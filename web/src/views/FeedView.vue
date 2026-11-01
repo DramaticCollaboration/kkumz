@@ -1,118 +1,183 @@
 <template>
   <div class="feed-page">
-    <!-- 히어로: 한 줄 아이디어 입력 및 스튜디오 즉시 시작 -->
-    <section class="hero-card">
-      <div class="hero-content">
-        <div class="hero-badges">
-          <span class="pill-primary">AI 브랜드·멀티사이트 스튜디오</span>
-          <span class="pill-outline">네이밍 · 벡터 로고 · 기획서 · 라이브 배포 · 팀빌딩</span>
+    <!-- 히어로: 깨끗하고 세련된 모던 AI 스튜디오 랜딩 (v0 / Perplexity 스타일) -->
+    <section class="hero-section">
+      <!-- 배경 소프트 바이올렛 글로우 -->
+      <div class="hero-glow"></div>
+
+      <div class="hero-inner">
+        <!-- 1. 미니 뱃지 -->
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          <span class="badge-title">AI 브랜드·멀티사이트 스튜디오</span>
+          <span class="badge-divider">·</span>
+          <span class="badge-sub">네이밍 · 로고 · 기획서 · 라이브 웹</span>
         </div>
-        <h1>
-          아이디어 한 줄로 나만의 브랜드 사이트를 만들고,<br />
-          함께 성장할 초기 팀원까지 만나는 곳
+
+        <!-- 2. 명확하고 날카로운 가치 제안 헤드라인 -->
+        <h1 class="hero-heading">
+          아이디어 한 줄로 완성하는<br />
+          <span class="gradient-text">나만의 라이브 브랜드 사이트</span>
         </h1>
         <p class="hero-desc">
-          복잡한 설정 없이 어떤 브랜드나 서비스를 만들고 싶은지 적어보세요. AI가 브랜드 네이밍 8종, 고해상도 벡터 로고 6종,
-          서비스 기획서, 그리고 실제 주문과 참가 신청이 동작하는 라이브 웹사이트까지 즉시 완성합니다.
+          브랜드 네이밍부터 고해상도 로고, 서비스 기획서, 실제 동작하는 커머스·웹사이트까지 AI가 단 1분 만에 완성합니다.
         </p>
 
-        <div class="quick-prompt-box">
-          <div class="site-type-selector">
+        <!-- 3. 고도화된 프롬프트 카드 (인풋 + 타입 칩 + CTA 일체형) -->
+        <div class="prompt-card">
+          <textarea
+            v-model="quickPrompt"
+            class="prompt-textarea"
+            rows="2"
+            placeholder="어떤 브랜드나 서비스를 만들고 싶으신가요? (예: 제주 서귀포 첫물 유기농 말차와 수제 백자 다완을 판매하는 프리미엄 다도 스토어)"
+            @keydown.enter.exact.prevent="startStudioWithPrompt"
+          ></textarea>
+
+          <div class="prompt-bottom-bar">
+            <!-- 사이트 타입 칩 셀렉터 -->
+            <div class="type-chips">
+              <button
+                v-for="opt in siteTypeOptions"
+                :key="opt.value"
+                type="button"
+                class="type-chip-btn"
+                :class="{ active: quickSiteType === opt.value }"
+                @click="quickSiteType = opt.value"
+              >
+                {{ opt.label }}
+              </button>
+            </div>
+
+            <!-- 메인 CTA 버튼 -->
             <button
-              v-for="opt in siteTypeOptions"
-              :key="opt.value"
+              class="create-cta-btn"
               type="button"
-              :class="{ active: quickSiteType === opt.value }"
-              @click="quickSiteType = opt.value"
+              :disabled="creating"
+              @click="startStudioWithPrompt"
             >
-              {{ opt.label }}
+              <span v-if="creating" class="btn-spinner"></span>
+              <span v-else class="btn-icon">⚡</span>
+              <span>{{ creating ? '스튜디오 준비 중...' : 'AI 스튜디오에서 만들기' }}</span>
+              <span class="arrow">→</span>
             </button>
           </div>
-          <div class="prompt-input-row">
-            <input
-              v-model="quickPrompt"
-              type="text"
-              placeholder="어떤 브랜드나 서비스를 만들고 싶으신가요? (예: 제주 첫물 유기농 말차와 수제 백자 다완 스토어)"
-              @keyup.enter="startStudioWithPrompt"
-            />
-            <button class="launch-btn" type="button" :disabled="creating" @click="startStudioWithPrompt">
-              {{ creating ? '스튜디오 준비 중...' : 'AI 스튜디오에서 만들기 →' }}
-            </button>
-          </div>
-          <div class="sample-prompts">
-            <span class="sample-label">추천 아이디어:</span>
+        </div>
+
+        <!-- 4. 정제된 추천 키워드 태그 -->
+        <div class="sample-keywords">
+          <span class="sample-label">추천 키워드:</span>
+          <div class="sample-list">
             <button
               type="button"
+              class="sample-pill"
               @click="applySample('COMMERCE', '제주 서귀포 유기농 다원의 첫물 말차와 수제 백자 다완을 판매하는 프리미엄 다도 브랜드 스토어')"
             >
-              제주 유기농 말차 & 다기 스토어
+              # 제주 유기농 말차 & 다기 스토어
             </button>
             <button
               type="button"
+              class="sample-pill"
               @click="applySample('CMS_SITE', '매주 화·목 한강에서 달리는 나이트 러닝 크루 커뮤니티 및 코스 가이드·게스트 런 신청 웹사이트')"
             >
-              서울 나이트 러닝 크루 웹사이트
+              # 서울 나이트 러닝 크루
             </button>
             <button
               type="button"
+              class="sample-pill"
               @click="applySample('HYBRID', '스페셜티 커피 산지 직교역 인터뷰 매거진과 싱글오리진 원두 구매·시음 클래스 예약 복합 사이트')"
             >
-              스페셜티 커피 매거진 & 스토어
+              # 스페셜티 커피 매거진 & 스토어
             </button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 필터 바 -->
-    <section class="filter-bar">
-      <div class="filter-tabs">
-        <button
-          v-for="tab in filterTabs"
-          :key="tab.value"
-          type="button"
-          :class="{ active: selectedSiteType === tab.value }"
-          @click="selectSiteTypeFilter(tab.value)"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
-
-      <div class="filter-controls">
-        <select v-model="selectedRecruitRole" @change="loadFeed">
-          <option value="ALL">전체 모집 포지션</option>
-          <option value="FRONTEND">프론트엔드 개발</option>
-          <option value="BACKEND">백엔드 개발</option>
-          <option value="DESIGNER">브랜드·프로덕트 디자이너</option>
-          <option value="MARKETER">그로스 마케터</option>
-          <option value="MD">커머스 상품 MD</option>
-          <option value="PLANNER">서비스 기획·PM</option>
-          <option value="CO_FOUNDER">공동창업자(Co-Founder)</option>
-        </select>
-
-        <div class="search-group">
-          <input
-            v-model="keyword"
-            type="text"
-            placeholder="브랜드명, 슬로건 검색..."
-            @keyup.enter="loadFeed"
-          />
-          <button type="button" @click="loadFeed">검색</button>
+    <!-- 쇼케이스 탐색 툴바 (2단 분리 및 반응형 정렬 개선) -->
+    <section class="filter-section">
+      <div class="filter-top-row">
+        <!-- 카테고리 탭 -->
+        <div class="filter-tabs">
+          <button
+            v-for="tab in filterTabs"
+            :key="tab.value"
+            type="button"
+            class="tab-btn"
+            :class="{ active: selectedSiteType === tab.value }"
+            @click="selectSiteTypeFilter(tab.value)"
+          >
+            {{ tab.label }}
+          </button>
         </div>
 
-        <div class="sort-group">
-          <button type="button" :class="{ active: sortBy === 'POPULAR' }" @click="changeSort('POPULAR')">
-            인기순
-          </button>
-          <button type="button" :class="{ active: sortBy === 'LATEST' }" @click="changeSort('LATEST')">
-            최신순
-          </button>
+        <!-- 우측 컨트롤 그룹 -->
+        <div class="filter-controls-group">
+          <!-- 포지션 필터 -->
+          <div class="select-wrapper">
+            <select v-model="selectedRecruitRole" class="custom-select" @change="loadFeed">
+              <option value="ALL">전체 모집 포지션</option>
+              <option value="FRONTEND">프론트엔드 개발</option>
+              <option value="BACKEND">백엔드 개발</option>
+              <option value="DESIGNER">브랜드·프로덕트 디자이너</option>
+              <option value="MARKETER">그로스 마케터</option>
+              <option value="MD">커머스 상품 MD</option>
+              <option value="PLANNER">서비스 기획·PM</option>
+              <option value="CO_FOUNDER">공동창업자(Co-Founder)</option>
+            </select>
+          </div>
+
+          <!-- 정렬 세그먼트 -->
+          <div class="sort-segment">
+            <button
+              type="button"
+              class="sort-btn"
+              :class="{ active: sortBy === 'POPULAR' }"
+              @click="changeSort('POPULAR')"
+            >
+              인기순
+            </button>
+            <button
+              type="button"
+              class="sort-btn"
+              :class="{ active: sortBy === 'LATEST' }"
+              @click="changeSort('LATEST')"
+            >
+              최신순
+            </button>
+          </div>
+
+          <!-- 검색창 -->
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+            </svg>
+            <input
+              v-model="keyword"
+              type="text"
+              class="search-input"
+              placeholder="브랜드명, 슬로건 검색..."
+              @keyup.enter="loadFeed"
+            />
+            <button v-if="keyword" type="button" class="search-clear-btn" @click="clearKeyword">✕</button>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- 쇼케이스 그리드 (다이어트된 깔끔한 카드) -->
-    <section v-if="loading" class="loading-box">창업가들의 브랜드 쇼케이스를 불러오는 중입니다...</section>
+    <section v-if="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>창업가들의 생생한 브랜드 쇼케이스를 불러오는 중입니다...</p>
+    </section>
+
+    <section v-else-if="feedItems.length === 0" class="empty-state">
+      <div class="empty-icon">💡</div>
+      <h3>발견된 쇼케이스가 없습니다</h3>
+      <p>새로운 아이디어로 첫 번째 브랜드 쇼케이스의 주인공이 되어보세요!</p>
+      <button class="empty-cta" type="button" @click="router.push('/studio')">
+        새 아이디어 만들기
+      </button>
+    </section>
 
     <section v-else class="showcase-grid">
       <article v-for="item in feedItems" :key="item.id" class="showcase-card">
@@ -120,7 +185,7 @@
           class="card-banner"
           :style="{
             background: item.designTokens?.surface || '#f8fafc',
-            borderBottomColor: (item.designTokens?.primary || '#1e293b') + '18',
+            borderBottomColor: (item.designTokens?.primary || '#1e293b') + '15',
           }"
         >
           <div class="banner-top">
@@ -148,12 +213,12 @@
             <span v-for="tag in (item.tags || []).slice(0, 4)" :key="tag" class="tag-chip">#{{ tag }}</span>
           </div>
 
-          <!-- 모집 중인 포지션 요약 -->
+          <!-- 모집 중인 포지션 요약 (팀빌딩 연동 강화) -->
           <div v-if="item.openRecruits && item.openRecruits.length > 0" class="recruit-summary" @click="openLounge(item)">
             <div class="recruit-summary-head">
               <span class="recruit-dot"></span>
-              <strong>합류 가능 포지션 ({{ item.openRecruits.length }})</strong>
-              <span class="recruit-more">팀빌딩 라운지 →</span>
+              <strong>팀원 모집 중 ({{ item.openRecruits.length }})</strong>
+              <span class="recruit-more">지원하기 →</span>
             </div>
             <div class="recruit-chips">
               <span v-for="rec in item.openRecruits.slice(0, 3)" :key="rec.id" class="role-chip">
@@ -166,20 +231,20 @@
         <div class="card-footer">
           <div class="metrics">
             <button type="button" class="like-btn" @click="handleLike(item)">
-              ♥ {{ item.likeCount }}
+              <span class="like-icon">♥</span> {{ item.likeCount }}
             </button>
             <button type="button" class="comment-btn" @click="openCommentModal(item)">
-              💬 댓글 {{ item.commentCount }}
+              💬 {{ item.commentCount }}
             </button>
             <span class="view-stat">조회 {{ item.viewCount }}</span>
           </div>
 
           <div class="card-actions">
             <button type="button" class="btn-outline" @click="openStudio(item)">
-              스튜디오 열기
+              스튜디오
             </button>
             <button type="button" class="btn-solid" @click="openLiveSite(item)">
-              라이브 사이트
+              라이브 사이트 →
             </button>
           </div>
         </div>
@@ -288,6 +353,11 @@ function changeSort(sort: string) {
   loadFeed();
 }
 
+function clearKeyword() {
+  keyword.value = '';
+  loadFeed();
+}
+
 function applySample(siteType: string, prompt: string) {
   quickSiteType.value = siteType;
   quickPrompt.value = prompt;
@@ -353,205 +423,465 @@ onMounted(() => {
 .feed-page {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 36px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px 64px;
 }
-.hero-card {
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 58%, #311042 100%);
-  border-radius: 24px;
-  padding: 40px 36px;
-  color: #fff;
-  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.16);
+
+/* ============================================================
+   1. HERO SECTION (모던 라이트 & 바이올렛 글로우)
+   ============================================================ */
+.hero-section {
+  position: relative;
+  padding: 56px 20px 48px;
+  text-align: center;
+  overflow: hidden;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #ffffff 0%, #fcfaff 100%);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.07);
 }
-.hero-badges {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+
+.hero-glow {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 680px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.08) 50%, transparent 75%);
+  filter: blur(48px);
+  pointer-events: none;
+  z-index: 0;
 }
-.pill-primary {
-  background: #4f46e5;
-  color: #fff;
-  padding: 5px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 820px;
+  margin: 0 auto;
 }
-.pill-outline {
-  background: rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
-  padding: 5px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-}
-.hero-content h1 {
-  font-size: 30px;
-  line-height: 1.35;
-  margin: 0 0 12px;
-  font-weight: 800;
-}
-.hero-desc {
-  color: #cbd5e1;
-  font-size: 14px;
-  line-height: 1.65;
-  max-width: 780px;
-  margin: 0 0 24px;
-}
-.quick-prompt-box {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 18px;
-  padding: 18px;
-}
-.site-type-selector {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-.site-type-selector button {
-  padding: 7px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #e2e8f0;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.site-type-selector button.active {
-  background: #6366f1;
-  border-color: #6366f1;
-  color: #fff;
-}
-.prompt-input-row {
-  display: flex;
-  gap: 10px;
-}
-.prompt-input-row input {
-  flex: 1;
-  padding: 14px 18px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(15, 23, 42, 0.78);
-  color: #fff;
-  font-size: 14px;
-}
-.launch-btn {
-  padding: 0 24px;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  font-weight: 800;
-  font-size: 14px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.sample-prompts {
-  display: flex;
+
+/* 미니 뱃지 */
+.hero-badge {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 12px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: #f5f3ff;
+  border: 1px solid #ede9fe;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6366f1;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+.badge-title {
+  color: #4f46e5;
+  font-weight: 700;
+}
+.badge-divider {
+  color: #cbd5e1;
+}
+.badge-sub {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* 헤드라인 & 서브카피 */
+.hero-heading {
+  font-size: 38px;
+  line-height: 1.28;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.025em;
+  margin: 0 0 14px;
+}
+.gradient-text {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-desc {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #64748b;
+  max-width: 640px;
+  margin: 0 auto 32px;
+}
+
+/* 프롬프트 인풋 카드 */
+.prompt-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(99, 102, 241, 0.04);
+  padding: 16px 18px 14px;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+.prompt-card:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.16), 0 0 0 4px rgba(99, 102, 241, 0.12);
+}
+.prompt-textarea {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #0f172a;
+  resize: none;
+  font-family: inherit;
+}
+.prompt-textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* 프롬프트 카드 하단 바 */
+.prompt-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.type-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.type-chip-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.type-chip-btn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+.type-chip-btn.active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.create-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+  transition: all 0.18s ease;
+}
+.create-cta-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.4);
+  transform: translateY(-1px);
+}
+.create-cta-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.btn-icon {
+  font-size: 13px;
+}
+.arrow {
+  font-size: 14px;
+  transition: transform 0.15s ease;
+}
+.create-cta-btn:hover:not(:disabled) .arrow {
+  transform: translateX(2px);
+}
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 추천 키워드 태그 */
+.sample-keywords {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
   flex-wrap: wrap;
 }
 .sample-label {
   font-size: 12px;
+  font-weight: 600;
   color: #94a3b8;
 }
-.sample-prompts button {
-  padding: 5px 11px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
-  color: #cbd5e1;
-  font-size: 12px;
-  cursor: pointer;
-}
-.filter-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  background: #fff;
-  padding: 14px 18px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-}
-.filter-tabs {
+.sample-list {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
-.filter-tabs button {
+.sample-pill {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sample-pill:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #4f46e5;
+}
+
+/* ============================================================
+   2. FILTER & TOOLBAR SECTION (정돈된 2단 반응형)
+   ============================================================ */
+.filter-section {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.filter-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+.tab-btn {
   padding: 8px 14px;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
   font-size: 13px;
-  font-weight: 700;
-  color: #475569;
+  font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 }
-.filter-tabs button.active {
-  background: #0f172a;
-  color: #fff;
-  border-color: #0f172a;
+.tab-btn:hover {
+  background: #f8fafc;
+  color: #1e293b;
 }
-.filter-controls {
+.tab-btn.active {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.filter-controls-group {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
-.filter-controls select,
-.search-group input {
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  font-size: 13px;
+
+/* 포지션 드롭다운 */
+.select-wrapper {
+  position: relative;
 }
-.search-group {
-  display: flex;
-  gap: 6px;
-}
-.search-group button,
-.sort-group button {
-  padding: 8px 12px;
-  border-radius: 10px;
+.custom-select {
+  appearance: none;
+  background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") no-repeat right 10px center / 14px;
   border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border-radius: 10px;
+  padding: 8px 30px 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  outline: none;
+}
+.custom-select:focus {
+  border-color: #6366f1;
+}
+
+/* 정렬 세그먼트 */
+.sort-segment {
+  display: flex;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 10px;
+}
+.sort-btn {
+  border: none;
+  background: transparent;
+  padding: 5px 12px;
+  border-radius: 7px;
   font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.sort-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+/* 인라인 검색창 */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-icon {
+  position: absolute;
+  left: 10px;
+  width: 15px;
+  height: 15px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+.search-input {
+  width: 190px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 7px 28px 7px 32px;
+  font-size: 12px;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.search-input:focus {
+  width: 230px;
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+.search-clear-btn {
+  position: absolute;
+  right: 8px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+/* ============================================================
+   3. SHOWCASE GRID & CARDS
+   ============================================================ */
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 64px 20px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+}
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 16px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+.empty-state p {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0 0 20px;
+}
+.empty-cta {
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: none;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
-.sort-group button.active {
-  background: #eef2ff;
-  color: #4f46e5;
-  border-color: #c7d2fe;
-}
+
 .showcase-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(540px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+  gap: 24px;
 }
+
 .showcase-card {
-  background: #fff;
+  background: #ffffff;
   border-radius: 20px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .showcase-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.03);
+  border-color: #cbd5e1;
 }
+
 .card-banner {
   padding: 20px 24px;
   border-bottom: 1px solid #e2e8f0;
+  position: relative;
 }
 .banner-top {
   display: flex;
@@ -566,49 +896,52 @@ onMounted(() => {
 }
 .type-pill {
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: 9999px;
   font-size: 11px;
   font-weight: 800;
 }
 .type-pill.commerce {
   background: #dcfce7;
-  color: #166534;
+  color: #15803d;
 }
 .type-pill.cms_site {
   background: #ffedd5;
-  color: #9a3412;
+  color: #c2410c;
 }
 .type-pill.hybrid {
   background: #ede9fe;
-  color: #5b21b6;
+  color: #6d28d9;
 }
 .featured-pill {
   background: #fef3c7;
   color: #92400e;
   padding: 4px 9px;
-  border-radius: 999px;
+  border-radius: 9999px;
   font-size: 11px;
   font-weight: 700;
 }
 .deploy-pill {
   font-size: 11px;
   font-weight: 600;
-  color: #475569;
-  background: rgba(255, 255, 255, 0.85);
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.9);
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.6);
 }
 .logo-preview {
-  height: 42px;
+  height: 44px;
   display: flex;
   align-items: center;
 }
 .logo-preview :deep(svg) {
-  height: 40px;
+  height: 42px;
   width: auto;
 }
+
 .card-body {
   padding: 22px 24px;
+  flex: 1;
 }
 .title-row {
   display: flex;
@@ -621,14 +954,15 @@ onMounted(() => {
   font-size: 20px;
   font-weight: 800;
   color: #0f172a;
+  letter-spacing: -0.01em;
 }
 .slug-badge {
-  font-family: monospace;
-  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
   background: #f1f5f9;
   color: #4f46e5;
-  padding: 4px 10px;
-  border-radius: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
   font-weight: 700;
 }
 .slogan {
@@ -644,19 +978,21 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 .tag-chip {
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 999px;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 9999px;
   background: #f8fafc;
-  color: #475569;
+  color: #64748b;
   border: 1px solid #e2e8f0;
 }
+
 .recruit-summary {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 12px 14px;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 .recruit-summary:hover {
   border-color: #c7d2fe;
@@ -688,11 +1024,12 @@ onMounted(() => {
 .role-chip {
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 8px;
+  padding: 3px 9px;
+  border-radius: 6px;
   background: #eef2ff;
   color: #4338ca;
 }
+
 .card-footer {
   padding: 14px 24px;
   border-top: 1px solid #f1f5f9;
@@ -700,26 +1037,39 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  background: #fafafa;
 }
 .metrics {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 .like-btn,
 .comment-btn {
-  padding: 6px 12px;
+  padding: 6px 11px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
-  background: #fff;
+  background: #ffffff;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
+  color: #475569;
   cursor: pointer;
+  transition: all 0.12s ease;
+}
+.like-btn:hover,
+.comment-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+.like-icon {
+  color: #ef4444;
 }
 .view-stat {
-  font-size: 12px;
-  color: #64748b;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-left: 2px;
 }
+
 .card-actions {
   display: flex;
   gap: 8px;
@@ -728,37 +1078,52 @@ onMounted(() => {
   padding: 8px 14px;
   border-radius: 10px;
   border: 1px solid #cbd5e1;
-  background: #fff;
+  background: #ffffff;
   color: #334155;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.12s ease;
+}
+.btn-outline:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
 }
 .btn-solid {
   padding: 8px 16px;
   border-radius: 10px;
   border: none;
   background: #0f172a;
-  color: #fff;
+  color: #ffffff;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.12s ease;
 }
+.btn-solid:hover {
+  background: #1e293b;
+}
+
+/* ============================================================
+   4. COMMENT MODAL
+   ============================================================ */
 .modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
 }
 .modal-panel {
-  background: #fff;
-  width: 540px;
+  background: #ffffff;
+  width: 520px;
   max-width: 92vw;
   border-radius: 20px;
   padding: 24px;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
 }
 .modal-header {
   display: flex;
@@ -769,6 +1134,8 @@ onMounted(() => {
 .modal-header h3 {
   margin: 0;
   font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
 }
 .modal-sub {
   margin: 4px 0 0;
@@ -778,10 +1145,11 @@ onMounted(() => {
 .close-btn {
   border: none;
   background: #f1f5f9;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 8px;
   cursor: pointer;
+  color: #64748b;
 }
 .comment-list {
   max-height: 280px;
@@ -805,9 +1173,10 @@ onMounted(() => {
 .role-badge {
   font-size: 11px;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: 9999px;
   background: #e0e7ff;
   color: #3730a3;
+  font-weight: 600;
 }
 .comment-form {
   display: flex;
@@ -818,14 +1187,59 @@ onMounted(() => {
   padding: 10px 14px;
   border-radius: 10px;
   border: 1px solid #cbd5e1;
+  font-size: 13px;
+  outline: none;
+}
+.comment-form input:focus {
+  border-color: #6366f1;
 }
 .comment-form button {
   padding: 10px 18px;
   border-radius: 10px;
   border: none;
   background: #4f46e5;
-  color: #fff;
+  color: #ffffff;
   font-weight: 700;
+  font-size: 13px;
   cursor: pointer;
+}
+
+/* ============================================================
+   5. RESPONSIVE BREAKPOINTS
+   ============================================================ */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 36px 16px 32px;
+  }
+  .hero-heading {
+    font-size: 26px;
+  }
+  .hero-desc {
+    font-size: 13px;
+  }
+  .showcase-grid {
+    grid-template-columns: 1fr;
+  }
+  .prompt-bottom-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .create-cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .filter-controls-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .search-box {
+    width: 100%;
+  }
+  .search-input {
+    width: 100%;
+  }
+  .search-input:focus {
+    width: 100%;
+  }
 }
 </style>

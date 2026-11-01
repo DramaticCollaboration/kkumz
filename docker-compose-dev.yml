@@ -75,8 +75,14 @@ services:
       - DB_NAME=${POSTGRES_DB:-kkumz}
       - DB_USERNAME=${POSTGRES_USER:-postgres}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-root}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://${POSTGRES_HOST:-kkumz-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-kkumz}?currentSchema=public&stringtype=unspecified
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-root}
       - REDIS_HOST=${REDIS_HOST:-kkumz-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
+      - SPRING_DATA_REDIS_HOST=${REDIS_HOST:-kkumz-redis}
+      - SPRING_DATA_REDIS_PORT=${REDIS_PORT:-6379}
+      - SPRING_DATA_REDIS_PASSWORD=
     depends_on:
       kkumz-postgres:
         condition: service_healthy

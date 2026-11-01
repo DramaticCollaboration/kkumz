@@ -87,12 +87,12 @@ CREATE TABLE kkumz_screen_spec (
     id VARCHAR(64) PRIMARY KEY,
     idea_id VARCHAR(64) NOT NULL REFERENCES kkumz_idea(id) ON DELETE CASCADE,
     screen_key VARCHAR(64) NOT NULL,
-    title VARCHAR(150) NOT NULL,
+    screen_title VARCHAR(150) NOT NULL,
     route_path VARCHAR(128) NOT NULL,
-    purpose VARCHAR(500) NOT NULL,
     layout_type VARCHAR(64) NOT NULL DEFAULT 'STANDARD_GRID',
+    description VARCHAR(500),
     components_json JSONB NOT NULL DEFAULT '[]'::jsonb,
-    priority INTEGER NOT NULL DEFAULT 1,
+    sort_no INTEGER NOT NULL DEFAULT 1,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -111,8 +111,9 @@ CREATE TABLE kkumz_site (
     deploy_mode VARCHAR(32) NOT NULL DEFAULT 'DYNAMIC_SDUI',
     active_version INTEGER NOT NULL DEFAULT 1,
     deployed_url VARCHAR(255) NOT NULL,
+    custom_domain VARCHAR(255),
+    is_featured BOOLEAN NOT NULL DEFAULT FALSE,
     visibility VARCHAR(32) NOT NULL DEFAULT 'PUBLIC',
-    featured BOOLEAN NOT NULL DEFAULT FALSE,
     like_count INTEGER NOT NULL DEFAULT 0,
     comment_count INTEGER NOT NULL DEFAULT 0,
     view_count INTEGER NOT NULL DEFAULT 0,
@@ -146,16 +147,17 @@ CREATE TABLE kkumz_site_release (
 CREATE TABLE kkumz_build_job (
     id VARCHAR(64) PRIMARY KEY,
     site_id VARCHAR(64) NOT NULL REFERENCES kkumz_site(id) ON DELETE CASCADE,
-    version_no INTEGER NOT NULL DEFAULT 1,
-    trigger_type VARCHAR(32) NOT NULL DEFAULT 'MANUAL_DEPLOY',
+    release_id VARCHAR(64) REFERENCES kkumz_site_release(id) ON DELETE SET NULL,
+    job_type VARCHAR(32) NOT NULL DEFAULT 'INITIAL_PROVISION',
     deploy_mode VARCHAR(32) NOT NULL DEFAULT 'DYNAMIC_SDUI',
-    build_status VARCHAR(32) NOT NULL DEFAULT 'SUCCESS',
+    status VARCHAR(32) NOT NULL DEFAULT 'SUCCESS',
     duration_ms BIGINT NOT NULL DEFAULT 1200,
-    ai_fix_applied BOOLEAN NOT NULL DEFAULT FALSE,
-    ai_fix_summary VARCHAR(500),
+    error_summary VARCHAR(500),
+    ai_patch_applied BOOLEAN NOT NULL DEFAULT FALSE,
     build_log TEXT NOT NULL,
     triggered_by VARCHAR(64) NOT NULL DEFAULT 'admin',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    finished_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 9. 팀원 모집 공고 (kkumz_team_recruit)
@@ -228,13 +230,16 @@ CREATE TABLE kkumz_ai_prompt_template (
     id VARCHAR(64) PRIMARY KEY,
     template_code VARCHAR(64) NOT NULL UNIQUE,
     template_name VARCHAR(128) NOT NULL,
-    stage_category VARCHAR(32) NOT NULL,
+    stage_type VARCHAR(32) NOT NULL,
     model_name VARCHAR(64) NOT NULL DEFAULT 'qwen-plus',
     temperature NUMERIC(3,2) NOT NULL DEFAULT 0.70,
     system_prompt TEXT NOT NULL,
+    user_prompt_template TEXT NOT NULL DEFAULT '',
     forbidden_words_json JSONB NOT NULL DEFAULT '[]'::jsonb,
     status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    created_by VARCHAR(64) NOT NULL DEFAULT 'admin',
     updated_by VARCHAR(64) NOT NULL DEFAULT 'admin',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -242,7 +247,7 @@ CREATE TABLE kkumz_ai_prompt_template (
 CREATE TABLE kkumz_notification (
     id VARCHAR(64) PRIMARY KEY,
     recipient_username VARCHAR(64) NOT NULL,
-    noti_type VARCHAR(32) NOT NULL DEFAULT 'SYSTEM',
+    notif_type VARCHAR(32) NOT NULL DEFAULT 'SYSTEM',
     title VARCHAR(200) NOT NULL,
     message TEXT NOT NULL,
     link_url VARCHAR(255),
@@ -254,5 +259,5 @@ CREATE INDEX idx_kkumz_site_type_status ON kkumz_site (site_type, status, like_c
 CREATE INDEX idx_kkumz_recruit_site_status ON kkumz_team_recruit (site_id, status);
 CREATE INDEX idx_kkumz_comment_site_time ON kkumz_feed_comment (site_id, created_at DESC);
 CREATE INDEX idx_kkumz_report_status ON kkumz_moderation_report (status, created_at DESC);
-CREATE INDEX idx_kkumz_build_site_time ON kkumz_build_job (site_id, created_at DESC);
+CREATE INDEX idx_kkumz_build_site_time ON kkumz_build_job (site_id, started_at DESC);
 CREATE INDEX idx_kkumz_noti_user_read ON kkumz_notification (recipient_username, is_read, created_at DESC);

@@ -38,8 +38,8 @@ INSERT INTO sys_role_permission (id, role_id, permission_id) VALUES
 
 -- AI 스튜디오 프롬프트 템플릿 및 필터 규칙 마스터
 INSERT INTO kkumz_ai_prompt_template (
-    id, template_code, template_name, stage_category, model_name, temperature,
-    system_prompt, forbidden_words_json, status, updated_by
+    id, template_code, template_name, stage_type, model_name, temperature,
+    system_prompt, user_prompt_template, forbidden_words_json, status, created_by, updated_by
 ) VALUES
 (
     'tpl-kkumz-001',
@@ -49,8 +49,10 @@ INSERT INTO kkumz_ai_prompt_template (
     'qwen-plus',
     0.75,
     '당신은 스타트업 브랜드 네이밍 전문가입니다. 사용자의 아이디어 프롬프트와 카테고리를 분석하여 발음하기 쉽고 기억에 남는 브랜드명 8종, 영문/국문 발음 가이드, 영문 케밥케이스 슬러그(site_slug), 그리고 2문장 이내의 브랜딩 스토리를 JSON 배열로 생성하십시오.',
+    '아이디어: {{promptText}} / 카테고리: {{category}} / 키워드 힌트: {{keywordHint}}',
     '["admin", "root", "system", "kkumz-official", "test", "null", "illegal", "casino"]'::jsonb,
     'ACTIVE',
+    'admin',
     'admin'
 ),
 (
@@ -61,8 +63,10 @@ INSERT INTO kkumz_ai_prompt_template (
     'qwen-plus',
     0.70,
     '당신은 브랜드 BX 디자이너입니다. 선택된 브랜드명과 아이디어 컨셉을 바탕으로 즉시 브라우저에서 렌더링 가능한 순수 SVG 코드(viewBox="0 0 185 40") 6종과 primary, secondary, accent, surface 컬러 팔레트 토큰을 생성하십시오.',
+    '브랜드명: {{brandName}} / 선호 스타일: {{stylePreference}}',
     '["script", "onload", "onerror", "javascript:"]'::jsonb,
     'ACTIVE',
+    'admin',
     'admin'
 ),
 (
@@ -73,8 +77,10 @@ INSERT INTO kkumz_ai_prompt_template (
     'qwen-plus',
     0.50,
     '당신은 수석 프로덕트 매니저(PM)입니다. 아이디어 프롬프트와 확정된 브랜드 아이덴티티를 바탕으로 1) 브랜드 비전 및 타겟 고객, 2) 핵심 기능 구성, 3) 화면 흐름 및 주요 컴포넌트 목록(screens_json), 4) 데이터 및 연동 규격을 포함한 마크다운 기능 명세서를 작성하십시오.',
+    '브랜드명: {{brandName}} / 사이트 유형: {{siteType}} / 상세 프롬프트: {{promptText}}',
     '["TODO", "TBD", "추후작성"]'::jsonb,
     'ACTIVE',
+    'admin',
     'admin'
 ),
 (
@@ -85,7 +91,9 @@ INSERT INTO kkumz_ai_prompt_template (
     'qwen-plus',
     0.20,
     '당신은 Vue 3 및 TypeScript 빌드 디버깅 전문 에이전트입니다. 빌드 로그의 컴파일/타입 오류 원인을 정확히 진단하고, 수정 전/후 Diff 요약과 함께 즉시 빌드 가능한 정상 소스 코드를 생성하십시오.',
+    '에러 로그: {{buildLog}} / 대상 파일: {{filesJson}}',
     '["eval(", "Function("]'::jsonb,
     'ACTIVE',
+    'admin',
     'admin'
 );

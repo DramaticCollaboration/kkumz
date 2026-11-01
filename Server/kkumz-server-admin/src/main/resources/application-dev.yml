@@ -4,20 +4,20 @@ server:
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://kkumz-postgres:5432/kkumz_db?currentSchema=public&stringtype=unspecified}
-    username: ${SPRING_DATASOURCE_USERNAME:syncadmin}
-    password: ${SPRING_DATASOURCE_PASSWORD:syncpass}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:kkumz-postgres}:${DB_PORT:5432}/${DB_NAME:kkumz}?currentSchema=public&stringtype=unspecified}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:syncadmin}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:syncpass}}
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:kkumz-redis}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
-      password: ${SPRING_DATA_REDIS_PASSWORD:syncpass}
+      host: ${SPRING_DATA_REDIS_HOST:${REDIS_HOST:kkumz-redis}}
+      port: ${SPRING_DATA_REDIS_PORT:${REDIS_PORT:6379}}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
 
 kkumz:
   cross-db:
-    shop-url: ${KKUMZ_SHOP_DB_URL:jdbc:postgresql://kkumz-postgres:5432/syncshop_db?currentSchema=public&stringtype=unspecified}
-    cms-url: ${KKUMZ_CMS_DB_URL:jdbc:postgresql://kkumz-postgres:5432/synccms_db?currentSchema=public&stringtype=unspecified}
-    username: ${SPRING_DATASOURCE_USERNAME:syncadmin}
-    password: ${SPRING_DATASOURCE_PASSWORD:syncpass}
+    shop-url: ${KKUMZ_SHOP_DB_URL:jdbc:postgresql://${DB_HOST:kkumz-postgres}:${DB_PORT:5432}/sync_shop?currentSchema=public&stringtype=unspecified}
+    cms-url: ${KKUMZ_CMS_DB_URL:jdbc:postgresql://${DB_HOST:kkumz-postgres}:${DB_PORT:5432}/sync_cms?currentSchema=public&stringtype=unspecified}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:syncadmin}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:syncpass}}
   nacos:
     enabled: false

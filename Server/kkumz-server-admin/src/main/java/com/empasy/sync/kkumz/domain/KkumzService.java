@@ -37,10 +37,10 @@ public class KkumzService {
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${kkumz.cross-db.shop-url:jdbc:postgresql://localhost:5432/syncshop_db?currentSchema=public&stringtype=unspecified}")
+    @Value("${kkumz.cross-db.shop-url:jdbc:postgresql://localhost:5432/sync_shop?currentSchema=public&stringtype=unspecified}")
     private String shopDbUrl;
 
-    @Value("${kkumz.cross-db.cms-url:jdbc:postgresql://localhost:5432/synccms_db?currentSchema=public&stringtype=unspecified}")
+    @Value("${kkumz.cross-db.cms-url:jdbc:postgresql://localhost:5432/synccms?currentSchema=public&stringtype=unspecified}")
     private String cmsDbUrl;
 
     @Value("${kkumz.cross-db.username:syncadmin}")
