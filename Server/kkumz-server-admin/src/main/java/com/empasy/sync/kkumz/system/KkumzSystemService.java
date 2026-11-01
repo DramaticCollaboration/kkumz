@@ -71,7 +71,11 @@ public class KkumzSystemService {
         user.put("userId", user.get("id"));
         user.put("homePath", "/dashboard/analysis");
         user.put("roles", getUserRoles(String.valueOf(user.get("id"))));
-        return user;
+
+        Map<String, Object> res = new LinkedHashMap<>(user);
+        res.put("userInfo", user);
+        res.put("sysAllDictItems", Map.of());
+        return res;
     }
 
     public List<Map<String, Object>> getUserRoles(String userId) {

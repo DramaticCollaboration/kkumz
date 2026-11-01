@@ -72,7 +72,9 @@ export const useMultipleTabStore = defineStore({
     // Tabs that need to be cached
     cacheTabList: new Set(),
     // multiple tab list
-    tabList: cacheTab ? Persistent.getLocal(MULTIPLE_TABS_KEY) || [] : [],
+    tabList: (cacheTab ? Persistent.getLocal(MULTIPLE_TABS_KEY) || [] : []).filter(
+      (tab: any) => !String(tab?.path || tab?.fullPath || '').startsWith('/ecommerce')
+    ),
     // Index of the last moved tab
     lastDragEndIndex: 0,
     // 리디렉션 시 저장된 라우팅 매개변수

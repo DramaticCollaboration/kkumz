@@ -31,6 +31,11 @@ export function createPermissionGuard(router: Router) {
   const userStore = useUserStoreWithOut();
   const permissionStore = usePermissionStoreWithOut();
   router.beforeEach(async (to, from, next) => {
+    if (to.path.startsWith('/ecommerce')) {
+      next({ path: PageEnum.BASE_HOME, replace: true });
+      return;
+    }
+
     if (
       from.path === ROOT_PATH &&
       to.path === PageEnum.BASE_HOME &&

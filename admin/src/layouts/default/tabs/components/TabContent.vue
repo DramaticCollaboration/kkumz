@@ -55,8 +55,7 @@
       const prefixIconType = computed(() => {
         if (props.tabItem.meta.icon) {
           return props.tabItem.meta.icon;
-        } else if (props.tabItem.path === '/dashboard/analysis' || props.tabItem.path === '/ecommerce/dashboard') {
-          // 홈페이지인 경우 홈 아이콘 TODO로 돌아가 여기서 홈페이지 경로를 동적으로 결정해야 할 수도 있습니다.
+        } else if (props.tabItem.path === '/dashboard/analysis') {
           return 'ant-design:home-outlined';
         } else {
           return 'ant-design:code';

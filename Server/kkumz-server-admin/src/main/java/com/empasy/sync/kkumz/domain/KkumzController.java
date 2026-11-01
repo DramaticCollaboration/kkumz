@@ -388,9 +388,10 @@ public class KkumzController {
 
     @GetMapping("/admin/projects")
     public Result<List<Map<String, Object>>> listAdminCommunityProjects(
+            @RequestParam(required = false) String siteType,
             @RequestParam(required = false) String keyword
     ) {
-        return Result.OK(kkumzService.listAdminCommunityProjects(keyword));
+        return Result.OK(kkumzService.listAdminCommunityProjects(siteType, keyword));
     }
 
     @GetMapping("/admin/moderation/reports")

@@ -198,17 +198,25 @@ public class KkumzService {
                 ideaId
         );
 
+        idea.put("logoSvg", idea.get("selectedLogoSvg"));
+        idea.put("siteSlug", idea.get("selectedSiteSlug"));
+        idea.put("currentVersionNo", versions.isEmpty() ? 1 : versions.get(0).get("versionNo"));
         idea.put("nameSuggestions", names);
         idea.put("logoSuggestions", logos);
         idea.put("versions", versions);
-        idea.put("screenSpecs", listIdeaScreens(ideaId));
+        List<Map<String, Object>> screenSpecRows = listIdeaScreens(ideaId);
+        idea.put("screenSpecs", screenSpecRows);
+        if (!screenSpecRows.isEmpty()) {
+            idea.put("screens", screenSpecRows);
+        }
         idea.put("site", siteRows.isEmpty() ? null : siteRows.get(0));
         return idea;
     }
 
     public List<Map<String, Object>> listIdeaScreens(String ideaId) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT id, idea_id AS \"ideaId\", screen_key AS \"screenKey\", screen_title AS \"screenTitle\", " +
+                "SELECT id, idea_id AS \"ideaId\", screen_key AS \"screenKey\", screen_key AS \"screenCode\", " +
+                "screen_title AS \"screenTitle\", screen_title AS \"screenName\", " +
                 "route_path AS \"routePath\", layout_type AS \"layoutType\", description, " +
                 "components_json::text AS \"componentsJson\", sort_no AS \"sortNo\", created_at AS \"createdAt\" " +
                 "FROM kkumz_screen_spec WHERE idea_id = ? ORDER BY sort_no ASC, id ASC",
@@ -1351,33 +1359,99 @@ public class KkumzService {
 
     public Map<String, Object> getAdminDashboardSummary() {
         Integer totalIdeas = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_idea", Integer.class);
+        Integer publishedIdeas = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_idea WHERE status IN ('PUBLISHED', 'DEPLOYED')", Integer.class);
         Integer totalSites = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_site", Integer.class);
         Integer activeSites = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_site WHERE status = 'ACTIVE'", Integer.class);
+        Integer suspendedSites = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_site WHERE status = 'SUSPENDED'", Integer.class);
         Integer openRecruits = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_team_recruit WHERE status = 'OPEN'", Integer.class);
         Integer activeMembers = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_team_member WHERE status = 'ACTIVE'", Integer.class);
+        Integer pendingApplicants = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_team_member WHERE status = 'PENDING'", Integer.class);
         Integer pendingReports = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_moderation_report WHERE status = 'PENDING'", Integer.class);
+        Integer totalReports = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_moderation_report", Integer.class);
         Integer totalBuilds = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job", Integer.class);
         Integer successBuilds = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job WHERE status = 'SUCCESS'", Integer.class);
+        Integer failedBuilds = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job WHERE status = 'FAILED'", Integer.class);
+        Integer aiPatchedBuilds = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job WHERE ai_patch_applied = TRUE", Integer.class);
+
+        Integer namingCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_name_suggestion", Integer.class);
+        Integer logoCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_logo_suggestion", Integer.class);
+        Integer specVersionCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_idea_version", Integer.class);
+        Integer screenBlueprintCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_screen_spec", Integer.class);
+        Integer activePromptTemplates = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_ai_prompt_template WHERE status = 'ACTIVE'", Integer.class);
+
+        Integer totalViews = jdbcTemplate.queryForObject("SELECT COALESCE(SUM(view_count), 0) FROM kkumz_site", Integer.class);
+        Integer totalLikes = jdbcTemplate.queryForObject("SELECT COALESCE(SUM(like_count), 0) FROM kkumz_site", Integer.class);
+        Integer totalComments = jdbcTemplate.queryForObject("SELECT COALESCE(SUM(comment_count), 0) FROM kkumz_site", Integer.class);
+
+        int safeTotalBuilds = totalBuilds != null ? totalBuilds : 0;
+        int safeSuccessBuilds = successBuilds != null ? successBuilds : 0;
+        int buildSuccessRate = safeTotalBuilds > 0 ? Math.round((safeSuccessBuilds * 100.0f) / safeTotalBuilds) : 100;
+
+        int safeNamingCount = namingCount != null ? namingCount : 0;
+        int safeLogoCount = logoCount != null ? logoCount : 0;
+        int safeSpecVersionCount = specVersionCount != null ? specVersionCount : 0;
+        int safeScreenBlueprintCount = screenBlueprintCount != null ? screenBlueprintCount : 0;
+        int safeAiPatchedBuilds = aiPatchedBuilds != null ? aiPatchedBuilds : 0;
+        int totalAiPromptCalls = safeNamingCount + safeLogoCount + safeSpecVersionCount + safeScreenBlueprintCount + safeAiPatchedBuilds;
 
         List<Map<String, Object>> siteTypeDistribution = jdbcTemplate.queryForList(
-                "SELECT site_type AS \"siteType\", COUNT(*) AS \"count\" FROM kkumz_site GROUP BY site_type ORDER BY \"count\" DESC"
+                "SELECT site_type AS \"siteType\", COUNT(*) AS \"count\", " +
+                "COALESCE(SUM(view_count), 0) AS \"totalViews\", COALESCE(SUM(like_count), 0) AS \"totalLikes\" " +
+                "FROM kkumz_site GROUP BY site_type ORDER BY \"count\" DESC, site_type ASC"
         );
+        List<Map<String, Object>> deployModeDistribution = jdbcTemplate.queryForList(
+                "SELECT deploy_mode AS \"deployMode\", COUNT(*) AS \"count\" " +
+                "FROM kkumz_site GROUP BY deploy_mode ORDER BY \"count\" DESC, deploy_mode ASC"
+        );
+
         List<Map<String, Object>> recentBuilds = listAdminBuilds(null, null);
         if (recentBuilds.size() > 5) {
             recentBuilds = recentBuilds.subList(0, 5);
         }
 
+        List<Map<String, Object>> recentReports = listModerationReports(null);
+        if (recentReports.size() > 5) {
+            recentReports = recentReports.subList(0, 5);
+        }
+
+        List<Map<String, Object>> recentIdeas = listAdminIdeas(null, null, null);
+        if (recentIdeas.size() > 5) {
+            recentIdeas = recentIdeas.subList(0, 5);
+        }
+
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("totalIdeas", totalIdeas != null ? totalIdeas : 0);
+        summary.put("publishedIdeas", publishedIdeas != null ? publishedIdeas : 0);
         summary.put("totalSites", totalSites != null ? totalSites : 0);
         summary.put("activeSites", activeSites != null ? activeSites : 0);
+        summary.put("suspendedSites", suspendedSites != null ? suspendedSites : 0);
         summary.put("openRecruits", openRecruits != null ? openRecruits : 0);
         summary.put("activeMembers", activeMembers != null ? activeMembers : 0);
+        summary.put("activeTeamMembers", activeMembers != null ? activeMembers : 0);
+        summary.put("pendingApplicants", pendingApplicants != null ? pendingApplicants : 0);
         summary.put("pendingReports", pendingReports != null ? pendingReports : 0);
-        summary.put("totalBuilds", totalBuilds != null ? totalBuilds : 0);
-        summary.put("successBuilds", successBuilds != null ? successBuilds : 0);
+        summary.put("pendingModerationCount", pendingReports != null ? pendingReports : 0);
+        summary.put("totalReports", totalReports != null ? totalReports : 0);
+        summary.put("totalBuilds", safeTotalBuilds);
+        summary.put("successBuilds", safeSuccessBuilds);
+        summary.put("failedBuilds", failedBuilds != null ? failedBuilds : 0);
+        summary.put("aiPatchedBuilds", safeAiPatchedBuilds);
+        summary.put("buildSuccessRate", buildSuccessRate);
+        summary.put("totalAiPromptCalls", totalAiPromptCalls);
+        summary.put("namingCount", safeNamingCount);
+        summary.put("logoCount", safeLogoCount);
+        summary.put("specVersionCount", safeSpecVersionCount);
+        summary.put("screenBlueprintCount", safeScreenBlueprintCount);
+        summary.put("activePromptTemplates", activePromptTemplates != null ? activePromptTemplates : 0);
+        summary.put("totalViews", totalViews != null ? totalViews : 0);
+        summary.put("totalLikes", totalLikes != null ? totalLikes : 0);
+        summary.put("totalComments", totalComments != null ? totalComments : 0);
         summary.put("siteTypeDistribution", siteTypeDistribution);
+        summary.put("deployModeDistribution", deployModeDistribution);
         summary.put("recentBuilds", recentBuilds);
+        summary.put("recentBuildJobs", recentBuilds);
+        summary.put("recentReports", recentReports);
+        summary.put("recentIdeas", recentIdeas);
         summary.put("topSites", listAdminSites(null, null, null));
         return summary;
     }
@@ -1387,8 +1461,11 @@ public class KkumzService {
                 "SELECT i.id, i.author_username AS \"authorUsername\", i.author_display_name AS \"authorDisplayName\", " +
                 "i.title, i.prompt_text AS \"promptText\", i.site_type AS \"siteType\", i.category, " +
                 "i.visibility, i.current_step AS \"currentStep\", i.selected_brand_name AS \"selectedBrandName\", " +
-                "i.selected_site_slug AS \"selectedSiteSlug\", i.status, i.created_at AS \"createdAt\", i.updated_at AS \"updatedAt\", " +
+                "i.selected_site_slug AS \"selectedSiteSlug\", i.selected_site_slug AS \"siteSlug\", " +
+                "i.selected_logo_svg AS \"selectedLogoSvg\", i.selected_logo_svg AS \"logoSvg\", " +
+                "i.status, i.created_at AS \"createdAt\", i.updated_at AS \"updatedAt\", " +
                 "(SELECT COUNT(*) FROM kkumz_idea_version v WHERE v.idea_id = i.id) AS \"versionCount\", " +
+                "COALESCE((SELECT MAX(v.version_no) FROM kkumz_idea_version v WHERE v.idea_id = i.id), 1) AS \"currentVersionNo\", " +
                 "(SELECT COUNT(*) FROM kkumz_name_suggestion n WHERE n.idea_id = i.id) AS \"nameCandidateCount\", " +
                 "(SELECT COUNT(*) FROM kkumz_logo_suggestion l WHERE l.idea_id = i.id) AS \"logoCandidateCount\" " +
                 "FROM kkumz_idea i WHERE 1=1 "
@@ -1433,8 +1510,25 @@ public class KkumzService {
         }
         sql.append(" ORDER BY id ASC ");
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+
+        Integer namingCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_name_suggestion", Integer.class);
+        Integer logoCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_logo_suggestion", Integer.class);
+        Integer specCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_idea_version", Integer.class);
+        Integer patchCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job WHERE ai_patch_applied = TRUE", Integer.class);
+
         for (Map<String, Object> r : rows) {
-            r.put("forbiddenWords", parseJsonList(r.remove("forbiddenWordsJson")));
+            List<String> words = parseJsonList(r.remove("forbiddenWordsJson"));
+            r.put("forbiddenWords", words);
+            r.put("forbiddenKeywords", words);
+            String st = String.valueOf(r.get("stageType"));
+            int calls = switch (st) {
+                case "NAMING" -> namingCount != null ? namingCount : 0;
+                case "LOGO_SVG" -> logoCount != null ? logoCount : 0;
+                case "SPEC_FRS", "FRS_SPEC" -> specCount != null ? specCount : 0;
+                case "BUILD_FIX", "WEBIDE_FIX" -> patchCount != null ? patchCount : 0;
+                default -> 0;
+            };
+            r.put("totalCalls", calls);
         }
         return rows;
     }
@@ -1451,9 +1545,12 @@ public class KkumzService {
                 ? req.getTemplateCode().trim()
                 : "KKUMZ_" + id.toUpperCase(Locale.ROOT).replace("-", "_");
         String stage = (req.getStageType() != null && !req.getStageType().isBlank()) ? req.getStageType().trim() : "NAMING";
-        String model = (req.getModelName() != null && !req.getModelName().isBlank()) ? req.getModelName().trim() : "gemini-2.5-pro";
+        String model = (req.getModelName() != null && !req.getModelName().isBlank()) ? req.getModelName().trim() : "qwen-plus";
         BigDecimal temp = req.getTemperature() != null ? req.getTemperature() : new BigDecimal("0.70");
-        String forbidden = toJson(req.getForbiddenWords() != null ? req.getForbiddenWords() : List.of());
+        List<String> words = req.getForbiddenWords() != null && !req.getForbiddenWords().isEmpty()
+                ? req.getForbiddenWords()
+                : (req.getForbiddenKeywords() != null ? req.getForbiddenKeywords() : List.of());
+        String forbidden = toJson(words);
         String status = (req.getStatus() != null && !req.getStatus().isBlank()) ? req.getStatus().trim() : "ACTIVE";
 
         Integer exists = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_ai_prompt_template WHERE id = ?", Integer.class, id);
@@ -1487,9 +1584,10 @@ public class KkumzService {
     public List<Map<String, Object>> listAdminSites(String siteType, String status, String keyword) {
         StringBuilder sql = new StringBuilder(
                 "SELECT s.id, s.idea_id AS \"ideaId\", s.site_slug AS \"siteSlug\", s.site_name AS \"siteName\", " +
-                "s.site_type AS \"siteType\", s.category, s.brand_slogan AS \"brandSlogan\", s.logo_svg AS \"logoSvg\", " +
-                "s.shop_site_id AS \"shopSiteId\", s.cms_site_id AS \"cmsSiteId\", s.deploy_mode AS \"deployMode\", " +
-                "s.active_version AS \"activeVersion\", s.deployed_url AS \"deployedUrl\", s.custom_domain AS \"customDomain\", " +
+                "s.site_name AS \"brandName\", s.site_type AS \"siteType\", s.category, s.brand_slogan AS \"brandSlogan\", " +
+                "s.logo_svg AS \"logoSvg\", s.shop_site_id AS \"shopSiteId\", s.cms_site_id AS \"cmsSiteId\", " +
+                "s.deploy_mode AS \"deployMode\", s.active_version AS \"activeVersion\", s.active_version AS \"activeVersionNo\", " +
+                "s.deployed_url AS \"deployedUrl\", s.custom_domain AS \"customDomain\", " +
                 "s.is_featured AS \"isFeatured\", s.visibility, " +
                 "s.like_count AS \"likeCount\", s.comment_count AS \"commentCount\", s.view_count AS \"viewCount\", " +
                 "s.owner_username AS \"ownerUsername\", s.owner_display_name AS \"ownerDisplayName\", " +
@@ -1512,7 +1610,7 @@ public class KkumzService {
             params.add(kw);
             params.add(kw);
         }
-        sql.append(" ORDER BY s.created_at DESC ");
+        sql.append(" ORDER BY s.view_count DESC, s.created_at DESC ");
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
 
@@ -1534,12 +1632,19 @@ public class KkumzService {
 
     public List<Map<String, Object>> listAdminBuilds(String status, String deployMode) {
         StringBuilder sql = new StringBuilder(
-                "SELECT b.id, b.site_id AS \"siteId\", s.site_name AS \"siteName\", s.site_slug AS \"siteSlug\", " +
-                "b.release_id AS \"releaseId\", b.job_type AS \"jobType\", b.deploy_mode AS \"deployMode\", " +
+                "SELECT b.id, b.site_id AS \"siteId\", s.site_name AS \"siteName\", s.site_name AS \"brandName\", " +
+                "s.site_slug AS \"siteSlug\", b.release_id AS \"releaseId\", " +
+                "COALESCE(r.version_no, s.active_version) AS \"versionNo\", " +
+                "b.job_type AS \"jobType\", b.job_type AS \"triggerType\", b.deploy_mode AS \"deployMode\", " +
                 "b.status, b.duration_ms AS \"durationMs\", b.error_summary AS \"errorSummary\", " +
-                "b.ai_patch_applied AS \"aiPatchApplied\", b.build_log AS \"buildLog\", " +
-                "b.triggered_by AS \"triggeredBy\", b.started_at AS \"startedAt\", b.finished_at AS \"finishedAt\" " +
-                "FROM kkumz_build_job b JOIN kkumz_site s ON s.id = b.site_id WHERE 1=1 "
+                "b.ai_patch_applied AS \"aiPatchApplied\", " +
+                "CASE WHEN b.ai_patch_applied THEN '자동 구문 검증 및 태그 복구 패치 적용됨' ELSE NULL END AS \"aiFixSuggestion\", " +
+                "b.build_log AS \"buildLog\", b.build_log AS \"logOutput\", " +
+                "b.triggered_by AS \"triggeredBy\", b.started_at AS \"startedAt\", b.started_at AS \"createdAt\", " +
+                "b.finished_at AS \"finishedAt\" " +
+                "FROM kkumz_build_job b " +
+                "JOIN kkumz_site s ON s.id = b.site_id " +
+                "LEFT JOIN kkumz_site_release r ON r.id = b.release_id WHERE 1=1 "
         );
         List<Object> params = new ArrayList<>();
         if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
@@ -1555,10 +1660,23 @@ public class KkumzService {
     }
 
     public List<Map<String, Object>> listAdminCommunityProjects(String keyword) {
-        List<Map<String, Object>> sites = listAdminSites(null, null, keyword);
+        return listAdminCommunityProjects(null, keyword);
+    }
+
+    public List<Map<String, Object>> listAdminCommunityProjects(String siteType, String keyword) {
+        List<Map<String, Object>> sites = listAdminSites(siteType, null, keyword);
         for (Map<String, Object> site : sites) {
             String siteId = String.valueOf(site.get("id"));
-            site.put("recruits", listSiteRecruits(siteId));
+            site.put("siteId", siteId);
+            site.put("brandName", site.get("siteName"));
+            site.put("tagline", site.get("brandSlogan"));
+            site.put("authorDisplayName", site.get("ownerDisplayName"));
+            List<Map<String, Object>> recruits = listSiteRecruits(siteId);
+            for (Map<String, Object> rec : recruits) {
+                rec.put("currentCount", rec.get("recruitedCount"));
+            }
+            site.put("recruits", recruits);
+            site.put("openRecruits", recruits);
             site.put("members", listSiteTeamMembers(siteId));
         }
         return sites;
@@ -1567,9 +1685,10 @@ public class KkumzService {
     public List<Map<String, Object>> listModerationReports(String status) {
         StringBuilder sql = new StringBuilder(
                 "SELECT r.id, r.target_type AS \"targetType\", r.target_id AS \"targetId\", r.site_id AS \"siteId\", " +
-                "s.site_slug AS \"siteSlug\", s.site_name AS \"siteName\", s.site_type AS \"siteType\", " +
+                "s.site_slug AS \"siteSlug\", s.site_name AS \"siteName\", s.site_name AS \"brandName\", s.site_type AS \"siteType\", " +
                 "r.reporter_username AS \"reporterUsername\", r.reason_category AS \"reasonCategory\", " +
                 "r.reason_detail AS \"reasonDetail\", r.status, r.action_taken AS \"actionTaken\", " +
+                "r.action_taken AS \"resolutionNote\", " +
                 "r.moderator_username AS \"moderatorUsername\", r.resolved_at AS \"resolvedAt\", r.created_at AS \"createdAt\" " +
                 "FROM kkumz_moderation_report r " +
                 "JOIN kkumz_site s ON s.id = r.site_id WHERE 1=1 "
@@ -1605,10 +1724,15 @@ public class KkumzService {
     @Transactional
     public List<Map<String, Object>> resolveModerationReport(String reportId, ResolveReportRequest req) {
         String status = (req.getStatus() != null && !req.getStatus().isBlank()) ? req.getStatus().trim().toUpperCase(Locale.ROOT) : "RESOLVED";
-        String actionTaken = (req.getActionTaken() != null && !req.getActionTaken().isBlank())
+        String rawAction = (req.getActionTaken() != null && !req.getActionTaken().isBlank())
                 ? req.getActionTaken().trim()
+                : (req.getResolutionNote() != null && !req.getResolutionNote().isBlank() ? req.getResolutionNote().trim() : null);
+        String actionTaken = rawAction != null
+                ? rawAction
                 : ("RESOLVED".equals(status) ? "커뮤니티 가이드라인에 따라 조치 완료" : "검토 결과 위반 사항 없음으로 기각 처리");
-        String moderator = (req.getModeratorUsername() != null && !req.getModeratorUsername().isBlank()) ? req.getModeratorUsername().trim() : "admin";
+        String moderator = (req.getModeratorUsername() != null && !req.getModeratorUsername().isBlank())
+                ? req.getModeratorUsername().trim()
+                : (req.getResolvedBy() != null && !req.getResolvedBy().isBlank() ? req.getResolvedBy().trim() : "admin");
 
         jdbcTemplate.update(
                 "UPDATE kkumz_moderation_report SET status = ?, action_taken = ?, moderator_username = ?, resolved_at = CURRENT_TIMESTAMP WHERE id = ?",

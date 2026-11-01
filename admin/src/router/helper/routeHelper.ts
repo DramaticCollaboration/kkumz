@@ -18,9 +18,13 @@ const LayoutContent = () => import('/@/layouts/default/content/index.vue');
 const LayoutMap = new Map<string, () => Promise<typeof import('*.vue')>>();
 
 LayoutMap.set('LAYOUT', LAYOUT);
+LayoutMap.set('LAYOUTS/DEFAULT/INDEX', LAYOUT);
+LayoutMap.set('/LAYOUTS/DEFAULT/INDEX', LAYOUT);
+LayoutMap.set('layouts/default/index', LAYOUT);
 LayoutMap.set('IFRAME', IFRAME);
 //마이크로 프론트엔드 qiankun
 LayoutMap.set('LayoutsContent', LayoutContent);
+LayoutMap.set('LAYOUTSCONTENT', LayoutContent);
 
 let dynamicViewsModules: Record<string, () => Promise<Recordable>>;
 
@@ -84,7 +88,7 @@ function asyncImportRoute(routes: AppRouteRecordRaw[] | undefined) {
           matched = dynamicImport(dynamicViewsModules, component + '/index');
         }
         if (!matched && (component.indexOf('dashboard') > -1 || (item.path && item.path.indexOf('/dashboard') > -1))) {
-          matched = dynamicViewsModules['../../views/ecommerce/dashboard/index.vue'];
+          matched = dynamicViewsModules['../../views/dashboard/analysis/index.vue'];
         }
         item.component = matched;
       }
@@ -124,8 +128,9 @@ export function transformObjToRoute<T = AppRouteModule>(routeList: AppRouteModul
   routeList.forEach((route) => {
     const component = route.component as string;
     if (component) {
-      if (component.toUpperCase() === 'LAYOUT') {
-        route.component = LayoutMap.get(component.toUpperCase());
+      const upperComp = component.toUpperCase().replace(/^\//, '');
+      if (upperComp === 'LAYOUT' || upperComp === 'LAYOUTS/DEFAULT/INDEX') {
+        route.component = LAYOUT;
       } else {
         route.children = [cloneDeep(route)];
         route.component = LAYOUT;

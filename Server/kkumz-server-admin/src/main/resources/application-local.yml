@@ -7,6 +7,9 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:kkumz}?currentSchema=public&stringtype=unspecified}
     username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:syncadmin}}
     password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:syncpass}}
+    hikari:
+      minimum-idle: 2
+      maximum-pool-size: 10
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:${REDIS_HOST:localhost}}

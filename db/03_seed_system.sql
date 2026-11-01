@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Kkumz (꿈즈) 시스템 필수 기초 시드 데이터 (03_seed_system.sql)
--- (ON CONFLICT 금지, 순수 INSERT INTO 단일 원천 구성)
+-- (무중복 결정론적 순수 INSERT INTO 단일 원천 구성)
 -- ============================================================================
 
 INSERT INTO sys_user (id, username, realname, password, salt, avatar, email, phone, org_code, status, del_flag, create_by) VALUES

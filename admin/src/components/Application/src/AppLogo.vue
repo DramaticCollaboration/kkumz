@@ -4,28 +4,45 @@
 -->
 <template>
   <div class="anticon flex items-center cursor-pointer select-none py-1.5 px-2.5" :class="getAppLogoClass" @click="goHome">
-    <img
-      src="../../../assets/images/logo.png"
-      alt="Kkumz"
-      class="w-8 h-8 rounded-lg shadow-sm object-contain mr-2.5 shrink-0 transition-transform hover:scale-105"
-    />
+    <svg
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      class="w-8 h-8 rounded-lg shadow-sm mr-2.5 shrink-0 transition-transform hover:scale-105"
+    >
+      <rect width="36" height="36" rx="10" fill="url(#kkumzLogoGrad)" />
+      <path
+        d="M11 10V26M11 18L20 10M15 15L21.5 26"
+        stroke="white"
+        stroke-width="3.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <circle cx="26" cy="11" r="2.6" fill="#FDE047" />
+      <defs>
+        <linearGradient id="kkumzLogoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#4F46E5" />
+          <stop offset="1" stop-color="#9333EA" />
+        </linearGradient>
+      </defs>
+    </svg>
 
     <div class="flex items-center text-lg font-bold tracking-tight whitespace-nowrap" :class="getTitleClass" v-show="showTitle">
       <span
         class="font-extrabold tracking-tight shrink-0"
         :class="theme === 'light' ? 'text-slate-900' : 'text-white'"
       >
-        Awesome<span class="text-[#3B82F6]">Fit</span>
+        꿈즈 <span class="text-[#818CF8]">Kkumz</span>
       </span>
       <span
         class="ml-2 px-1.5 py-0.5 text-[10px] leading-none font-semibold rounded uppercase tracking-wider whitespace-nowrap shrink-0 hidden sm:inline-block"
         :class="
           theme === 'light'
-            ? 'bg-blue-50 text-blue-700 border border-blue-300'
-            : 'bg-blue-950/70 text-blue-300 border border-blue-500/40'
+            ? 'bg-indigo-50 text-indigo-700 border border-indigo-300'
+            : 'bg-indigo-950/70 text-indigo-300 border border-indigo-500/40'
         "
       >
-        B2B
+        ADMIN
       </span>
     </div>
   </div>
@@ -67,7 +84,9 @@
   ]);
 
   function goHome() {
-    go(userStore.getUserInfo.homePath || PageEnum.BASE_HOME);
+    const rawHome = userStore.getUserInfo.homePath;
+    const targetHome = rawHome && !String(rawHome).startsWith('/ecommerce') ? rawHome : PageEnum.BASE_HOME;
+    go(targetHome);
   }
 </script>
 

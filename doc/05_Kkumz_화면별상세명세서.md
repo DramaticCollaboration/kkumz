@@ -116,10 +116,10 @@
 ### 2.1 `SCR-KZ-01`: 운영 종합 대시보드 (`/dashboard/analysis`)
 - **권한 코드**: `perm-kkumz-sys-002` (`role_admin`, `role_moderator`)
 - **주요 구성**:
-  1. **상단 핵심 KPI 카드 4종**: 누적 창업 아이디어 수(`totalIdeas`), 라이브 배포 사이트 수(`publishedSites` / `totalSites`), 샌드박스 빌드 성공률(`successfulBuilds` / `totalBuilds`), 미처리 모더레이션 신고 건수(`pendingReports`)
-  2. **최근 생성된 창업 아이디어 요약 테이블**: 브랜드명, 사이트 유형(`COMMERCE`/`CMS_SITE`/`HYBRID`), 진행 단계(`Step 1~6`), 생성일시
-  3. **멀티사이트 배포 및 빌드 상태 요약 패널**: 배포 모드별 비율(`DYNAMIC_SDUI` vs `CUSTOM_BUNDLE`), 최근 빌드 잡 상태 및 미처리 신고 바로가기
-- **연동 API**: `GET /api/v1/kkumz/stats`, `GET /api/v1/kkumz/ideas`, `GET /api/v1/kkumz/sites`, `GET /api/v1/kkumz/moderation/reports`
+  1. **상단 핵심 KPI 카드 6종**: 누적 아이디어 프로젝트(`totalIdeas`), 가동 중 멀티사이트(`publishedSites` / `totalSites`), WebIDE 빌드 성공률(`buildSuccessRate` / `totalBuilds`), 오픈 팀빌딩 포지션(`openRecruits` / `activeTeamMembers`), AI 프롬프트 누적 호출(`totalAiPromptCalls`), 미처리 모더레이션 신고(`pendingModerationCount` / `totalReports`)
+  2. **중단 관제 현황 카드 3종**: 멀티사이트 유형별 분포(`siteTypeDistribution`) 및 2-Track 배포 모드(`deployModeDistribution`) 요약, 최근 WebIDE 빌드 & 배포 파이프라인(`recentBuildJobs`), 최근 모더레이션 신고 접수 큐(`recentReports`)
+  3. **하단 실데이터 상세 패널 2종**: 라이브 멀티사이트 운영 및 트래픽 현황 테이블(`topSites` — SVG 로고·슬러그·배포 모드·트래픽·새창 바로가기), 최근 AI 스튜디오 아이디어 & 기능명세서 현황(`recentIdeas` — Step 1~6 진행 단계·브랜드명·상태)
+- **연동 API**: `GET /api/v1/kkumz/admin/dashboard/summary`, `GET /api/v1/kkumz/stats`
 
 ### 2.2 `SCR-KZ-02`: 아이디어 & 명세서 관리 (`/studio/ideas`)
 - **권한 코드**: `perm-kkumz-dom-002` (`role_admin`)

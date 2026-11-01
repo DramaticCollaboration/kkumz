@@ -64,7 +64,11 @@ export const useUserStore = defineStore({
       if(this.userInfo == null){
         this.userInfo = getAuthCache<UserInfo>(USER_INFO_KEY)!=null ? getAuthCache<UserInfo>(USER_INFO_KEY) : null;
       }
-      return this.userInfo || getAuthCache<UserInfo>(USER_INFO_KEY) || {};
+      const info = this.userInfo || getAuthCache<UserInfo>(USER_INFO_KEY) || ({} as UserInfo);
+      if (info && info.homePath && String(info.homePath).startsWith('/ecommerce')) {
+        info.homePath = PageEnum.BASE_HOME;
+      }
+      return info;
     },
     getLoginInfo(): LoginInfo {
       return this.loginInfo || getAuthCache<LoginInfo>(LOGIN_INFO_KEY) || {};
@@ -99,6 +103,9 @@ export const useUserStore = defineStore({
         const roles = info.roles || [];
         if (roles.some((role) => role.value === RoleEnum.INSTALLER)) {
           info.homePath = PageEnum.INSTALLER_HOME;
+        }
+        if (!info.homePath || String(info.homePath).startsWith('/ecommerce')) {
+          info.homePath = PageEnum.BASE_HOME;
         }
       }
       this.userInfo = info;
@@ -174,28 +181,11 @@ export const useUserStore = defineStore({
           }
         }
 
-        const isSeller = Boolean(
-          (Array.isArray(userInfo?.roles) && userInfo.roles.some((r: any) => String(r.value || r.roleCode || r).toLowerCase().includes('seller'))) ||
-          (Array.isArray(this.roleList) && this.roleList.some((r: any) => String(r).toLowerCase().includes('seller'))) ||
-          (userInfo?.username && String(userInfo.username).toLowerCase().startsWith('seller')) ||
-          (userInfo?.realname && String(userInfo.realname).includes('셀러'))
-        );
+        const rawHome = userInfo && userInfo.homePath;
+        const homePath = rawHome && !String(rawHome).startsWith('/ecommerce') ? rawHome : PageEnum.BASE_HOME;
 
-        const homePath = (userInfo && userInfo.homePath) || PageEnum.BASE_HOME;
-
-        // 셀러 권한 검증: 셀러가 접근할 수 없는 관리자 전용 경로로의 리디렉션 원천 차단
-        if (isSeller && redirect) {
-          const sellerAllowedPrefixes = [
-            '/ecommerce/dashboard',
-            '/ecommerce/product',
-            '/ecommerce/order',
-            '/ecommerce/claim-cs',
-            '/ecommerce/settlement',
-          ];
-          const isAllowed = sellerAllowedPrefixes.some((prefix) => redirect.startsWith(prefix));
-          if (!isAllowed) {
-            redirect = '';
-          }
+        if (redirect && redirect.startsWith('/ecommerce')) {
+          redirect = '';
         }
 
         if (redirect && goHome) {
@@ -239,11 +229,13 @@ export const useUserStore = defineStore({
       if (!this.getToken) {
         return null;
       }
-      const { userInfo, sysAllDictItems } = await getUserInfo();
+      const res: any = await getUserInfo();
+      const userInfo = res?.userInfo || (res?.username ? res : null);
+      const sysAllDictItems = res?.sysAllDictItems;
       if (userInfo) {
         const { roles = [] } = userInfo;
         if (isArray(roles)) {
-          const roleList = roles.map((item) => item.value) as RoleEnum[];
+          const roleList = roles.map((item) => item.value || item.roleCode || item) as RoleEnum[];
           this.setRoleList(roleList);
         } else {
           userInfo.roles = [];

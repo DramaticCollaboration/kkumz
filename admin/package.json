@@ -18,7 +18,6 @@
     "gen:icon": "esno ./build/generate/icon/index.ts",
     "batch:prettier": "prettier --write  \"src/**/*.{js,json,tsx,css,less,scss,vue,html,md}\"",
     "test:screens": "node ../scripts/harness/screen_test_runner.mjs",
-    "test:awesomefit": "python ../scripts/harness/verify_awesomefit_ecommerce.py",
     "upgrade:log": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "husky:install": "husky install"
   },

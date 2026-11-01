@@ -54,9 +54,15 @@
   // 백그라운드 활성 태스크 주기적 갱신
   const fetchTasks = async () => {
     try {
-      const res = await defHttp.get<any>({ url: '/api/v1/kkumz/automation/logs', params: { pageNo: 1, pageSize: 5 } }, { isPolling: true });
+      const res = await defHttp.get<any>({ url: '/api/v1/kkumz/admin/builds' }, { isPolling: true, errorMessageMode: 'none' });
       const records = Array.isArray(res) ? res : (res?.records || []);
-      tasks.value = records;
+      tasks.value = records.slice(0, 5).map((b: any) => ({
+        id: b.id,
+        name: `${b.siteName || b.siteSlug} (v${b.versionNo || 1})`,
+        progress: b.buildStatus === 'SUCCESS' ? 100 : (b.buildStatus === 'FAILED' ? 100 : 60),
+        status: b.buildStatus === 'FAILED' ? 'ERROR' : 'SUCCESS',
+        description: b.commitMessage || b.buildMode || 'WebIDE 샌드박스 빌드',
+      }));
     } catch (e) {
       tasks.value = [];
     }

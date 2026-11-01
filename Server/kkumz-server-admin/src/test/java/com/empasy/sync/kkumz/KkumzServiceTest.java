@@ -210,4 +210,32 @@ class KkumzServiceTest {
         verify(jdbcTemplate, times(1)).update(contains("UPDATE kkumz_moderation_report"), eq("RESOLVED"), anyString(), eq("admin"), eq("rep-kkumz-001"));
         verify(jdbcTemplate, times(1)).update(contains("UPDATE kkumz_site SET status = 'SUSPENDED'"), eq("rep-kkumz-001"));
     }
+
+    @Test
+    @DisplayName("6. [운영 종합 대시보드 요약] GET /api/v1/kkumz/admin/dashboard/summary KPI 및 파이프라인 집계 검증")
+    void testGetAdminDashboardSummary() throws Exception {
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class))).thenReturn(4);
+        when(jdbcTemplate.queryForList(contains("GROUP BY site_type")))
+                .thenReturn(List.of(Map.of("siteType", "COMMERCE", "count", 2, "totalViews", 4530, "totalLikes", 363)));
+        when(jdbcTemplate.queryForList(contains("GROUP BY deploy_mode")))
+                .thenReturn(List.of(Map.of("deployMode", "CUSTOM_BUNDLE", "count", 2)));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_build_job b"), any(Object[].class)))
+                .thenReturn(List.of(Map.of("id", "job-kkumz-002", "brandName", "말차 아뜰리에 제주", "status", "SUCCESS", "versionNo", 2)));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_moderation_report r"), any(Object[].class)))
+                .thenReturn(List.of(Map.of("id", "rep-kkumz-001", "brandName", "데스크 오빗", "status", "PENDING", "reasonCategory", "SPAM_PROMOTION")));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_idea i"), any(Object[].class)))
+                .thenReturn(List.of(Map.of("id", "idea-kkumz-001", "selectedBrandName", "말차 아뜰리에 제주", "status", "PUBLISHED")));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site s"), any(Object[].class)))
+                .thenReturn(List.of(Map.of("id", "site-kkumz-001", "siteName", "말차 아뜰리에 제주", "viewCount", 1890)));
+
+        mockMvc.perform(get("/api/v1/kkumz/admin/dashboard/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.totalIdeas").value(4))
+                .andExpect(jsonPath("$.result.buildSuccessRate").value(100))
+                .andExpect(jsonPath("$.result.totalAiPromptCalls").value(20))
+                .andExpect(jsonPath("$.result.siteTypeDistribution[0].siteType").value("COMMERCE"))
+                .andExpect(jsonPath("$.result.recentBuilds[0].brandName").value("말차 아뜰리에 제주"))
+                .andExpect(jsonPath("$.result.recentReports[0].brandName").value("데스크 오빗"));
+    }
 }

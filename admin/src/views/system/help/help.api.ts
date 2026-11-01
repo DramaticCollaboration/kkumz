@@ -1,7 +1,7 @@
-import { defHttp } from '/@/utils/http/axios';
+﻿import { defHttp } from '/@/utils/http/axios';
 
 export const HELP_API_PREFIX = '/api/v1/kkumz';
-export const DEFAULT_APP_CODE = 'AWESOMEFIT';
+export const DEFAULT_APP_CODE = 'KKUMZ';
 export const HELP_VIEWER_PATH = '/help';
 
 const Api = {
@@ -92,7 +92,7 @@ export interface SysPageHelpModel {
 }
 
 /**
- * 현재 화면 경로(pageKey) 기준 도움말 단건 조회
+ * ?꾩옱 ?붾㈃ 寃쎈줈(pageKey) 湲곗? ?꾩?留??④굔 議고쉶
  */
 export const getHelpGuideByPath = (params: { path: string; appCode?: string; routeName?: string }) =>
   defHttp.get<SysPageHelpModel>(
@@ -108,7 +108,7 @@ export const getHelpGuideByPath = (params: { path: string; appCode?: string; rou
   );
 
 /**
- * 도움말 전체 목록 조회
+ * ?꾩?留??꾩껜 紐⑸줉 議고쉶
  */
 export const getHelpList = (params?: Record<string, any>) =>
   defHttp.get<SysPageHelpModel[]>({
@@ -117,14 +117,13 @@ export const getHelpList = (params?: Record<string, any>) =>
   });
 
 /**
- * 도움말 단건 상세 조회
+ * ?꾩?留??④굔 ?곸꽭 議고쉶
  */
 export const getHelpById = (id: string) =>
   defHttp.get<SysPageHelpModel>({ url: `${Api.Detail}/${id}` });
 
 /**
- * 도움말 신규 등록 및 수정 저장
- */
+ * ?꾩?留??좉퇋 ?깅줉 諛??섏젙 ??? */
 export const saveOrUpdateHelp = (params: SysPageHelpModel) =>
   defHttp.post({
     url: Api.Save,
@@ -135,19 +134,19 @@ export const saveOrUpdateHelp = (params: SysPageHelpModel) =>
   });
 
 /**
- * 도움말 단건 삭제
+ * ?꾩?留??④굔 ??젣
  */
 export const deleteHelpById = (id: string) =>
   defHttp.delete({ url: `${Api.Delete}/${id}` });
 
 /**
- * 도움말 일괄 삭제
+ * ?꾩?留??쇨큵 ??젣
  */
 export const deleteBatchHelp = (ids: string[]) =>
   defHttp.delete({ url: Api.DeleteBatch, params: { ids: ids.join(',') } });
 
 /**
- * DB 등록 메뉴 트리 조회 (라우트 경로 선택기용)
+ * DB ?깅줉 硫붾돱 ?몃━ 議고쉶 (?쇱슦??寃쎈줈 ?좏깮湲곗슜)
  */
 export const getRegisteredMenuRoutes = async (): Promise<
   Array<{ label: string; value: string; title: string; category?: string }>
@@ -168,7 +167,7 @@ export const getRegisteredMenuRoutes = async (): Promise<
           options.push({
             value: path,
             title: String(title),
-            category: parentTitle || '일반',
+            category: parentTitle || '?쇰컲',
             label: parentTitle ? `[${parentTitle}] ${title} (${path})` : `${title} (${path})`,
           });
         }

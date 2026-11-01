@@ -280,8 +280,10 @@ public class KkumzDTO {
     public static class ResolveReportRequest {
         private String status;
         private String actionTaken;
+        private String resolutionNote;
         private Boolean suspendSite;
         private String moderatorUsername;
+        private String resolvedBy;
     }
 
     @Getter
@@ -308,6 +310,7 @@ public class KkumzDTO {
         private String systemPrompt;
         private String userPromptTemplate;
         private List<String> forbiddenWords;
+        private List<String> forbiddenKeywords;
         private String status;
     }
 }

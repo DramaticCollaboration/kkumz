@@ -312,7 +312,8 @@
   }
 
   onMounted(() => {
-    // 백그라운드에서 캡차 사전 준비
-    handleChangeCheckCode();
+    if (showCaptcha.value) {
+      handleChangeCheckCode();
+    }
   });
 </script>

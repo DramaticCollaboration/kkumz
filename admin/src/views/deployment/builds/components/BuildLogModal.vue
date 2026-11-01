@@ -22,7 +22,7 @@
       </div>
 
       <div v-if="record.aiFixSuggestion" class="p-3 rounded-lg bg-indigo-50 border border-indigo-200 text-xs text-indigo-800">
-        🤖 <strong>AI 자동 패치 내역:</strong> {{ record.aiFixSuggestion }}
+        <strong>AI 자동 패치 내역:</strong> {{ record.aiFixSuggestion }}
       </div>
 
       <div>

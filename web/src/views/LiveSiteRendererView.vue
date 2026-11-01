@@ -309,7 +309,7 @@
                 <input
                   v-model="cmsFormInput.phone"
                   type="text"
-                  placeholder="010-0000-0000"
+                  placeholder="수신 가능한 휴대전화 번호 입력"
                   class="kkumz-input text-xs bg-white"
                 />
               </div>
@@ -512,19 +512,19 @@ const placingOrder = ref(false);
 const orderResult = ref<any>(null);
 const orderInput = ref({
   quantity: 1,
-  receiverName: '홍길동',
-  receiverPhone: '010-2345-6789',
-  receiverAddress: '서울특별시 성동구 성수이로 88, 3층',
+  receiverName: '',
+  receiverPhone: '',
+  receiverAddress: '',
 });
 
 // 온라인 신청 폼 상태
 const submittingForm = ref(false);
 const formSubmitResult = ref<any>(null);
 const cmsFormInput = ref({
-  applicantName: '이서윤',
-  phone: '010-9876-5432',
-  optionValue: '주말 시그니처 클래스 (2인)',
-  message: '친구와 함께 참여 신청합니다!',
+  applicantName: '',
+  phone: '',
+  optionValue: '',
+  message: '',
 });
 
 // AI 브랜드 컨시어지 상태
