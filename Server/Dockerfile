@@ -10,7 +10,7 @@ RUN apk add --no-cache tzdata fontconfig ttf-dejavu curl && \
     cp /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
     echo "Asia/Seoul" > /etc/timezone
 
-COPY Server/kkumz-server-admin/target/kkumz-server-admin-*.jar /app/app.jar
+COPY Server/kkumz-server-admin/target/kkumz-server-admin*.jar /app/app.jar
 
 ENV JAVA_OPTS="-Xms512m -Xmx1536m -Dfile.encoding=UTF-8"
 ENV SPRING_PROFILES_ACTIVE=dev
