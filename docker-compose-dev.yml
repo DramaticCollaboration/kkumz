@@ -1,0 +1,142 @@
+# ===================================================================
+# 꿈즈(Kkumz) AI 브랜드·멀티사이트 빌더 & 창업 커뮤니티 통합 개발 클러스터 (docker-compose-dev.yml)
+# ===================================================================
+
+services:
+  # -----------------------------------------------------------------
+  # 1. Reverse Proxy & Automatic HTTPS/SSL Cert Manager (Caddy)
+  # -----------------------------------------------------------------
+  kkumz-gateway:
+    image: caddy:2-alpine
+    container_name: kkumz-gateway
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN_KKUMZ: ${DOMAIN_KKUMZ:-kkumz.empasy.io}
+      DOMAIN_KKUMZ_ADMIN: ${DOMAIN_KKUMZ_ADMIN:-kkumz-admin.empasy.io}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@empasy.io}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - kkumz-web
+      - kkumz-admin
+      - kkumz-server
+    networks:
+      - kkumz-dev-net
+
+  # -----------------------------------------------------------------
+  # 2. Frontend Vue 3 + Tailwind CSS User Portal & AI Studio (@empasy/kkumz-web)
+  # -----------------------------------------------------------------
+  kkumz-web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    container_name: kkumz-web
+    restart: always
+    ports:
+      - "9530:80"
+    networks:
+      - kkumz-dev-net
+
+  # -----------------------------------------------------------------
+  # 3. Frontend Vben Admin Dedicated Backoffice (@empasy/kkumz-admin)
+  # -----------------------------------------------------------------
+  kkumz-admin:
+    build:
+      context: .
+      dockerfile: admin/Dockerfile
+    container_name: kkumz-admin
+    restart: always
+    ports:
+      - "3118:80"
+    networks:
+      - kkumz-dev-net
+
+  # -----------------------------------------------------------------
+  # 4. Backend Java 25 + Spring Boot 3.5 Application Server (kkumz-server-admin)
+  # -----------------------------------------------------------------
+  kkumz-server:
+    build:
+      context: .
+      dockerfile: Server/Dockerfile
+    container_name: kkumz-server
+    restart: always
+    ports:
+      - "9580:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - DB_HOST=${POSTGRES_HOST:-kkumz-postgres}
+      - DB_PORT=${POSTGRES_PORT:-5432}
+      - DB_NAME=${POSTGRES_DB:-kkumz}
+      - DB_USERNAME=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-root}
+      - REDIS_HOST=${REDIS_HOST:-kkumz-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+    depends_on:
+      kkumz-postgres:
+        condition: service_healthy
+      kkumz-redis:
+        condition: service_healthy
+    networks:
+      - kkumz-dev-net
+
+  # -----------------------------------------------------------------
+  # 5. PostgreSQL 18.6 with pgvector & 6-Stage DDL/Seed 자동 초기화
+  # -----------------------------------------------------------------
+  kkumz-postgres:
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    container_name: kkumz-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kkumz}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      TZ: Asia/Seoul
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-kkumz}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./db/:/docker-entrypoint-initdb.d/
+    networks:
+      - kkumz-dev-net
+
+  # -----------------------------------------------------------------
+  # 6. Redis 7 In-Memory Cache & Session Storage
+  # -----------------------------------------------------------------
+  kkumz-redis:
+    image: redis:7-alpine
+    container_name: kkumz-redis
+    hostname: kkumz-redis
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - kkumz-dev-net
+
+networks:
+  kkumz-dev-net:
+    name: kkumz-dev-net
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

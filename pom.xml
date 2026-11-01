@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.16</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.empasy.sync.kkumz</groupId>
+    <artifactId>kkumz-parent</artifactId>
+    <version>2.6.5-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Kkumz Parent</name>
+    <description>Empasy Kkumz - AI Brand &amp; Multi-Site Builder + Startup Team Building Community</description>
+
+    <modules>
+        <module>Server</module>
+        <module>admin</module>
+        <module>web</module>
+    </modules>
+
+    <properties>
+        <java.version>25</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <spring-boot.version>3.5.16</spring-boot.version>
+        <lombok.version>1.18.46</lombok.version>
+        <frontend-maven-plugin.version>1.15.4</frontend-maven-plugin.version>
+        <agentscope.version>2.0.2</agentscope.version>
+        <mybatis-plus.version>3.5.12</mybatis-plus.version>
+        <postgresql.version>42.7.14</postgresql.version>
+        <fastjson2.version>2.0.56</fastjson2.version>
+        <hutool.version>5.8.36</hutool.version>
+        <jacoco.version>0.8.14</jacoco.version>
+        <argLine></argLine>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.agentscope</groupId>
+                <artifactId>agentscope-harness</artifactId>
+                <version>${agentscope.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>${fastjson2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>

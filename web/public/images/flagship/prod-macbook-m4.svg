@@ -1,0 +1,20 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" fill="none">
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <circle cx="300" cy="270" r="210" fill="#38bdf8" fill-opacity="0.1"/>
+  <rect x="36" y="36" width="230" height="34" rx="17" fill="#ffffff" fill-opacity="0.1" stroke="#38bdf8" stroke-opacity="0.4"/>
+  <text x="54" y="58" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" letter-spacing="0.8">M4 MAX · 48GB RAM</text>
+  <rect x='130' y='150' width='340' height='220' rx='14' fill='#090d16' stroke='#64748b' stroke-width='4'/><rect x='144' y='164' width='312' height='192' rx='6' fill='url(#screenG)'/><rect x='270' y='164' width='60' height='10' rx='4' fill='#090d16'/><path d='M90 370h420l-22 24H112l-22-24z' fill='#94a3b8'/><rect x='260' y='370' width='80' height='6' rx='3' fill='#475569'/>
+  <rect x="40" y="485" width="520" height="78" rx="18" fill="#090d16" fill-opacity="0.65" stroke="#ffffff" stroke-opacity="0.1"/>
+  <text x="64" y="516" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" letter-spacing="1.2">APPLE</text>
+  <text x="64" y="544" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800">MacBook Pro 16</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="600" y2="600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="screenG" x1="150" y1="150" x2="450" y2="380" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38bdf8" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#1e1b4b"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>kkumz-web</artifactId>
+    <packaging>pom</packaging>
+    <name>Kkumz Web</name>
+
+    <parent>
+        <groupId>com.empasy.sync.kkumz</groupId>
+        <artifactId>kkumz-parent</artifactId>
+        <version>2.6.5-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <profiles>
+        <profile>
+            <id>buildFront</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.eirslett</groupId>
+                        <artifactId>frontend-maven-plugin</artifactId>
+                        <version>${frontend-maven-plugin.version}</version>
+                        <configuration>
+                            <environmentVariables>
+                                <CI>true</CI>
+                                <COREPACK_ENABLE_DOWNLOAD_PROMPT>0</COREPACK_ENABLE_DOWNLOAD_PROMPT>
+                            </environmentVariables>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>install node and pnpm</id>
+                                <goals>
+                                    <goal>install-node-and-pnpm</goal>
+                                </goals>
+                                <configuration>
+                                    <nodeVersion>v22.22.2</nodeVersion>
+                                    <pnpmVersion>v10.19.0</pnpmVersion>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>pnpm install</id>
+                                <goals>
+                                    <goal>pnpm</goal>
+                                </goals>
+                                <phase>generate-resources</phase>
+                                <configuration>
+                                    <arguments>install --ignore-workspace --no-frozen-lockfile</arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>pnpm run build</id>
+                                <goals>
+                                    <goal>pnpm</goal>
+                                </goals>
+                                <phase>generate-resources</phase>
+                                <configuration>
+                                    <arguments>--ignore-workspace run build</arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

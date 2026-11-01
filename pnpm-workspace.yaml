@@ -1,0 +1,17 @@
+packages:
+  - 'admin'
+  - 'web'
+
+confirmModulesPurge: false
+
+allowBuilds:
+  core-js: true
+  esbuild: true
+  sharp: true
+  vue-demi: true
+
+onlyBuiltDependencies:
+  - core-js
+  - esbuild
+  - sharp
+  - vue-demi

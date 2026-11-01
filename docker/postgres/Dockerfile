@@ -1,0 +1,11 @@
+FROM postgres:18.6-trixie
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    postgresql-18-pgvector \
+    postgresql-18-postgis-3 \
+    postgresql-18-postgis-3-scripts \
+    postgresql-18-pgrouting \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY db/ /docker-entrypoint-initdb.d/

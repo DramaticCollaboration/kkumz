@@ -1,0 +1,206 @@
+.bg-white {
+  background-color: @component-background !important;
+}
+
+html[data-theme='light'] {
+  body{
+    color: rgba(0, 0, 0, 0.65);
+  }
+  .text-secondary {
+    color: rgba(0, 0, 0, 0.45);
+  }
+  .ant-table {
+    color: rgba(0, 0, 0, 0.65);
+  }
+  .ant-select-multiple .ant-select-selection-item-content {
+    color: rgba(0, 0, 0, 0.65);
+  }
+  .ant-input-affix-wrapper > input.ant-input {
+    &:not([disabled]) {
+      color: rgba(0, 0, 0, 0.65);
+    }
+  }
+  .ant-select-single.ant-select-show-arrow .ant-select-selection-item, .ant-select-single.ant-select-show-arrow {
+    color: rgba(0, 0, 0, 0.65);
+  }
+  
+  .ant-alert-success {
+    background-color: #f6ffed;
+    border: 1px solid #b7eb8f;
+  }
+
+  .ant-alert-error {
+    background-color: #fff2f0;
+    border: 1px solid #ffccc7;
+  }
+
+  .ant-alert-warning {
+    background-color: #fffbe6;
+    border: 1px solid #ffe58f;
+  }
+  :not(:root):fullscreen::backdrop {
+    background-color: @layout-body-background !important;
+  }
+}
+
+[data-theme='dark'], html.dark {
+  body{
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .ant-list .ant-list-item {
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .text-secondary {
+    color: #8b949e;
+  }
+
+  .ant-card-grid-hoverable:hover {
+    box-shadow: 0 3px 6px -4px rgb(0 0 0 / 48%), 0 6px 16px 0 rgb(0 0 0 / 32%), 0 9px 28px 8px rgb(0 0 0 / 20%);
+  }
+
+  .ant-card-grid {
+    box-shadow: 1px 0 0 0 #434343, 0 1px 0 0 #434343, 1px 1px 0 0 #434343, 1px 0 0 0 #434343 inset, 0 1px 0 0 #434343 inset;
+  }
+
+  .ant-calendar-selected-day .ant-calendar-date {
+    color: rgba(0, 0, 0, 0.8);
+  }
+
+  .ant-select-tree li .ant-select-tree-node-content-wrapper.ant-select-tree-node-selected {
+    color: rgba(0, 0, 0, 0.9);
+  }
+
+  // ==================== Kkumz Dark Mode Enhancements ====================
+  // 1. Text contrast for dark mode
+  .text-slate-900 {
+    color: #f8fafc !important;
+  }
+  .text-slate-800 {
+    color: #f1f5f9 !important;
+  }
+  .text-slate-700 {
+    color: #e2e8f0 !important;
+  }
+  .text-slate-600 {
+    color: #cbd5e1 !important;
+  }
+  .text-slate-500 {
+    color: #94a3b8 !important;
+  }
+  .text-slate-400 {
+    color: #94a3b8 !important;
+  }
+
+  // Brand / Semantic dark text readability
+  .text-emerald-800,
+  .text-emerald-900 {
+    color: #34d399 !important;
+  }
+  .text-blue-800,
+  .text-blue-900 {
+    color: #60a5fa !important;
+  }
+  .text-indigo-800,
+  .text-indigo-900 {
+    color: #818cf8 !important;
+  }
+  .text-purple-800,
+  .text-purple-900 {
+    color: #c084fc !important;
+  }
+  .text-rose-800,
+  .text-rose-900 {
+    color: #fb7185 !important;
+  }
+  .text-amber-800,
+  .text-amber-900 {
+    color: #fbbf24 !important;
+  }
+
+  // 2. Prevent light utility background glare on dark surfaces
+  .bg-slate-50,
+  .bg-slate-50\/80,
+  .bg-slate-50\/70,
+  .bg-slate-50\/50,
+  .bg-slate-50\/40 {
+    background-color: rgba(30, 41, 59, 0.6) !important;
+  }
+  .bg-slate-100 {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+  }
+  .bg-slate-200,
+  .bg-slate-200\/70 {
+    background-color: rgba(51, 65, 85, 0.6) !important;
+  }
+
+  // 3. Refined subtle dark mode borders
+  .border-slate-50,
+  .border-slate-100 {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  .border-slate-200,
+  .border-slate-200\/80 {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+  .border-slate-300 {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  // 4. Pastel badges & icon containers adapted for dark mode
+  .bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+    color: #60a5fa !important;
+  }
+  .bg-indigo-50 {
+    background-color: rgba(99, 102, 241, 0.15) !important;
+    color: #818cf8 !important;
+  }
+  .bg-emerald-50 {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    color: #34d399 !important;
+  }
+  .bg-purple-50 {
+    background-color: rgba(168, 85, 247, 0.15) !important;
+    color: #c084fc !important;
+  }
+  .bg-rose-50 {
+    background-color: rgba(244, 63, 94, 0.15) !important;
+    color: #fb7185 !important;
+  }
+  .bg-amber-50 {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    color: #fbbf24 !important;
+  }
+
+  // 5. Interactive states
+  .hover\:bg-slate-100:hover {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+  }
+  .hover\:bg-slate-50\/80:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  // 6. Secondary buttons & tabs
+  .ant-btn-default:not(.ant-btn-primary) {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #e2e8f0;
+
+    &:hover, &:focus {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-color: #3b82f6;
+      color: #60a5fa;
+    }
+  }
+
+  .ant-card {
+    background-color: #141414;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .ant-card-head {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+    .ant-card-head-title {
+      color: #f1f5f9;
+    }
+  }
+}

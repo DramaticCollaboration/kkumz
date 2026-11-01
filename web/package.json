@@ -1,0 +1,25 @@
+{
+  "name": "@empasy/kkumz-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kkumz(꿈즈) AI 브랜드·멀티사이트 생성 스튜디오 & 창업 팀빌딩 커뮤니티 포털",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 9530 --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --port 9530 --host 0.0.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "pinia": "^2.3.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vue-tsc": "^2.2.0"
+  }
+}

@@ -1,0 +1,99 @@
+<template>
+  <ConfigProvider :theme="appTheme" :locale="getAntdLocale">
+    <AppProvider>
+      <RouterView />
+    </AppProvider>
+  </ConfigProvider>
+</template>
+
+<script lang="ts" setup>
+  import { watch, ref } from 'vue';
+  import { theme } from 'ant-design-vue';
+  import { ConfigProvider } from 'ant-design-vue';
+  import { AppProvider } from '/@/components/Application';
+  import { useTitle } from '/@/hooks/web/useTitle';
+  import { useLocale } from '/@/locales/useLocale';
+  import { useAppStore } from '/@/store/modules/app';
+  import { useRootSetting } from '/@/hooks/setting/useRootSetting';
+  import { ThemeEnum } from '/@/enums/appEnum';
+  import { changeTheme } from '/@/logics/theme/index';
+
+  const appStore = useAppStore();
+  // 날짜 및 시간 국제화 문제 해결
+  import 'dayjs/locale/ko';
+  // support Multi-language
+  const { getAntdLocale } = useLocale();
+
+  useTitle();
+  /**
+   * 2024-04-07
+   * liaozhiyang
+   * 다크 모드의 기본 텍스트는 흰색이며, 데이 모드의 기본 텍스트는 #333입니다.
+   * */
+  const modeAction = (data) => {
+    if (data.token) {
+      if (getDarkMode.value === ThemeEnum.DARK) {
+        Object.assign(data.token, { colorTextBase: 'fff' });
+      } else {
+        Object.assign(data.token, { colorTextBase: '#333' });
+      }
+    }
+  };
+  const appTheme: any = ref({});
+  const { getDarkMode } = useRootSetting();
+  watch(
+    () => getDarkMode.value,
+    (newValue) => {
+      delete appTheme.value.algorithm;
+      if (newValue === ThemeEnum.DARK) {
+        appTheme.value.algorithm = theme.darkAlgorithm;
+      }
+      if (import.meta.env.PROD && appStore.getProjectConfig?.themeColor) {
+        changeTheme(appStore.getProjectConfig.themeColor);
+      }
+      modeAction(appTheme.value);
+      appTheme.value = {
+        ...appTheme.value,
+      };
+    },
+    { immediate: true }
+  );
+  watch(
+    () => appStore.getProjectConfig,
+    (newValue) => {
+      const primary = newValue?.themeColor || '#1677ff';
+      const result = {
+        ...appTheme.value,
+        ...{
+          token: {
+            colorPrimary: primary,
+            wireframe: true,
+            fontSize: 14,
+            colorTextBase: '#333',
+            colorSuccess: '#55D187',
+            colorInfo: primary,
+            borderRadius: 4,
+            sizeStep: 4,
+            sizeUnit: 4,
+            colorWarning: '#EFBD47',
+            colorError: '#ED6F6F',
+            fontFamily:
+              '-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Hiragino Sans GB,Microsoft YaHei,Helvetica Neue,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol',
+          },
+        },
+      };
+      appTheme.value = result;
+      modeAction(result);
+    },
+    { immediate: true }
+  );
+  setTimeout(() => {
+    appStore.getProjectConfig?.themeColor && changeTheme(appStore.getProjectConfig.themeColor);
+  }, 300);
+
+</script>
+<style lang="less">
+  img {
+    display: inline-block;
+  }
+</style>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="kkumzGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="55%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#9333EA"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#kkumzGrad)"/>
+  <path d="M20 18V46M20 32L36 18M27 26L38 46" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="46" cy="20" r="4.5" fill="#FDE047"/>
+  <path d="M46 11V14M46 26V29M37 20H40M52 20H55" stroke="#FDE047" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,49 @@
+import { primaryColor } from '../config/themeConfig';
+// import { getThemeVariables } from 'ant-design-vue/dist/theme';
+import { resolve } from 'path';
+import { generate } from '@ant-design/colors';
+import { theme } from 'ant-design-vue/lib';
+import convertLegacyToken from 'ant-design-vue/lib/theme/convertLegacyToken';
+const { defaultAlgorithm, defaultSeed } = theme;
+
+function generateAntColors(color: string, theme: 'default' | 'dark' = 'default') {
+  return generate(color, {
+    theme,
+  });
+}
+
+/**
+ * less global variable
+ */
+export function generateModifyVars() {
+  const palettes = generateAntColors(primaryColor);
+  const primary = palettes[5];
+
+  const primaryColorObj: Record<string, string> = {};
+
+  for (let index = 0; index < 10; index++) {
+    primaryColorObj[`primary-${index + 1}`] = palettes[index];
+  }
+
+  const mapToken = defaultAlgorithm(defaultSeed);
+  const v3Token = convertLegacyToken(mapToken);
+  return {
+    ...v3Token,
+    // ...modifyVars,
+    // Used for global import to avoid the need to import each style file separately
+    // reference:  Avoid repeated references
+    hack: `true; @import (reference) "${resolve('src/design/config.less')}";`,
+    'primary-color': primary,
+    ...primaryColorObj,
+    'info-color': '#2563EB',
+    'processing-color': '#2563EB',
+    'success-color': '#10B981', //  Kkumz Profit Success color
+    'error-color': '#EF4444', //  Kkumz Error color
+    'warning-color': '#F59E0B', //   Kkumz Warning color
+    //'border-color-base': '#EEEEEE',
+    'font-size-base': '14px', //  Main font size
+    'border-radius-base': '6px', //  Component/float fillet
+    'link-color': '#2563EB', //   Link color
+    'app-content-background': '#F8FAFC', //   Background color
+  };
+}

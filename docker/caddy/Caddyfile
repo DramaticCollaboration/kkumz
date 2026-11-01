@@ -1,0 +1,66 @@
+{
+	email {$ACME_EMAIL:admin@empasy.io}
+
+	servers {
+		protocols h1 h2
+	}
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		-X-Frame-Options
+		Content-Security-Policy "frame-ancestors 'self' https://sync.empasy.io https://*.empasy.io http://localhost:* https://localhost:*"
+		Alt-Svc "clear"
+		defer
+	}
+}
+
+(kkumz_api_routes) {
+	request_body {
+		max_size 100MB
+	}
+
+	# 백엔드 Spring Boot API 역방향 프록시 (/api/v1/kkumz/* 1:1 패스스루)
+	handle /api/v1/kkumz/* {
+		reverse_proxy kkumz-server:8080 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+}
+
+# 1. 꿈즈 Kkumz 사용자 포털 & AI 스튜디오 (kkumz.empasy.io)
+kkumz.empasy.io {$DOMAIN_KKUMZ:kkumz.empasy.io} {
+	import security_headers
+	encode gzip zstd
+	import kkumz_api_routes
+
+	handle {
+		reverse_proxy kkumz-web:80 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+}
+
+# 2. 꿈즈 Kkumz 전용 관리자 백오피스 (kkumz-admin.empasy.io)
+kkumz-admin.empasy.io {$DOMAIN_KKUMZ_ADMIN:kkumz-admin.empasy.io} {
+	import security_headers
+	encode gzip zstd
+	import kkumz_api_routes
+
+	handle {
+		reverse_proxy kkumz-admin:80 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+}

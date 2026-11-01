@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" width="360" height="80" fill="none">
+  <defs>
+    <linearGradient id="af-logo-dark-primary-grad" x1="10%" y1="10%" x2="90%" y2="90%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="af-logo-dark-accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left Symbol Icon -->
+  <g transform="translate(8, 8)">
+    <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#af-logo-dark-primary-grad)"/>
+    <rect x="3" y="3" width="58" height="58" rx="15" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="1"/>
+    <!-- Handle -->
+    <path d="M 23 23 C 23 17, 41 17, 41 23" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <!-- Body 'A' -->
+    <path d="M 17 46 L 30 22 C 31 20, 33 20, 34 22 L 47 46" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Infinity loop green accent -->
+    <path d="M 21 36 C 25 32, 39 32, 43 36 C 46 39, 41 43, 32 40 C 24 37, 19 40, 21 44 C 24 47, 40 47, 43 43" 
+          stroke="url(#af-logo-dark-accent-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="32" cy="30" r="2" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Brand Typography (Dark Mode: White + Sky Blue) -->
+  <g transform="translate(82, 47)">
+    <text font-family="'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="700" letter-spacing="-0.5px">
+      <tspan fill="#FFFFFF">Awesome</tspan>
+      <tspan fill="#60A5FA">Fit</tspan>
+    </text>
+    <text y="17" font-family="'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10" font-weight="600" fill="#94A3B8" letter-spacing="1.5px">
+      AI AUTONOMOUS COMMERCE
+    </text>
+  </g>
+</svg>

@@ -1,34 +1,152 @@
+# =============================================================================
+# 꿈즈 (Kkumz) .gitignore
+# =============================================================================
+
+# 1. OS & System Files
 .DS_Store
-.thumbs.db
-node_modules
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Quasar core related directories
-.quasar
-/dist
-/quasar.config.*.temporary.compiled*
-
-# Cordova related directories and files
-/src-cordova/node_modules
-/src-cordova/platforms
-/src-cordova/plugins
-/src-cordova/www
-
-# Capacitor related directories and files
-/src-capacitor/www
-/src-capacitor/node_modules
-
-# Log files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Editor directories and files
-.idea
+# 2. IDE & Editor Files
+.idea/
+**/.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+**/.vscode/
+.history/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
+*.sw?
+rebel.xml
+.classpath
+**/.classpath
+.project
+**/.project
+.settings/
+**/.settings/
+.factorypath
+**/.factorypath
+.apt_generated/
+**/.apt_generated/
+.cache/
+**/.cache/
 
-# local .env files
-.env.local*
-/kkumz.iml
+# 3. Backend (Java / Maven / Spring Boot / JVM)
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+.flattened-pom.xml
+**/.flattened-pom.xml
+!.mvn/wrapper/maven-wrapper.jar
+
+# JVM Dumps & Logs
+*.log
+**/logs/
+logs/
+hs_err_pid*.log
+replay_pid*.log
+*.hprof
+*.dump
+dump.txt
+**/dump.txt
+derby.log
+
+# 4. Frontend (Node.js / Vue 3 / Vite / Admin / Web)
+node_modules/
+**/node_modules/
+node/
+**/node/
+dist/
+**/dist/
+dist-ssr/
+**/dist-ssr/
+.pnpm/
+.pnpm-store/
+**/.pnpm-store/
+.local/
+.eslintcache
+**/.eslintcache
+.stylelintcache
+**/.stylelintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.turbo/
+**/.turbo/
+.quasar/
+.nuxt/
+.output/
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# 5. Environment & Sensitive Configs
+/.env
+.env.local
+.env.*.local
+**/.env.local
+**/.env.*.local
+.env.localsv
+**/.env.localsv
+.local.env
+**/.local.env
+*.local
+!/.env.example
+!**/.env.example
+!**/.env.local.example
+!admin/.env
+!admin/.env.development
+!admin/.env.production
+!web/.env
+!web/.env.development
+!web/.env.production
+
+# 6. Python, Test & QA Artifacts
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+ENV/
+test-results/
+**/test-results/
+playwright-report/
+**/playwright-report/
+blob-report/
+screenshots/
+**/screenshots/
+/upload/
+/uploads/
+
+# 7. Temporary, Scratch & Container Volume Data
+*.bak
+*.tmp
+scratch/
+**/scratch/
+docker-compose.override.yml
+**/docker-compose.override.yml
+docker/postgres/data/
+docker/redis/data/
+/data/

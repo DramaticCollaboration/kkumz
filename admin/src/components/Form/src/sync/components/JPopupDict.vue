@@ -1,0 +1,226 @@
+<!--팝업 컴포넌트-->
+<template>
+  <div class="JPopupDict components-input-demo-presuffix">
+    <!--입력 상자-->
+    <a-select v-model:value="showText" v-bind="attrs" :mode="multi ? 'multiple' : ''" @click="handleOpen" readOnly :loading="loading">
+      <a-select-option v-for="item in options" :value="item.value">{{ item.text }}</a-select-option>
+    </a-select>
+    <a-form-item>
+      <!--팝업 팝업창-->
+      <JPopupOnlReportModal
+        @register="regModal"
+        :code="code"
+        :multi="multi"
+        :sorter="sorter"
+        :groupId="''"
+        :param="param"
+        @ok="callBack"
+        :getContainer="getContainer"
+        :showAdvancedButton="showAdvancedButton"
+      />
+    </a-form-item>
+  </div>
+</template>
+<script lang="ts">
+  import JPopupOnlReportModal from './modal/JPopupOnlReportModal.vue';
+  import { defineComponent, ref, nextTick, watch, reactive, unref } from 'vue';
+  import { useModal } from '/@/components/Modal';
+  import { propTypes } from '/@/utils/propTypes';
+  import { useAttrs } from '/@/hooks/core/useAttrs';
+  import { defHttp } from '/@/utils/http/axios';
+  import { useMessage } from '/@/hooks/web/useMessage';
+  //요청 URL 정보 정의
+  const configUrl = reactive({
+    getColumns: '/online/cgreport/api/getRpColumns/',
+    getData: '/online/cgreport/api/getData/',
+  });
+
+  export default defineComponent({
+    name: 'JPopupDict',
+    components: {
+      JPopupOnlReportModal,
+    },
+    inheritAttrs: false,
+    props: {
+      /**
+       * 예：demo,name,id
+       * demo: 온라인 보고서 코드
+       * name: 온라인 보고서 필드, 사용자가 표시하는 라벨
+       * id: 키를 저장하는 데 사용되는 온라인 보고서 필드
+       */
+      dictCode: propTypes.string.def(''),
+      value: propTypes.string.def(''),
+      sorter: propTypes.string.def(''),
+      multi: propTypes.bool.def(false),
+      param: propTypes.object.def({}),
+      spliter: propTypes.string.def(','),
+      getContainer: propTypes.func,
+      showAdvancedButton: propTypes.bool.def(true),
+    },
+    emits: ['update:value', 'register', 'change'],
+    setup(props, { emit }) {
+      const { createMessage } = useMessage();
+      const attrs = useAttrs();
+      const showText = ref<any>(props.multi ? [] : '');
+      const options = ref<any>([]);
+      const cgRpConfigId = ref('');
+      const loading = ref(false);
+      const code = props.dictCode.split(',')[0];
+      const labelFiled = props.dictCode.split(',')[1];
+      const valueFiled = props.dictCode.split(',')[2];
+      if (!code || !valueFiled || !labelFiled) {
+        createMessage.error('popupDict 매개변수가 올바르게 구성되지 않았습니다!');
+      }
+      //모델등록
+      const [regModal, { openModal }] = useModal();
+
+      /**
+       * 팝업 상자 열기
+       */
+      function handleOpen() {
+        !attrs.value.disabled && openModal(true);
+      }
+      /**
+       * 모니터 값 값
+       */
+      watch(
+        () => props.value,
+        (val) => {
+          const callBack = () => {
+            if (props.multi) {
+              showText.value = val && val.length > 0 ? val.split(props.spliter) : [];
+            } else {
+              showText.value = val ?? '';
+            }
+          };
+          if (props.value || props.defaultValue) {
+            if (cgRpConfigId.value) {
+              loadData({ callBack });
+            } else {
+              loadColumnsInfo({ callBack });
+            }
+          } else {
+            callBack();
+          }
+        },
+        { immediate: true }
+      );
+      watch(
+        () => showText.value,
+        (val) => {
+          let result;
+          if (props.multi) {
+            result = val.join(',');
+          } else {
+            result = val;
+          }
+          nextTick(() => {
+            emit('change', result);
+            emit('update:value', result);
+          });
+        }
+      );
+      /**
+       * 열 정보 로드
+       */
+      function loadColumnsInfo({ callBack }) {
+        loading.value = true;
+        let url = `${configUrl.getColumns}${code}`;
+        defHttp
+          .get({ url }, { isTransformResponse: false, successMessageMode: 'none' })
+          .then((res) => {
+            if (res.success) {
+              cgRpConfigId.value = res.result.cgRpConfigId;
+              loadData({ callBack });
+            }
+          })
+          .catch((err) => {
+            loading.value = false;
+            callBack?.();
+          });
+      }
+      function loadData({ callBack }) {
+        loading.value = true;
+        let url = `${configUrl.getData}${unref(cgRpConfigId)}`;
+        defHttp
+          .get(
+            { url, params: { ['force_' + valueFiled]: props.value || props.defaultValue } },
+            { isTransformResponse: false, successMessageMode: 'none' }
+          )
+          .then((res) => {
+            let data = res.result;
+            if (data.records?.length) {
+              options.value = data.records.map((item) => {
+                return { value: item[valueFiled], text: item[labelFiled] };
+              });
+            }
+          })
+          .finally(() => {
+            loading.value = false;
+            callBack?.();
+          });
+      }
+      /**
+       * 패스 값 콜백
+       */
+      function callBack(rows) {
+        const dataOptions: any = [];
+        const dataValue: any = [];
+        let result;
+        rows.forEach((item) => {
+          dataOptions.push({ value: item[valueFiled], text: item[labelFiled] });
+          dataValue.push(item[valueFiled]);
+        });
+        options.value = dataOptions;
+        if (props.multi) {
+          showText.value = dataValue;
+          result = dataValue.join(props.spliter);
+        } else {
+          showText.value = dataValue[0];
+          result = dataValue[0];
+        }
+        nextTick(() => {
+          emit('change', result);
+          emit('update:value', result);
+        });
+      }
+
+      return {
+        showText,
+        attrs,
+        regModal,
+        handleOpen,
+        callBack,
+        code,
+        options,
+        loading,
+      };
+    },
+  });
+</script>
+<style lang="less" scoped>
+  .JPopupDict {
+    > .ant-form-item {
+      display: none;
+    }
+  }
+  .components-input-demo-presuffix {
+    :deep(.ant-select-dropdown) {
+      display: none !important;
+    }
+  }
+  .components-input-demo-presuffix .anticon-close-circle {
+    cursor: pointer;
+    color: #ccc;
+    transition: color 0.3s;
+    font-size: 12px;
+  }
+
+  .components-input-demo-presuffix .anticon-close-circle:hover {
+    color: #f5222d;
+  }
+
+  .components-input-demo-presuffix .anticon-close-circle:active {
+    color: #666;
+  }
+</style>

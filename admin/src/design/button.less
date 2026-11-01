@@ -1,0 +1,160 @@
+// ========================================================
+// SyncSeries Standard Button Design System Tokens
+// Enterprise Console Standard (Radius: 6px, Height: 32px)
+// ========================================================
+
+// 1. Ant Design Button 글로벌 리셋 및 규격 통일
+.ant-btn {
+  border-radius: 6px !important;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Medium (Admin 콘솔 기본 높이 32px)
+  &:not(.ant-btn-sm):not(.ant-btn-lg):not(.ant-btn-link):not(.ant-btn-text) {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  // Small (인라인 액션 및 컴팩트 26px)
+  &.ant-btn-sm {
+    height: 26px;
+    padding: 0 8px;
+    font-size: 12px;
+    border-radius: 4px !important;
+    gap: 4px;
+  }
+
+  // Large (주요 폼 제출 등 40px)
+  &.ant-btn-lg {
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+    border-radius: 6px !important;
+    gap: 8px;
+  }
+
+  // Link 버튼 패딩 정돈
+  &.ant-btn-link {
+    height: auto;
+    padding: 2px 4px;
+  }
+}
+
+// 2. Soft Danger 전용 버튼 클래스 (테이블 상단 일괄 삭제 표준)
+.btn-soft-danger {
+  background-color: #fff1f2 !important;
+  border: 1px solid #fecdd3 !important;
+  color: #e11d48 !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+
+  &:hover:not(:disabled):not([disabled]) {
+    background-color: #ffe4e6 !important;
+    border-color: #fda4af !important;
+    color: #be123c !important;
+  }
+
+  &:active:not(:disabled):not([disabled]) {
+    background-color: #fecdd3 !important;
+    color: #9f1239 !important;
+  }
+
+  &:disabled,
+  &[disabled] {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    opacity: 0.7;
+  }
+}
+
+// 3. Ghost 아이콘 유틸리티 버튼 (새로고침, 다운로드, 컬럼설정)
+.btn-ghost-icon {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #64748b !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+
+  &:hover {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+  }
+
+  &:active {
+    background-color: #e2e8f0 !important;
+  }
+
+  &:disabled,
+  &[disabled] {
+    color: #cbd5e1 !important;
+    cursor: not-allowed !important;
+  }
+}
+
+// 4. 테이블 행(Row) 인라인 액션 전용 클래스
+.btn-row-action {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &.edit:hover {
+    color: #0d9488;
+    background-color: #f0fdfa;
+  }
+
+  &.delete:hover {
+    color: #e11d48;
+    background-color: #fff1f2;
+  }
+
+  &.primary:hover {
+    color: #2563eb;
+    background-color: #eff6ff;
+  }
+}
+
+// 5. 테이블 툴바 컨테이너 표준 여백 및 정렬
+.table-toolbar-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 0 8px 0;
+  gap: 8px;
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
