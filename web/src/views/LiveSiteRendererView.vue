@@ -70,7 +70,7 @@
       <!-- 브랜드 사이트 자체 헤더 -->
       <header class="px-6 md:px-10 py-5 border-b border-slate-200/70 bg-white/90 backdrop-blur flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-          <div class="w-36 h-11 flex items-center overflow-hidden" v-html="runtime.logoSvg"></div>
+          <div class="site-header-logo flex items-center overflow-hidden" v-html="runtime.logoSvg"></div>
           <span
             v-if="runtime.layoutSchema?.announcement"
             class="hidden sm:inline-block px-3 py-1 rounded-full text-xs font-extrabold text-white"
@@ -611,3 +611,17 @@ onMounted(() => {
   loadRuntime();
 });
 </script>
+
+<style scoped>
+.site-header-logo {
+  height: 44px;
+  max-width: 220px;
+}
+.site-header-logo :deep(svg) {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
+</style>
