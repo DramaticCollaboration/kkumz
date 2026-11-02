@@ -39,6 +39,8 @@ public class KkumzDTO {
     public static class SaveIdeaVersionRequest {
         private String title;
         private String promptText;
+        private String siteType;
+        private String category;
         private String specMarkdown;
         private List<Map<String, Object>> screens;
         private Integer rollbackToVersionNo;
@@ -88,6 +90,8 @@ public class KkumzDTO {
     public static class UpdateSpecRequest {
         private String title;
         private String promptText;
+        private String siteType;
+        private String category;
         private String specMarkdown;
         private List<Map<String, Object>> screens;
         private String updatedBy;

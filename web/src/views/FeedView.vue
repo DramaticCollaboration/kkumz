@@ -411,7 +411,8 @@ function openLounge(item: any) {
 }
 
 function openLiveSite(item: any) {
-  router.push({ name: 'LiveSiteRendererView', params: { siteSlug: item.siteSlug } });
+  const url = router.resolve({ name: 'LiveSiteRendererView', params: { siteSlug: item.siteSlug } }).href;
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 onMounted(() => {

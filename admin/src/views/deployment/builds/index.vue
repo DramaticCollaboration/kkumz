@@ -45,7 +45,7 @@
   const [registerLogModal, { openModal: openLogModal }] = useModal();
 
   const [registerTable, { reload }] = useTable({
-    title: 'WebIDE 빌드 파이프라인 & 에러 로그 관제',
+    title: '빌드·배포 로그',
     api: getAdminBuildList,
     rowKey: 'id',
     useSearchForm: true,

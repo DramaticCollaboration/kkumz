@@ -23,10 +23,19 @@ public class KkumzSystemService {
 
     private final JdbcTemplate jdbcTemplate;
 
+    private String normalizeUsername(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "admin";
+        }
+        String trimmed = raw.trim();
+        if ("moderator".equalsIgnoreCase(trimmed)) {
+            return "moderator.kim";
+        }
+        return trimmed;
+    }
+
     public Map<String, Object> login(LoginRequest req) {
-        String username = (req != null && req.getUsername() != null && !req.getUsername().isBlank())
-                ? req.getUsername().trim()
-                : "admin";
+        String username = normalizeUsername(req != null ? req.getUsername() : null);
         List<Map<String, Object>> users = jdbcTemplate.queryForList(
                 "SELECT id, username, realname, avatar, email, phone, org_code AS \"orgCode\", status " +
                 "FROM sys_user WHERE username = ? AND del_flag = 0 LIMIT 1",
@@ -53,7 +62,7 @@ public class KkumzSystemService {
     }
 
     public Map<String, Object> getUserInfo(String usernameHint) {
-        String username = (usernameHint != null && !usernameHint.isBlank()) ? usernameHint.trim() : "admin";
+        String username = normalizeUsername(usernameHint);
         List<Map<String, Object>> users = jdbcTemplate.queryForList(
                 "SELECT id, username, realname, avatar, email, phone, org_code AS \"orgCode\", status " +
                 "FROM sys_user WHERE username = ? AND del_flag = 0 LIMIT 1",
@@ -90,15 +99,31 @@ public class KkumzSystemService {
      * 전사 표준 동적 메뉴/권한 조회 (/api/v1/kkumz/sys/permission/getUserPermissionByToken)
      */
     public Map<String, Object> getUserPermissionByToken(String usernameHint) {
+        String username = normalizeUsername(usernameHint);
         List<Map<String, Object>> allPerms = jdbcTemplate.queryForList(
-                "SELECT p.id, p.parent_id AS \"parentId\", p.name, p.url, p.component, p.component_name AS \"componentName\", " +
+                "SELECT DISTINCT p.id, p.parent_id AS \"parentId\", p.name, p.url, p.component, p.component_name AS \"componentName\", " +
                 "p.redirect, p.menu_type AS \"menuType\", p.perms, p.sort_no AS \"sortNo\", p.icon, " +
                 "p.is_route AS \"isRoute\", p.is_leaf AS \"isLeaf\", p.keep_alive AS \"keepAlive\", " +
                 "p.hidden, p.status " +
                 "FROM sys_permission p " +
-                "WHERE p.del_flag = 0 AND p.status = 1 " +
-                "ORDER BY p.sort_no ASC, p.id ASC"
+                "JOIN sys_role_permission rp ON rp.permission_id = p.id " +
+                "JOIN sys_user_role ur ON ur.role_id = rp.role_id " +
+                "JOIN sys_user u ON u.id = ur.user_id " +
+                "WHERE u.username = ? AND u.del_flag = 0 AND p.del_flag = 0 AND p.status = 1 " +
+                "ORDER BY p.sort_no ASC, p.id ASC",
+                username
         );
+        if (allPerms.isEmpty()) {
+            allPerms = jdbcTemplate.queryForList(
+                    "SELECT p.id, p.parent_id AS \"parentId\", p.name, p.url, p.component, p.component_name AS \"componentName\", " +
+                    "p.redirect, p.menu_type AS \"menuType\", p.perms, p.sort_no AS \"sortNo\", p.icon, " +
+                    "p.is_route AS \"isRoute\", p.is_leaf AS \"isLeaf\", p.keep_alive AS \"keepAlive\", " +
+                    "p.hidden, p.status " +
+                    "FROM sys_permission p " +
+                    "WHERE p.del_flag = 0 AND p.status = 1 " +
+                    "ORDER BY p.sort_no ASC, p.id ASC"
+            );
+        }
 
         List<Map<String, Object>> menuItems = new ArrayList<>();
         List<Map<String, Object>> authItems = new ArrayList<>();

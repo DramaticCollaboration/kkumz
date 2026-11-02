@@ -61,9 +61,9 @@
               v-if="idea.selectedSiteSlug"
               type="button"
               class="btn-live"
-              @click="router.push({ name: 'LiveSiteRendererView', params: { siteSlug: idea.selectedSiteSlug } })"
+              @click="openLiveSiteInNewTab(idea.selectedSiteSlug)"
             >
-              라이브 사이트 보기
+              라이브 사이트 보기 ↗
             </button>
           </div>
         </article>
@@ -80,6 +80,12 @@ import { kkumzApi, formatSiteTypeLabel } from '@/api/kkumzApi';
 const router = useRouter();
 const ideas = ref<any[]>([]);
 const feed = ref<any[]>([]);
+
+function openLiveSiteInNewTab(slug: string) {
+  if (!slug) return;
+  const url = router.resolve({ name: 'LiveSiteRendererView', params: { siteSlug: slug } }).href;
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
 
 const publishedSitesCount = computed(() => ideas.value.filter((i) => i.status === 'PUBLISHED').length);
 const totalLikesCount = computed(() => feed.value.reduce((acc, s) => acc + (s.likeCount || 0), 0));

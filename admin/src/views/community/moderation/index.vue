@@ -37,7 +37,7 @@
   const [registerModal, { openModal }] = useModal();
 
   const [registerTable, { reload }] = useTable({
-    title: '커뮤니티 신고 심사 & 모더레이션 큐',
+    title: '신고·제재 관리',
     api: getAdminModerationList,
     rowKey: 'id',
     useSearchForm: true,

@@ -61,7 +61,7 @@
   const { createMessage } = useMessage();
 
   const [registerTable, { reload }] = useTable({
-    title: '멀티사이트 & 도메인 릴리즈 관제',
+    title: '생성 사이트 목록',
     api: getAdminSiteList,
     rowKey: 'id',
     useSearchForm: true,
@@ -105,7 +105,7 @@
     ],
     actionColumn: {
       width: 190,
-      title: '관제 액션',
+      title: '관리',
       dataIndex: 'action',
       slots: { customRender: 'action' },
     },

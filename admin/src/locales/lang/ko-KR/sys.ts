@@ -65,12 +65,12 @@ export default {
     backSignIn: '로그인으로 돌아가기',
     mobileSignInFormTitle: '휴대폰 번호 로그인',
     qrSignInFormTitle: 'QR 코드 로그인',
-    signInFormTitle: 'Kkumz 셀러 콘솔 로그인',
-    signUpFormTitle: '위탁 셀러 입점 신청',
+    signInFormTitle: 'Kkumz 통합 관제 포털 로그인',
+    signUpFormTitle: '운영자 계정 신청',
     forgetFormTitle: '비밀번호 재설정',
 
-    signInTitle: '전자동 이커머스 위탁 셀러 플랫폼',
-    signInDesc: '계정 정보를 입력하고 자율운영 콘솔에 접속하세요.',
+    signInTitle: 'AI 브랜드 스튜디오 · 멀티사이트 빌더 통합 관제 백오피스',
+    signInDesc: '인가된 관리자 계정 정보를 입력하여 통합 관제 포털에 접속하세요.',
     policy: '이용약관 및 개인정보 처리방침에 동의합니다.',
     scanSign: 'QR 코드를 스캔하여 로그인을 완료하세요.',
 

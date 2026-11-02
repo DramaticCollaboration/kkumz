@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,13 +42,42 @@ public class KkumzSystemController {
     }
 
     @GetMapping("/user/getUserInfo")
-    public Result<Map<String, Object>> getUserInfo(@RequestParam(required = false) String username) {
-        return Result.OK(systemService.getUserInfo(username));
+    public Result<Map<String, Object>> getUserInfo(
+            @RequestParam(required = false) String username,
+            @RequestHeader(value = "X-Access-Token", required = false) String xAccessToken,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        return Result.OK(systemService.getUserInfo(resolveUsername(username, xAccessToken, authorization)));
     }
 
     @GetMapping("/permission/getUserPermissionByToken")
-    public Result<Map<String, Object>> getUserPermissionByToken(@RequestParam(required = false) String username) {
-        return Result.OK(systemService.getUserPermissionByToken(username));
+    public Result<Map<String, Object>> getUserPermissionByToken(
+            @RequestParam(required = false) String username,
+            @RequestHeader(value = "X-Access-Token", required = false) String xAccessToken,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        return Result.OK(systemService.getUserPermissionByToken(resolveUsername(username, xAccessToken, authorization)));
+    }
+
+    private String resolveUsername(String usernameParam, String xAccessToken, String authorization) {
+        if (usernameParam != null && !usernameParam.isBlank()) {
+            return usernameParam.trim();
+        }
+        String rawToken = (xAccessToken != null && !xAccessToken.isBlank()) ? xAccessToken.trim() : authorization;
+        if (rawToken != null && !rawToken.isBlank()) {
+            if (rawToken.startsWith("Bearer ")) {
+                rawToken = rawToken.substring(7).trim();
+            }
+            String prefix = "kkumz-jwt-token-";
+            if (rawToken.startsWith(prefix)) {
+                String body = rawToken.substring(prefix.length());
+                int lastDash = body.lastIndexOf('-');
+                if (lastDash > 0) {
+                    return body.substring(0, lastDash);
+                }
+            }
+        }
+        return "admin";
     }
 
     @GetMapping("/user/list")

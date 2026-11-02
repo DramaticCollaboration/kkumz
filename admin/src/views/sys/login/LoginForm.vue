@@ -69,7 +69,7 @@
         <Checkbox v-model:checked="rememberMe" size="small">
           <span class="text-xs text-slate-600 dark:text-slate-300">{{ t('sys.login.rememberMe') }}</span>
         </Checkbox>
-        <Button type="link" size="small" class="!p-0 !text-xs !text-slate-500 dark:!text-slate-400 hover:!text-blue-600 dark:hover:!text-blue-400" @click="setLoginState(LoginStateEnum.RESET_PASSWORD)">
+        <Button type="link" size="small" class="!p-0 !text-xs !text-slate-500 dark:!text-slate-400 hover:!text-blue-600 dark:hover:!text-blue-400" @click="handleForgotPassword">
           {{ t('sys.login.forgetPassword') }}
         </Button>
       </div>
@@ -87,65 +87,15 @@
         </Button>
       </FormItem>
 
-      <!-- 간편 로그인 섹션 (슬림 3버튼) -->
-      <div class="mb-3">
-        <div class="relative my-3">
-          <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-slate-200 dark:border-slate-700/80"></div>
-          </div>
-          <div class="relative flex justify-center text-xs">
-            <span class="bg-white dark:bg-[#1e293b] px-2 text-slate-400 dark:text-slate-400">또는 간편 로그인</span>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            @click="handleKakaoLogin"
-            class="flex items-center justify-center gap-1.5 h-9 px-2 rounded-lg bg-[#FEE500] hover:bg-[#fbd800] text-[#191919] font-medium text-xs shadow-xs transition cursor-pointer border border-[#FEE500]"
-            title="카카오 로그인"
-          >
-            <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
-              <path d="M12 3c-5.523 0-10 3.582-10 8 0 2.868 1.867 5.39 4.685 6.726l-.95 3.518c-.1.37.28.69.6.49l4.19-2.617c.484.055.975.083 1.475.083 5.523 0 10-3.582 10-8s-4.477-8-10-8z"/>
-            </svg>
-            카카오
-          </button>
-
-          <button
-            type="button"
-            @click="handleSocialLogin('naver')"
-            class="flex items-center justify-center gap-1.5 h-9 px-2 rounded-lg bg-[#03C75A] hover:bg-[#02b350] text-white font-medium text-xs shadow-xs transition border border-[#03C75A] cursor-pointer"
-            title="네이버 로그인"
-          >
-            <span class="font-black text-xs leading-none">N</span> 네이버
-          </button>
-
-          <button
-            type="button"
-            @click="handleSocialLogin('google')"
-            class="flex items-center justify-center gap-1.5 h-9 px-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700 font-medium text-xs shadow-xs transition border border-slate-200 cursor-pointer"
-            title="구글 로그인"
-          >
-            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.9c2.28-2.1 3.645-5.2 3.645-9.15z"/>
-              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.9-3.05c-1.07.72-2.45 1.16-4.03 1.16-3.1 0-5.74-2.1-6.68-4.92H1.28v3.15C3.26 21.36 7.33 24 12 24z"/>
-              <path fill="#FBBC05" d="M5.32 14.28c-.24-.72-.38-1.49-.38-2.28s.14-1.56.38-2.28V6.57H1.28C.46 8.2 0 10.04 0 12s.46 3.8 1.28 5.43l4.04-3.15z"/>
-              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.28 6.57l4.04 3.15c.94-2.82 3.58-4.97 6.68-4.97z"/>
-            </svg>
-            구글
-          </button>
-        </div>
-      </div>
-
       <!-- 체험 계정 빠른 선택 -->
-      <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+      <div class="mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800">
         <div class="flex items-center justify-between mb-2">
           <button
             type="button"
             class="text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center gap-1.5"
             @click="showDemoAccounts = !showDemoAccounts"
           >
-            <span>체험 계정 빠른 선택</span>
+            <span>권한별 시연 계정 빠른 로그인</span>
             <span class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{{ showDemoAccounts ? '접기' : '펼치기' }}</span>
           </button>
           <span v-if="showDemoAccounts" class="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded font-medium">
@@ -157,26 +107,26 @@
           <div class="grid grid-cols-2 gap-2">
             <button
               type="button"
-              class="flex flex-col items-start px-2.5 py-2 rounded-lg bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-700/60 transition text-left cursor-pointer group"
+              class="flex flex-col items-start px-3 py-2.5 rounded-lg bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-700/60 transition text-left cursor-pointer group"
               @click="quickLogin('admin', '123456')"
             >
               <div class="flex items-center justify-between w-full">
                 <span class="font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 text-xs">총괄 관리자</span>
                 <span class="text-[10px] px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 font-mono">admin</span>
               </div>
-              <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">꿈즈 통합 관제 마스터</span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">AI 스튜디오 · 배포 · 시스템 전체</span>
             </button>
 
             <button
               type="button"
-              class="flex flex-col items-start px-2.5 py-2 rounded-lg bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-700/60 transition text-left cursor-pointer group"
-              @click="quickLogin('moderator', '123456')"
+              class="flex flex-col items-start px-3 py-2.5 rounded-lg bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-700/60 transition text-left cursor-pointer group"
+              @click="quickLogin('moderator.kim', '123456')"
             >
               <div class="flex items-center justify-between w-full">
                 <span class="font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 text-xs">모더레이터</span>
-                <span class="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 font-mono">moderator</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 font-mono">moderator.kim</span>
               </div>
-              <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">커뮤니티 · 신고 심사</span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">커뮤니티 큐레이션 · 신고 심사</span>
             </button>
           </div>
         </div>
@@ -199,8 +149,6 @@
   import { useRouter } from 'vue-router';
   import { PageEnum } from '/@/enums/pageEnum';
 
-  const emit = defineEmits(['open-apply']);
-
   const ACol = Col;
   const ARow = Row;
   const FormItem = Form.Item;
@@ -210,7 +158,7 @@
   const { prefixCls } = useDesign('login');
   const userStore = useUserStore();
 
-  const { setLoginState, getLoginState } = useLoginState();
+  const { getLoginState } = useLoginState();
   const { getFormRules } = useFormRules();
 
   const formRef = ref();
@@ -280,10 +228,10 @@
     formData.account = account;
     formData.password = pass;
     formData.inputCode = '';
-    // 셀러 계정으로 빠른 로그인 시 관리자 전용 리디렉션 파라미터가 남아있다면 제거
-    if (account.startsWith('seller')) {
+    // 모더레이터 계정으로 빠른 로그인 시 총괄관리자 전용 라우트(/studio, /deployment, /system) 리디렉션 파라미터가 남아있다면 제거
+    if (account.startsWith('moderator')) {
       const currentRedirect = router.currentRoute.value?.query?.redirect as string;
-      if (currentRedirect && /(automation|seller-apply|inquiry|supplier|channel|pricing-rules|dashboard\/)/.test(currentRedirect)) {
+      if (currentRedirect && /(\/studio|\/deployment|\/system)/.test(currentRedirect)) {
         router.replace({ path: PageEnum.BASE_LOGIN });
       }
     }
@@ -292,12 +240,13 @@
     });
   }
 
-  function handleKakaoLogin() {
-    emit('open-apply');
-  }
-
-  function handleSocialLogin(provider: string) {
-    emit('open-apply');
+  function handleForgotPassword() {
+    Modal.info({
+      title: '관리자 계정 비밀번호 초기화 안내',
+      content: '보안 정책상 백오피스 운영 계정의 비밀번호 초기화는 시스템 총괄 관리자(admin@kkumz.com) 권한으로만 가능합니다. 사내 보안 담당자에게 초기화를 요청해 주세요.',
+      okText: '확인',
+      centered: true,
+    });
   }
 
   function handleChangeCheckCode() {

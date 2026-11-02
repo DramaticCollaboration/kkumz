@@ -69,8 +69,8 @@ export default {
     signUpFormTitle: 'Sign up',
     forgetFormTitle: 'Reset password',
 
-    signInTitle: 'Kkumz Seller Automation Portal',
-    signInDesc: 'AI End-to-End B2B Wholesale Sourcing, Auto-Ordering & Profit Reconciliation Platform',
+    signInTitle: 'Kkumz Admin Control Portal',
+    signInDesc: 'AI Brand Studio, Multi-site Builder & Community Governance Backoffice',
     policy: 'I agree to the Terms and Privacy Policy',
     scanSign: 'Scan QR code to complete sign in',
 

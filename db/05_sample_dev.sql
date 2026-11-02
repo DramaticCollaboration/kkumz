@@ -215,8 +215,29 @@ INSERT INTO kkumz_name_suggestion (
 ('name-kkumz-107', 'idea-kkumz-001', '하영다도', 'hayoung-tea', 'Hayoung Dado / 하영다도', '제주의 너른 자연과 풍요로움을 뜻하는 제주어 어감을 살린 로컬 헤리티지 브랜드명입니다.', 89, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '5 days'),
 ('name-kkumz-108', 'idea-kkumz-001', '크림말차 랩', 'cream-matcha-lab', 'Cream Matcha Lab / 크림말차 랩', '마이크로 벨벳 거품과 무가당 라떼 베이스 연구에 특화된 젊은 감각의 브랜드명입니다.', 88, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '5 days'),
 ('name-kkumz-201', 'idea-kkumz-002', '데스크 오빗', 'desk-orbit', 'Desk Orbit / 데스크 오빗', '책상 위 모든 디바이스와 도구가 완벽한 몰입의 궤도로 정렬된다는 의미를 담은 테크 기어 브랜드입니다.', 98, TRUE, TRUE, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+('name-kkumz-202', 'idea-kkumz-002', '알루미나 독 랩', 'alumina-dock-lab', 'Alumina Dock Lab / 알루미나 독 랩', '항공 등급 6061 통절삭 알루미늄 가공 기술과 마그네틱 충전 스테이션의 정밀함을 강조합니다.', 95, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+('name-kkumz-203', 'idea-kkumz-002', '모듈러 그리드 서울', 'modular-grid-seoul', 'Modular Grid Seoul / 모듈러 그리드', '개발자와 디자이너의 작업 동선에 맞춰 자유롭게 확장되는 모듈형 데스크 셋업 시스템입니다.', 94, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+('name-kkumz-204', 'idea-kkumz-002', '월넛 앤 아노다이즈', 'walnut-anodize', 'Walnut & Anodize / 월넛 앤 아노다이즈', '따뜻한 북미산 호두나무 원목과 차가운 애노다이징 메탈의 조화로운 대비를 직관적으로 담았습니다.', 92, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+('name-kkumz-205', 'idea-kkumz-002', '포커스 아키텍처', 'focus-architecture', 'Focus Architecture / 포커스 아키텍처', '케이블 노이즈를 제거하고 순수한 몰입의 공간만을 설계한다는 프로페셔널 워크스페이스 브랜드입니다.', 91, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+('name-kkumz-206', 'idea-kkumz-002', '제로케이블 스튜디오', 'zerocable-studio', 'ZeroCable Studio / 제로케이블 스튜디오', 'Qi2 무선 충전과 매립형 마그네틱 레일로 선 없는 미니멀 데스크를 구현하는 브랜드 정체성을 표현합니다.', 90, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+('name-kkumz-207', 'idea-kkumz-002', '스페이스 기어 콜렉티브', 'space-gear-collective', 'Space Gear Collective / 스페이스 기어', '하이엔드 키보드, 모니터 조명, 충전 독 메이커들이 모인 크리에이터 장비 큐레이션 샵입니다.', 89, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+('name-kkumz-208', 'idea-kkumz-002', '노바 데스크웨어', 'nova-deskware', 'Nova Deskware / 노바 데스크웨어', '야간 코딩과 크리에이티브 작업 환경을 밝혀주는 차세대 데스크테리어 하드웨어 브랜드명입니다.', 88, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '4 days'),
 ('name-kkumz-301', 'idea-kkumz-003', '서울 나이트 런 클럽', 'seoul-run-club', 'Seoul Night Run Club / 서울 나이트 런 클럽', '서울 한강의 야경을 가르며 함께 달리는 역동적인 시티 러닝 크루 아이덴티티를 담았습니다.', 97, TRUE, TRUE, CURRENT_TIMESTAMP - INTERVAL '3 days'),
-('name-kkumz-401', 'idea-kkumz-004', '빈 크로니클 서울', 'bean-chronicle', 'Bean Chronicle Seoul / 빈 크로니클 서울', '산지 농부부터 로스터, 바리스타까지 이어지는 스페셜티 원두의 연대기를 기록하는 복합 문화 브랜드입니다.', 98, TRUE, TRUE, CURRENT_TIMESTAMP - INTERVAL '2 days');
+('name-kkumz-302', 'idea-kkumz-003', '한강 페이서스 530', 'hangang-pacers', 'Hangang Pacers / 한강 페이서스', '반포·성수·여의도 한강공원에서 서로의 페이스를 끌어주는 2030 러너 커뮤니티를 상징합니다.', 95, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+('name-kkumz-303', 'idea-kkumz-003', '미드나잇 스트라이드', 'midnight-stride', 'Midnight Stride / 미드나잇 스트라이드', '퇴근 후 도심의 밤공기를 가르며 달리는 시티 러너들의 경쾌한 보폭과 에너지를 표현합니다.', 94, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+('name-kkumz-304', 'idea-kkumz-003', '브릿지 러너스 아카이브', 'bridge-runners', 'Bridge Runners Archive / 브릿지 러너스', '잠수교부터 성수대교까지 서울의 다리와 강변 코스를 기록하는 러닝 매거진 & 크루 브랜드입니다.', 92, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+('name-kkumz-305', 'idea-kkumz-003', '펄스 트랙 서울', 'pulse-track-seoul', 'Pulse Track Seoul / 펄스 트랙 서울', '심박수가 뛰는 템포런 세션과 체계적인 마라톤 풀코스 훈련 커뮤니티의 전문성을 담았습니다.', 91, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+('name-kkumz-306', 'idea-kkumz-003', '어반 마일 콜렉티브', 'urban-mile-collective', 'Urban Mile Collective / 어반 마일', '도심 속 1마일씩 함께 누적하며 성장하는 오픈 게스트 런 & 라이프스타일 크루 네이밍입니다.', 90, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+('name-kkumz-307', 'idea-kkumz-003', '런 앤 리커버리 클럽', 'run-recovery-club', 'Run & Recovery Club / 런 앤 리커버리', '부상 없는 러닝과 세션 후 스트레칭·교류 문화를 지향하는 친근한 커뮤니티 브랜드명입니다.', 89, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+('name-kkumz-308', 'idea-kkumz-003', '시티 템포 저널', 'city-tempo-journal', 'City Tempo Journal / 시티 템포 저널', '러닝 코스 리뷰, 러닝화 큐레이션, 주간 세션 신청을 아우르는 미디어형 러닝 클럽입니다.', 88, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+('name-kkumz-401', 'idea-kkumz-004', '빈 크로니클 서울', 'bean-chronicle', 'Bean Chronicle Seoul / 빈 크로니클 서울', '산지 농부부터 로스터, 바리스타까지 이어지는 스페셜티 원두의 연대기를 기록하는 복합 문화 브랜드입니다.', 98, TRUE, TRUE, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('name-kkumz-402', 'idea-kkumz-004', '테루아 로스터리 저널', 'terroir-roastery', 'Terroir Roastery Journal / 테루아 로스터리', '콜롬비아·에티오피아 고산지대의 토양과 기후(떼루아)를 한 잔의 커피와 아티클로 전달합니다.', 96, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('name-kkumz-403', 'idea-kkumz-004', '마이크로랏 아뜰리에', 'microlot-atelier', 'Microlot Atelier / 마이크로랏 아뜰리에', '소량 직교역(Direct Trade)으로만 공수한 희귀 게이샤·무산소 발효 원두 전문 큐레이션 스토어입니다.', 94, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('name-kkumz-404', 'idea-kkumz-004', '성수 커핑 노트', 'seongsu-cupping-note', 'Seongsu Cupping Note / 성수 커핑 노트', '매월 헤드로스터의 테이스팅 노트 매거진과 주말 프라이빗 시음 클래스가 열리는 복합 공간 브랜드입니다.', 93, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('name-kkumz-405', 'idea-kkumz-004', '다이렉트 빈 아카이브', 'direct-bean-archive', 'Direct Bean Archive / 다이렉트 빈 아카이브', '산지 농장 인터뷰 아카이브와 신선한 로스팅 원두 즉시 주문을 하나로 결합한 하이브리드 브랜드명입니다.', 91, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('name-kkumz-406', 'idea-kkumz-004', '나인티투 브루잉 랩', 'ninetytwo-brewing', '92 Brewing Lab / 나인티투 브루잉 랩', '스페셜티 추출의 황금 온도인 92℃에서 영감을 얻은 정밀 로스팅 & 브루잉 기어 셀렉트샵입니다.', 90, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('name-kkumz-407', 'idea-kkumz-004', '앰버 크래프트 로스터스', 'amber-craft-roasters', 'Amber Craft Roasters / 앰버 크래프트', '호박빛 클린컵 추출액과 장인 로스터의 섬세한 불조절 프로파일을 상징하는 감성 브랜드명입니다.', 89, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('name-kkumz-408', 'idea-kkumz-004', '오리진 앤 푸어', 'origin-and-pour', 'Origin & Pour / 오리진 앤 푸어', '싱글오리진 원두의 본질과 푸어오버 핸드드립의 여유로운 일상을 잇는 모던 커피 브랜드입니다.', 88, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '2 days');
 
 -- AI SVG Logo & Palette Suggestions
 INSERT INTO kkumz_logo_suggestion (
@@ -292,7 +313,7 @@ INSERT INTO kkumz_logo_suggestion (
     'logo-kkumz-201',
     'idea-kkumz-002',
     '오빗 일립스 테크 마크',
-    '<svg viewBox="0 0 150 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#1e1b4b"/><ellipse cx="20" cy="20" rx="13" ry="6" transform="rotate(-25 20 20)" stroke="#818cf8" stroke-width="2.5" fill="none"/><circle cx="20" cy="20" r="4" fill="#38bdf8"/><text x="50" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="14" fill="#1e1b4b">DESK ORBIT</text></svg>',
+    '<svg viewBox="0 0 165 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#1e1b4b"/><ellipse cx="20" cy="20" rx="13" ry="6" transform="rotate(-25 20 20)" stroke="#818cf8" stroke-width="2.5" fill="none"/><circle cx="20" cy="20" r="4" fill="#38bdf8"/><text x="50" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="14" fill="#1e1b4b">DESK ORBIT</text></svg>',
     '{"primary":"#1e1b4b","secondary":"#4f46e5","accent":"#06b6d4","surface":"#f8fafc"}'::jsonb,
     '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
     '["데스크테리어", "인디고테크", "모듈형"]'::jsonb,
@@ -300,14 +321,124 @@ INSERT INTO kkumz_logo_suggestion (
     CURRENT_TIMESTAMP - INTERVAL '4 days'
 ),
 (
+    'logo-kkumz-202',
+    'idea-kkumz-002',
+    'CNC 헥사곤 정밀 배지',
+    '<svg viewBox="0 0 165 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#0f172a"/><polygon points="20,8 30,14 30,26 20,32 10,26 10,14" stroke="#38bdf8" stroke-width="2.2" fill="none"/><circle cx="20" cy="20" r="3.5" fill="#818cf8"/><text x="50" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="14" fill="#0f172a">DESK ORBIT</text></svg>',
+    '{"primary":"#0f172a","secondary":"#334155","accent":"#38bdf8","surface":"#f1f5f9"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["CNC알루미늄", "다크슬레이트", "하드웨어"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '4 days'
+),
+(
+    'logo-kkumz-203',
+    'idea-kkumz-002',
+    '월넛 & 티타늄 레이어 심볼',
+    '<svg viewBox="0 0 165 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#27272a"/><rect x="9" y="13" width="22" height="5" rx="2.5" fill="#d97706"/><rect x="9" y="22" width="22" height="5" rx="2.5" fill="#a1a1aa"/><text x="50" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="14" fill="#27272a">DESK ORBIT</text></svg>',
+    '{"primary":"#27272a","secondary":"#78350f","accent":"#d97706","surface":"#fafafa"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["월넛원목", "티타늄그레이", "데스크쉘프"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '4 days'
+),
+(
+    'logo-kkumz-204',
+    'idea-kkumz-002',
+    '매그세이프 링 마크',
+    '<svg viewBox="0 0 165 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#172554"/><circle cx="20" cy="18" r="9" stroke="#60a5fa" stroke-width="2.5" fill="none"/><line x1="20" y1="29" x2="20" y2="33" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/><text x="50" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="14" fill="#172554">DESK ORBIT</text></svg>',
+    '{"primary":"#172554","secondary":"#2563eb","accent":"#38bdf8","surface":"#eff6ff"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["Qi2무선충전", "딥네이비", "스마트독"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '4 days'
+),
+(
+    'logo-kkumz-205',
+    'idea-kkumz-002',
+    '비대칭 라이트바 프리즘',
+    '<svg viewBox="0 0 165 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#18181b"/><line x1="10" y1="12" x2="30" y2="12" stroke="#facc15" stroke-width="3" stroke-linecap="round"/><polygon points="13,15 27,15 32,30 8,30" fill="#fde047" fill-opacity="0.22"/><text x="50" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="14" fill="#18181b">DESK ORBIT</text></svg>',
+    '{"primary":"#18181b","secondary":"#3f3f46","accent":"#eab308","surface":"#f4f4f5"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["모니터조명", "앰비언트", "블랙골드"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '4 days'
+),
+(
+    'logo-kkumz-206',
+    'idea-kkumz-002',
+    '사이버 매트릭스 모노그램',
+    '<svg viewBox="0 0 165 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#311042"/><rect x="11" y="11" width="7" height="7" rx="2" fill="#e879f9"/><rect x="22" y="11" width="7" height="7" rx="2" fill="#38bdf8"/><rect x="11" y="22" width="18" height="7" rx="2" fill="#c084fc"/><text x="50" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="14" fill="#311042">DESK ORBIT</text></svg>',
+    '{"primary":"#3b0764","secondary":"#7e22ce","accent":"#06b6d4","surface":"#faf5ff"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["매크로패드", "네온바이올렛", "크리에이터"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '4 days'
+),
+(
     'logo-kkumz-301',
     'idea-kkumz-003',
     '나이트 펄스 트랙 마크',
-    '<svg viewBox="0 0 170 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#0f172a"/><path d="M9 26L18 14L23 21L31 12" stroke="#f97316" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="31" cy="12" r="3" fill="#fb923c"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#0f172a">SEOUL RUN CLUB</text></svg>',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#0f172a"/><path d="M9 26L18 14L23 21L31 12" stroke="#f97316" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="31" cy="12" r="3" fill="#fb923c"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#0f172a">SEOUL RUN CLUB</text></svg>',
     '{"primary":"#ea580c","secondary":"#0f172a","accent":"#f59e0b","surface":"#fff7ed"}'::jsonb,
     '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
     '["러닝크루", "에너지오렌지", "나이트런"]'::jsonb,
     TRUE,
+    CURRENT_TIMESTAMP - INTERVAL '3 days'
+),
+(
+    'logo-kkumz-302',
+    'idea-kkumz-003',
+    '한강 브릿지 웨이브 엠블럼',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#1e293b"/><path d="M8 24C14 14 26 14 32 24" stroke="#38bdf8" stroke-width="2.5" fill="none"/><path d="M8 28H32" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#1e293b">SEOUL RUN CLUB</text></svg>',
+    '{"primary":"#0284c7","secondary":"#0f172a","accent":"#f97316","surface":"#f0f9ff"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["한강 잠수교", "리버블루", "시티러너"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '3 days'
+),
+(
+    'logo-kkumz-303',
+    'idea-kkumz-003',
+    '네온 볼트 스트라이드',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#111827"/><polygon points="22,8 11,22 20,22 18,32 29,18 20,18" fill="#84cc16"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#111827">SEOUL RUN CLUB</text></svg>',
+    '{"primary":"#3f6212","secondary":"#111827","accent":"#84cc16","surface":"#f7fee7"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["네온라임", "스피드세션", "마라톤"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '3 days'
+),
+(
+    'logo-kkumz-304',
+    'idea-kkumz-003',
+    '트랙 오벌 크루 실드',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#7c2d12"/><rect x="8" y="13" width="24" height="14" rx="7" stroke="#fdba74" stroke-width="2.5" fill="none"/><circle cx="26" cy="20" r="3" fill="#fb923c"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#7c2d12">SEOUL RUN CLUB</text></svg>',
+    '{"primary":"#c2410c","secondary":"#431407","accent":"#fb923c","surface":"#fff7ed"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["트랙오벌", "테라코타", "인터벌훈련"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '3 days'
+),
+(
+    'logo-kkumz-305',
+    'idea-kkumz-003',
+    '미드나잇 문라이트 러너',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#1e1b4b"/><path d="M24 11A9 9 0 1 0 29 25A7 7 0 1 1 24 11Z" fill="#fde047"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#1e1b4b">SEOUL RUN CLUB</text></svg>',
+    '{"primary":"#1e1b4b","secondary":"#312e81","accent":"#eab308","surface":"#eef2ff"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["미드나잇", "문라이트", "야간러닝"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '3 days'
+),
+(
+    'logo-kkumz-306',
+    'idea-kkumz-003',
+    '하트비트 페이서 크레스트',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#881337"/><path d="M7 20H14L17 12L22 28L25 20H33" stroke="#fda4af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#881337">SEOUL RUN CLUB</text></svg>',
+    '{"primary":"#be123c","secondary":"#4c0519","accent":"#fb7185","surface":"#fff1f2"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["심박수페이스", "크림슨레드", "열정크루"]'::jsonb,
+    FALSE,
     CURRENT_TIMESTAMP - INTERVAL '3 days'
 ),
 (
@@ -320,6 +451,61 @@ INSERT INTO kkumz_logo_suggestion (
     '["스페셜티로스터리", "에스프레소브라운", "매거진스토어"]'::jsonb,
     TRUE,
     CURRENT_TIMESTAMP - INTERVAL '2 days'
+),
+(
+    'logo-kkumz-402',
+    'idea-kkumz-004',
+    '푸어오버 드리퍼 라인 마크',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#292524"/><polygon points="10,11 30,11 23,25 17,25" stroke="#f59e0b" stroke-width="2.2" fill="none"/><line x1="14" y1="29" x2="26" y2="29" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#292524">BEAN CHRONICLE</text></svg>',
+    '{"primary":"#292524","secondary":"#57534e","accent":"#d97706","surface":"#fafaf9"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["푸어오버", "모던스톤", "핸드드립"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '2 days'
+),
+(
+    'logo-kkumz-403',
+    'idea-kkumz-004',
+    '테루아 마운틴 & 선 배지',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#14532d"/><circle cx="26" cy="14" r="4" fill="#fbbf24"/><path d="M8 29L17 16L24 24L29 19L33 29H8Z" fill="#86efac"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#14532d">BEAN CHRONICLE</text></svg>',
+    '{"primary":"#14532d","secondary":"#166534","accent":"#d97706","surface":"#f7fee7"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["고산지농장", "다이렉트트레이드", "보태니컬"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '2 days'
+),
+(
+    'logo-kkumz-404',
+    'idea-kkumz-004',
+    '에디토리얼 아카이브 북 심볼',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#1e293b"/><path d="M11 13H19V28H11V13ZM21 13H29V28H21V13Z" stroke="#fdba74" stroke-width="2" fill="none"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#1e293b">BEAN CHRONICLE</text></svg>',
+    '{"primary":"#1e293b","secondary":"#475569","accent":"#ea580c","surface":"#f8fafc"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["매거진아카이브", "슬레이트네이비", "저널리즘"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '2 days'
+),
+(
+    'logo-kkumz-405',
+    'idea-kkumz-004',
+    '스팀 아로마 웨이브 실드',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#7c2d12"/><path d="M15 27C13 22 17 18 15 13M20 27C18 22 22 18 20 13M25 27C23 22 27 18 25 13" stroke="#fed7aa" stroke-width="2.2" stroke-linecap="round" fill="none"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#7c2d12">BEAN CHRONICLE</text></svg>',
+    '{"primary":"#7c2d12","secondary":"#9a3412","accent":"#f97316","surface":"#fff7ed"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["로스팅아로마", "웜테라코타", "크래프트"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '2 days'
+),
+(
+    'logo-kkumz-406',
+    'idea-kkumz-004',
+    '게이샤 블라썸 크레스트',
+    '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#4c0519"/><circle cx="20" cy="20" r="9" stroke="#fda4af" stroke-width="2.2" fill="none"/><circle cx="20" cy="20" r="3.5" fill="#fb7185"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#4c0519">BEAN CHRONICLE</text></svg>',
+    '{"primary":"#881337","secondary":"#be123c","accent":"#f43f5e","surface":"#fff1f2"}'::jsonb,
+    '{"fontHeading":"Pretendard","fontBody":"Pretendard","weightHeading":"800"}'::jsonb,
+    '["게이샤플로럴", "버건디로즈", "부티크로스터리"]'::jsonb,
+    FALSE,
+    CURRENT_TIMESTAMP - INTERVAL '2 days'
 );
 
 -- Screen Blueprint Specifications (kkumz_screen_spec)
@@ -331,9 +517,13 @@ INSERT INTO kkumz_screen_spec (
 ('scr-kkumz-103', 'idea-kkumz-001', 'CHECKOUT', '기프트 패키징 및 즉시 결제', '/checkout', 'ONE_PAGE_CHECKOUT', '보자기 선물 포장 선택 및 AI 티 소믈리에 추천 연동 원페이지 주문서', '["GiftWrapSelector","OrderForm","AiTeaSommelierWidget"]'::jsonb, 3, CURRENT_TIMESTAMP - INTERVAL '5 days'),
 ('scr-kkumz-201', 'idea-kkumz-002', 'HOME_HERO', '다크 테크 워크스테이션 히어로', '/', 'DARK_TECH_GRID', '듀얼 모니터 & 맥북 프로 셋업 쇼케이스 및 알루미늄 기어 하이라이트', '["OrbitSetupShowcase","SpecHighlightStrip","BestGearGrid"]'::jsonb, 1, CURRENT_TIMESTAMP - INTERVAL '4 days'),
 ('scr-kkumz-202', 'idea-kkumz-002', 'CATALOG', '모듈형 기어 카탈로그', '/catalog', 'SPEC_COMPARISON_GRID', '책상 규격 호환성 필터 및 Qi2 충전 독·데스크 쉘프 비교 카탈로그', '["CompatibilityFilter","ProductCard","CartSidebar"]'::jsonb, 2, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+('scr-kkumz-203', 'idea-kkumz-002', 'CHECKOUT', '데스크 풀셋업 번들 주문서', '/checkout', 'ONE_PAGE_CHECKOUT', '케이블 정리 기어 번들 할인 적용 및 당일 출고 익스프레스 결제', '["ShippingAddressForm","CouponApplier","InstantOrderButton"]'::jsonb, 3, CURRENT_TIMESTAMP - INTERVAL '4 days'),
 ('scr-kkumz-301', 'idea-kkumz-003', 'CMS_HERO', '시티 나이트 런 비주얼 배너', '/', 'MAGAZINE_HERO', '주간 나이트 런 일정 안내 및 한강 코스 하이라이트 배너', '["WeeklySessionBanner","CrewMetricsBar"]'::jsonb, 1, CURRENT_TIMESTAMP - INTERVAL '3 days'),
-('scr-kkumz-302', 'idea-kkumz-003', 'APPLY_FORM', '게스트 런 & 크루 합류 신청 폼', '/apply', 'DYNAMIC_CMS_FORM', '희망 러닝 페이스 및 세션 참가 온라인 신청 폼', '["SessionSelectField","PaceRadioGroup","SubmitApplicationButton"]'::jsonb, 2, CURRENT_TIMESTAMP - INTERVAL '3 days'),
-('scr-kkumz-401', 'idea-kkumz-004', 'HYBRID_HERO', '로스터리 저널 & 이달의 원두 히어로', '/', 'HYBRID_EDITORIAL_COMMERCE', '산지 농장 인터뷰 아티클과 이달의 싱글오리진 원두 셀렉션 통합 메인', '["FeaturedStoryHero","CommerceCatalogSection","EditorialJournalSection"]'::jsonb, 1, CURRENT_TIMESTAMP - INTERVAL '2 days');
+('scr-kkumz-302', 'idea-kkumz-003', 'ARTICLE_FEED', '한강 러닝 코스 아카이브 매거진', '/articles', 'EDITORIAL_CARDS', '반포·성수·여의도 급수대 및 노면 가이드 아티클 피드', '["CourseArticleList","PaceCalculatorCard"]'::jsonb, 2, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+('scr-kkumz-303', 'idea-kkumz-003', 'APPLY_FORM', '게스트 런 & 크루 합류 신청 폼', '/apply', 'DYNAMIC_CMS_FORM', '희망 러닝 페이스 및 세션 참가 온라인 신청 폼', '["SessionSelectField","PaceRadioGroup","SubmitApplicationButton"]'::jsonb, 3, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+('scr-kkumz-401', 'idea-kkumz-004', 'HYBRID_HERO', '로스터리 저널 & 이달의 원두 히어로', '/', 'HYBRID_EDITORIAL_COMMERCE', '산지 농장 인터뷰 아티클과 이달의 싱글오리진 원두 셀렉션 통합 메인', '["FeaturedStoryHero","RoastProfileBadge","AiBrewingConcierge"]'::jsonb, 1, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('scr-kkumz-402', 'idea-kkumz-004', 'SHOP_CATALOG', '싱글오리진 원두 & 브루잉 기어 스토어', '/store', 'FILTERABLE_3COL_GRID', '게이샤 홀빈, 질소충전 드립백, 온도조절 드립포트 카탈로그 및 즉시 주문', '["CommerceCatalogSection","RoastLevelFilter","InstantCheckoutModal"]'::jsonb, 2, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('scr-kkumz-403', 'idea-kkumz-004', 'JOURNAL_AND_CLASS', '산지 직교역 매거진 & 커핑 클래스 예약', '/journal', 'EDITORIAL_MAGAZINE_LAYOUT', '농장 직교역 인터뷰 저널 열람 및 주말 성수동 커핑 세션 온라인 예약 폼', '["EditorialJournalSection","ClassBookingForm"]'::jsonb, 3, CURRENT_TIMESTAMP - INTERVAL '2 days');
 
 -- Deployed Kkumz Multi-Sites (kkumz_site)
 INSERT INTO kkumz_site (
@@ -428,7 +618,7 @@ INSERT INTO kkumz_site (
     'LIFESTYLE_HYBRID',
     '한 잔의 커피에 담긴 산지의 연대기 — 로스터리 저널 & 스페셜티 셀렉트 샵',
     '<svg viewBox="0 0 175 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#451a03"/><ellipse cx="20" cy="20" rx="10" ry="13" fill="#d97706"/><path d="M20 8C17 14 23 26 20 32" stroke="#451a03" stroke-width="2.2" stroke-linecap="round"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-weight="800" font-size="13" fill="#451a03">BEAN CHRONICLE</text></svg>',
-    1,
+    4,
     102,
     'CUSTOM_BUNDLE',
     1,
@@ -517,6 +707,7 @@ INSERT INTO kkumz_site_release (
     '{"heroTitle":"케이블 없는 몰입의 궤도, 데스크 오빗 2026 컬렉션","heroSubtitle":"항공 등급 6061 알루미늄 Qi2 충전 스테이션 & 모듈형 마그네틱 월넛 데스크 쉘프 풀셋업","ctaText":"워크스테이션 기어 탐색","showFlashDeal":true,"showAiConcierge":true,"customBadge":"Qi2 공식 인증 · 당일 출고"}'::jsonb,
     '[
       {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"desk-orbit-app\">\n    <HeroSection :badge=\"layout.customBadge\" />\n    <CatalogSection />\n  </div>\n</template>"},
+      {"path":"src/sections/HeroSection.vue","language":"vue","content":"<template>\n  <section class=\"orbit-hero\">\n    <span class=\"badge\">{{ badge }}</span>\n    <h1>케이블 없는 몰입의 궤도</h1>\n  </section>\n</template>\n<script setup lang=\"ts\">\ndefineProps<{ badge?: string }>();\n</script>"},
       {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#1e1b4b\",\n  \"secondary\": \"#4f46e5\",\n  \"accent\": \"#06b6d4\"\n}"}
     ]'::jsonb,
     'minio://kkumz-sites/desk-orbit/v2/schema.json',
@@ -532,9 +723,10 @@ INSERT INTO kkumz_site_release (
     '서울 나이트 런 클럽 아티클 및 게스트 런 온라인 신청 폼 통합 배포',
     'DYNAMIC_SDUI',
     '{"primary":"#ea580c","secondary":"#0f172a","accent":"#f59e0b","surface":"#fff7ed","radius":"12px"}'::jsonb,
-    '{"heroTitle":"SEOUL NIGHT RUNNERS — 매주 화·목 서울의 밤을 달립니다","heroSubtitle":"반포 잠수교 · 성수 서울숲 · 여의도 한강공원 페이스별 그룹 러닝 및 마라톤 풀코스 훈련 커뮤니티","ctaText":"이번 주 게스트 런 신청하기","showCmsArticles":true,"showCmsForm":true}'::jsonb,
+    '{"heroTitle":"SEOUL NIGHT RUNNERS — 매주 화·목 서울의 밤을 달립니다","heroSubtitle":"반포 잠수교 · 성수 서울숲 · 여의도 한강공원 페이스별 그룹 러닝 및 마라톤 풀코스 훈련 커뮤니티","ctaText":"이번 주 게스트 런 신청하기","showCmsArticles":true,"showCmsForm":true,"customBadge":"매주 화·목 20:00 정규 세션"}'::jsonb,
     '[
       {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"seoul-run-cms\">\n    <RunClubHero />\n    <CourseMagazineSection />\n    <GuestRunApplyForm />\n  </div>\n</template>"},
+      {"path":"src/sections/RunClubHero.vue","language":"vue","content":"<template>\n  <section class=\"night-run-hero\">\n    <h1>SEOUL NIGHT RUNNERS</h1>\n    <p>반포 잠수교 · 성수 서울숲 · 여의도 한강공원 그룹 러닝</p>\n  </section>\n</template>"},
       {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#ea580c\",\n  \"secondary\": \"#0f172a\",\n  \"surface\": \"#fff7ed\"\n}"}
     ]'::jsonb,
     'minio://kkumz-sites/seoul-run-club/v1/schema.json',
@@ -550,14 +742,16 @@ INSERT INTO kkumz_site_release (
     '빈 크로니클 서울 로스터리 저널 + 브루잉 스토어 복합 사이트 배포',
     'CUSTOM_BUNDLE',
     '{"primary":"#78350f","secondary":"#b45309","accent":"#d97706","surface":"#fffbeb","radius":"12px"}'::jsonb,
-    '{"heroTitle":"산지의 떼루아부터 한 잔의 브루잉까지, 빈 크로니클 서울","heroSubtitle":"직교역 커피 농장 아카이브 저널과 이달의 싱글오리진 & 브루잉 머신 셀렉트 스토어","ctaText":"이달의 로스터리 셀렉션 & 저널 보기","showFlashDeal":true,"showCmsArticles":true,"showCmsForm":true}'::jsonb,
+    '{"heroTitle":"산지의 떼루아부터 한 잔의 브루잉까지, 빈 크로니클 서울","heroSubtitle":"직교역 커피 농장 아카이브 저널과 이달의 싱글오리진 & 브루잉 머신 셀렉트 스토어","ctaText":"이달의 로스터리 셀렉션 & 저널 보기","showFlashDeal":true,"showCmsArticles":true,"showCmsForm":true,"customBadge":"산지 직교역 로스터리 · 당일 로스팅 발송"}'::jsonb,
     '[
-      {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"bean-chronicle-hybrid\">\n    <EditorialSplitHero />\n    <RoasteryShopSection />\n    <DirectTradeJournalSection />\n    <CuppingClassForm />\n  </div>\n</template>"},
-      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#78350f\",\n  \"secondary\": \"#b45309\",\n  \"accent\": \"#d97706\",\n  \"surface\": \"#fffbeb\"\n}"}
+      {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"bean-chronicle-hybrid\" :style=\"{ ''--brand-primary'': tokens.primary }\">\n    <EditorialSplitHero :title=\"layout.heroTitle\" :subtitle=\"layout.heroSubtitle\" :badge=\"layout.customBadge\" />\n    <RoasteryShopSection :products=\"commerce.products\" />\n    <DirectTradeJournalSection :articles=\"cms.articles\" />\n    <CuppingClassForm :form=\"cms.forms?.[0]\" />\n  </div>\n</template>\n<script setup lang=\"ts\">\nimport EditorialSplitHero from ''./sections/HeroSection.vue'';\nimport RoasteryShopSection from ''./sections/CatalogSection.vue'';\n</script>"},
+      {"path":"src/sections/HeroSection.vue","language":"vue","content":"<template>\n  <section class=\"roastery-split-hero\">\n    <span class=\"roast-badge\">{{ badge }}</span>\n    <h1>{{ title }}</h1>\n    <p>{{ subtitle }}</p>\n  </section>\n</template>\n<script setup lang=\"ts\">\ndefineProps<{ title: string; subtitle: string; badge?: string }>();\n</script>"},
+      {"path":"src/sections/CatalogSection.vue","language":"vue","content":"<template>\n  <section class=\"roastery-catalog-grid\">\n    <article v-for=\"bean in products\" :key=\"bean.id\" class=\"bean-card\">\n      <h3>{{ bean.name }}</h3>\n      <p>{{ bean.subTitle }}</p>\n      <strong>{{ bean.promotionPrice || bean.price }}원</strong>\n    </article>\n  </section>\n</template>\n<script setup lang=\"ts\">\ndefineProps<{ products: any[] }>();\n</script>"},
+      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#78350f\",\n  \"secondary\": \"#b45309\",\n  \"accent\": \"#d97706\",\n  \"surface\": \"#fffbeb\",\n  \"radius\": \"12px\"\n}"}
     ]'::jsonb,
     'minio://kkumz-sites/bean-chronicle/v1/dist/index.js',
     'SUCCESS',
-    '[15:10:00] [Hybrid-Deploy] Linked store catalog + editorial journal. Custom bundle built and published.',
+    '[15:10:00] [Hybrid-Deploy] Linked specialty coffee catalog (4 products) + editorial journal (2 articles) + cupping reservation form.\n[15:10:01] [Publish] Custom bundle built and published to /s/bean-chronicle.',
     'hajun.roast',
     CURRENT_TIMESTAMP - INTERVAL '2 days'
 );

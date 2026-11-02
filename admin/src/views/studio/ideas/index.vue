@@ -19,7 +19,7 @@
           <TableAction
             :actions="[
               {
-                label: '명세서 상세',
+                label: '기획서 보기',
                 icon: 'ant-design:eye-outlined',
                 onClick: handleDetail.bind(null, record),
               },
@@ -53,7 +53,7 @@
   const [registerDetailModal, { openModal: openDetailModal }] = useModal();
 
   const [registerTable, { reload }] = useTable({
-    title: 'AI 스튜디오 아이디어 & 명세서 관제',
+    title: '아이디어·기획서 목록',
     api: getAdminIdeaList,
     rowKey: 'id',
     useSearchForm: true,

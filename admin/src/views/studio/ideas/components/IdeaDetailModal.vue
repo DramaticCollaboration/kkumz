@@ -2,7 +2,7 @@
   <BasicModal
     v-bind="$attrs"
     @register="registerModal"
-    title="AI 스튜디오 아이디어 & 명세서 상세 조회"
+    title="아이디어·기획서 상세 정보"
     :width="820"
     :showOkBtn="false"
     cancelText="닫기"

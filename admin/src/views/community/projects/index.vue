@@ -29,7 +29,7 @@
   import { getAdminProjectList } from '/@/api/kkumz';
 
   const [registerTable] = useTable({
-    title: '커뮤니티 쇼케이스 프로젝트 & 팀빌딩 현황 관리',
+    title: '쇼케이스·팀빌딩 목록',
     api: getAdminProjectList,
     rowKey: 'siteId',
     useSearchForm: true,

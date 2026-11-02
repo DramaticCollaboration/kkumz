@@ -135,6 +135,8 @@ public class KkumzService {
         );
 
         syncScreenSpecsToTable(ideaId, initialScreens);
+        generateNameSuggestions(ideaId, null);
+        generateLogoSuggestions(ideaId, null);
         return getIdeaDetail(ideaId);
     }
 
@@ -286,6 +288,8 @@ public class KkumzService {
         int nextVer = (maxVer != null ? maxVer : 0) + 1;
         String title = req.getTitle() != null && !req.getTitle().isBlank() ? req.getTitle().trim() : String.valueOf(idea.get("title"));
         String prompt = req.getPromptText() != null && !req.getPromptText().isBlank() ? req.getPromptText().trim() : String.valueOf(idea.get("promptText"));
+        String siteType = req.getSiteType() != null && !req.getSiteType().isBlank() ? normalizeSiteType(req.getSiteType()) : String.valueOf(idea.get("siteType"));
+        String category = req.getCategory() != null && !req.getCategory().isBlank() ? req.getCategory().trim() : String.valueOf(idea.get("category"));
         String spec = req.getSpecMarkdown() != null && !req.getSpecMarkdown().isBlank() ? req.getSpecMarkdown() : String.valueOf(idea.get("specMarkdown"));
         String screensJson = req.getScreens() != null ? toJson(req.getScreens()) : toJson(idea.get("screens"));
         String creator = req.getCreatedBy() != null && !req.getCreatedBy().isBlank() ? req.getCreatedBy() : "admin";
@@ -296,8 +300,8 @@ public class KkumzService {
                 "iver-" + ideaId + "-v" + nextVer, ideaId, nextVer, title, prompt, spec, screensJson, creator
         );
         jdbcTemplate.update(
-                "UPDATE kkumz_idea SET title = ?, prompt_text = ?, spec_markdown = ?, screens_json = ?::jsonb, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                title, prompt, spec, screensJson, ideaId
+                "UPDATE kkumz_idea SET title = ?, prompt_text = ?, site_type = ?, category = ?, spec_markdown = ?, screens_json = ?::jsonb, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                title, prompt, siteType, category, spec, screensJson, ideaId
         );
         if (req.getScreens() != null && !req.getScreens().isEmpty()) {
             syncScreenSpecsToTable(ideaId, req.getScreens());
@@ -318,24 +322,19 @@ public class KkumzService {
             return idea;
         }
 
+        String title = String.valueOf(idea.get("title"));
         String prompt = String.valueOf(idea.get("promptText"));
-        String hint = (req != null && req.getKeywordHint() != null && !req.getKeywordHint().isBlank())
+        String rawHint = (req != null && req.getKeywordHint() != null && !req.getKeywordHint().isBlank())
                 ? req.getKeywordHint().trim()
-                : extractCoreKeyword(prompt);
-        String slugBase = toSlugBase(hint);
+                : "";
+        String domain = detectDomainKey(title + " " + prompt + " " + rawHint);
+        String hint = !rawHint.isBlank() ? rawHint : resolveDomainKoKeyword(domain, prompt);
+        String engBase = resolveDomainEngKeyword(domain, hint);
+        String slugBase = toSlugBase(engBase.toLowerCase(Locale.ROOT));
 
         jdbcTemplate.update("DELETE FROM kkumz_name_suggestion WHERE idea_id = ?", ideaId);
 
-        String[][] templates = new String[][]{
-                {hint + " 아뜰리에", slugBase + "-atelier", hint + " Atelier", "장인정신과 모던 라이프스타일 큐레이션의 가치를 담은 프리미엄 브랜드 네이밍입니다.", "99"},
-                {hint + " 오빗", slugBase + "-orbit", hint + " Orbit", "고객의 일상과 몰입의 궤도를 완벽하게 연결한다는 감각적인 스토리를 담았습니다.", "96"},
-                {hint + " 크로니클", slugBase + "-chronicle", hint + " Chronicle", "원산지부터 사용자 경험까지의 진정성 있는 기록을 강조한 에디토리얼 브랜드명입니다.", "95"},
-                {"아카이브 " + hint, "archive-" + slugBase, "Archive " + hint, "엄선된 컬렉션과 깊이 있는 커뮤니티 매거진 감성을 동시에 전달합니다.", "93"},
-                {hint + " 콜렉티브", slugBase + "-collective", hint + " Collective", "크리에이터와 소비자가 함께 취향을 공유하는 젊은 커뮤니티형 브랜드명입니다.", "92"},
-                {"스튜디오 " + hint, "studio-" + slugBase, "Studio " + hint, "직관적이고 기억하기 쉬운 모던 디자인 하우스 스타일의 네이밍입니다.", "91"},
-                {hint + " 리추얼", slugBase + "-ritual", hint + " Ritual", "매일 반복되는 일상을 특별한 감각의 루틴으로 바꾸어 주는 브랜드 철학을 담았습니다.", "90"},
-                {"네오 " + hint + " 랩", "neo-" + slugBase + "-lab", "Neo " + hint + " Lab", "혁신적인 기획력과 실험적인 제품 라인업을 상징하는 테크·라이프스타일 브랜드명입니다.", "89"}
-        };
+        String[][] templates = buildDomainNameTemplates(domain, hint, engBase, slugBase);
 
         for (int i = 0; i < templates.length; i++) {
             String[] t = templates[i];
@@ -368,52 +367,69 @@ public class KkumzService {
         String brandName = (req != null && req.getBrandName() != null && !req.getBrandName().isBlank())
                 ? req.getBrandName().trim()
                 : (idea.get("selectedBrandName") != null ? String.valueOf(idea.get("selectedBrandName")) : "KKUMZ STUDIO");
-        String displayUpper = brandName.length() > 14 ? brandName.substring(0, 14).toUpperCase(Locale.ROOT) : brandName.toUpperCase(Locale.ROOT);
+        String slugSource = idea.get("selectedSiteSlug") != null ? String.valueOf(idea.get("selectedSiteSlug")) : brandName;
+        String displayUpper = toLogoDisplayText(brandName, slugSource);
+        String domain = detectDomainKey(String.valueOf(idea.get("title")) + " " + String.valueOf(idea.get("promptText")) + " " + brandName);
 
         jdbcTemplate.update("DELETE FROM kkumz_logo_suggestion WHERE idea_id = ?", ideaId);
 
-        Object[][] logoSpecs = new Object[][]{
+        Object[][] baseLogoSpecs = new Object[][]{
                 {
                         "보태니컬 엠블럼",
-                        "<svg viewBox=\"0 0 180 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#14532d\"/><circle cx=\"20\" cy=\"20\" r=\"11\" fill=\"#86efac\" fill-opacity=\"0.25\"/><path d=\"M13 24C13 17 20 12 27 15C26 22 20 27 13 24Z\" fill=\"#4ade80\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#14532d\">" + escapeXml(displayUpper) + "</text></svg>",
+                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#14532d\"/><circle cx=\"20\" cy=\"20\" r=\"11\" fill=\"#86efac\" fill-opacity=\"0.25\"/><path d=\"M13 24C13 17 20 12 27 15C26 22 20 27 13 24Z\" fill=\"#4ade80\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#14532d\">" + escapeXml(displayUpper) + "</text></svg>",
                         Map.of("primary", "#14532d", "secondary", "#16a34a", "accent", "#ca8a04", "surface", "#f7fee7"),
                         List.of("보태니컬", "딥포레스트", "오가닉")
                 },
                 {
                         "오빗 테크 심볼",
-                        "<svg viewBox=\"0 0 180 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#1e1b4b\"/><ellipse cx=\"20\" cy=\"20\" rx=\"13\" ry=\"6\" transform=\"rotate(-25 20 20)\" stroke=\"#818cf8\" stroke-width=\"2.5\" fill=\"none\"/><circle cx=\"20\" cy=\"20\" r=\"4\" fill=\"#38bdf8\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#1e1b4b\">" + escapeXml(displayUpper) + "</text></svg>",
+                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#1e1b4b\"/><ellipse cx=\"20\" cy=\"20\" rx=\"13\" ry=\"6\" transform=\"rotate(-25 20 20)\" stroke=\"#818cf8\" stroke-width=\"2.5\" fill=\"none\"/><circle cx=\"20\" cy=\"20\" r=\"4\" fill=\"#38bdf8\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#1e1b4b\">" + escapeXml(displayUpper) + "</text></svg>",
                         Map.of("primary", "#1e1b4b", "secondary", "#4f46e5", "accent", "#06b6d4", "surface", "#f8fafc"),
                         List.of("다크테크", "인디고", "모듈러")
                 },
                 {
                         "다이내믹 펄스 크레스트",
-                        "<svg viewBox=\"0 0 180 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#0f172a\"/><path d=\"M9 26L18 14L23 21L31 12\" stroke=\"#f97316\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"31\" cy=\"12\" r=\"3\" fill=\"#fb923c\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#0f172a\">" + escapeXml(displayUpper) + "</text></svg>",
+                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#0f172a\"/><path d=\"M9 26L18 14L23 21L31 12\" stroke=\"#f97316\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"31\" cy=\"12\" r=\"3\" fill=\"#fb923c\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#0f172a\">" + escapeXml(displayUpper) + "</text></svg>",
                         Map.of("primary", "#ea580c", "secondary", "#0f172a", "accent", "#f59e0b", "surface", "#fff7ed"),
                         List.of("에너지오렌지", "애슬레틱", "커뮤니티")
                 },
                 {
                         "아티장 로스트 배지",
-                        "<svg viewBox=\"0 0 180 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#451a03\"/><ellipse cx=\"20\" cy=\"20\" rx=\"10\" ry=\"13\" fill=\"#d97706\"/><path d=\"M20 8C17 14 23 26 20 32\" stroke=\"#451a03\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#451a03\">" + escapeXml(displayUpper) + "</text></svg>",
+                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#451a03\"/><ellipse cx=\"20\" cy=\"20\" rx=\"10\" ry=\"13\" fill=\"#d97706\"/><path d=\"M20 8C17 14 23 26 20 32\" stroke=\"#451a03\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#451a03\">" + escapeXml(displayUpper) + "</text></svg>",
                         Map.of("primary", "#78350f", "secondary", "#b45309", "accent", "#d97706", "surface", "#fffbeb"),
                         List.of("크래프트", "웜앰버", "에디토리얼")
                 },
                 {
                         "미니멀 프리즘 마크",
-                        "<svg viewBox=\"0 0 180 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#090d16\"/><polygon points=\"20,9 31,29 9,29\" stroke=\"#38bdf8\" stroke-width=\"2.4\" fill=\"none\"/><circle cx=\"20\" cy=\"22\" r=\"3\" fill=\"#a855f7\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#090d16\">" + escapeXml(displayUpper) + "</text></svg>",
+                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#090d16\"/><polygon points=\"20,9 31,29 9,29\" stroke=\"#38bdf8\" stroke-width=\"2.4\" fill=\"none\"/><circle cx=\"20\" cy=\"22\" r=\"3\" fill=\"#a855f7\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#090d16\">" + escapeXml(displayUpper) + "</text></svg>",
                         Map.of("primary", "#0f172a", "secondary", "#7c3aed", "accent", "#38bdf8", "surface", "#f8fafc"),
                         List.of("지오메트릭", "모던프리즘", "스튜디오")
                 },
                 {
                         "코랄 아치 시그니처",
-                        "<svg viewBox=\"0 0 180 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#881337\"/><path d=\"M12 29V19C12 14.5 15.5 11 20 11C24.5 11 28 14.5 28 19V29\" stroke=\"#fda4af\" stroke-width=\"2.6\" fill=\"none\"/><circle cx=\"20\" cy=\"19\" r=\"3.5\" fill=\"#fb7185\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#881337\">" + escapeXml(displayUpper) + "</text></svg>",
+                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#881337\"/><path d=\"M12 29V19C12 14.5 15.5 11 20 11C24.5 11 28 14.5 28 19V29\" stroke=\"#fda4af\" stroke-width=\"2.6\" fill=\"none\"/><circle cx=\"20\" cy=\"19\" r=\"3.5\" fill=\"#fb7185\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#881337\">" + escapeXml(displayUpper) + "</text></svg>",
                         Map.of("primary", "#9f1239", "secondary", "#e11d48", "accent", "#f43f5e", "surface", "#fff1f2"),
                         List.of("부티크아치", "로즈코랄", "감성브랜드")
                 }
         };
 
+        int preferredIdx = switch (domain) {
+            case "COFFEE", "BAKERY" -> 3;
+            case "TECH" -> 1;
+            case "FITNESS" -> 2;
+            case "FASHION" -> 5;
+            default -> 0;
+        };
+        List<Object[]> orderedLogos = new ArrayList<>();
+        orderedLogos.add(baseLogoSpecs[preferredIdx]);
+        for (int idx = 0; idx < baseLogoSpecs.length; idx++) {
+            if (idx != preferredIdx) {
+                orderedLogos.add(baseLogoSpecs[idx]);
+            }
+        }
+
         Map<String, Object> typo = Map.of("fontHeading", "Pretendard", "fontBody", "Pretendard", "weightHeading", "800");
-        for (int i = 0; i < logoSpecs.length; i++) {
-            Object[] spec = logoSpecs[i];
+        for (int i = 0; i < orderedLogos.size(); i++) {
+            Object[] spec = orderedLogos.get(i);
             boolean isFirst = (i == 0);
             jdbcTemplate.update(
                     "INSERT INTO kkumz_logo_suggestion (id, idea_id, style_name, svg_code, color_palette_json, typography_json, tags_json, is_selected, created_at) " +
@@ -500,6 +516,7 @@ public class KkumzService {
         SaveIdeaVersionRequest saveReq = SaveIdeaVersionRequest.builder()
                 .title(title)
                 .promptText(prompt)
+                .siteType(siteType)
                 .specMarkdown(specMarkdown)
                 .screens(screens)
                 .createdBy(String.valueOf(idea.get("authorUsername")))
@@ -514,6 +531,8 @@ public class KkumzService {
         SaveIdeaVersionRequest saveReq = SaveIdeaVersionRequest.builder()
                 .title(req.getTitle())
                 .promptText(req.getPromptText())
+                .siteType(req.getSiteType())
+                .category(req.getCategory())
                 .specMarkdown(req.getSpecMarkdown())
                 .screens(req.getScreens())
                 .createdBy(req.getUpdatedBy())
@@ -564,7 +583,18 @@ public class KkumzService {
                 ideaId
         );
         if (!existingSites.isEmpty()) {
-            String existingSlug = String.valueOf(existingSites.get(0).get("site_slug"));
+            Map<String, Object> existingSite = existingSites.get(0);
+            String existingSiteId = String.valueOf(existingSite.get("id"));
+            String existingSlug = String.valueOf(existingSite.get("site_slug"));
+            int activeVer = ((Number) existingSite.get("active_version")).intValue();
+            jdbcTemplate.update(
+                    "UPDATE kkumz_site SET site_name = ?, site_type = ?, logo_svg = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    brandName, siteType, logoSvg, existingSiteId
+            );
+            jdbcTemplate.update(
+                    "UPDATE kkumz_site_release SET design_tokens_json = ?::jsonb WHERE site_id = ? AND version_no = ?",
+                    toJson(tokens), existingSiteId, activeVer
+            );
             jdbcTemplate.update("UPDATE kkumz_idea SET current_step = GREATEST(current_step, 4), updated_at = CURRENT_TIMESTAMP WHERE id = ?", ideaId);
             return getSiteRuntime(existingSlug);
         }
@@ -625,6 +655,8 @@ public class KkumzService {
     public Map<String, Object> chatRefineSite(String siteSlug, ChatRefineRequest req) {
         Map<String, Object> site = getSiteRecordBySlugOrId(siteSlug);
         String siteId = String.valueOf(site.get("id"));
+        String siteName = String.valueOf(site.get("siteName"));
+        String brandSlogan = String.valueOf(site.get("brandSlogan"));
         int currentVer = ((Number) site.get("activeVersion")).intValue();
 
         Map<String, Object> latestRel = getReleaseRecord(siteId, currentVer);
@@ -643,21 +675,57 @@ public class KkumzService {
                 tokens.putAll(parseJsonMap(matchedPalettes.get(0).get("palette_text")));
             }
         }
-        if (instruction.contains("인디고")) {
+        if (instruction.contains("인디고") || instruction.contains("네이비") || instruction.contains("테크")) {
             tokens.put("primary", "#1e1b4b");
             tokens.put("secondary", "#4f46e5");
             tokens.put("accent", "#06b6d4");
             tokens.put("surface", "#f8fafc");
-        } else if (instruction.contains("포레스트")) {
+        } else if (instruction.contains("포레스트") || instruction.contains("그린") || instruction.contains("보태니컬")) {
             tokens.put("primary", "#14532d");
             tokens.put("secondary", "#16a34a");
             tokens.put("accent", "#ca8a04");
             tokens.put("surface", "#f7fee7");
-        } else if (instruction.contains("크래프트")) {
+        } else if (instruction.contains("크래프트") || instruction.contains("앰버") || instruction.contains("브라운") || instruction.contains("로스트")) {
             tokens.put("primary", "#78350f");
             tokens.put("secondary", "#b45309");
             tokens.put("accent", "#d97706");
             tokens.put("surface", "#fffbeb");
+        } else if (instruction.contains("코랄") || instruction.contains("로즈") || instruction.contains("핑크")) {
+            tokens.put("primary", "#9f1239");
+            tokens.put("secondary", "#e11d48");
+            tokens.put("accent", "#f43f5e");
+            tokens.put("surface", "#fff1f2");
+        } else if (instruction.contains("오렌지") || instruction.contains("에너지")) {
+            tokens.put("primary", "#ea580c");
+            tokens.put("secondary", "#0f172a");
+            tokens.put("accent", "#f59e0b");
+            tokens.put("surface", "#fff7ed");
+        } else if (instruction.contains("모던") || instruction.contains("블랙") || instruction.contains("미니멀")) {
+            tokens.put("primary", "#0f172a");
+            tokens.put("secondary", "#334155");
+            tokens.put("accent", "#38bdf8");
+            tokens.put("surface", "#f8fafc");
+        }
+
+        if (!instruction.isBlank()) {
+            if (instruction.contains("특가") && (instruction.contains("숨") || instruction.contains("제거") || instruction.contains("끄"))) {
+                layout.put("showFlashDeal", false);
+            } else if (instruction.contains("특가") && (instruction.contains("보여") || instruction.contains("추가") || instruction.contains("켜"))) {
+                layout.put("showFlashDeal", true);
+            }
+            if (instruction.contains("문구") || instruction.contains("배너") || instruction.contains("타이틀") || instruction.contains("슬로건") || instruction.contains("헤드라인")) {
+                if (instruction.contains("강렬") || instruction.contains("임팩트")) {
+                    layout.put("heroTitle", siteName + " — 한계를 넘어서는 시그니처 컬렉션");
+                    layout.put("heroSubtitle", "지금 가장 주목받는 프리미엄 라인업과 브랜드 아카이브를 한자리에서 경험하세요.");
+                } else if (instruction.contains("감성") || instruction.contains("따뜻") || instruction.contains("에디토리얼")) {
+                    layout.put("heroTitle", "일상의 순간을 특별하게 기록하는 곳, " + siteName);
+                    layout.put("heroSubtitle", brandSlogan);
+                } else if (instruction.contains("할인") || instruction.contains("프로모션") || instruction.contains("런칭")) {
+                    layout.put("heroTitle", siteName + " 공식 그랜드 런칭 스페셜 위크");
+                    layout.put("heroSubtitle", "첫 구매 고객 웰컴 혜택과 한정 수량 시그니처 에디션을 지금 만나보세요.");
+                }
+            }
+            layout.put("customBadge", "AI 반영: " + (instruction.length() > 26 ? instruction.substring(0, 26) + "..." : instruction));
         }
 
         if (req.getTokenOverrides() != null) {
@@ -666,17 +734,13 @@ public class KkumzService {
         if (req.getLayoutOverrides() != null) {
             layout.putAll(req.getLayoutOverrides());
         }
-        if (!instruction.isBlank()) {
-            layout.put("customBadge", "AI 반영: " + (instruction.length() > 28 ? instruction.substring(0, 28) + "..." : instruction));
-            layout.put("heroSubtitle", instruction);
-        }
 
         Integer maxVer = jdbcTemplate.queryForObject(
                 "SELECT COALESCE(MAX(version_no), 1) FROM kkumz_site_release WHERE site_id = ?",
                 Integer.class, siteId
         );
         int nextVer = (maxVer != null ? maxVer : 1) + 1;
-        String note = instruction.isBlank() ? "대화형 프리뷰 디자인 토큰 및 레이아웃 수정" : "대화형 편집: " + instruction;
+        String note = instruction.isBlank() ? "비주얼 에디터 디자인·콘텐츠 즉시 반영" : "대화형 편집: " + instruction;
         String logMsg = "[Chat-Refine] Applied instruction: \"" + note + "\"\n[Hot-Reload] Updated designTokens & layoutSchema (v" + nextVer + ").";
         String releaseId = "rel-" + siteId + "-v" + nextVer;
         String user = req.getUsername() != null ? req.getUsername() : "admin";
@@ -885,8 +949,29 @@ public class KkumzService {
         jdbcTemplate.update("UPDATE kkumz_site SET view_count = view_count + 1 WHERE id = ?", siteId);
 
         Map<String, Object> runtime = new LinkedHashMap<>(site);
-        runtime.put("designTokens", parseJsonMap(rel.get("designTokensText")));
-        runtime.put("layoutSchema", parseJsonMap(rel.get("layoutSchemaText")));
+        Map<String, Object> designTokens = new LinkedHashMap<>(parseJsonMap(rel.get("designTokensText")));
+        String primaryColor = String.valueOf(designTokens.getOrDefault("primary", designTokens.getOrDefault("primaryColor", "#4f46e5")));
+        String secondaryColor = String.valueOf(designTokens.getOrDefault("secondary", designTokens.getOrDefault("secondaryColor", "#6366f1")));
+        String accentColor = String.valueOf(designTokens.getOrDefault("accent", designTokens.getOrDefault("accentColor", "#06b6d4")));
+        String surfaceColor = String.valueOf(designTokens.getOrDefault("surface", designTokens.getOrDefault("surfaceColor", "#f8fafc")));
+        designTokens.put("primary", primaryColor);
+        designTokens.put("primaryColor", primaryColor);
+        designTokens.put("secondary", secondaryColor);
+        designTokens.put("secondaryColor", secondaryColor);
+        designTokens.put("accent", accentColor);
+        designTokens.put("accentColor", accentColor);
+        designTokens.put("surface", surfaceColor);
+        designTokens.put("surfaceColor", surfaceColor);
+
+        Map<String, Object> layoutSchema = new LinkedHashMap<>(parseJsonMap(rel.get("layoutSchemaText")));
+        if (layoutSchema.get("ctaText") != null && layoutSchema.get("primaryCta") == null) {
+            layoutSchema.put("primaryCta", layoutSchema.get("ctaText"));
+        } else if (layoutSchema.get("primaryCta") != null && layoutSchema.get("ctaText") == null) {
+            layoutSchema.put("ctaText", layoutSchema.get("primaryCta"));
+        }
+
+        runtime.put("designTokens", designTokens);
+        runtime.put("layoutSchema", layoutSchema);
         runtime.put("webideFiles", parseJsonListOfMap(rel.get("webideFilesText")));
         runtime.put("releaseNote", rel.get("releaseNote"));
         runtime.put("buildStatus", rel.get("buildStatus"));
@@ -900,17 +985,48 @@ public class KkumzService {
         Long shopSiteId = site.get("shopSiteId") != null ? ((Number) site.get("shopSiteId")).longValue() : null;
         Long cmsSiteId = site.get("cmsSiteId") != null ? ((Number) site.get("cmsSiteId")).longValue() : null;
 
+        runtime.put("brandName", siteName);
+        runtime.put("tagline", slogan);
+        runtime.put("activeVersionNo", activeVer);
+
+        Map<String, Object> commerceData;
         if ("COMMERCE".equals(siteType) || "HYBRID".equals(siteType) || shopSiteId != null) {
-            runtime.put("commerce", loadCommerceData(shopSiteId != null ? shopSiteId : 2L, siteName, slogan));
+            commerceData = new LinkedHashMap<>(loadCommerceData(shopSiteId != null ? shopSiteId : 2L, siteName, slogan));
         } else {
-            runtime.put("commerce", Map.of("banners", List.of(), "categories", List.of(), "products", List.of(), "coupons", List.of()));
+            commerceData = new LinkedHashMap<>(Map.of("banners", List.of(), "categories", List.of(), "products", List.of(), "coupons", List.of()));
         }
 
-        if ("CMS_SITE".equals(siteType) || "HYBRID".equals(siteType) || cmsSiteId != null) {
-            runtime.put("cms", loadCmsData(cmsSiteId != null ? cmsSiteId : 101L, siteName, slogan));
-        } else {
-            runtime.put("cms", Map.of("categories", List.of(), "articles", List.of(), "banners", List.of(), "forms", List.of(), "recentSubmissions", List.of()));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> customProducts = layoutSchema.get("customProducts") instanceof List
+                ? (List<Map<String, Object>>) layoutSchema.get("customProducts")
+                : null;
+        if (customProducts != null && !customProducts.isEmpty()) {
+            commerceData.put("products", customProducts);
         }
+        runtime.put("commerce", commerceData);
+        runtime.put("products", commerceData.getOrDefault("products", List.of()));
+        runtime.put("categories", commerceData.getOrDefault("categories", List.of()));
+        runtime.put("coupons", commerceData.getOrDefault("coupons", List.of()));
+
+        Map<String, Object> cmsData;
+        if ("CMS_SITE".equals(siteType) || "HYBRID".equals(siteType) || cmsSiteId != null) {
+            cmsData = new LinkedHashMap<>(loadCmsData(cmsSiteId != null ? cmsSiteId : 101L, siteName, slogan));
+        } else {
+            cmsData = new LinkedHashMap<>(Map.of("categories", List.of(), "articles", List.of(), "banners", List.of(), "forms", List.of(), "recentSubmissions", List.of()));
+        }
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> customArticles = layoutSchema.get("customArticles") instanceof List
+                ? (List<Map<String, Object>>) layoutSchema.get("customArticles")
+                : null;
+        if (customArticles != null && !customArticles.isEmpty()) {
+            cmsData.put("articles", customArticles);
+        }
+        runtime.put("cms", cmsData);
+        runtime.put("articles", cmsData.getOrDefault("articles", List.of()));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> cmsForms = (List<Map<String, Object>>) cmsData.getOrDefault("forms", List.of());
+        runtime.put("cmsForm", !cmsForms.isEmpty() ? cmsForms.get(0) : null);
 
         runtime.put("recruits", listSiteRecruits(siteId));
         runtime.put("teamMembers", listSiteTeamMembers(siteId));
@@ -935,6 +1051,7 @@ public class KkumzService {
         BigDecimal unitPrice = new BigDecimal("42000");
         BigDecimal discount = req.getDiscountAmount() != null ? req.getDiscountAmount() : BigDecimal.ZERO;
         BigDecimal payAmount = unitPrice.multiply(BigDecimal.valueOf(quantity)).subtract(discount).max(BigDecimal.ZERO);
+        int remainingStock = Math.max(1, 80 - quantity);
 
         try {
             if (shopJdbcTemplate != null) {
@@ -954,6 +1071,8 @@ public class KkumzService {
                     Map<String, Object> product = prodRows.get(0);
                     resolvedProductId = ((Number) product.get("id")).longValue();
                     productName = String.valueOf(product.get("name"));
+                    int currentStock = product.get("stock") != null ? ((Number) product.get("stock")).intValue() : 50;
+                    remainingStock = Math.max(0, currentStock - quantity);
                     unitPrice = product.get("promotion_price") != null
                             ? new BigDecimal(String.valueOf(product.get("promotion_price")))
                             : new BigDecimal(String.valueOf(product.get("price")));
@@ -1006,6 +1125,7 @@ public class KkumzService {
         result.put("productName", productName);
         result.put("quantity", quantity);
         result.put("payAmount", payAmount);
+        result.put("remainingStock", remainingStock);
         result.put("receiverName", receiverName);
         result.put("status", "PAID_READY_FOR_SHIPMENT");
         return result;
@@ -1016,8 +1136,9 @@ public class KkumzService {
         Long cmsSiteId = site.get("cmsSiteId") != null ? ((Number) site.get("cmsSiteId")).longValue() : 101L;
         Long formId = req.getFormId() != null ? req.getFormId() : 101L;
 
+        String applicantName = req.getApplicantName() != null && !req.getApplicantName().isBlank() ? req.getApplicantName().trim() : "김도현 신청자";
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("applicantName", req.getApplicantName() != null && !req.getApplicantName().isBlank() ? req.getApplicantName().trim() : "김도현 신청자");
+        payload.put("applicantName", applicantName);
         payload.put("phone", (req.getPhone() != null && !req.getPhone().isBlank()) ? req.getPhone().trim() : "안심번호-기본");
         payload.put("optionValue", req.getOptionValue() != null ? req.getOptionValue() : "정규 세션 참가 신청");
         payload.put("message", req.getMessage() != null ? req.getMessage() : "꿈즈 라이브 사이트를 통해 온라인 신청합니다.");
@@ -1026,6 +1147,7 @@ public class KkumzService {
         }
 
         Long submissionId = System.currentTimeMillis() % 100000L;
+        int totalSubmissions = 12;
         try {
             if (cmsJdbcTemplate != null) {
                 if (req.getFormId() == null) {
@@ -1041,6 +1163,12 @@ public class KkumzService {
                         "VALUES (?, ?::jsonb, '127.0.0.1', 'RECEIVED', '꿈즈 라이브 사이트 온라인 접수 완료', CURRENT_TIMESTAMP) RETURNING id",
                         Long.class, formId, toJson(payload)
                 );
+                Integer count = cmsJdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM cms_form_data WHERE form_id = ?", Integer.class, formId
+                );
+                if (count != null) {
+                    totalSubmissions = count;
+                }
             }
         } catch (Exception e) {
             log.info("Standalone 모드 온라인 신청 폼 접수 (siteSlug={}): {}", siteSlug, e.getMessage());
@@ -1050,7 +1178,7 @@ public class KkumzService {
                 String.valueOf(site.get("ownerUsername")),
                 "FORM_SUBMIT",
                 "[" + site.get("siteName") + "] 온라인 참가/문의 신청 접수",
-                payload.get("applicantName") + "님이 [" + payload.get("optionValue") + "] 신청서를 제출했습니다.",
+                applicantName + "님이 [" + payload.get("optionValue") + "] 신청서를 제출했습니다.",
                 "/s/" + site.get("siteSlug")
         );
 
@@ -1059,6 +1187,8 @@ public class KkumzService {
         result.put("formId", formId);
         result.put("cmsSiteId", cmsSiteId);
         result.put("siteSlug", site.get("siteSlug"));
+        result.put("applicantName", applicantName);
+        result.put("totalSubmissions", totalSubmissions);
         result.put("submittedData", payload);
         result.put("status", "RECEIVED");
         return result;
@@ -1760,16 +1890,17 @@ public class KkumzService {
         jdbcTemplate.update("DELETE FROM kkumz_screen_spec WHERE idea_id = ?", ideaId);
         int sort = 1;
         for (Map<String, Object> s : screens) {
-            String key = String.valueOf(s.getOrDefault("screenKey", "SECTION_" + sort));
-            String title = String.valueOf(s.getOrDefault("title", "화면 섹션 " + sort));
-            String layout = String.valueOf(s.getOrDefault("layout", "STANDARD_GRID"));
+            String key = String.valueOf(s.getOrDefault("screenKey", s.getOrDefault("screenCode", "SECTION_" + sort)));
+            String title = String.valueOf(s.getOrDefault("screenTitle", s.getOrDefault("title", "화면 섹션 " + sort)));
+            String layout = String.valueOf(s.getOrDefault("layoutType", s.getOrDefault("layout", "STANDARD_GRID")));
+            String route = String.valueOf(s.getOrDefault("routePath", "/" + key.toLowerCase(Locale.ROOT)));
+            String desc = String.valueOf(s.getOrDefault("description", title + " 화면 구성 및 핵심 전환 기능"));
             Object compsObj = s.get("components");
             String compsJson = compsObj != null ? toJson(compsObj) : "[\"HeroBanner\"]";
             jdbcTemplate.update(
                     "INSERT INTO kkumz_screen_spec (id, idea_id, screen_key, screen_title, route_path, layout_type, description, components_json, sort_no, created_at) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, CURRENT_TIMESTAMP)",
-                    "scr-" + ideaId + "-" + sort, ideaId, key, title, "/" + key.toLowerCase(Locale.ROOT), layout,
-                    title + " 블루프린트 구성", compsJson, sort
+                    "scr-" + ideaId + "-" + sort, ideaId, key, title, route, layout, desc, compsJson, sort
             );
             sort++;
         }
@@ -1796,8 +1927,10 @@ public class KkumzService {
     }
 
     private Map<String, Object> loadCommerceData(Long shopSiteId, String siteName, String slogan) {
+        String domain = detectDomainKey(siteName + " " + slogan);
+        boolean isMismatchDefaultElectronics = (shopSiteId != null && shopSiteId == 1L && !"TECH".equals(domain));
         try {
-            if (shopJdbcTemplate != null) {
+            if (shopJdbcTemplate != null && !isMismatchDefaultElectronics) {
                 List<Map<String, Object>> products = shopJdbcTemplate.queryForList(
                         "SELECT id, site_id AS \"siteId\", brand_id AS \"brandId\", product_category_id AS \"productCategoryId\", " +
                         "name, pic, product_sn AS \"productSn\", price, promotion_price AS \"promotionPrice\", " +
@@ -1837,70 +1970,37 @@ public class KkumzService {
             log.debug("Standalone 커머스 카탈로그 기본값 로드 (shopSiteId={}): {}", shopSiteId, e.getMessage());
         }
 
-        List<Map<String, Object>> fallbackProducts = List.of(
-                Map.of(
-                        "id", 101L,
-                        "name", siteName + " 시그니처 플래그십 에디션",
-                        "pic", "/images/studio/prod-balmuda-brew.jpg",
-                        "price", 49000,
-                        "promotionPrice", 42000,
-                        "subTitle", slogan,
-                        "stock", 85,
-                        "unit", "세트",
-                        "brandName", siteName,
-                        "productCategoryName", "시그니처 컬렉션"
-                ),
-                Map.of(
-                        "id", 102L,
-                        "name", siteName + " 프레스티지 기프트 패키지",
-                        "pic", "/images/studio/ed-5.jpg",
-                        "price", 79000,
-                        "promotionPrice", 68000,
-                        "subTitle", "전용 선물 포장 및 커스텀 메시지 카드 포함",
-                        "stock", 60,
-                        "unit", "박스",
-                        "brandName", siteName,
-                        "productCategoryName", "기프트 에디션"
-                ),
-                Map.of(
-                        "id", 103L,
-                        "name", siteName + " 데일리 스타터 팩",
-                        "pic", "/images/studio/ed-1.jpg",
-                        "price", 32000,
-                        "promotionPrice", 27900,
-                        "subTitle", "일상 속에서 부담 없이 시작하는 베스트셀러",
-                        "stock", 120,
-                        "unit", "개",
-                        "brandName", siteName,
-                        "productCategoryName", "스타터 라인"
-                )
-        );
-        return Map.of(
-                "shopSiteId", shopSiteId,
-                "banners", List.of(Map.of("id", 1L, "name", siteName + " 공식 런칭 기획전", "pic", "/images/studio/banner-acoustic-lounge.jpg", "note", slogan)),
-                "categories", List.of(
-                        Map.of("id", 1L, "name", "시그니처 컬렉션", "productCount", 3),
-                        Map.of("id", 2L, "name", "기프트 에디션", "productCount", 2)
-                ),
-                "products", fallbackProducts,
-                "coupons", List.of(Map.of("id", 1L, "name", siteName + " 첫 구매 5,000원 웰컴 쿠폰", "amount", 5000, "minPoint", 30000, "code", "WELCOME-5K"))
-        );
+        return buildDomainFallbackCommerce(shopSiteId, siteName, slogan, domain);
     }
 
     private Map<String, Object> loadCmsData(Long cmsSiteId, String siteName, String slogan) {
         try {
             if (cmsJdbcTemplate != null) {
                 short sid = cmsSiteId.shortValue();
-                List<Map<String, Object>> articles = cmsJdbcTemplate.queryForList(
-                        "SELECT id, title, author, description, cover, scores, comments, clicks, publish_date AS \"publishDate\" " +
+                List<Map<String, Object>> rawArticles = cmsJdbcTemplate.queryForList(
+                        "SELECT id, title, author, description, content, cover, scores, comments, clicks, publish_date AS \"publishDate\" " +
                         "FROM cms_content WHERE site_id = ? AND disabled = false ORDER BY sort DESC, id DESC LIMIT 12",
                         sid
                 );
-                if (!articles.isEmpty()) {
+                if (!rawArticles.isEmpty()) {
                     List<Map<String, Object>> categories = cmsJdbcTemplate.queryForList(
                             "SELECT id, name, code, sort FROM cms_category WHERE site_id = ? AND disabled = false ORDER BY sort ASC, id ASC",
                             sid
                     );
+                    String defaultCatName = !categories.isEmpty() ? String.valueOf(categories.get(0).get("name")) : (siteName + " 저널");
+                    List<Map<String, Object>> articles = new ArrayList<>();
+                    for (Map<String, Object> row : rawArticles) {
+                        Map<String, Object> art = new LinkedHashMap<>(row);
+                        String desc = art.get("description") != null ? String.valueOf(art.get("description")) : slogan;
+                        String contentHtml = art.get("content") != null && !String.valueOf(art.get("content")).isBlank()
+                                ? String.valueOf(art.get("content"))
+                                : "<p>" + escapeXml(desc) + "</p>";
+                        art.put("summary", desc);
+                        art.put("bodyHtml", contentHtml);
+                        art.put("viewCount", art.getOrDefault("clicks", 240));
+                        art.put("categoryName", defaultCatName);
+                        articles.add(art);
+                    }
                     List<Map<String, Object>> banners = cmsJdbcTemplate.queryForList(
                             "SELECT id, title, sub_title AS \"subTitle\", image_url AS \"imageUrl\", link_url AS \"linkUrl\" " +
                             "FROM cms_banner WHERE site_id = ? AND status = 1 ORDER BY sort DESC, id DESC LIMIT 6",
@@ -1912,6 +2012,7 @@ public class KkumzService {
                             sid
                     );
                     for (Map<String, Object> form : forms) {
+                        form.put("formName", form.getOrDefault("title", siteName + " 온라인 신청"));
                         form.put("fields", parseJsonListOfMap(form.remove("schemaText")));
                     }
                     Map<String, Object> cms = new LinkedHashMap<>();
@@ -1928,45 +2029,7 @@ public class KkumzService {
             log.debug("Standalone 매거진/커뮤니티 기본값 로드 (cmsSiteId={}): {}", cmsSiteId, e.getMessage());
         }
 
-        List<Map<String, Object>> fallbackArticles = List.of(
-                Map.of(
-                        "id", 201L,
-                        "title", "[브랜드 스토리] " + siteName + " 공식 런칭 및 디렉터 인터뷰",
-                        "author", "브랜드 에디터",
-                        "description", slogan,
-                        "cover", "/images/studio/ed-5.jpg",
-                        "clicks", 420
-                ),
-                Map.of(
-                        "id", 202L,
-                        "title", "[커뮤니티 가이드] " + siteName + " 정규 프로그램 및 오프라인 세션 안내",
-                        "author", "커뮤니티 매니저",
-                        "description", "초기 멤버를 위한 오프라인 밋업 및 온라인 커뮤니티 참여 안내 가이드입니다.",
-                        "cover", "/images/studio/ed-1.jpg",
-                        "clicks", 315
-                )
-        );
-        List<Map<String, Object>> fallbackForms = List.of(
-                Map.of(
-                        "id", 101L,
-                        "code", "online-apply",
-                        "title", siteName + " 온라인 참가 신청 및 제휴 문의",
-                        "description", "아래 양식을 작성해 제출해 주시면 담당 매니저가 빠르게 안내해 드립니다.",
-                        "fields", List.of(
-                                Map.of("field", "applicantName", "label", "신청자 성명", "type", "text", "required", true),
-                                Map.of("field", "phone", "label", "연락처", "type", "tel", "required", true),
-                                Map.of("field", "optionValue", "label", "신청 프로그램", "type", "select", "options", List.of("정규 세션/클래스 참여 신청", "파트너십 및 제휴 문의"), "required", true)
-                        )
-                )
-        );
-        return Map.of(
-                "cmsSiteId", cmsSiteId,
-                "categories", List.of(Map.of("id", 1, "name", siteName + " 매거진 & 소식", "code", "news")),
-                "articles", fallbackArticles,
-                "banners", List.of(Map.of("id", 1, "title", siteName + " 공식 커뮤니티 오픈", "subTitle", slogan, "imageUrl", "/images/studio/banner-urban-techwear.jpg")),
-                "forms", fallbackForms,
-                "recentSubmissions", List.of()
-        );
+        return buildDomainFallbackCms(cmsSiteId, siteName, slogan, detectDomainKey(siteName + " " + slogan));
     }
 
     private Long provisionSyncShopSite(String slug, String siteName, String siteType, String logoSvg, String slogan,
@@ -1981,12 +2044,13 @@ public class KkumzService {
             if (!existing.isEmpty()) {
                 return ((Number) existing.get(0).get("id")).longValue();
             }
-            return shopJdbcTemplate.queryForObject(
+            Long newSiteId = shopJdbcTemplate.queryForObject(
                     "INSERT INTO shop_site (site_slug, site_name, site_type, logo_svg, brand_slogan, " +
                     "design_tokens_json, layout_schema_json, owner_username, status, create_time, update_time) " +
                     "VALUES (?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, 'admin', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id",
                     Long.class, slug, siteName, siteType, logoSvg, slogan, toJson(tokens), toJson(layout)
             );
+            return newSiteId;
         } catch (Exception e) {
             log.info("SyncShop 멀티사이트 자동 프로비저닝 기본 ID 대체 (slug={}): {}", slug, e.getMessage());
             return 2L;
@@ -2074,6 +2138,195 @@ public class KkumzService {
         return "COMMERCE";
     }
 
+    private String detectDomainKey(String text) {
+        if (text == null) {
+            return "LIFESTYLE";
+        }
+        String t = text.toLowerCase(Locale.ROOT);
+        if (t.contains("커피") || t.contains("원두") || t.contains("로스터") || t.contains("브루잉") || t.contains("드립") || t.contains("에스프레소") || t.contains("bean") || t.contains("coffee")) {
+            return "COFFEE";
+        }
+        if (t.contains("말차") || t.contains("녹차") || t.contains("다도") || t.contains("티룸") || t.contains("matcha") || t.contains("tea") || t.contains("보태니컬")) {
+            return "TEA";
+        }
+        if (t.contains("데스크") || t.contains("키보드") || t.contains("모니터") || t.contains("테크") || t.contains("오빗") || t.contains("가젯") || t.contains("워크스테이션") || t.contains("desk") || t.contains("orbit")) {
+            return "TECH";
+        }
+        if (t.contains("러닝") || t.contains("마라톤") || t.contains("크루") || t.contains("피트니스") || t.contains("요가") || t.contains("필라테스") || t.contains("트레이닝") || t.contains("run")) {
+            return "FITNESS";
+        }
+        if (t.contains("비건") || t.contains("스킨케어") || t.contains("화장품") || t.contains("뷰티") || t.contains("퍼퓸") || t.contains("아로마") || t.contains("코스메틱")) {
+            return "BEAUTY";
+        }
+        if (t.contains("베이커리") || t.contains("디저트") || t.contains("구움과자") || t.contains("빵") || t.contains("그로서리") || t.contains("미식") || t.contains("와인")) {
+            return "BAKERY";
+        }
+        if (t.contains("패션") || t.contains("어패럴") || t.contains("의류") || t.contains("스트릿") || t.contains("가방") || t.contains("주얼리")) {
+            return "FASHION";
+        }
+        return "LIFESTYLE";
+    }
+
+    private String resolveDomainKoKeyword(String domain, String prompt) {
+        return switch (domain) {
+            case "COFFEE" -> "빈 크로니클";
+            case "TEA" -> "말차 아뜰리에";
+            case "TECH" -> "데스크 오빗";
+            case "FITNESS" -> "서울 런 클럽";
+            case "BEAUTY" -> "보태니컬 듀";
+            case "BAKERY" -> "메종 드 크럼브";
+            case "FASHION" -> "아카이브 느와르";
+            default -> extractCoreKeyword(prompt);
+        };
+    }
+
+    private String resolveDomainEngKeyword(String domain, String hint) {
+        if (hint != null && hint.matches(".*[a-zA-Z]{3,}.*")) {
+            return hint.replaceAll("[^a-zA-Z0-9\\s]", "").trim();
+        }
+        return switch (domain) {
+            case "COFFEE" -> "Bean";
+            case "TEA" -> "Matcha";
+            case "TECH" -> "Desk";
+            case "FITNESS" -> "Run";
+            case "BEAUTY" -> "Dew";
+            case "BAKERY" -> "Maison";
+            case "FASHION" -> "Noir";
+            default -> "Atelier";
+        };
+    }
+
+    private String toLogoDisplayText(String brandName, String slugSource) {
+        if (brandName != null && brandName.matches("^[A-Za-z0-9\\s\\-&.]+$")) {
+            String trimmed = brandName.trim().toUpperCase(Locale.ROOT);
+            return trimmed.length() > 15 ? trimmed.substring(0, 15) : trimmed;
+        }
+        if (slugSource != null && !slugSource.isBlank()) {
+            String fromSlug = slugSource.replace("-", " ").trim().toUpperCase(Locale.ROOT);
+            if (!fromSlug.isBlank() && !fromSlug.startsWith("KKUMZ ")) {
+                return fromSlug.length() > 15 ? fromSlug.substring(0, 15) : fromSlug;
+            }
+        }
+        if (brandName == null || brandName.isBlank()) {
+            return "KKUMZ STUDIO";
+        }
+        return brandName.length() > 10 ? brandName.substring(0, 10) : brandName;
+    }
+
+    private String[][] buildDomainNameTemplates(String domain, String hint, String engBase, String slugBase) {
+        String cleanHint = hint.replace(" 아뜰리에", "").replace(" 크로니클", "").replace(" 오빗", "").trim();
+        if (cleanHint.isBlank()) {
+            cleanHint = hint;
+        }
+        return new String[][]{
+                {cleanHint + " 아뜰리에", slugBase + "-atelier", engBase + " Atelier", "장인정신과 모던 라이프스타일 큐레이션의 가치를 담은 대표 프리미엄 네이밍입니다.", "99"},
+                {cleanHint + " 크로니클", slugBase + "-chronicle", engBase + " Chronicle", "원산지부터 사용자 경험까지의 진정성 있는 기록을 강조한 에디토리얼 브랜드명입니다.", "97"},
+                {cleanHint + " 오빗", slugBase + "-orbit", engBase + " Orbit", "고객의 일상과 몰입의 궤도를 완벽하게 연결한다는 감각적인 스토리를 담았습니다.", "95"},
+                {"아카이브 " + cleanHint, "archive-" + slugBase, "Archive " + engBase, "엄선된 컬렉션과 깊이 있는 커뮤니티 매거진 감성을 동시에 전달합니다.", "94"},
+                {cleanHint + " 콜렉티브", slugBase + "-collective", engBase + " Collective", "크리에이터와 소비자가 함께 취향을 공유하는 젊은 커뮤니티형 브랜드명입니다.", "92"},
+                {"스튜디오 " + cleanHint, "studio-" + slugBase, "Studio " + engBase, "직관적이고 기억하기 쉬운 모던 디자인 하우스 스타일의 네이밍입니다.", "91"},
+                {cleanHint + " 리추얼", slugBase + "-ritual", engBase + " Ritual", "매일 반복되는 일상을 특별한 감각의 루틴으로 바꾸어 주는 브랜드 철학을 담았습니다.", "90"},
+                {"메종 " + cleanHint + " 서울", "maison-" + slugBase, "Maison " + engBase + " Seoul", "서울의 감각적인 큐레이션과 하이엔드 브랜드 경험을 상징하는 시그니처 네이밍입니다.", "89"}
+        };
+    }
+
+    private Map<String, Object> buildDomainFallbackCommerce(Long shopSiteId, String siteName, String slogan, String domain) {
+        List<Map<String, Object>> products = switch (domain) {
+            case "COFFEE" -> List.of(
+                    Map.of("id", 401L, "name", "콜롬비아 엘 파라이소 96시간 무산소 발효 게이샤 원두 (200g)", "pic", "/images/studio/prod-balmuda-brew.jpg", "price", 36000, "promotionPrice", 31500, "subTitle", "백도 복숭아, 자스민, 열대과일 노트의 직교역 스페셜티 마이크로랏", "stock", 75, "unit", "팩", "brandName", siteName, "productCategoryName", "싱글오리진 원두"),
+                    Map.of("id", 402L, "name", "에티오피아 예가체프 아리차 내추럴 드립백 기프트 박스 (12입)", "pic", "/images/studio/ed-1.jpg", "price", 26000, "promotionPrice", 21900, "subTitle", "베르가못과 블루베리 향미를 언제 어디서나 간편하게 즐기는 드립백", "stock", 140, "unit", "박스", "brandName", siteName, "productCategoryName", "드립백 & 캡슐"),
+                    Map.of("id", 403L, "name", "발뮤다 더 브루 스페셜티 정밀 드립 커피머신 (로스터리 에디션)", "pic", "/images/studio/prod-balmuda-brew.jpg", "price", 599000, "promotionPrice", 539000, "subTitle", "정밀 온도 제어와 바이패스 추출 기술로 완성하는 클린컵 브루어", "stock", 18, "unit", "대", "brandName", siteName, "productCategoryName", "브루잉 기어"),
+                    Map.of("id", 404L, "name", "펠로우 오드 브루 그라인더 Gen 2 (64mm 플랫버 탑재)", "pic", "/images/studio/ed-6.jpg", "price", 490000, "promotionPrice", 445000, "subTitle", "싱글오리진 필터 브루잉에 최적화된 31단계 정밀 분쇄 그라인더", "stock", 24, "unit", "대", "brandName", siteName, "productCategoryName", "브루잉 기어")
+            );
+            case "TEA" -> List.of(
+                    Map.of("id", 201L, "name", "제주 첫물 유기농 세레모니얼 말차 틴케이스 (100g)", "pic", "/images/studio/ed-5.jpg", "price", 42000, "promotionPrice", 36900, "subTitle", "15일 차광 재배 찻잎을 맷돌로 정밀 분쇄한 최상급 다도용 말차", "stock", 90, "unit", "캔", "brandName", siteName, "productCategoryName", "세레모니얼 말차"),
+                    Map.of("id", 202L, "name", "한라산 야생 화산암반 우전 녹차 잎차 에디션 (80g)", "pic", "/images/studio/ed-1.jpg", "price", 38000, "promotionPrice", 33000, "subTitle", "곡우 전 수확한 여린 찻잎의 은은한 감칠맛과 깔끔한 피니시", "stock", 65, "unit", "박스", "brandName", siteName, "productCategoryName", "싱글오리진 잎차"),
+                    Map.of("id", 203L, "name", "수제 백자 다완 & 대나무 백본 차선 다도 스타터 키트", "pic", "/images/studio/prod-balmuda-brew.jpg", "price", 68000, "promotionPrice", 58000, "subTitle", "집에서도 정통 말차 격불을 경험할 수 있는 프리미엄 다구 세트", "stock", 40, "unit", "세트", "brandName", siteName, "productCategoryName", "다도 기프트"),
+                    Map.of("id", 204L, "name", "제주 호지차 로스티드 밀크티 베이스 원액 (500ml)", "pic", "/images/studio/ed-6.jpg", "price", 24000, "promotionPrice", 19800, "subTitle", "우유만 부으면 완성되는 구수하고 깊은 풍미의 무설탕 호지차 베이스", "stock", 110, "unit", "병", "brandName", siteName, "productCategoryName", "티 베리에이션")
+            );
+            case "TECH" -> List.of(
+                    Map.of("id", 301L, "name", "풀 알루미늄 CNC 가스켓 커스텀 기계식 키보드 75% 베어본", "pic", "/images/studio/prod-keychron-q1.jpg", "price", 249000, "promotionPrice", 219000, "subTitle", "QMK/VIA 완벽 지원 및 더블 가스켓 마운트로 완성한 도각거리는 타건감", "stock", 45, "unit", "대", "brandName", siteName, "productCategoryName", "커스텀 키보드"),
+                    Map.of("id", 302L, "name", "모듈러 마그네틱 월넛 모니터 받침대 & 맥세이프 충전 독 세트", "pic", "/images/studio/prod-caldigit-ts4.jpg", "price", 168000, "promotionPrice", 142000, "subTitle", "북미산 호두나무 원목과 마그네틱 트레이로 완성하는 데스크테리어", "stock", 60, "unit", "세트", "brandName", siteName, "productCategoryName", "데스크 모듈"),
+                    Map.of("id", 303L, "name", "비대칭 광학 눈부심 방지 무선 컨트롤 모니터 라이트바 Pro", "pic", "/images/studio/prod-lg-32un880.jpg", "price", 129000, "promotionPrice", 109000, "subTitle", "화면 반사 없이 책상 위만 선명하게 비추는 Ra97 고연색성 워크 라이트", "stock", 85, "unit", "대", "brandName", siteName, "productCategoryName", "조명 & 액세서리"),
+                    Map.of("id", 304L, "name", "천연 메리노 울 펠트 & 비건 레더 양면 데스크 매트 (900x400)", "pic", "/images/studio/ed-6.jpg", "price", 54000, "promotionPrice", 45000, "subTitle", "정밀한 마우스 트래킹과 포근한 손목 쿠션감을 동시에 제공하는 매트", "stock", 130, "unit", "매", "brandName", siteName, "productCategoryName", "데스크 모듈")
+            );
+            case "BEAUTY" -> List.of(
+                    Map.of("id", 501L, "name", "제주 비자나무 & 시카 카밍 배리어 비건 세럼 (50ml)", "pic", "/images/studio/ed-5.jpg", "price", 44000, "promotionPrice", 36000, "subTitle", "민감성 피부 장벽을 편안하게 진정시키는 저분자 비건 액티브 앰플", "stock", 95, "unit", "병", "brandName", siteName, "productCategoryName", "스킨케어"),
+                    Map.of("id", 502L, "name", "피토 세라마이드 딥 모이스처 리차징 크림 (70ml)", "pic", "/images/studio/ed-1.jpg", "price", 48000, "promotionPrice", 39900, "subTitle", "끈적임 없이 72시간 수분 보호막을 유지하는 클린 뷰티 보습 크림", "stock", 80, "unit", "개", "brandName", siteName, "productCategoryName", "스킨케어"),
+                    Map.of("id", 503L, "name", "보태니컬 우디 & 베르가못 릴렉싱 오 드 퍼퓸 (50ml)", "pic", "/images/studio/prod-balmuda-brew.jpg", "price", 89000, "promotionPrice", 76000, "subTitle", "비 온 뒤 숲속의 젖은 이끼와 시트러스 잔향을 담은 시그니처 향수", "stock", 50, "unit", "병", "brandName", siteName, "productCategoryName", "프래그런스")
+            );
+            default -> List.of(
+                    Map.of("id", 101L, "name", siteName + " 시그니처 플래그십 에디션", "pic", "/images/studio/prod-balmuda-brew.jpg", "price", 49000, "promotionPrice", 42000, "subTitle", slogan, "stock", 85, "unit", "세트", "brandName", siteName, "productCategoryName", "시그니처 컬렉션"),
+                    Map.of("id", 102L, "name", siteName + " 프레스티지 기프트 패키지", "pic", "/images/studio/ed-5.jpg", "price", 79000, "promotionPrice", 68000, "subTitle", "전용 선물 포장 및 커스텀 메시지 카드 포함", "stock", 60, "unit", "박스", "brandName", siteName, "productCategoryName", "기프트 에디션"),
+                    Map.of("id", 103L, "name", siteName + " 데일리 스타터 팩", "pic", "/images/studio/ed-1.jpg", "price", 32000, "promotionPrice", 27900, "subTitle", "일상 속에서 부담 없이 시작하는 베스트셀러", "stock", 120, "unit", "개", "brandName", siteName, "productCategoryName", "스타터 라인")
+            );
+        };
+        return Map.of(
+                "shopSiteId", shopSiteId != null ? shopSiteId : 2L,
+                "banners", List.of(Map.of("id", 1L, "name", siteName + " 공식 런칭 기획전", "pic", "/images/studio/banner-acoustic-lounge.jpg", "note", slogan)),
+                "categories", List.of(
+                        Map.of("id", 1L, "name", "시그니처 컬렉션", "productCount", products.size()),
+                        Map.of("id", 2L, "name", "기프트 & 베스트", "productCount", 2)
+                ),
+                "products", products,
+                "coupons", List.of(Map.of("id", 1L, "name", siteName + " 첫 구매 5,000원 웰컴 쿠폰", "amount", 5000, "minPoint", 30000, "code", "WELCOME-5K"))
+        );
+    }
+
+    private Map<String, Object> buildDomainFallbackCms(Long cmsSiteId, String siteName, String slogan, String domain) {
+        List<Map<String, Object>> fallbackArticles = List.of(
+                Map.of(
+                        "id", 201L,
+                        "title", "[브랜드 스토리] " + siteName + " 공식 런칭 및 디렉터 인터뷰",
+                        "author", "브랜드 에디터",
+                        "description", slogan,
+                        "summary", slogan,
+                        "bodyHtml", "<p>" + escapeXml(slogan) + "</p><p>엄선된 원료와 디자인 철학으로 완성된 시그니처 컬렉션의 탄생 비하인드를 소개합니다.</p>",
+                        "categoryName", "브랜드 저널",
+                        "cover", "/images/studio/ed-5.jpg",
+                        "clicks", 420,
+                        "viewCount", 420
+                ),
+                Map.of(
+                        "id", 202L,
+                        "title", "[큐레이션 가이드] " + siteName + " 시그니처 라인업 200% 활용법 & 오프라인 세션 안내",
+                        "author", "커뮤니티 매니저",
+                        "description", "초기 멤버를 위한 오프라인 쇼룸 클래스 및 온라인 커뮤니티 참여 안내 가이드입니다.",
+                        "summary", "초기 멤버를 위한 오프라인 쇼룸 클래스 및 온라인 커뮤니티 참여 안내 가이드입니다.",
+                        "bodyHtml", "<p>매주 주말 진행되는 프라이빗 체험 클래스와 B2B 파트너십 프로그램 일정을 확인하고 온라인으로 간편하게 신청하세요.</p>",
+                        "categoryName", "커뮤니티 가이드",
+                        "cover", "/images/studio/ed-1.jpg",
+                        "clicks", 315,
+                        "viewCount", 315
+                )
+        );
+        String formTitle = "COFFEE".equals(domain)
+                ? siteName + " 주말 프라이빗 커핑 클래스 & 원두 납품 신청"
+                : ("FITNESS".equals(domain) ? siteName + " 정규 러닝 세션 참가 신청서" : siteName + " 온라인 클래스 예약 및 제휴 문의");
+        List<Map<String, Object>> fallbackForms = List.of(
+                Map.of(
+                        "id", 101L,
+                        "code", "online-apply",
+                        "title", formTitle,
+                        "formName", formTitle,
+                        "description", "아래 양식을 작성해 제출해 주시면 담당 매니저가 빠르게 안내해 드립니다.",
+                        "fields", List.of(
+                                Map.of("field", "applicantName", "label", "신청자 성명", "type", "text", "required", true),
+                                Map.of("field", "phone", "label", "연락처", "type", "tel", "required", true),
+                                Map.of("field", "optionValue", "label", "신청 프로그램", "type", "select", "options", List.of("정규 세션/클래스 참여 신청", "파트너십 및 제휴 문의"), "required", true)
+                        )
+                )
+        );
+        return Map.of(
+                "cmsSiteId", cmsSiteId != null ? cmsSiteId : 101L,
+                "categories", List.of(Map.of("id", 1, "name", siteName + " 매거진 & 소식", "code", "news")),
+                "articles", fallbackArticles,
+                "banners", List.of(Map.of("id", 1, "title", siteName + " 공식 커뮤니티 오픈", "subTitle", slogan, "imageUrl", "/images/studio/banner-urban-techwear.jpg")),
+                "forms", fallbackForms,
+                "recentSubmissions", List.of()
+        );
+    }
+
     private String extractCoreKeyword(String prompt) {
         if (prompt == null || prompt.isBlank()) {
             return "아뜰리에";
@@ -2136,14 +2389,18 @@ public class KkumzService {
         list.add(Map.of(
                 "screenKey", "HERO_SECTION",
                 "title", "브랜드 시그니처 히어로 & 핵심 슬로건 배너",
+                "routePath", "/",
                 "layout", "SPLIT_SHOWCASE",
+                "description", "브랜드 로고, 시그니처 컬러 테마 배너 및 핵심 가치 슬로건을 전면에 배치하여 첫인상을 완성합니다.",
                 "components", List.of("BrandSvgLogoHeader", "HeroBannerCarousel", "AiConciergeTrigger")
         ));
         if ("COMMERCE".equals(siteType) || "HYBRID".equals(siteType)) {
             list.add(Map.of(
                     "screenKey", "COMMERCE_CATALOG",
-                    "title", "상품 카탈로그 & 원클릭 장바구니/주문",
+                    "title", "시그니처 상품 카탈로그 & 원클릭 주문",
+                    "routePath", "/shop",
                     "layout", "FILTERABLE_3COL_GRID",
+                    "description", "카테고리별 필터링, 웰컴 할인 쿠폰 적용 및 장바구니·원클릭 즉시 결제 모달을 제공합니다.",
                     "components", List.of("CategoryFilterPills", "ProductCardGrid", "InstantCheckoutModal")
             ));
         }
@@ -2151,7 +2408,9 @@ public class KkumzService {
             list.add(Map.of(
                     "screenKey", "EDITORIAL_AND_FORM",
                     "title", "브랜드 아카이브 저널 & 온라인 참가/문의 신청 폼",
+                    "routePath", "/journal",
                     "layout", "EDITORIAL_MAGAZINE_LAYOUT",
+                    "description", "깊이 있는 브랜드 스토리 아티클 열람과 오프라인 클래스·세션 온라인 신청 폼을 연결합니다.",
                     "components", List.of("ArticleStoryGrid", "OnlineApplicationForm")
             ));
         }

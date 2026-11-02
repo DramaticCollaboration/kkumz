@@ -56,7 +56,7 @@
   const [registerModal, { openModal }] = useModal();
 
   const [registerTable, { reload }] = useTable({
-    title: 'AI 프롬프트 템플릿 & 브랜드 금지어 필터 관리',
+    title: '프롬프트·금지어 설정',
     api: getAdminPromptList,
     rowKey: 'id',
     useSearchForm: true,
