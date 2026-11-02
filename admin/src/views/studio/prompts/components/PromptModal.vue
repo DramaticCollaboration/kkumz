@@ -39,11 +39,12 @@
         defaultValue: 'NAMING',
         componentProps: {
           options: [
-            { label: '브랜드 네이밍 (NAMING)', value: 'NAMING' },
-            { label: '벡터 SVG 로고 (LOGO_SVG)', value: 'LOGO_SVG' },
-            { label: '마크다운 기능명세서 (FRS_SPEC)', value: 'FRS_SPEC' },
-            { label: '대화형 프리뷰 수정 (CHAT_REFINE)', value: 'CHAT_REFINE' },
-            { label: 'WebIDE 빌드 패치 (WEBIDE_FIX)', value: 'WEBIDE_FIX' },
+            { label: '브랜드 네이밍', value: 'NAMING' },
+            { label: '벡터 SVG 로고', value: 'LOGO_SVG' },
+            { label: '마크다운 기능명세서', value: 'SPEC_FRS' },
+            { label: '대화형 프리뷰 수정', value: 'CHAT_REFINE' },
+            { label: '사이트 컨시어지 상담', value: 'CONCIERGE' },
+            { label: 'WebIDE 빌드 패치', value: 'BUILD_FIX' },
           ],
         },
         colProps: { span: 12 },
@@ -60,7 +61,6 @@
         label: 'AI 모델명',
         component: 'Input',
         required: true,
-        defaultValue: 'sync-llm-sonnet-4.5',
         colProps: { span: 8 },
       },
       {
@@ -93,8 +93,8 @@
         defaultValue: 'ACTIVE',
         componentProps: {
           options: [
-            { label: '활성 (ACTIVE)', value: 'ACTIVE' },
-            { label: '비활성 (INACTIVE)', value: 'INACTIVE' },
+            { label: '활성', value: 'ACTIVE' },
+            { label: '비활성', value: 'INACTIVE' },
           ],
         },
         colProps: { span: 8 },

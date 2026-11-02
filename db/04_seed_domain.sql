@@ -96,4 +96,32 @@ INSERT INTO kkumz_ai_prompt_template (
     'ACTIVE',
     'admin',
     'admin'
+),
+(
+    'tpl-kkumz-005',
+    'SITE_CONCIERGE_CHAT',
+    '멀티사이트 AI 브랜드 컨시어지 상담 에이전트',
+    'CONCIERGE',
+    'qwen-plus',
+    0.60,
+    '당신은 브랜드 사이트 전용 AI 컨시어지입니다. 제공된 사이트 정보, 상품 목록, 매거진 아티클 데이터를 바탕으로 방문객의 질문에 친절하고 정확하게 한국어로 답변하십시오.',
+    '사이트명: {{siteName}} / 슬로건: {{brandSlogan}} / 질문: {{question}}',
+    '[]'::jsonb,
+    'ACTIVE',
+    'admin',
+    'admin'
+),
+(
+    'tpl-kkumz-006',
+    'STUDIO_CHAT_REFINE',
+    '스튜디오 대화형 테마·레이아웃 리파인 에이전트',
+    'CHAT_REFINE',
+    'qwen-plus',
+    0.40,
+    '당신은 웹사이트 UI/UX 디자인 토큰 및 레이아웃 스키마 편집 에이전트입니다. 사용자의 자연어 수정 지시를 해석하여 primary, secondary, accent, surface 컬러 토큰과 heroTitle, heroSubtitle, ctaText, customBadge 레이아웃 속성을 JSON 객체로 반환하십시오.',
+    '현재 토큰: {{tokensJson}} / 현재 레이아웃: {{layoutJson}} / 사용자 요청: {{instruction}}',
+    '[]'::jsonb,
+    'ACTIVE',
+    'admin',
+    'admin'
 );

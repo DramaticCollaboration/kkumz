@@ -1,5 +1,6 @@
 package com.empasy.sync.kkumz.system;
 
+import cn.hutool.crypto.digest.BCrypt;
 import com.empasy.sync.kkumz.system.KkumzSystemDTO.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,33 +27,48 @@ public class KkumzSystemService {
 
     private String normalizeUsername(String raw) {
         if (raw == null || raw.isBlank()) {
-            return "admin";
+            throw new IllegalArgumentException("사용자 계정 식별자(username)가 누락되었습니다.");
         }
-        String trimmed = raw.trim();
-        if ("moderator".equalsIgnoreCase(trimmed)) {
-            return "moderator.kim";
-        }
-        return trimmed;
+        return raw.trim();
     }
 
     public Map<String, Object> login(LoginRequest req) {
-        String username = normalizeUsername(req != null ? req.getUsername() : null);
+        if (req == null || req.getUsername() == null || req.getUsername().isBlank()) {
+            throw new IllegalArgumentException("로그인 아이디(username)는 필수입니다.");
+        }
+        if (req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new IllegalArgumentException("로그인 비밀번호(password)는 필수입니다.");
+        }
+        String username = normalizeUsername(req.getUsername());
         List<Map<String, Object>> users = jdbcTemplate.queryForList(
-                "SELECT id, username, realname, avatar, email, phone, org_code AS \"orgCode\", status " +
+                "SELECT id, username, realname, password, avatar, email, phone, org_code AS \"orgCode\", status " +
                 "FROM sys_user WHERE username = ? AND del_flag = 0 LIMIT 1",
                 username
         );
         if (users.isEmpty()) {
-            users = jdbcTemplate.queryForList(
-                    "SELECT id, username, realname, avatar, email, phone, org_code AS \"orgCode\", status " +
-                    "FROM sys_user WHERE del_flag = 0 ORDER BY create_time ASC LIMIT 1"
-            );
-        }
-        if (users.isEmpty()) {
-            throw new IllegalArgumentException("로그인 가능한 계정을 찾을 수 없습니다: " + username);
+            throw new IllegalArgumentException("존재하지 않는 사용자 계정입니다: " + username);
         }
         Map<String, Object> user = new LinkedHashMap<>(users.get(0));
-        user.put("homePath", "/dashboard/analysis");
+        String storedHash = user.remove("password") != null ? String.valueOf(users.get(0).get("password")) : "";
+        if (storedHash.startsWith("$2")) {
+            if (!BCrypt.checkpw(req.getPassword(), storedHash)) {
+                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            }
+        } else if (!storedHash.isBlank() && !storedHash.equals(req.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        List<Map<String, Object>> firstMenu = jdbcTemplate.queryForList("""
+                SELECT p.url
+                FROM sys_permission p
+                JOIN sys_role_permission rp ON rp.permission_id = p.id
+                JOIN sys_user_role ur ON ur.role_id = rp.role_id
+                WHERE ur.user_id = ? AND p.del_flag = 0 AND p.status = 1 AND p.menu_type = 1
+                ORDER BY p.sort_no ASC
+                LIMIT 1
+                """, user.get("id"));
+        String homePath = !firstMenu.isEmpty() ? String.valueOf(firstMenu.get(0).get("url")) : "/dashboard/analysis";
+        user.put("homePath", homePath);
 
         String token = "kkumz-jwt-token-" + user.get("username") + "-" + System.currentTimeMillis();
         Map<String, Object> res = new LinkedHashMap<>();
@@ -69,16 +86,10 @@ public class KkumzSystemService {
                 username
         );
         if (users.isEmpty()) {
-            users = jdbcTemplate.queryForList(
-                    "SELECT id, username, realname, avatar, email, phone, org_code AS \"orgCode\", status " +
-                    "FROM sys_user WHERE del_flag = 0 ORDER BY create_time ASC LIMIT 1"
-            );
+            throw new IllegalArgumentException("존재하지 않는 사용자 계정입니다: " + username);
         }
-        Map<String, Object> user = users.isEmpty()
-                ? new LinkedHashMap<>(Map.of("id", "user_admin_001", "username", "admin", "realname", "꿈즈 최고관리자"))
-                : new LinkedHashMap<>(users.get(0));
+        Map<String, Object> user = new LinkedHashMap<>(users.get(0));
         user.put("userId", user.get("id"));
-        user.put("homePath", "/dashboard/analysis");
         user.put("roles", getUserRoles(String.valueOf(user.get("id"))));
 
         Map<String, Object> res = new LinkedHashMap<>(user);
@@ -113,17 +124,6 @@ public class KkumzSystemService {
                 "ORDER BY p.sort_no ASC, p.id ASC",
                 username
         );
-        if (allPerms.isEmpty()) {
-            allPerms = jdbcTemplate.queryForList(
-                    "SELECT p.id, p.parent_id AS \"parentId\", p.name, p.url, p.component, p.component_name AS \"componentName\", " +
-                    "p.redirect, p.menu_type AS \"menuType\", p.perms, p.sort_no AS \"sortNo\", p.icon, " +
-                    "p.is_route AS \"isRoute\", p.is_leaf AS \"isLeaf\", p.keep_alive AS \"keepAlive\", " +
-                    "p.hidden, p.status " +
-                    "FROM sys_permission p " +
-                    "WHERE p.del_flag = 0 AND p.status = 1 " +
-                    "ORDER BY p.sort_no ASC, p.id ASC"
-            );
-        }
 
         List<Map<String, Object>> menuItems = new ArrayList<>();
         List<Map<String, Object>> authItems = new ArrayList<>();
@@ -239,18 +239,22 @@ public class KkumzSystemService {
             jdbcTemplate.update(
                     "UPDATE sys_user SET realname = ?, email = ?, phone = ?, org_code = ?, status = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
                     req.getRealname(), req.getEmail(), req.getPhone(),
-                    req.getOrgCode() != null ? req.getOrgCode() : "A01",
+                    req.getOrgCode() != null ? req.getOrgCode() : "KKUMZ",
                     req.getStatus() != null ? req.getStatus() : 1,
                     userId
             );
         } else {
+            String rawPw = (req.getPassword() != null && !req.getPassword().isBlank()) ? req.getPassword().trim() : UUID.randomUUID().toString();
+            String hashedPw = BCrypt.hashpw(rawPw, BCrypt.gensalt(10));
+            String salt = UUID.randomUUID().toString().substring(0, 8);
             jdbcTemplate.update(
                     "INSERT INTO sys_user (id, username, realname, password, salt, email, phone, org_code, status, del_flag, create_by, create_time) " +
-                    "VALUES (?, ?, ?, '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'kkumz_salt', ?, ?, ?, ?, 0, 'admin', CURRENT_TIMESTAMP)",
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'admin', CURRENT_TIMESTAMP)",
                     userId, req.getUsername().trim(),
                     req.getRealname() != null ? req.getRealname().trim() : req.getUsername().trim(),
+                    hashedPw, salt,
                     req.getEmail(), req.getPhone(),
-                    req.getOrgCode() != null ? req.getOrgCode() : "A01",
+                    req.getOrgCode() != null ? req.getOrgCode() : "KKUMZ",
                     req.getStatus() != null ? req.getStatus() : 1
             );
         }
@@ -530,12 +534,19 @@ public class KkumzSystemService {
     }
 
     private Map<String, Object> toPageResult(List<Map<String, Object>> allRecords, int pageNo, int pageSize) {
+        int safePageNo = Math.max(1, pageNo);
+        int safePageSize = Math.max(1, pageSize);
+        int total = allRecords != null ? allRecords.size() : 0;
+        int fromIndex = (safePageNo - 1) * safePageSize;
+        List<Map<String, Object>> pagedRecords = (allRecords == null || fromIndex >= total)
+                ? Collections.emptyList()
+                : allRecords.subList(fromIndex, Math.min(fromIndex + safePageSize, total));
         Map<String, Object> page = new LinkedHashMap<>();
-        page.put("records", allRecords);
-        page.put("items", allRecords);
-        page.put("total", allRecords.size());
-        page.put("current", pageNo);
-        page.put("size", pageSize);
+        page.put("records", pagedRecords);
+        page.put("items", pagedRecords);
+        page.put("total", total);
+        page.put("current", safePageNo);
+        page.put("size", safePageSize);
         return page;
     }
 }

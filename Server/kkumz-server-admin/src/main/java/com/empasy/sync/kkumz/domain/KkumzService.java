@@ -2,10 +2,12 @@ package com.empasy.sync.kkumz.domain;
 
 import com.empasy.sync.kkumz.domain.KkumzDTO.*;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -15,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,11 +26,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 /**
- * Kkumz(꿈즈) AI 브랜드·멀티사이트 생성기, 2-Track 하이브리드 배포,
- * SyncShop/SyncCMS 멀티사이트 실시간 연동, 창업 팀빌딩 커뮤니티 및 전용 Admin 백오피스 핵심 서비스
+ * Kkumz(꿈즈) 핵심 도메인 비즈니스 서비스
+ * - AI 브랜드·멀티사이트 빌더 (AgentScope Java + DB 프롬프트 템플릿 기반)
+ * - SyncShop / SyncCMS 멀티사이트 실데이터 연동 (Zero-Mock & Fail-Fast)
+ * - 창업 쇼케이스 피드, 팀원 모집/지원, 실시간 댓글 및 모더레이션
  */
 @Slf4j
 @Service
@@ -37,247 +40,326 @@ public class KkumzService {
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
+    private final ObjectProvider<KkumzAiGatewayService> aiGatewayProvider;
 
-    @Value("${kkumz.cross-db.shop-url:jdbc:postgresql://localhost:5432/sync_shop?currentSchema=public&stringtype=unspecified}")
+    private KkumzAiGatewayService aiGatewayService;
+
+    @Value("${kkumz.cross-db.shop-url:}")
     private String shopDbUrl;
 
-    @Value("${kkumz.cross-db.cms-url:jdbc:postgresql://localhost:5432/synccms?currentSchema=public&stringtype=unspecified}")
+    @Value("${kkumz.cross-db.cms-url:}")
     private String cmsDbUrl;
 
-    @Value("${kkumz.cross-db.username:syncadmin}")
+    @Value("${kkumz.cross-db.username:}")
     private String crossDbUsername;
 
-    @Value("${kkumz.cross-db.password:syncpass}")
+    @Value("${kkumz.cross-db.password:}")
     private String crossDbPassword;
 
     private JdbcTemplate shopJdbcTemplate;
     private JdbcTemplate cmsJdbcTemplate;
 
+    public KkumzService(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.objectMapper = objectMapper;
+        this.aiGatewayProvider = null;
+    }
+
     @PostConstruct
     public void initCrossDomainJdbcTemplates() {
-        try {
+        if (shopDbUrl != null && !shopDbUrl.isBlank() && crossDbUsername != null && !crossDbUsername.isBlank()) {
             DriverManagerDataSource shopDs = new DriverManagerDataSource(shopDbUrl, crossDbUsername, crossDbPassword);
             shopDs.setDriverClassName("org.postgresql.Driver");
             this.shopJdbcTemplate = new JdbcTemplate(shopDs);
-
+        }
+        if (cmsDbUrl != null && !cmsDbUrl.isBlank() && crossDbUsername != null && !crossDbUsername.isBlank()) {
             DriverManagerDataSource cmsDs = new DriverManagerDataSource(cmsDbUrl, crossDbUsername, crossDbPassword);
             cmsDs.setDriverClassName("org.postgresql.Driver");
             this.cmsJdbcTemplate = new JdbcTemplate(cmsDs);
-        } catch (Exception e) {
-            log.warn("Cross-domain JdbcTemplate 초기화 경고: {}", e.getMessage());
+        }
+        if (this.aiGatewayService == null) {
+            KkumzAiGatewayService provided = this.aiGatewayProvider != null ? this.aiGatewayProvider.getIfAvailable() : null;
+            this.aiGatewayService = provided != null ? provided : new KkumzAiGatewayService(this.jdbcTemplate, this.objectMapper, null);
         }
     }
 
     // =========================================================================
-    // 1. 아이디어 및 버전/화면설계 관리
+    // 0. 스튜디오 공통 사전 메타데이터 조회 (DB sys_dict / sys_dict_item 단일 원천)
+    // =========================================================================
+
+    public Map<String, Object> getStudioMetadata() {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+                SELECT d.dict_code AS "dictCode",
+                       i.item_text AS "itemText",
+                       i.item_value AS "itemValue",
+                       i.description AS "description",
+                       i.sort_order AS "sortOrder"
+                FROM sys_dict_item i
+                JOIN sys_dict d ON d.id = i.dict_id
+                WHERE d.del_flag = 0 AND i.status = 1
+                ORDER BY d.dict_code ASC, i.sort_order ASC
+                """);
+
+        Map<String, String> layoutLabels = new LinkedHashMap<>();
+        Map<String, String> componentLabels = new LinkedHashMap<>();
+        Map<String, String> roleLabels = new LinkedHashMap<>();
+        Map<String, String> siteTypeLabels = new LinkedHashMap<>();
+        List<Map<String, Object>> starterPresets = new ArrayList<>();
+
+        for (Map<String, Object> row : rows) {
+            String dictCode = String.valueOf(row.get("dictCode"));
+            String itemValue = String.valueOf(row.get("itemValue"));
+            String itemText = String.valueOf(row.get("itemText"));
+            String description = row.get("description") != null ? String.valueOf(row.get("description")) : "";
+
+            switch (dictCode) {
+                case "kkumz_layout_type" -> layoutLabels.put(itemValue, itemText);
+                case "kkumz_component_type" -> componentLabels.put(itemValue, itemText);
+                case "kkumz_recruit_role" -> roleLabels.put(itemValue, itemText);
+                case "kkumz_site_type" -> siteTypeLabels.put(itemValue, itemText);
+                case "kkumz_starter_preset" -> {
+                    Map<String, Object> preset = new LinkedHashMap<>(parseJsonObject(description));
+                    preset.put("code", itemValue);
+                    preset.put("title", itemText);
+                    starterPresets.add(preset);
+                }
+                default -> {
+                }
+            }
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("layoutLabels", layoutLabels);
+        result.put("componentLabels", componentLabels);
+        result.put("roleLabels", roleLabels);
+        result.put("siteTypeLabels", siteTypeLabels);
+        result.put("starterPresets", starterPresets);
+        return result;
+    }
+
+    // =========================================================================
+    // 1. 아이디어 & 버전 히스토리 & 화면설계 (Step 1 & Step 3)
     // =========================================================================
 
     public List<Map<String, Object>> listIdeas(String authorUsername, String siteType) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT i.id, i.author_username AS \"authorUsername\", i.author_display_name AS \"authorDisplayName\", " +
-                "i.title, i.prompt_text AS \"promptText\", i.site_type AS \"siteType\", i.category, " +
-                "i.tags_json::text AS \"tagsJson\", i.visibility, i.current_step AS \"currentStep\", " +
-                "i.selected_brand_name AS \"selectedBrandName\", i.selected_site_slug AS \"selectedSiteSlug\", " +
-                "i.selected_logo_svg AS \"selectedLogoSvg\", i.status, i.created_at AS \"createdAt\", i.updated_at AS \"updatedAt\", " +
-                "s.id AS \"siteId\", s.deployed_url AS \"deployedUrl\", s.deploy_mode AS \"deployMode\", s.active_version AS \"activeVersion\" " +
-                "FROM kkumz_idea i " +
-                "LEFT JOIN kkumz_site s ON s.idea_id = i.id WHERE 1=1 "
-        );
+        StringBuilder sql = new StringBuilder("""
+                SELECT id,
+                       author_username AS "authorUsername",
+                       author_display_name AS "authorDisplayName",
+                       title,
+                       prompt_text AS "promptText",
+                       site_type AS "siteType",
+                       category,
+                       tags_json::text AS "tagsJson",
+                       visibility,
+                       current_step AS "currentStep",
+                       selected_brand_name AS "selectedBrandName",
+                       selected_site_slug AS "selectedSiteSlug",
+                       selected_logo_svg AS "selectedLogoSvg",
+                       design_tokens_json::text AS "designTokensJson",
+                       spec_markdown AS "specMarkdown",
+                       screens_json::text AS "screensJson",
+                       status,
+                       created_at AS "createdAt",
+                       updated_at AS "updatedAt"
+                FROM kkumz_idea
+                WHERE 1=1
+                """);
         List<Object> params = new ArrayList<>();
         if (authorUsername != null && !authorUsername.isBlank()) {
-            sql.append(" AND i.author_username = ? ");
+            sql.append(" AND author_username = ?");
             params.add(authorUsername.trim());
         }
         if (siteType != null && !siteType.isBlank() && !"ALL".equalsIgnoreCase(siteType)) {
-            sql.append(" AND i.site_type = ? ");
+            sql.append(" AND site_type = ?");
             params.add(siteType.trim().toUpperCase(Locale.ROOT));
         }
-        sql.append(" ORDER BY i.updated_at DESC, i.created_at DESC ");
+        sql.append(" ORDER BY updated_at DESC");
 
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql.toString(), params.toArray());
-        for (Map<String, Object> row : rows) {
-            row.put("tags", parseJsonList(row.remove("tagsJson")));
-        }
-        return rows;
+        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        list.forEach(this::enrichIdeaRow);
+        return list;
     }
 
     @Transactional
     public Map<String, Object> createIdea(CreateIdeaRequest req) {
-        if (req.getPromptText() == null || req.getPromptText().isBlank()) {
-            throw new IllegalArgumentException("아이디어 프롬프트(promptText)는 필수입니다.");
+        if (req == null || req.getPromptText() == null || req.getPromptText().isBlank()) {
+            throw new IllegalArgumentException("창업 아이디어 프롬프트(promptText)는 필수 입력 항목입니다.");
         }
-        String ideaId = "idea-kkumz-" + UUID.randomUUID().toString().substring(0, 8);
-        String prompt = req.getPromptText().trim();
+        String promptText = req.getPromptText().trim();
+        String id = "idea-" + UUID.randomUUID().toString().substring(0, 8);
+        String siteType = (req.getSiteType() != null && !req.getSiteType().isBlank())
+                ? req.getSiteType().trim().toUpperCase(Locale.ROOT)
+                : "COMMERCE";
+        String category = (req.getCategory() != null && !req.getCategory().isBlank())
+                ? req.getCategory().trim().toUpperCase(Locale.ROOT)
+                : "FOOD_BEVERAGE";
         String title = (req.getTitle() != null && !req.getTitle().isBlank())
                 ? req.getTitle().trim()
-                : (prompt.length() > 42 ? prompt.substring(0, 42) + "..." : prompt);
-        String siteType = normalizeSiteType(req.getSiteType());
-        String category = (req.getCategory() != null && !req.getCategory().isBlank()) ? req.getCategory().trim() : "LIFESTYLE";
-        String visibility = (req.getVisibility() != null && !req.getVisibility().isBlank()) ? req.getVisibility().trim().toUpperCase(Locale.ROOT) : "PUBLIC";
-        String authorUser = (req.getAuthorUsername() != null && !req.getAuthorUsername().isBlank()) ? req.getAuthorUsername().trim() : "admin";
-        String authorName = (req.getAuthorDisplayName() != null && !req.getAuthorDisplayName().isBlank()) ? req.getAuthorDisplayName().trim() : "김도현 창업가";
-        String tagsJson = toJson(req.getTags() != null && !req.getTags().isEmpty() ? req.getTags() : List.of("AI브랜드빌더", category));
+                : summarizeTitle(promptText);
 
-        String initialSpec = buildDefaultMarkdownSpec(title, prompt, siteType, title);
-        List<Map<String, Object>> initialScreens = buildDefaultScreens(siteType);
+        Map<String, String> author = resolveUserIdentity(req.getAuthorUsername(), req.getAuthorDisplayName());
+        String authorUsername = author.get("username");
+        String authorDisplay = author.get("realname");
+        String visibility = (req.getVisibility() != null && !req.getVisibility().isBlank())
+                ? req.getVisibility().trim().toUpperCase(Locale.ROOT)
+                : "PUBLIC";
 
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_idea (id, author_username, author_display_name, title, prompt_text, site_type, " +
-                "category, tags_json, visibility, current_step, spec_markdown, screens_json, status, created_at, updated_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, 2, ?, ?::jsonb, 'DRAFT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-                ideaId, authorUser, authorName, title, prompt, siteType, category, tagsJson, visibility, initialSpec, toJson(initialScreens)
+        List<String> tags = (req.getTags() != null && !req.getTags().isEmpty())
+                ? req.getTags()
+                : List.of(category);
+
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_idea (
+                    id, author_username, author_display_name, title, prompt_text, site_type, category,
+                    tags_json, visibility, current_step, spec_markdown, screens_json, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, 2, ?, '[]'::jsonb, 'DRAFT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """,
+                id, authorUsername, authorDisplay, title, promptText, siteType, category,
+                toJson(tags), visibility, promptText
         );
 
-        String verId = "iver-" + ideaId + "-v1";
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_idea_version (id, idea_id, version_no, title, prompt_text, spec_markdown, screens_json, created_by, created_at) " +
-                "VALUES (?, ?, 1, ?, ?, ?, ?::jsonb, ?, CURRENT_TIMESTAMP)",
-                verId, ideaId, title, prompt, initialSpec, toJson(initialScreens), authorUser
+        String verId = "iver-" + id + "-v1";
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_idea_version (
+                    id, idea_id, version_no, title, prompt_text, spec_markdown, screens_json, created_by, created_at
+                ) VALUES (?, ?, 1, ?, ?, ?, '[]'::jsonb, ?, CURRENT_TIMESTAMP)
+                """,
+                verId, id, title + " (v1)", promptText, promptText, authorUsername
         );
 
-        syncScreenSpecsToTable(ideaId, initialScreens);
-        generateNameSuggestions(ideaId, null);
-        generateLogoSuggestions(ideaId, null);
-        return getIdeaDetail(ideaId);
+        return getIdeaDetail(id);
     }
 
     public Map<String, Object> getIdeaDetail(String ideaId) {
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT id, author_username AS \"authorUsername\", author_display_name AS \"authorDisplayName\", " +
-                "title, prompt_text AS \"promptText\", site_type AS \"siteType\", category, " +
-                "tags_json::text AS \"tagsJson\", visibility, current_step AS \"currentStep\", " +
-                "selected_brand_name AS \"selectedBrandName\", selected_site_slug AS \"selectedSiteSlug\", " +
-                "selected_logo_svg AS \"selectedLogoSvg\", design_tokens_json::text AS \"designTokensJson\", " +
-                "spec_markdown AS \"specMarkdown\", screens_json::text AS \"screensJson\", " +
-                "status, created_at AS \"createdAt\", updated_at AS \"updatedAt\" " +
-                "FROM kkumz_idea WHERE id = ? LIMIT 1",
-                ideaId
-        );
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+                SELECT id,
+                       author_username AS "authorUsername",
+                       author_display_name AS "authorDisplayName",
+                       title,
+                       prompt_text AS "promptText",
+                       site_type AS "siteType",
+                       category,
+                       tags_json::text AS "tagsJson",
+                       visibility,
+                       current_step AS "currentStep",
+                       selected_brand_name AS "selectedBrandName",
+                       selected_site_slug AS "selectedSiteSlug",
+                       selected_logo_svg AS "selectedLogoSvg",
+                       design_tokens_json::text AS "designTokensJson",
+                       spec_markdown AS "specMarkdown",
+                       screens_json::text AS "screensJson",
+                       status,
+                       created_at AS "createdAt",
+                       updated_at AS "updatedAt"
+                FROM kkumz_idea
+                WHERE id = ?
+                """, ideaId);
+
         if (rows.isEmpty()) {
             throw new IllegalArgumentException("존재하지 않는 아이디어 ID입니다: " + ideaId);
         }
+
         Map<String, Object> idea = new LinkedHashMap<>(rows.get(0));
-        idea.put("tags", parseJsonList(idea.remove("tagsJson")));
-        idea.put("designTokens", parseJsonMap(idea.remove("designTokensJson")));
-        idea.put("screens", parseJsonListOfMap(idea.remove("screensJson")));
+        enrichIdeaRow(idea);
 
-        List<Map<String, Object>> names = jdbcTemplate.queryForList(
-                "SELECT id, idea_id AS \"ideaId\", brand_name AS \"brandName\", site_slug AS \"siteSlug\", " +
-                "pronunciation, brand_story AS \"brandStory\", score, slug_available AS \"slugAvailable\", " +
-                "is_selected AS \"isSelected\", created_at AS \"createdAt\" " +
-                "FROM kkumz_name_suggestion WHERE idea_id = ? ORDER BY score DESC, id ASC",
-                ideaId
-        );
-        List<Map<String, Object>> logos = jdbcTemplate.queryForList(
-                "SELECT id, idea_id AS \"ideaId\", style_name AS \"styleName\", svg_code AS \"svgCode\", " +
-                "color_palette_json::text AS \"colorPaletteJson\", typography_json::text AS \"typographyJson\", " +
-                "tags_json::text AS \"tagsJson\", is_selected AS \"isSelected\", created_at AS \"createdAt\" " +
-                "FROM kkumz_logo_suggestion WHERE idea_id = ? ORDER BY is_selected DESC, id ASC",
-                ideaId
-        );
-        for (Map<String, Object> logo : logos) {
-            logo.put("colorPalette", parseJsonMap(logo.remove("colorPaletteJson")));
-            logo.put("typography", parseJsonMap(logo.remove("typographyJson")));
-            logo.put("tags", parseJsonList(logo.remove("tagsJson")));
-        }
-
-        List<Map<String, Object>> versions = jdbcTemplate.queryForList(
-                "SELECT id, idea_id AS \"ideaId\", version_no AS \"versionNo\", title, prompt_text AS \"promptText\", " +
-                "spec_markdown AS \"specMarkdown\", screens_json::text AS \"screensJson\", " +
-                "created_by AS \"createdBy\", created_at AS \"createdAt\" " +
-                "FROM kkumz_idea_version WHERE idea_id = ? ORDER BY version_no DESC",
-                ideaId
-        );
-        for (Map<String, Object> ver : versions) {
-            ver.put("screens", parseJsonListOfMap(ver.remove("screensJson")));
-        }
-
-        List<Map<String, Object>> siteRows = jdbcTemplate.queryForList(
-                "SELECT id, site_slug AS \"siteSlug\", site_name AS \"siteName\", site_type AS \"siteType\", " +
-                "brand_slogan AS \"brandSlogan\", shop_site_id AS \"shopSiteId\", cms_site_id AS \"cmsSiteId\", " +
-                "deploy_mode AS \"deployMode\", active_version AS \"activeVersion\", deployed_url AS \"deployedUrl\", " +
-                "custom_domain AS \"customDomain\", is_featured AS \"isFeatured\", status " +
-                "FROM kkumz_site WHERE idea_id = ? LIMIT 1",
-                ideaId
-        );
-
-        idea.put("logoSvg", idea.get("selectedLogoSvg"));
-        idea.put("siteSlug", idea.get("selectedSiteSlug"));
-        idea.put("currentVersionNo", versions.isEmpty() ? 1 : versions.get(0).get("versionNo"));
-        idea.put("nameSuggestions", names);
-        idea.put("logoSuggestions", logos);
+        List<Map<String, Object>> versions = jdbcTemplate.queryForList("""
+                SELECT id,
+                       idea_id AS "ideaId",
+                       version_no AS "versionNo",
+                       title,
+                       prompt_text AS "promptText",
+                       spec_markdown AS "specMarkdown",
+                       screens_json::text AS "screensJson",
+                       created_by AS "createdBy",
+                       created_at AS "createdAt"
+                FROM kkumz_idea_version
+                WHERE idea_id = ?
+                ORDER BY version_no DESC
+                """, ideaId);
+        versions.forEach(v -> v.put("screens", parseJsonList(String.valueOf(v.remove("screensJson")))));
         idea.put("versions", versions);
-        List<Map<String, Object>> screenSpecRows = listIdeaScreens(ideaId);
-        idea.put("screenSpecs", screenSpecRows);
-        if (!screenSpecRows.isEmpty()) {
-            idea.put("screens", screenSpecRows);
-        }
-        idea.put("site", siteRows.isEmpty() ? null : siteRows.get(0));
+
+        List<Map<String, Object>> names = jdbcTemplate.queryForList("""
+                SELECT id,
+                       idea_id AS "ideaId",
+                       brand_name AS "brandName",
+                       site_slug AS "siteSlug",
+                       pronunciation,
+                       brand_story AS "brandStory",
+                       score,
+                       slug_available AS "slugAvailable",
+                       is_selected AS "isSelected"
+                FROM kkumz_name_suggestion
+                WHERE idea_id = ?
+                ORDER BY score DESC, created_at ASC
+                """, ideaId);
+        idea.put("nameSuggestions", names);
+
+        List<Map<String, Object>> logos = jdbcTemplate.queryForList("""
+                SELECT id,
+                       idea_id AS "ideaId",
+                       style_name AS "styleName",
+                       svg_code AS "svgCode",
+                       color_palette_json::text AS "colorPaletteJson",
+                       typography_json::text AS "typographyJson",
+                       tags_json::text AS "tagsJson",
+                       is_selected AS "isSelected"
+                FROM kkumz_logo_suggestion
+                WHERE idea_id = ?
+                ORDER BY is_selected DESC, created_at ASC
+                """, ideaId);
+        logos.forEach(l -> {
+            l.put("colorPalette", parseJsonObject(String.valueOf(l.remove("colorPaletteJson"))));
+            l.put("typography", parseJsonObject(String.valueOf(l.remove("typographyJson"))));
+            l.put("tags", parseJsonList(String.valueOf(l.remove("tagsJson"))));
+        });
+        idea.put("logoSuggestions", logos);
+        idea.put("screenSpecs", listIdeaScreens(ideaId));
+
+        List<Map<String, Object>> sites = jdbcTemplate.queryForList("""
+                SELECT id,
+                       site_slug AS "siteSlug",
+                       site_name AS "siteName",
+                       site_type AS "siteType",
+                       deploy_mode AS "deployMode",
+                       active_version AS "activeVersion",
+                       deployed_url AS "deployedUrl",
+                       shop_site_id AS "shopSiteId",
+                       cms_site_id AS "cmsSiteId",
+                       status
+                FROM kkumz_site
+                WHERE idea_id = ?
+                ORDER BY created_at DESC
+                """, ideaId);
+        idea.put("deployedSites", sites);
+
         return idea;
-    }
-
-    public List<Map<String, Object>> listIdeaScreens(String ideaId) {
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT id, idea_id AS \"ideaId\", screen_key AS \"screenKey\", screen_key AS \"screenCode\", " +
-                "screen_title AS \"screenTitle\", screen_title AS \"screenName\", " +
-                "route_path AS \"routePath\", layout_type AS \"layoutType\", description, " +
-                "components_json::text AS \"componentsJson\", sort_no AS \"sortNo\", created_at AS \"createdAt\" " +
-                "FROM kkumz_screen_spec WHERE idea_id = ? ORDER BY sort_no ASC, id ASC",
-                ideaId
-        );
-        for (Map<String, Object> r : rows) {
-            r.put("components", parseJsonList(r.remove("componentsJson")));
-        }
-        return rows;
-    }
-
-    @Transactional
-    public List<Map<String, Object>> saveIdeaScreen(String ideaId, SaveScreenSpecRequest req) {
-        String id = (req.getId() != null && !req.getId().isBlank())
-                ? req.getId().trim()
-                : "scr-" + UUID.randomUUID().toString().substring(0, 8);
-        String key = (req.getScreenKey() != null && !req.getScreenKey().isBlank()) ? req.getScreenKey().trim() : "CUSTOM_SCREEN";
-        String title = (req.getScreenTitle() != null && !req.getScreenTitle().isBlank()) ? req.getScreenTitle().trim() : "신규 화면 섹션";
-        String route = (req.getRoutePath() != null && !req.getRoutePath().isBlank()) ? req.getRoutePath().trim() : "/section";
-        String layout = (req.getLayoutType() != null && !req.getLayoutType().isBlank()) ? req.getLayoutType().trim() : "STANDARD_GRID";
-        String comps = toJson(req.getComponents() != null ? req.getComponents() : List.of("HeroBanner", "ContentGrid"));
-        int sortNo = req.getSortNo() != null ? req.getSortNo() : 10;
-
-        Integer exists = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_screen_spec WHERE id = ?", Integer.class, id);
-        if (exists != null && exists > 0) {
-            jdbcTemplate.update(
-                    "UPDATE kkumz_screen_spec SET screen_key = ?, screen_title = ?, route_path = ?, layout_type = ?, " +
-                    "description = ?, components_json = ?::jsonb, sort_no = ? WHERE id = ?",
-                    key, title, route, layout, req.getDescription(), comps, sortNo, id
-            );
-        } else {
-            jdbcTemplate.update(
-                    "INSERT INTO kkumz_screen_spec (id, idea_id, screen_key, screen_title, route_path, layout_type, description, components_json, sort_no, created_at) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, CURRENT_TIMESTAMP)",
-                    id, ideaId, key, title, route, layout, req.getDescription(), comps, sortNo
-            );
-        }
-        return listIdeaScreens(ideaId);
     }
 
     @Transactional
     public Map<String, Object> saveOrRollbackIdeaVersion(String ideaId, SaveIdeaVersionRequest req) {
-        Map<String, Object> idea = getIdeaDetail(ideaId);
-        if (req.getRollbackToVersionNo() != null) {
-            List<Map<String, Object>> targetRows = jdbcTemplate.queryForList(
-                    "SELECT title, prompt_text, spec_markdown, screens_json::text AS screens_text " +
-                    "FROM kkumz_idea_version WHERE idea_id = ? AND version_no = ? LIMIT 1",
-                    ideaId, req.getRollbackToVersionNo()
-            );
+        Map<String, Object> current = getIdeaDetail(ideaId);
+
+        if (req.getRollbackToVersionNo() != null && req.getRollbackToVersionNo() > 0) {
+            List<Map<String, Object>> targetRows = jdbcTemplate.queryForList("""
+                    SELECT title, prompt_text AS "promptText", spec_markdown AS "specMarkdown", screens_json::text AS "screensJson"
+                    FROM kkumz_idea_version
+                    WHERE idea_id = ? AND version_no = ?
+                    """, ideaId, req.getRollbackToVersionNo());
             if (targetRows.isEmpty()) {
-                throw new IllegalArgumentException("롤백할 버전을 찾을 수 없습니다: v" + req.getRollbackToVersionNo());
+                throw new IllegalArgumentException("롤백 대상 버전을 찾을 수 없습니다: v" + req.getRollbackToVersionNo());
             }
             Map<String, Object> target = targetRows.get(0);
-            jdbcTemplate.update(
-                    "UPDATE kkumz_idea SET title = ?, prompt_text = ?, spec_markdown = ?, " +
-                    "screens_json = ?::jsonb, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                    target.get("title"), target.get("prompt_text"), target.get("spec_markdown"),
-                    target.get("screens_text"), ideaId
+            jdbcTemplate.update("""
+                    UPDATE kkumz_idea
+                    SET prompt_text = ?, spec_markdown = ?, screens_json = ?::jsonb, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """,
+                    target.get("promptText"),
+                    target.get("specMarkdown"),
+                    target.get("screensJson"),
+                    ideaId
             );
             return getIdeaDetail(ideaId);
         }
@@ -287,163 +369,230 @@ public class KkumzService {
                 Integer.class, ideaId
         );
         int nextVer = (maxVer != null ? maxVer : 0) + 1;
-        String title = req.getTitle() != null && !req.getTitle().isBlank() ? req.getTitle().trim() : String.valueOf(idea.get("title"));
-        String prompt = req.getPromptText() != null && !req.getPromptText().isBlank() ? req.getPromptText().trim() : String.valueOf(idea.get("promptText"));
-        String siteType = req.getSiteType() != null && !req.getSiteType().isBlank() ? normalizeSiteType(req.getSiteType()) : String.valueOf(idea.get("siteType"));
-        String category = req.getCategory() != null && !req.getCategory().isBlank() ? req.getCategory().trim() : String.valueOf(idea.get("category"));
-        String spec = req.getSpecMarkdown() != null && !req.getSpecMarkdown().isBlank() ? req.getSpecMarkdown() : String.valueOf(idea.get("specMarkdown"));
-        String screensJson = req.getScreens() != null ? toJson(req.getScreens()) : toJson(idea.get("screens"));
-        String creator = req.getCreatedBy() != null && !req.getCreatedBy().isBlank() ? req.getCreatedBy() : "admin";
+        String title = (req.getTitle() != null && !req.getTitle().isBlank())
+                ? req.getTitle().trim()
+                : current.get("title") + " (v" + nextVer + ")";
+        String promptText = (req.getPromptText() != null && !req.getPromptText().isBlank())
+                ? req.getPromptText().trim()
+                : String.valueOf(current.get("promptText"));
+        String specMarkdown = (req.getSpecMarkdown() != null && !req.getSpecMarkdown().isBlank())
+                ? req.getSpecMarkdown().trim()
+                : String.valueOf(current.get("specMarkdown"));
+        String screensJson = req.getScreens() != null
+                ? toJson(req.getScreens())
+                : toJson(current.get("screens"));
+        String createdBy = (req.getCreatedBy() != null && !req.getCreatedBy().isBlank())
+                ? req.getCreatedBy().trim()
+                : String.valueOf(current.get("authorUsername"));
 
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_idea_version (id, idea_id, version_no, title, prompt_text, spec_markdown, screens_json, created_by, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, CURRENT_TIMESTAMP)",
-                "iver-" + ideaId + "-v" + nextVer, ideaId, nextVer, title, prompt, spec, screensJson, creator
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_idea_version (
+                    id, idea_id, version_no, title, prompt_text, spec_markdown, screens_json, created_by, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, CURRENT_TIMESTAMP)
+                """,
+                "iver-" + ideaId + "-v" + nextVer, ideaId, nextVer, title, promptText, specMarkdown, screensJson, createdBy
         );
-        jdbcTemplate.update(
-                "UPDATE kkumz_idea SET title = ?, prompt_text = ?, site_type = ?, category = ?, spec_markdown = ?, screens_json = ?::jsonb, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                title, prompt, siteType, category, spec, screensJson, ideaId
+
+        jdbcTemplate.update("""
+                UPDATE kkumz_idea
+                SET prompt_text = ?, spec_markdown = ?, screens_json = ?::jsonb, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                promptText, specMarkdown, screensJson, ideaId
         );
-        if (req.getScreens() != null && !req.getScreens().isEmpty()) {
-            syncScreenSpecsToTable(ideaId, req.getScreens());
-        }
+
         return getIdeaDetail(ideaId);
     }
 
+    public List<Map<String, Object>> listIdeaScreens(String ideaId) {
+        List<Map<String, Object>> screens = jdbcTemplate.queryForList("""
+                SELECT id,
+                       idea_id AS "ideaId",
+                       screen_key AS "screenKey",
+                       screen_title AS "screenTitle",
+                       route_path AS "routePath",
+                       layout_type AS "layoutType",
+                       description,
+                       components_json::text AS "componentsJson",
+                       sort_no AS "sortNo"
+                FROM kkumz_screen_spec
+                WHERE idea_id = ?
+                ORDER BY sort_no ASC, created_at ASC
+                """, ideaId);
+        screens.forEach(s -> s.put("components", parseJsonList(String.valueOf(s.remove("componentsJson")))));
+        return screens;
+    }
+
+    @Transactional
+    public List<Map<String, Object>> saveIdeaScreen(String ideaId, SaveScreenSpecRequest req) {
+        if (req == null || req.getScreenTitle() == null || req.getScreenTitle().isBlank()) {
+            throw new IllegalArgumentException("화면 제목(screenTitle)은 필수입니다.");
+        }
+        String screenKey = (req.getScreenKey() != null && !req.getScreenKey().isBlank())
+                ? req.getScreenKey().trim().toUpperCase(Locale.ROOT)
+                : "SCR_" + UUID.randomUUID().toString().substring(0, 4).toUpperCase(Locale.ROOT);
+        String routePath = (req.getRoutePath() != null && !req.getRoutePath().isBlank())
+                ? req.getRoutePath().trim()
+                : "/" + screenKey.toLowerCase(Locale.ROOT).replace('_', '-');
+        String layoutType = (req.getLayoutType() != null && !req.getLayoutType().isBlank())
+                ? req.getLayoutType().trim()
+                : "STANDARD_GRID";
+        int sortNo = req.getSortNo() != null ? req.getSortNo() : (listIdeaScreens(ideaId).size() + 1);
+        List<String> components = req.getComponents() != null ? req.getComponents() : List.of("BrandStoryBanner", "FeaturedProductGrid");
+
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_screen_spec (
+                    id, idea_id, screen_key, screen_title, route_path, layout_type, description, components_json, sort_no, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, CURRENT_TIMESTAMP)
+                """,
+                "scr-" + UUID.randomUUID().toString().substring(0, 8),
+                ideaId,
+                screenKey,
+                req.getScreenTitle().trim(),
+                routePath,
+                layoutType,
+                req.getDescription() != null ? req.getDescription().trim() : "",
+                toJson(components),
+                sortNo
+        );
+
+        return listIdeaScreens(ideaId);
+    }
+
     // =========================================================================
-    // 2. Step 2 — AI 브랜드 네이밍 8종 & 벡터 SVG 로고 6종 생성 및 선택
+    // 2. Step 2 — AI 브랜드 네이밍 & 벡터 SVG 로고 생성 (AgentScope Java 연동)
     // =========================================================================
 
     @Transactional
     public Map<String, Object> generateNameSuggestions(String ideaId, GenerateNamesRequest req) {
         Map<String, Object> idea = getIdeaDetail(ideaId);
+        String promptText = String.valueOf(idea.get("promptText"));
+        String category = String.valueOf(idea.get("category"));
+        String keywordHint = (req != null && req.getKeywordHint() != null) ? req.getKeywordHint().trim() : "";
+
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> existing = (List<Map<String, Object>>) idea.get("nameSuggestions");
-        if (existing != null && existing.size() >= 8 && (req == null || req.getKeywordHint() == null || req.getKeywordHint().isBlank())) {
+        List<Map<String, Object>> existingNames = (List<Map<String, Object>>) idea.get("nameSuggestions");
+        if (existingNames != null && !existingNames.isEmpty() && keywordHint.isBlank()) {
             return idea;
         }
 
-        String title = String.valueOf(idea.get("title"));
-        String prompt = String.valueOf(idea.get("promptText"));
-        String rawHint = (req != null && req.getKeywordHint() != null && !req.getKeywordHint().isBlank())
-                ? req.getKeywordHint().trim()
-                : "";
-        String domain = detectDomainKey(title + " " + prompt + " " + rawHint);
-        String hint = !rawHint.isBlank() ? rawHint : resolveDomainKoKeyword(domain, prompt);
-        String engBase = resolveDomainEngKeyword(domain, hint);
-        String slugBase = toSlugBase(engBase.toLowerCase(Locale.ROOT));
+        String rawJson = ensureAiGateway().executeStagePrompt("NAMING", Map.of(
+                "promptText", promptText,
+                "category", category,
+                "keywordHint", keywordHint
+        ));
+
+        List<Map<String, Object>> candidates = parseAiJsonArray(rawJson, "NAMING");
+        if (candidates.isEmpty()) {
+            throw new IllegalStateException("AI 브랜드 네이밍 생성 결과가 비어 있습니다.");
+        }
 
         jdbcTemplate.update("DELETE FROM kkumz_name_suggestion WHERE idea_id = ?", ideaId);
 
-        String[][] templates = buildDomainNameTemplates(domain, hint, engBase, slugBase);
+        int idx = 0;
+        for (Map<String, Object> item : candidates) {
+            String brandName = String.valueOf(item.getOrDefault("brandName", item.getOrDefault("brand_name", ""))).trim();
+            String rawSlug = String.valueOf(item.getOrDefault("siteSlug", item.getOrDefault("site_slug", ""))).trim();
+            if (brandName.isBlank() || rawSlug.isBlank()) {
+                continue;
+            }
+            String slug = normalizeSlug(rawSlug);
+            String pronunciation = String.valueOf(item.getOrDefault("pronunciation", brandName)).trim();
+            String story = String.valueOf(item.getOrDefault("brandStory", item.getOrDefault("brand_story", ""))).trim();
+            int score = (item.get("score") instanceof Number num) ? num.intValue() : (98 - idx * 2);
 
-        for (int i = 0; i < templates.length; i++) {
-            String[] t = templates[i];
-            String candidateSlug = ensureAvailableSlug(t[1], ideaId);
-            boolean isFirst = (i == 0);
-            jdbcTemplate.update(
-                    "INSERT INTO kkumz_name_suggestion (id, idea_id, brand_name, site_slug, pronunciation, brand_story, score, slug_available, is_selected, created_at) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, ?, CURRENT_TIMESTAMP)",
-                    "name-" + ideaId + "-" + (i + 1), ideaId, t[0], candidateSlug, t[2], t[3], Integer.parseInt(t[4]), isFirst
+            Integer taken = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM kkumz_site WHERE site_slug = ? AND idea_id <> ?",
+                    Integer.class, slug, ideaId
             );
-            if (isFirst) {
-                jdbcTemplate.update(
-                        "UPDATE kkumz_idea SET selected_brand_name = ?, selected_site_slug = ?, current_step = GREATEST(current_step, 2), updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                        t[0], candidateSlug, ideaId
+            boolean available = (taken == null || taken == 0);
+            boolean isSelected = (idx == 0);
+
+            jdbcTemplate.update("""
+                    INSERT INTO kkumz_name_suggestion (
+                        id, idea_id, brand_name, site_slug, pronunciation, brand_story, score, slug_available, is_selected, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    """,
+                    "name-" + ideaId + "-" + (idx + 1),
+                    ideaId, brandName, slug, pronunciation, story, score, available, isSelected
+            );
+
+            if (isSelected) {
+                jdbcTemplate.update("""
+                        UPDATE kkumz_idea
+                        SET selected_brand_name = ?, selected_site_slug = ?, current_step = GREATEST(current_step, 2), updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                        """,
+                        brandName, slug, ideaId
                 );
             }
+            idx++;
         }
+
         return getIdeaDetail(ideaId);
     }
 
     @Transactional
     public Map<String, Object> generateLogoSuggestions(String ideaId, GenerateLogosRequest req) {
         Map<String, Object> idea = getIdeaDetail(ideaId);
+        String brandName = (req != null && req.getBrandName() != null && !req.getBrandName().isBlank())
+                ? req.getBrandName().trim()
+                : String.valueOf(idea.getOrDefault("selectedBrandName", idea.get("title")));
+        String stylePreference = (req != null && req.getStylePreference() != null)
+                ? req.getStylePreference().trim()
+                : "";
+
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> existing = (List<Map<String, Object>>) idea.get("logoSuggestions");
-        if (existing != null && existing.size() >= 6 && (req == null || req.getStylePreference() == null || req.getStylePreference().isBlank())) {
+        List<Map<String, Object>> existingLogos = (List<Map<String, Object>>) idea.get("logoSuggestions");
+        if (existingLogos != null && !existingLogos.isEmpty() && stylePreference.isBlank()) {
             return idea;
         }
 
-        String brandName = (req != null && req.getBrandName() != null && !req.getBrandName().isBlank())
-                ? req.getBrandName().trim()
-                : (idea.get("selectedBrandName") != null ? String.valueOf(idea.get("selectedBrandName")) : "KKUMZ STUDIO");
-        String slugSource = idea.get("selectedSiteSlug") != null ? String.valueOf(idea.get("selectedSiteSlug")) : brandName;
-        String displayUpper = toLogoDisplayText(brandName, slugSource);
-        String domain = detectDomainKey(String.valueOf(idea.get("title")) + " " + String.valueOf(idea.get("promptText")) + " " + brandName);
+        String rawJson = ensureAiGateway().executeStagePrompt("LOGO_SVG", Map.of(
+                "brandName", brandName,
+                "stylePreference", stylePreference
+        ));
+
+        List<Map<String, Object>> candidates = parseAiJsonArray(rawJson, "LOGO_SVG");
+        if (candidates.isEmpty()) {
+            throw new IllegalStateException("AI 벡터 SVG 로고 생성 결과가 비어 있습니다.");
+        }
 
         jdbcTemplate.update("DELETE FROM kkumz_logo_suggestion WHERE idea_id = ?", ideaId);
 
-        Object[][] baseLogoSpecs = new Object[][]{
-                {
-                        "보태니컬 엠블럼",
-                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#14532d\"/><circle cx=\"20\" cy=\"20\" r=\"11\" fill=\"#86efac\" fill-opacity=\"0.25\"/><path d=\"M13 24C13 17 20 12 27 15C26 22 20 27 13 24Z\" fill=\"#4ade80\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#14532d\">" + escapeXml(displayUpper) + "</text></svg>",
-                        Map.of("primary", "#14532d", "secondary", "#16a34a", "accent", "#ca8a04", "surface", "#f7fee7"),
-                        List.of("보태니컬", "딥포레스트", "오가닉")
-                },
-                {
-                        "오빗 테크 심볼",
-                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#1e1b4b\"/><ellipse cx=\"20\" cy=\"20\" rx=\"13\" ry=\"6\" transform=\"rotate(-25 20 20)\" stroke=\"#818cf8\" stroke-width=\"2.5\" fill=\"none\"/><circle cx=\"20\" cy=\"20\" r=\"4\" fill=\"#38bdf8\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#1e1b4b\">" + escapeXml(displayUpper) + "</text></svg>",
-                        Map.of("primary", "#1e1b4b", "secondary", "#4f46e5", "accent", "#06b6d4", "surface", "#f8fafc"),
-                        List.of("다크테크", "인디고", "모듈러")
-                },
-                {
-                        "다이내믹 펄스 크레스트",
-                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#0f172a\"/><path d=\"M9 26L18 14L23 21L31 12\" stroke=\"#f97316\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"31\" cy=\"12\" r=\"3\" fill=\"#fb923c\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#0f172a\">" + escapeXml(displayUpper) + "</text></svg>",
-                        Map.of("primary", "#ea580c", "secondary", "#0f172a", "accent", "#f59e0b", "surface", "#fff7ed"),
-                        List.of("에너지오렌지", "애슬레틱", "커뮤니티")
-                },
-                {
-                        "아티장 로스트 배지",
-                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#451a03\"/><ellipse cx=\"20\" cy=\"20\" rx=\"10\" ry=\"13\" fill=\"#d97706\"/><path d=\"M20 8C17 14 23 26 20 32\" stroke=\"#451a03\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#451a03\">" + escapeXml(displayUpper) + "</text></svg>",
-                        Map.of("primary", "#78350f", "secondary", "#b45309", "accent", "#d97706", "surface", "#fffbeb"),
-                        List.of("크래프트", "웜앰버", "에디토리얼")
-                },
-                {
-                        "미니멀 프리즘 마크",
-                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#090d16\"/><polygon points=\"20,9 31,29 9,29\" stroke=\"#38bdf8\" stroke-width=\"2.4\" fill=\"none\"/><circle cx=\"20\" cy=\"22\" r=\"3\" fill=\"#a855f7\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#090d16\">" + escapeXml(displayUpper) + "</text></svg>",
-                        Map.of("primary", "#0f172a", "secondary", "#7c3aed", "accent", "#38bdf8", "surface", "#f8fafc"),
-                        List.of("지오메트릭", "모던프리즘", "스튜디오")
-                },
-                {
-                        "코랄 아치 시그니처",
-                        "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#881337\"/><path d=\"M12 29V19C12 14.5 15.5 11 20 11C24.5 11 28 14.5 28 19V29\" stroke=\"#fda4af\" stroke-width=\"2.6\" fill=\"none\"/><circle cx=\"20\" cy=\"19\" r=\"3.5\" fill=\"#fb7185\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#881337\">" + escapeXml(displayUpper) + "</text></svg>",
-                        Map.of("primary", "#9f1239", "secondary", "#e11d48", "accent", "#f43f5e", "surface", "#fff1f2"),
-                        List.of("부티크아치", "로즈코랄", "감성브랜드")
-                }
-        };
-
-        int preferredIdx = switch (domain) {
-            case "COFFEE", "BAKERY" -> 3;
-            case "TECH" -> 1;
-            case "FITNESS" -> 2;
-            case "FASHION" -> 5;
-            default -> 0;
-        };
-        List<Object[]> orderedLogos = new ArrayList<>();
-        orderedLogos.add(baseLogoSpecs[preferredIdx]);
-        for (int idx = 0; idx < baseLogoSpecs.length; idx++) {
-            if (idx != preferredIdx) {
-                orderedLogos.add(baseLogoSpecs[idx]);
+        int idx = 0;
+        for (Map<String, Object> item : candidates) {
+            String styleName = String.valueOf(item.getOrDefault("styleName", item.getOrDefault("style_name", ""))).trim();
+            String svgCode = String.valueOf(item.getOrDefault("svgCode", item.getOrDefault("svg_code", ""))).trim();
+            if (styleName.isBlank() || !svgCode.startsWith("<svg")) {
+                continue;
             }
-        }
+            Object paletteObj = item.getOrDefault("colorPalette", item.getOrDefault("color_palette", Map.of()));
+            Object typoObj = item.getOrDefault("typography", Map.of("fontHeading", "Pretendard", "fontBody", "Pretendard"));
+            Object tagsObj = item.getOrDefault("tags", List.of(styleName));
+            boolean isSelected = (idx == 0);
 
-        Map<String, Object> typo = Map.of("fontHeading", "Pretendard", "fontBody", "Pretendard", "weightHeading", "800");
-        for (int i = 0; i < orderedLogos.size(); i++) {
-            Object[] spec = orderedLogos.get(i);
-            boolean isFirst = (i == 0);
-            jdbcTemplate.update(
-                    "INSERT INTO kkumz_logo_suggestion (id, idea_id, style_name, svg_code, color_palette_json, typography_json, tags_json, is_selected, created_at) " +
-                    "VALUES (?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, CURRENT_TIMESTAMP)",
-                    "logo-" + ideaId + "-" + (i + 1), ideaId, spec[0], spec[1], toJson(spec[2]), toJson(typo), toJson(spec[3]), isFirst
+            jdbcTemplate.update("""
+                    INSERT INTO kkumz_logo_suggestion (
+                        id, idea_id, style_name, svg_code, color_palette_json, typography_json, tags_json, is_selected, created_at
+                    ) VALUES (?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, CURRENT_TIMESTAMP)
+                    """,
+                    "logo-" + ideaId + "-" + (idx + 1),
+                    ideaId, styleName, svgCode, toJson(paletteObj), toJson(typoObj), toJson(tagsObj), isSelected
             );
-            if (isFirst) {
-                jdbcTemplate.update(
-                        "UPDATE kkumz_idea SET selected_logo_svg = ?, design_tokens_json = ?::jsonb, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                        spec[1], toJson(spec[2]), ideaId
+
+            if (isSelected) {
+                jdbcTemplate.update("""
+                        UPDATE kkumz_idea
+                        SET selected_logo_svg = ?, design_tokens_json = ?::jsonb, current_step = GREATEST(current_step, 3), updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                        """,
+                        svgCode, toJson(paletteObj), ideaId
                 );
             }
+            idx++;
         }
+
         return getIdeaDetail(ideaId);
     }
 
@@ -453,619 +602,754 @@ public class KkumzService {
         String brandName = req.getBrandName();
         String siteSlug = req.getSiteSlug();
         String logoSvg = req.getLogoSvg();
-        Map<String, Object> tokens = req.getDesignTokens();
+        Map<String, Object> designTokens = req.getDesignTokens();
 
         if (req.getNameSuggestionId() != null && !req.getNameSuggestionId().isBlank()) {
             jdbcTemplate.update("UPDATE kkumz_name_suggestion SET is_selected = (id = ?) WHERE idea_id = ?",
                     req.getNameSuggestionId(), ideaId);
-            List<Map<String, Object>> nameRows = jdbcTemplate.queryForList(
-                    "SELECT brand_name, site_slug FROM kkumz_name_suggestion WHERE id = ? LIMIT 1",
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                    "SELECT brand_name AS \"brandName\", site_slug AS \"siteSlug\" FROM kkumz_name_suggestion WHERE id = ?",
                     req.getNameSuggestionId()
             );
-            if (!nameRows.isEmpty()) {
-                brandName = String.valueOf(nameRows.get(0).get("brand_name"));
-                siteSlug = String.valueOf(nameRows.get(0).get("site_slug"));
+            if (!rows.isEmpty()) {
+                brandName = String.valueOf(rows.get(0).get("brandName"));
+                if (siteSlug == null || siteSlug.isBlank()) {
+                    siteSlug = String.valueOf(rows.get(0).get("siteSlug"));
+                }
             }
         }
+
         if (req.getLogoSuggestionId() != null && !req.getLogoSuggestionId().isBlank()) {
             jdbcTemplate.update("UPDATE kkumz_logo_suggestion SET is_selected = (id = ?) WHERE idea_id = ?",
                     req.getLogoSuggestionId(), ideaId);
-            List<Map<String, Object>> logoRows = jdbcTemplate.queryForList(
-                    "SELECT svg_code, color_palette_json::text AS palette_text FROM kkumz_logo_suggestion WHERE id = ? LIMIT 1",
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                    "SELECT svg_code AS \"svgCode\", color_palette_json::text AS \"palette\" FROM kkumz_logo_suggestion WHERE id = ?",
                     req.getLogoSuggestionId()
             );
-            if (!logoRows.isEmpty()) {
-                logoSvg = String.valueOf(logoRows.get(0).get("svg_code"));
-                tokens = parseJsonMap(logoRows.get(0).get("palette_text"));
+            if (!rows.isEmpty()) {
+                logoSvg = String.valueOf(rows.get(0).get("svgCode"));
+                if (designTokens == null || designTokens.isEmpty()) {
+                    designTokens = parseJsonObject(String.valueOf(rows.get(0).get("palette")));
+                }
             }
         }
 
-        if (brandName == null || brandName.isBlank()) {
-            brandName = idea.get("selectedBrandName") != null ? String.valueOf(idea.get("selectedBrandName")) : String.valueOf(idea.get("title"));
-        }
-        if (siteSlug == null || siteSlug.isBlank()) {
-            siteSlug = idea.get("selectedSiteSlug") != null ? String.valueOf(idea.get("selectedSiteSlug")) : toSlugBase(brandName);
-        }
-        if (logoSvg == null || logoSvg.isBlank()) {
-            logoSvg = idea.get("selectedLogoSvg") != null ? String.valueOf(idea.get("selectedLogoSvg")) : "";
-        }
-        String tokensJson = toJson(tokens != null && !tokens.isEmpty() ? tokens : idea.get("designTokens"));
+        String finalBrand = (brandName != null && !brandName.isBlank())
+                ? brandName.trim()
+                : String.valueOf(idea.getOrDefault("selectedBrandName", idea.get("title")));
+        String finalSlug = (siteSlug != null && !siteSlug.isBlank())
+                ? normalizeSlug(siteSlug)
+                : String.valueOf(idea.getOrDefault("selectedSiteSlug", "site-" + ideaId));
+        String finalSvg = (logoSvg != null && !logoSvg.isBlank())
+                ? logoSvg
+                : String.valueOf(idea.getOrDefault("selectedLogoSvg", ""));
+        String finalTokensJson = (designTokens != null && !designTokens.isEmpty())
+                ? toJson(designTokens)
+                : toJson(idea.get("designTokens"));
 
-        jdbcTemplate.update(
-                "UPDATE kkumz_idea SET selected_brand_name = ?, selected_site_slug = ?, selected_logo_svg = ?, " +
-                "design_tokens_json = ?::jsonb, current_step = GREATEST(current_step, 3), updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                brandName, siteSlug, logoSvg, tokensJson, ideaId
+        jdbcTemplate.update("""
+                UPDATE kkumz_idea
+                SET selected_brand_name = ?,
+                    selected_site_slug = ?,
+                    selected_logo_svg = ?,
+                    design_tokens_json = ?::jsonb,
+                    current_step = GREATEST(current_step, 3),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                finalBrand, finalSlug, finalSvg, finalTokensJson, ideaId
         );
+
         return getIdeaDetail(ideaId);
     }
 
     // =========================================================================
-    // 3. Step 3 — AI 마크다운 기획서 & 화면 블루프린트 생성 및 수정
+    // 3. Step 3 — AI 기능명세서(FRS) & 화면 블루프린트 생성/편집
     // =========================================================================
 
     @Transactional
     public Map<String, Object> generateSpec(String ideaId) {
         Map<String, Object> idea = getIdeaDetail(ideaId);
-        String title = String.valueOf(idea.get("title"));
-        String prompt = String.valueOf(idea.get("promptText"));
+        String existingMarkdown = idea.get("specMarkdown") != null ? String.valueOf(idea.get("specMarkdown")) : "";
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> existingScreens = (List<Map<String, Object>>) idea.get("screenSpecs");
+        if (!existingMarkdown.isBlank() && existingScreens != null && !existingScreens.isEmpty()) {
+            return idea;
+        }
+
+        String brandName = idea.get("selectedBrandName") != null
+                ? String.valueOf(idea.get("selectedBrandName"))
+                : String.valueOf(idea.get("title"));
         String siteType = String.valueOf(idea.get("siteType"));
-        String brandName = idea.get("selectedBrandName") != null ? String.valueOf(idea.get("selectedBrandName")) : title;
+        String promptText = String.valueOf(idea.get("promptText"));
 
-        String specMarkdown = buildDefaultMarkdownSpec(title, prompt, siteType, brandName);
-        List<Map<String, Object>> screens = buildDefaultScreens(siteType);
+        String rawOutput = ensureAiGateway().executeStagePrompt("SPEC_FRS", Map.of(
+                "brandName", brandName,
+                "siteType", siteType,
+                "promptText", promptText
+        ));
 
-        SaveIdeaVersionRequest saveReq = SaveIdeaVersionRequest.builder()
-                .title(title)
-                .promptText(prompt)
-                .siteType(siteType)
-                .specMarkdown(specMarkdown)
-                .screens(screens)
-                .createdBy(String.valueOf(idea.get("authorUsername")))
-                .build();
-        saveOrRollbackIdeaVersion(ideaId, saveReq);
-        jdbcTemplate.update("UPDATE kkumz_idea SET current_step = GREATEST(current_step, 3) WHERE id = ?", ideaId);
+        String markdown = rawOutput;
+        List<Map<String, Object>> screens = new ArrayList<>();
+        try {
+            JsonNode node = objectMapper.readTree(rawOutput);
+            if (node.isObject()) {
+                if (node.has("specMarkdown")) {
+                    markdown = node.get("specMarkdown").asText();
+                }
+                if (node.has("screens") && node.get("screens").isArray()) {
+                    screens = objectMapper.convertValue(node.get("screens"), new TypeReference<List<Map<String, Object>>>() {});
+                }
+            }
+        } catch (Exception ignored) {
+            // Markdown 평문 응답인 경우 그대로 사용
+        }
+
+        jdbcTemplate.update("""
+                UPDATE kkumz_idea
+                SET spec_markdown = ?, screens_json = ?::jsonb, current_step = GREATEST(current_step, 4), updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                markdown, toJson(screens), ideaId
+        );
+
+        if (!screens.isEmpty()) {
+            jdbcTemplate.update("DELETE FROM kkumz_screen_spec WHERE idea_id = ?", ideaId);
+            int idx = 1;
+            for (Map<String, Object> scr : screens) {
+                SaveScreenSpecRequest sReq = SaveScreenSpecRequest.builder()
+                        .screenKey(String.valueOf(scr.getOrDefault("screenKey", "SCR_" + idx)))
+                        .screenTitle(String.valueOf(scr.getOrDefault("title", scr.getOrDefault("screenTitle", "화면 " + idx))))
+                        .routePath(String.valueOf(scr.getOrDefault("routePath", idx == 1 ? "/" : "/section-" + idx)))
+                        .layoutType(String.valueOf(scr.getOrDefault("layout", scr.getOrDefault("layoutType", "STANDARD_GRID"))))
+                        .description(String.valueOf(scr.getOrDefault("description", "")))
+                        .sortNo(idx++)
+                        .build();
+                saveIdeaScreen(ideaId, sReq);
+            }
+        }
+
         return getIdeaDetail(ideaId);
     }
 
     @Transactional
     public Map<String, Object> updateSpec(String ideaId, UpdateSpecRequest req) {
-        SaveIdeaVersionRequest saveReq = SaveIdeaVersionRequest.builder()
-                .title(req.getTitle())
-                .promptText(req.getPromptText())
-                .siteType(req.getSiteType())
-                .category(req.getCategory())
-                .specMarkdown(req.getSpecMarkdown())
+        Map<String, Object> idea = getIdeaDetail(ideaId);
+        String markdown = (req.getSpecMarkdown() != null && !req.getSpecMarkdown().isBlank())
+                ? req.getSpecMarkdown()
+                : String.valueOf(idea.get("specMarkdown"));
+        String screensJson = req.getScreens() != null
+                ? toJson(req.getScreens())
+                : toJson(idea.get("screens"));
+
+        jdbcTemplate.update("""
+                UPDATE kkumz_idea
+                SET spec_markdown = ?, screens_json = ?::jsonb, current_step = GREATEST(current_step, 4), updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                markdown, screensJson, ideaId
+        );
+
+        SaveIdeaVersionRequest verReq = SaveIdeaVersionRequest.builder()
+                .title(idea.get("title") + " (기획서 편집본)")
+                .promptText(String.valueOf(idea.get("promptText")))
+                .specMarkdown(markdown)
                 .screens(req.getScreens())
                 .createdBy(req.getUpdatedBy())
                 .build();
-        return saveOrRollbackIdeaVersion(ideaId, saveReq);
+        return saveOrRollbackIdeaVersion(ideaId, verReq);
     }
 
     // =========================================================================
-    // 4. Step 4, 5, 6 — 멀티사이트 스캐폴딩, 대화형 편집, WebIDE, 빌드/배포 & 롤백
+    // 4. Step 4~6 — 멀티사이트 프로비저닝, WebIDE 편집, AI 빌드 복구 & 배포
     // =========================================================================
 
     @Transactional
     public Map<String, Object> scaffoldSite(String ideaId) {
+        long startNs = System.nanoTime();
         Map<String, Object> idea = getIdeaDetail(ideaId);
         String siteType = String.valueOf(idea.get("siteType"));
         String category = String.valueOf(idea.get("category"));
-        String brandName = idea.get("selectedBrandName") != null && !String.valueOf(idea.get("selectedBrandName")).isBlank()
+        String brandName = idea.get("selectedBrandName") != null
                 ? String.valueOf(idea.get("selectedBrandName"))
                 : String.valueOf(idea.get("title"));
-        String rawSlug = idea.get("selectedSiteSlug") != null && !String.valueOf(idea.get("selectedSiteSlug")).isBlank()
+        String siteSlug = idea.get("selectedSiteSlug") != null
                 ? String.valueOf(idea.get("selectedSiteSlug"))
-                : toSlugBase(brandName);
-        String logoSvg = idea.get("selectedLogoSvg") != null && !String.valueOf(idea.get("selectedLogoSvg")).isBlank()
-                ? String.valueOf(idea.get("selectedLogoSvg"))
-                : "<svg viewBox=\"0 0 185 40\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"40\" height=\"40\" rx=\"10\" fill=\"#0f172a\"/><circle cx=\"20\" cy=\"20\" r=\"9\" fill=\"#38bdf8\"/><text x=\"50\" y=\"25\" font-family=\"Pretendard, sans-serif\" font-weight=\"800\" font-size=\"13\" fill=\"#0f172a\">" + escapeXml(brandName) + "</text></svg>";
-        String slogan = String.valueOf(idea.get("promptText"));
-        if (slogan.length() > 110) {
-            slogan = slogan.substring(0, 110);
+                : normalizeSlug(brandName);
+        String logoSvg = idea.get("selectedLogoSvg") != null ? String.valueOf(idea.get("selectedLogoSvg")) : "";
+        if (logoSvg.isBlank()) {
+            throw new IllegalStateException("사이트 스캐폴딩 전 브랜드 로고(selectedLogoSvg) 선택이 완료되어야 합니다: ideaId=" + ideaId);
         }
+        String brandSlogan = String.valueOf(idea.get("title"));
+        String deployMode = "DYNAMIC_SDUI";
 
         @SuppressWarnings("unchecked")
         Map<String, Object> tokens = (Map<String, Object>) idea.get("designTokens");
         if (tokens == null || tokens.isEmpty()) {
-            tokens = Map.of("primary", "#14532d", "secondary", "#16a34a", "accent", "#ca8a04", "surface", "#f7fee7", "radius", "14px");
+            throw new IllegalStateException("디자인 토큰(designTokens) 정보가 존재하지 않습니다: ideaId=" + ideaId);
         }
+
         Map<String, Object> layoutSchema = new LinkedHashMap<>();
-        layoutSchema.put("heroTitle", brandName + " — 공식 브랜드 쇼케이스");
-        layoutSchema.put("heroSubtitle", slogan);
-        layoutSchema.put("ctaText", "COMMERCE".equals(siteType) ? "시그니처 상품 구매하기" : ("CMS_SITE".equals(siteType) ? "커뮤니티 세션 신청하기" : "매거진 & 스토어 탐색하기"));
-        layoutSchema.put("showFlashDeal", !"CMS_SITE".equals(siteType));
+        layoutSchema.put("heroTitle", brandName);
+        layoutSchema.put("heroSubtitle", brandSlogan);
+        layoutSchema.put("ctaText", "자세히 보기");
+        layoutSchema.put("showFlashDeal", !"CMS_SITE".equalsIgnoreCase(siteType));
         layoutSchema.put("showAiConcierge", true);
-        layoutSchema.put("showCmsArticles", !"COMMERCE".equals(siteType));
-        layoutSchema.put("showCmsForm", !"COMMERCE".equals(siteType));
-        layoutSchema.put("customBadge", "AI 멀티사이트 프로비저닝 완료");
+        layoutSchema.put("showCmsArticles", !"COMMERCE".equalsIgnoreCase(siteType));
+        layoutSchema.put("showCmsForm", !"COMMERCE".equalsIgnoreCase(siteType));
+        layoutSchema.put("customBadge", category);
 
-        List<Map<String, Object>> existingSites = jdbcTemplate.queryForList(
-                "SELECT id, site_slug, shop_site_id, cms_site_id, active_version FROM kkumz_site WHERE idea_id = ? LIMIT 1",
-                ideaId
-        );
-        if (!existingSites.isEmpty()) {
-            Map<String, Object> existingSite = existingSites.get(0);
-            String existingSiteId = String.valueOf(existingSite.get("id"));
-            String existingSlug = String.valueOf(existingSite.get("site_slug"));
-            int activeVer = ((Number) existingSite.get("active_version")).intValue();
-            jdbcTemplate.update(
-                    "UPDATE kkumz_site SET site_name = ?, site_type = ?, logo_svg = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                    brandName, siteType, logoSvg, existingSiteId
-            );
-            jdbcTemplate.update(
-                    "UPDATE kkumz_site_release SET design_tokens_json = ?::jsonb WHERE site_id = ? AND version_no = ?",
-                    toJson(tokens), existingSiteId, activeVer
-            );
-            jdbcTemplate.update("UPDATE kkumz_idea SET current_step = GREATEST(current_step, 4), updated_at = CURRENT_TIMESTAMP WHERE id = ?", ideaId);
-            return getSiteRuntime(existingSlug);
-        }
-
-        String siteSlug = ensureAvailableSlug(rawSlug, ideaId);
         Long shopSiteId = null;
         Long cmsSiteId = null;
-        if ("COMMERCE".equals(siteType) || "HYBRID".equals(siteType)) {
-            shopSiteId = provisionSyncShopSite(siteSlug, brandName, siteType, logoSvg, slogan, tokens, layoutSchema);
+        if ("COMMERCE".equalsIgnoreCase(siteType) || "HYBRID".equalsIgnoreCase(siteType)) {
+            shopSiteId = provisionSyncShopSite(siteSlug, brandName, brandSlogan);
         }
-        if ("CMS_SITE".equals(siteType) || "HYBRID".equals(siteType)) {
-            cmsSiteId = provisionSyncCmsSite(siteSlug, brandName, slogan);
+        if ("CMS_SITE".equalsIgnoreCase(siteType) || "HYBRID".equalsIgnoreCase(siteType)) {
+            cmsSiteId = provisionSyncCmsSite(siteSlug, brandName, brandSlogan);
         }
 
-        String siteId = "site-kkumz-" + UUID.randomUUID().toString().substring(0, 8);
-        String ownerUser = String.valueOf(idea.get("authorUsername"));
-        String ownerName = String.valueOf(idea.get("authorDisplayName"));
-
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_site (id, idea_id, site_slug, site_name, site_type, category, brand_slogan, " +
-                "logo_svg, shop_site_id, cms_site_id, deploy_mode, active_version, deployed_url, custom_domain, is_featured, visibility, " +
-                "like_count, comment_count, view_count, owner_username, owner_display_name, status, created_at, updated_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DYNAMIC_SDUI', 1, ?, ?, FALSE, 'PUBLIC', 1, 0, 1, ?, ?, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-                siteId, ideaId, siteSlug, brandName, siteType, category, slogan, logoSvg,
-                shopSiteId, cmsSiteId, "/s/" + siteSlug, siteSlug + ".kkumz.io", ownerUser, ownerName
+        List<Map<String, Object>> existingSite = jdbcTemplate.queryForList(
+                "SELECT id, active_version AS \"activeVersion\" FROM kkumz_site WHERE site_slug = ?",
+                siteSlug
         );
 
-        List<Map<String, Object>> webideFiles = buildDefaultWebIdeFiles(brandName, siteSlug, siteType, tokens, layoutSchema);
-        String buildLog = "[Instant-Deploy] Provisioned multi-site '" + siteSlug + "' (shopSiteId=" + shopSiteId + ", cmsSiteId=" + cmsSiteId + ").\n" +
-                "[Publish] Live endpoint /s/" + siteSlug + " is ready.";
-        String releaseId = "rel-" + siteId + "-v1";
+        String siteId;
+        int nextVer;
+        if (!existingSite.isEmpty()) {
+            siteId = String.valueOf(existingSite.get(0).get("id"));
+            nextVer = ((Number) existingSite.get(0).get("activeVersion")).intValue() + 1;
+            jdbcTemplate.update("""
+                    UPDATE kkumz_site
+                    SET site_name = ?, site_type = ?, category = ?, brand_slogan = ?, logo_svg = ?,
+                        shop_site_id = COALESCE(?, shop_site_id), cms_site_id = COALESCE(?, cms_site_id),
+                        deploy_mode = ?, active_version = ?, status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """,
+                    brandName, siteType, category, brandSlogan, logoSvg,
+                    shopSiteId, cmsSiteId, deployMode, nextVer, siteId
+            );
+        } else {
+            siteId = "site-" + UUID.randomUUID().toString().substring(0, 8);
+            nextVer = 1;
+            jdbcTemplate.update("""
+                    INSERT INTO kkumz_site (
+                        id, idea_id, site_slug, site_name, site_type, category, brand_slogan, logo_svg,
+                        shop_site_id, cms_site_id, deploy_mode, active_version, deployed_url, custom_domain,
+                        is_featured, visibility, like_count, comment_count, view_count,
+                        owner_username, owner_display_name, status, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, FALSE, 'PUBLIC', 0, 0, 0, ?, ?, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    """,
+                    siteId, ideaId, siteSlug, brandName, siteType, category, brandSlogan, logoSvg,
+                    shopSiteId, cmsSiteId, deployMode,
+                    "/s/" + siteSlug, siteSlug + ".kkumz.io",
+                    idea.get("authorUsername"), idea.get("authorDisplayName")
+            );
+        }
 
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_site_release (id, site_id, version_no, release_note, deploy_mode, " +
-                "design_tokens_json, layout_schema_json, webide_files_json, minio_bundle_path, build_status, build_log, created_by, created_at) " +
-                "VALUES (?, ?, 1, '초기 멀티사이트 프로비저닝 및 기본 스키마 배포', 'DYNAMIC_SDUI', ?::jsonb, ?::jsonb, ?::jsonb, ?, 'SUCCESS', ?, ?, CURRENT_TIMESTAMP)",
-                releaseId, siteId, toJson(tokens), toJson(layoutSchema), toJson(webideFiles),
-                "minio://kkumz-sites/" + siteSlug + "/v1/schema.json", buildLog, ownerUser
+        List<Map<String, Object>> screenSpecs = listIdeaScreens(ideaId);
+        List<Map<String, Object>> webideFiles = buildWebIdeFilesFromScreens(brandName, tokens, layoutSchema, screenSpecs);
+        String releaseId = "rel-" + siteId + "-v" + nextVer;
+        String nowTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        long durationMs = Math.max(1L, (System.nanoTime() - startNs) / 1_000_000L);
+        String buildLog = "[" + nowTime + "] [Provision] Site slug /s/" + siteSlug + " initialized (v" + nextVer + ", " + durationMs + "ms).";
+        String bundlePath = "/s/" + siteSlug + "/releases/v" + nextVer;
+
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_site_release (
+                    id, site_id, version_no, release_note, deploy_mode, design_tokens_json,
+                    layout_schema_json, webide_files_json, minio_bundle_path, build_status, build_log, created_by, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, 'SUCCESS', ?, ?, CURRENT_TIMESTAMP)
+                """,
+                releaseId, siteId, nextVer,
+                "멀티사이트 프로비저닝 및 배포 (v" + nextVer + ")",
+                deployMode, toJson(tokens), toJson(layoutSchema), toJson(webideFiles),
+                bundlePath, buildLog, idea.get("authorUsername")
         );
 
-        recordBuildJob(siteId, releaseId, "INITIAL_PROVISION", "DYNAMIC_SDUI", "SUCCESS", 680, null, false, buildLog, ownerUser);
-
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_team_member (id, site_id, recruit_id, username, display_name, member_role, position_role, join_type, application_message, status, joined_at) " +
-                "VALUES (?, ?, NULL, ?, ?, 'OWNER', 'CO_FOUNDER', 'FOUNDER', '프로젝트 총괄 창업자', 'ACTIVE', CURRENT_TIMESTAMP)",
-                "tmem-" + siteId + "-founder", siteId, ownerUser, ownerName
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_build_job (
+                    id, site_id, release_id, job_type, deploy_mode, status, duration_ms,
+                    ai_patch_applied, build_log, triggered_by, started_at, finished_at
+                ) VALUES (?, ?, ?, 'INITIAL_PROVISION', ?, 'SUCCESS', ?, FALSE, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """,
+                "job-" + UUID.randomUUID().toString().substring(0, 8),
+                siteId, releaseId, deployMode, durationMs, buildLog, idea.get("authorUsername")
         );
 
-        jdbcTemplate.update(
-                "UPDATE kkumz_idea SET selected_brand_name = ?, selected_site_slug = ?, current_step = GREATEST(current_step, 4), status = 'PUBLISHED', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                brandName, siteSlug, ideaId
+        jdbcTemplate.update("""
+                UPDATE kkumz_idea
+                SET current_step = 6, status = 'PUBLISHED', selected_site_slug = ?, selected_brand_name = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                siteSlug, brandName, ideaId
         );
 
         return getSiteRuntime(siteSlug);
     }
 
     @Transactional
-    public Map<String, Object> chatRefineSite(String siteSlug, ChatRefineRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteSlug);
+    public Map<String, Object> chatRefineSite(String siteIdOrSlug, ChatRefineRequest req) {
+        long startNs = System.nanoTime();
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        String siteName = String.valueOf(site.get("siteName"));
-        String brandSlogan = String.valueOf(site.get("brandSlogan"));
+        String siteSlug = String.valueOf(site.get("siteSlug"));
         int currentVer = ((Number) site.get("activeVersion")).intValue();
 
-        Map<String, Object> latestRel = getReleaseRecord(siteId, currentVer);
-        Map<String, Object> tokens = new LinkedHashMap<>(parseJsonMap(latestRel.get("designTokensText")));
-        Map<String, Object> layout = new LinkedHashMap<>(parseJsonMap(latestRel.get("layoutSchemaText")));
-        List<Map<String, Object>> files = new ArrayList<>(parseJsonListOfMap(latestRel.get("webideFilesText")));
+        Map<String, Object> latestRel = getLatestRelease(siteId, currentVer);
+        Map<String, Object> tokens = new LinkedHashMap<>(parseJsonObject(String.valueOf(latestRel.get("designTokensJson"))));
+        Map<String, Object> layout = new LinkedHashMap<>(parseJsonObject(String.valueOf(latestRel.get("layoutSchemaJson"))));
 
-        String instruction = req.getInstruction() != null ? req.getInstruction().trim() : "";
-        if (!instruction.isBlank() && site.get("ideaId") != null) {
-            List<Map<String, Object>> matchedPalettes = jdbcTemplate.queryForList(
-                    "SELECT color_palette_json::text AS palette_text FROM kkumz_logo_suggestion " +
-                    "WHERE idea_id = ? AND (? ILIKE '%' || style_name || '%' OR tags_json::text ILIKE '%' || ? || '%') LIMIT 1",
-                    site.get("ideaId"), instruction, extractCoreKeyword(instruction)
-            );
-            if (!matchedPalettes.isEmpty()) {
-                tokens.putAll(parseJsonMap(matchedPalettes.get(0).get("palette_text")));
-            }
-        }
-
-        if (!instruction.isBlank()) {
-            layout.put("customBadge", "AI 반영: " + (instruction.length() > 26 ? instruction.substring(0, 26) + "..." : instruction));
-        }
-
-        if (req.getTokenOverrides() != null) {
+        if (req.getTokenOverrides() != null && !req.getTokenOverrides().isEmpty()) {
             tokens.putAll(req.getTokenOverrides());
         }
-        if (req.getLayoutOverrides() != null) {
+        if (req.getLayoutOverrides() != null && !req.getLayoutOverrides().isEmpty()) {
             layout.putAll(req.getLayoutOverrides());
         }
 
-        Integer maxVer = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(MAX(version_no), 1) FROM kkumz_site_release WHERE site_id = ?",
-                Integer.class, siteId
-        );
-        int nextVer = (maxVer != null ? maxVer : 1) + 1;
-        String note = instruction.isBlank() ? "비주얼 에디터 디자인·콘텐츠 즉시 반영" : "대화형 편집: " + instruction;
-        String logMsg = "[Chat-Refine] Applied instruction: \"" + note + "\"\n[Hot-Reload] Updated designTokens & layoutSchema (v" + nextVer + ").";
-        String releaseId = "rel-" + siteId + "-v" + nextVer;
-        String user = req.getUsername() != null ? req.getUsername() : "admin";
-
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_site_release (id, site_id, version_no, release_note, deploy_mode, " +
-                "design_tokens_json, layout_schema_json, webide_files_json, minio_bundle_path, build_status, build_log, created_by, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, 'SUCCESS', ?, ?, CURRENT_TIMESTAMP)",
-                releaseId, siteId, nextVer, note, site.get("deployMode"),
-                toJson(tokens), toJson(layout), toJson(files),
-                "minio://kkumz-sites/" + site.get("siteSlug") + "/v" + nextVer + "/schema.json",
-                logMsg, user
-        );
-
-        recordBuildJob(siteId, releaseId, "CHAT_HOT_RELOAD", String.valueOf(site.get("deployMode")), "SUCCESS", 420, null, false, logMsg, user);
-
-        jdbcTemplate.update(
-                "UPDATE kkumz_site SET active_version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                nextVer, siteId
-        );
-        return getSiteRuntime(String.valueOf(site.get("siteSlug")));
-    }
-
-    public Map<String, Object> getWebIdeFiles(String siteSlug) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteSlug);
-        String siteId = String.valueOf(site.get("id"));
-        int activeVer = ((Number) site.get("activeVersion")).intValue();
-        Map<String, Object> rel = getReleaseRecord(siteId, activeVer);
-
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("siteId", siteId);
-        result.put("siteSlug", site.get("siteSlug"));
-        result.put("siteName", site.get("siteName"));
-        result.put("siteType", site.get("siteType"));
-        result.put("deployMode", site.get("deployMode"));
-        result.put("activeVersion", activeVer);
-        result.put("buildStatus", rel.get("buildStatus"));
-        result.put("buildLog", rel.get("buildLog"));
-        result.put("minioBundlePath", rel.get("minioBundlePath"));
-        result.put("files", parseJsonListOfMap(rel.get("webideFilesText")));
-        result.put("releases", listSiteReleases(siteId));
-        return result;
-    }
-
-    @Transactional
-    public Map<String, Object> updateWebIdeFiles(String siteSlug, UpdateWebIdeFilesRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteSlug);
-        String siteId = String.valueOf(site.get("id"));
-        int activeVer = ((Number) site.get("activeVersion")).intValue();
-        Map<String, Object> rel = getReleaseRecord(siteId, activeVer);
-
-        List<Map<String, Object>> files = (req.getFiles() != null && !req.getFiles().isEmpty())
-                ? req.getFiles()
-                : parseJsonListOfMap(rel.get("webideFilesText"));
-
-        boolean hasSyntaxIssue = Boolean.TRUE.equals(req.getSimulateSyntaxError());
-        for (Map<String, Object> f : files) {
-            String content = String.valueOf(f.getOrDefault("content", ""));
-            if (content.contains("SYNTAX_ERROR") || content.contains("<<<")) {
-                hasSyntaxIssue = true;
+        String instruction = req.getInstruction() != null ? req.getInstruction().trim() : "";
+        if (!instruction.isBlank()
+                && (req.getTokenOverrides() == null || req.getTokenOverrides().isEmpty())
+                && (req.getLayoutOverrides() == null || req.getLayoutOverrides().isEmpty())) {
+            String aiJson = ensureAiGateway().executeStagePrompt("CHAT_REFINE", Map.of(
+                    "tokensJson", toJson(tokens),
+                    "layoutJson", toJson(layout),
+                    "instruction", instruction
+            ));
+            Map<String, Object> parsed = parseJsonObject(aiJson);
+            if (parsed.get("designTokens") instanceof Map<?, ?> dt) {
+                dt.forEach((k, v) -> tokens.put(String.valueOf(k), v));
+            }
+            if (parsed.get("layoutSchema") instanceof Map<?, ?> ls) {
+                ls.forEach((k, v) -> layout.put(String.valueOf(k), v));
+            }
+            for (String tokenKey : List.of("primary", "secondary", "accent", "surface", "radius")) {
+                if (parsed.containsKey(tokenKey)) {
+                    tokens.put(tokenKey, parsed.get(tokenKey));
+                }
+            }
+            for (String layoutKey : List.of("heroTitle", "heroSubtitle", "ctaText", "customBadge", "showFlashDeal", "showAiConcierge")) {
+                if (parsed.containsKey(layoutKey)) {
+                    layout.put(layoutKey, parsed.get(layoutKey));
+                }
             }
         }
 
-        String buildStatus = hasSyntaxIssue ? "FAILED" : "SUCCESS";
-        String buildLog = hasSyntaxIssue
-                ? "[Bundle-Builder] Compiling SFC bundle...\n[ERROR] [vite:vue] Unterminated template tag or invalid expression in src/App.vue:12:5\n[Hint] Click 'AI 에러 자동 수정' to diagnose and repair AST syntax automatically."
-                : "[Bundle-Builder] Compiling " + files.size() + " virtual SFC files...\n[Vite-Bundle] TypeScript & Vue template check passed (0 errors).\n[Artifact] Ready at minio://kkumz-sites/" + site.get("siteSlug") + "/v" + activeVer + "/dist/index.js";
+        int nextVer = currentVer + 1;
+        String releaseId = "rel-" + siteId + "-v" + nextVer;
+        long durationMs = Math.max(1L, (System.nanoTime() - startNs) / 1_000_000L);
+        String logMsg = "[" + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+                + "] [Chat-Refine] Applied instruction ('" + instruction + "') -> v" + nextVer + " (" + durationMs + "ms).";
 
-        jdbcTemplate.update(
-                "UPDATE kkumz_site_release SET webide_files_json = ?::jsonb, build_status = ?, build_log = ? " +
-                "WHERE site_id = ? AND version_no = ?",
-                toJson(files), buildStatus, buildLog, siteId, activeVer
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_site_release (
+                    id, site_id, version_no, release_note, deploy_mode, design_tokens_json,
+                    layout_schema_json, webide_files_json, minio_bundle_path, build_status, build_log, created_by, created_at
+                ) VALUES (?, ?, ?, ?, 'DYNAMIC_SDUI', ?::jsonb, ?::jsonb, ?::jsonb, ?, 'SUCCESS', ?, ?, CURRENT_TIMESTAMP)
+                """,
+                releaseId, siteId, nextVer,
+                "대화형 디자인 편집: " + (instruction.isBlank() ? "테마/레이아웃 속성 업데이트" : instruction),
+                toJson(tokens), toJson(layout), String.valueOf(latestRel.get("webideFilesJson")),
+                "/s/" + siteSlug + "/releases/v" + nextVer,
+                logMsg,
+                req.getUsername() != null ? req.getUsername() : site.get("ownerUsername")
         );
 
-        recordBuildJob(
-                siteId,
-                String.valueOf(rel.get("id")),
-                "WEBIDE_BUNDLE_BUILD",
-                "CUSTOM_BUNDLE",
-                buildStatus,
-                hasSyntaxIssue ? 610 : 1850,
-                hasSyntaxIssue ? "Unterminated template tag in src/App.vue:12:5" : null,
-                false,
-                buildLog,
-                req.getUsername() != null ? req.getUsername() : "admin"
+        jdbcTemplate.update("UPDATE kkumz_site SET active_version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                nextVer, siteId);
+
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_build_job (
+                    id, site_id, release_id, job_type, deploy_mode, status, duration_ms,
+                    ai_patch_applied, build_log, triggered_by, started_at, finished_at
+                ) VALUES (?, ?, ?, 'CHAT_HOT_RELOAD', 'DYNAMIC_SDUI', 'SUCCESS', ?, FALSE, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """,
+                "job-" + UUID.randomUUID().toString().substring(0, 8),
+                siteId, releaseId, durationMs, logMsg,
+                req.getUsername() != null ? req.getUsername() : site.get("ownerUsername")
         );
-        return getWebIdeFiles(String.valueOf(site.get("siteSlug")));
+
+        return getSiteRuntime(siteSlug);
+    }
+
+    public Map<String, Object> getWebIdeFiles(String siteIdOrSlug) {
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        String siteId = String.valueOf(site.get("id"));
+        int activeVer = ((Number) site.get("activeVersion")).intValue();
+        Map<String, Object> rel = getLatestRelease(siteId, activeVer);
+
+        List<Map<String, Object>> jobs = jdbcTemplate.queryForList("""
+                SELECT id,
+                       job_type AS "jobType",
+                       deploy_mode AS "deployMode",
+                       status,
+                       duration_ms AS "durationMs",
+                       error_summary AS "errorSummary",
+                       ai_patch_applied AS "aiPatchApplied",
+                       build_log AS "buildLog",
+                       triggered_by AS "triggeredBy",
+                       started_at AS "startedAt"
+                FROM kkumz_build_job
+                WHERE site_id = ?
+                ORDER BY started_at DESC
+                LIMIT 10
+                """, siteId);
+
+        Map<String, Object> workspace = new LinkedHashMap<>();
+        workspace.put("site", site);
+        workspace.put("versionNo", rel.get("versionNo"));
+        workspace.put("deployMode", rel.get("deployMode"));
+        workspace.put("buildStatus", rel.get("buildStatus"));
+        workspace.put("buildLog", rel.get("buildLog"));
+        workspace.put("designTokens", parseJsonObject(String.valueOf(rel.get("designTokensJson"))));
+        workspace.put("layoutSchema", parseJsonObject(String.valueOf(rel.get("layoutSchemaJson"))));
+        workspace.put("files", parseJsonList(String.valueOf(rel.get("webideFilesJson"))));
+        workspace.put("buildJobs", jobs);
+        return workspace;
     }
 
     @Transactional
-    public Map<String, Object> aiFixBuildError(String siteSlug, FixBuildRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteSlug);
+    public Map<String, Object> updateWebIdeFiles(String siteIdOrSlug, UpdateWebIdeFilesRequest req) {
+        long startNs = System.nanoTime();
+        if (req == null || req.getFiles() == null || req.getFiles().isEmpty()) {
+            throw new IllegalArgumentException("저장할 WebIDE 소스 파일 목록(files)이 비어 있습니다.");
+        }
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        int activeVer = ((Number) site.get("activeVersion")).intValue();
-        Map<String, Object> rel = getReleaseRecord(siteId, activeVer);
+        String siteSlug = String.valueOf(site.get("siteSlug"));
+        int currentVer = ((Number) site.get("activeVersion")).intValue();
+        Map<String, Object> latestRel = getLatestRelease(siteId, currentVer);
 
-        List<Map<String, Object>> files = parseJsonListOfMap(rel.get("webideFilesText"));
-        for (Map<String, Object> file : files) {
-            String content = String.valueOf(file.getOrDefault("content", ""));
-            content = content.replace("SYNTAX_ERROR", "").replace("<<<", "");
-            file.put("content", content);
+        List<String> validationErrors = validateWebIdeSourceFiles(req.getFiles());
+        boolean hasError = !validationErrors.isEmpty();
+
+        int nextVer = currentVer + 1;
+        String releaseId = "rel-" + siteId + "-v" + nextVer;
+        String status = hasError ? "FAILED" : "SUCCESS";
+        String nowTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        long durationMs = Math.max(1L, (System.nanoTime() - startNs) / 1_000_000L);
+        String errorSummary = hasError ? String.join("; ", validationErrors) : null;
+        String buildLog = hasError
+                ? "[" + nowTime + "] [Bundle-Builder] Compiling " + req.getFiles().size() + " files...\n"
+                  + "[" + nowTime + "] [ERROR] " + errorSummary
+                : "[" + nowTime + "] [Bundle-Builder] Validated " + req.getFiles().size() + " SFC/JSON files (" + durationMs + "ms).\n"
+                  + "[" + nowTime + "] [Publish] Release v" + nextVer + " activated for /s/" + siteSlug + ".";
+
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_site_release (
+                    id, site_id, version_no, release_note, deploy_mode, design_tokens_json,
+                    layout_schema_json, webide_files_json, minio_bundle_path, build_status, build_log, created_by, created_at
+                ) VALUES (?, ?, ?, ?, 'CUSTOM_BUNDLE', ?::jsonb, ?::jsonb, ?::jsonb, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                """,
+                releaseId, siteId, nextVer,
+                req.getCommitMessage() != null && !req.getCommitMessage().isBlank() ? req.getCommitMessage() : "WebIDE 코드 편집 저장 (v" + nextVer + ")",
+                String.valueOf(latestRel.get("designTokensJson")),
+                String.valueOf(latestRel.get("layoutSchemaJson")),
+                toJson(req.getFiles()),
+                "/s/" + siteSlug + "/releases/v" + nextVer,
+                status, buildLog,
+                req.getUsername() != null ? req.getUsername() : site.get("ownerUsername")
+        );
+
+        if (!hasError) {
+            jdbcTemplate.update("UPDATE kkumz_site SET active_version = ?, deploy_mode = 'CUSTOM_BUNDLE', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    nextVer, siteId);
         }
 
-        String repairedLog = "[AI Build Healer] Diagnosing previous compiler stacktrace...\n" +
-                "[AI Patch] Repaired Vue SFC template closing tag & normalized TypeScript props in src/App.vue.\n" +
-                "[Bundle-Builder] Re-running Vite production bundle build... SUCCESS (0 errors, 0 warnings).\n" +
-                "[Artifact] Uploaded minio://kkumz-sites/" + site.get("siteSlug") + "/v" + activeVer + "/dist/index.js (43.2 KB).";
-
-        jdbcTemplate.update(
-                "UPDATE kkumz_site_release SET webide_files_json = ?::jsonb, build_status = 'SUCCESS', build_log = ? " +
-                "WHERE site_id = ? AND version_no = ?",
-                toJson(files), repairedLog, siteId, activeVer
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_build_job (
+                    id, site_id, release_id, job_type, deploy_mode, status, duration_ms, error_summary,
+                    ai_patch_applied, build_log, triggered_by, started_at, finished_at
+                ) VALUES (?, ?, ?, 'WEBIDE_BUNDLE_BUILD', 'CUSTOM_BUNDLE', ?, ?, ?, FALSE, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """,
+                "job-" + UUID.randomUUID().toString().substring(0, 8),
+                siteId, releaseId, status, durationMs,
+                errorSummary,
+                buildLog,
+                req.getUsername() != null ? req.getUsername() : site.get("ownerUsername")
         );
 
-        recordBuildJob(
-                siteId,
-                String.valueOf(rel.get("id")),
-                "AI_BUILD_SELF_HEAL",
-                "CUSTOM_BUNDLE",
-                "SUCCESS",
-                1420,
-                null,
-                true,
-                repairedLog,
-                req != null && req.getUsername() != null ? req.getUsername() : "admin"
-        );
-        return getWebIdeFiles(String.valueOf(site.get("siteSlug")));
+        return getWebIdeFiles(siteSlug);
     }
 
     @Transactional
-    public Map<String, Object> deploySite(String siteSlug, DeploySiteRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteSlug);
+    public Map<String, Object> aiFixBuildError(String siteIdOrSlug, FixBuildRequest req) {
+        long startNs = System.nanoTime();
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        int activeVer = ((Number) site.get("activeVersion")).intValue();
-        Map<String, Object> rel = getReleaseRecord(siteId, activeVer);
+        String siteSlug = String.valueOf(site.get("siteSlug"));
 
-        String mode = (req != null && req.getDeployMode() != null && !req.getDeployMode().isBlank())
+        List<Map<String, Object>> latestRelRows = jdbcTemplate.queryForList("""
+                SELECT id, version_no AS "versionNo", design_tokens_json::text AS "designTokensJson",
+                       layout_schema_json::text AS "layoutSchemaJson", webide_files_json::text AS "webideFilesJson",
+                       build_log AS "buildLog"
+                FROM kkumz_site_release
+                WHERE site_id = ?
+                ORDER BY version_no DESC
+                LIMIT 1
+                """, siteId);
+        if (latestRelRows.isEmpty()) {
+            throw new IllegalStateException("빌드 복구 대상 릴리즈 스냅샷이 존재하지 않습니다: siteId=" + siteId);
+        }
+
+        Map<String, Object> latestRel = latestRelRows.get(0);
+        String currentFilesJson = String.valueOf(latestRel.get("webideFilesJson"));
+        String prevBuildLog = (req != null && req.getErrorContext() != null && !req.getErrorContext().isBlank())
+                ? req.getErrorContext().trim()
+                : String.valueOf(latestRel.getOrDefault("buildLog", ""));
+
+        String repairedJson = ensureAiGateway().executeStagePrompt("BUILD_FIX", Map.of(
+                "buildLog", prevBuildLog,
+                "filesJson", currentFilesJson
+        ));
+
+        List<Map<String, Object>> repairedFiles = parseAiJsonArray(repairedJson, "BUILD_FIX");
+        if (repairedFiles.isEmpty()) {
+            throw new IllegalStateException("AI 빌드 오류 패치 결과 파일 목록이 비어 있습니다.");
+        }
+
+        List<String> postCheckErrors = validateWebIdeSourceFiles(repairedFiles);
+        if (!postCheckErrors.isEmpty()) {
+            throw new IllegalStateException("AI 패치 후에도 문법 오류가 남아 있습니다: " + String.join("; ", postCheckErrors));
+        }
+
+        int nextVer = ((Number) latestRel.get("versionNo")).intValue() + 1;
+        String releaseId = "rel-" + siteId + "-v" + nextVer;
+        String nowTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        long durationMs = Math.max(1L, (System.nanoTime() - startNs) / 1_000_000L);
+        String healLog = "[" + nowTime + "] [AI-Build-Fix] Repaired " + repairedFiles.size() + " files via AgentScope BUILD_FIX template (" + durationMs + "ms).";
+        String actor = (req != null && req.getUsername() != null && !req.getUsername().isBlank())
+                ? req.getUsername().trim()
+                : String.valueOf(site.get("ownerUsername"));
+
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_site_release (
+                    id, site_id, version_no, release_note, deploy_mode, design_tokens_json,
+                    layout_schema_json, webide_files_json, minio_bundle_path, build_status, build_log, created_by, created_at
+                ) VALUES (?, ?, ?, 'AI 빌드 오류 자동 패치 및 배포 복구', 'CUSTOM_BUNDLE', ?::jsonb, ?::jsonb, ?::jsonb, ?, 'SUCCESS', ?, ?, CURRENT_TIMESTAMP)
+                """,
+                releaseId, siteId, nextVer,
+                String.valueOf(latestRel.get("designTokensJson")),
+                String.valueOf(latestRel.get("layoutSchemaJson")),
+                toJson(repairedFiles),
+                "/s/" + siteSlug + "/releases/v" + nextVer,
+                healLog, actor
+        );
+
+        jdbcTemplate.update("UPDATE kkumz_site SET active_version = ?, deploy_mode = 'CUSTOM_BUNDLE', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                nextVer, siteId);
+
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_build_job (
+                    id, site_id, release_id, job_type, deploy_mode, status, duration_ms,
+                    ai_patch_applied, build_log, triggered_by, started_at, finished_at
+                ) VALUES (?, ?, ?, 'AI_AUTO_HEAL_BUILD', 'CUSTOM_BUNDLE', 'SUCCESS', ?, TRUE, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """,
+                "job-" + UUID.randomUUID().toString().substring(0, 8),
+                siteId, releaseId, durationMs, healLog, actor
+        );
+
+        return getWebIdeFiles(siteSlug);
+    }
+
+    @Transactional
+    public Map<String, Object> rollbackSiteRelease(String siteIdOrSlug, Integer versionNo) {
+        if (versionNo == null || versionNo <= 0) {
+            throw new IllegalArgumentException("롤백할 버전 번호(versionNo)가 유효하지 않습니다.");
+        }
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        String siteId = String.valueOf(site.get("id"));
+        String siteSlug = String.valueOf(site.get("siteSlug"));
+
+        Integer exists = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM kkumz_site_release WHERE site_id = ? AND version_no = ?",
+                Integer.class, siteId, versionNo
+        );
+        if (exists == null || exists == 0) {
+            throw new IllegalArgumentException("롤백할 릴리즈 버전이 존재하지 않습니다: v" + versionNo);
+        }
+        jdbcTemplate.update("UPDATE kkumz_site SET active_version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                versionNo, siteId);
+        return getSiteRuntime(siteSlug);
+    }
+
+    @Transactional
+    public Map<String, Object> deploySite(String siteIdOrSlug, DeploySiteRequest req) {
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        String siteId = String.valueOf(site.get("id"));
+        String siteSlug = String.valueOf(site.get("siteSlug"));
+        int currentVer = ((Number) site.get("activeVersion")).intValue();
+
+        String deployMode = (req != null && req.getDeployMode() != null && !req.getDeployMode().isBlank())
                 ? req.getDeployMode().trim().toUpperCase(Locale.ROOT)
                 : String.valueOf(site.get("deployMode"));
         String visibility = (req != null && req.getVisibility() != null && !req.getVisibility().isBlank())
                 ? req.getVisibility().trim().toUpperCase(Locale.ROOT)
                 : String.valueOf(site.get("visibility"));
-        String note = (req != null && req.getReleaseNote() != null && !req.getReleaseNote().isBlank())
-                ? req.getReleaseNote().trim()
-                : ("CUSTOM_BUNDLE".equals(mode) ? "WebIDE 커스텀 코드 번들 빌드 및 라이브 배포" : "즉시 디자인 스키마 무중단 배포");
 
-        Integer maxVer = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(MAX(version_no), 1) FROM kkumz_site_release WHERE site_id = ?",
-                Integer.class, siteId
-        );
-        int nextVer = (maxVer != null ? maxVer : 1) + 1;
-        String bundlePath = "CUSTOM_BUNDLE".equals(mode)
-                ? "minio://kkumz-sites/" + site.get("siteSlug") + "/v" + nextVer + "/dist/index.js"
-                : "minio://kkumz-sites/" + site.get("siteSlug") + "/v" + nextVer + "/schema.json";
-        String buildLog = "[Deploy Engine] Mode=" + mode + ", Version=v" + nextVer + "\n" +
-                "[Artifact] Published to " + bundlePath + "\n" +
-                "[Gateway] Live URL /s/" + site.get("siteSlug") + " switched to v" + nextVer + " with zero downtime.";
-        String releaseId = "rel-" + siteId + "-v" + nextVer;
-        String user = (req != null && req.getUsername() != null) ? req.getUsername() : "admin";
-
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_site_release (id, site_id, version_no, release_note, deploy_mode, " +
-                "design_tokens_json, layout_schema_json, webide_files_json, minio_bundle_path, build_status, build_log, created_by, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, 'SUCCESS', ?, ?, CURRENT_TIMESTAMP)",
-                releaseId, siteId, nextVer, note, mode,
-                rel.get("designTokensText"), rel.get("layoutSchemaText"), rel.get("webideFilesText"),
-                bundlePath, buildLog, user
+        jdbcTemplate.update("""
+                UPDATE kkumz_site
+                SET deploy_mode = ?, visibility = ?, status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                deployMode, visibility, siteId
         );
 
-        recordBuildJob(siteId, releaseId, "LIVE_RELEASE_DEPLOY", mode, "SUCCESS", 1120, null, false, buildLog, user);
+        createNotification(
+                String.valueOf(site.get("ownerUsername")),
+                "BUILD_DONE",
+                site.get("siteName") + " v" + currentVer + " 라이브 배포 완료",
+                "멀티사이트 런타임(/s/" + siteSlug + ")에 최신 릴리즈가 반영되었습니다.",
+                "/s/" + siteSlug
+        );
 
-        jdbcTemplate.update(
-                "UPDATE kkumz_site SET deploy_mode = ?, active_version = ?, visibility = ?, status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                mode, nextVer, visibility, siteId
-        );
-        jdbcTemplate.update(
-                "UPDATE kkumz_idea SET current_step = 6, status = 'PUBLISHED', visibility = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                visibility, site.get("ideaId")
-        );
-        return getSiteRuntime(String.valueOf(site.get("siteSlug")));
+        return getSiteRuntime(siteSlug);
     }
+
+    // =========================================================================
+    // 5. 멀티사이트 라이브 런타임 (/s/:siteSlug) — SyncShop + SyncCMS 실데이터 연동
+    // =========================================================================
 
     @Transactional
-    public Map<String, Object> rollbackSiteRelease(String siteSlug, Integer versionNo) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteSlug);
-        String siteId = String.valueOf(site.get("id"));
-        Map<String, Object> targetRel = getReleaseRecord(siteId, versionNo);
-
-        jdbcTemplate.update(
-                "UPDATE kkumz_site SET active_version = ?, deploy_mode = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                versionNo, targetRel.get("deployMode"), siteId
-        );
-        return getSiteRuntime(String.valueOf(site.get("siteSlug")));
-    }
-
-    // =========================================================================
-    // 5. 멀티사이트 통합 라이브 런타임 렌더러 (/s/:siteSlug) & 실주문/폼제출/AI컨시어지
-    // =========================================================================
-
     public Map<String, Object> getSiteRuntime(String siteSlug) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteSlug);
+        Map<String, Object> site = findSiteByIdOrSlug(siteSlug);
         String siteId = String.valueOf(site.get("id"));
+        String ideaId = String.valueOf(site.get("ideaId"));
+        String siteType = String.valueOf(site.get("siteType"));
         int activeVer = ((Number) site.get("activeVersion")).intValue();
-        Map<String, Object> rel = getReleaseRecord(siteId, activeVer);
 
         jdbcTemplate.update("UPDATE kkumz_site SET view_count = view_count + 1 WHERE id = ?", siteId);
 
-        Map<String, Object> runtime = new LinkedHashMap<>(site);
-        Map<String, Object> designTokens = new LinkedHashMap<>(parseJsonMap(rel.get("designTokensText")));
-        String primaryColor = String.valueOf(designTokens.getOrDefault("primary", designTokens.getOrDefault("primaryColor", "#4f46e5")));
-        String secondaryColor = String.valueOf(designTokens.getOrDefault("secondary", designTokens.getOrDefault("secondaryColor", "#6366f1")));
-        String accentColor = String.valueOf(designTokens.getOrDefault("accent", designTokens.getOrDefault("accentColor", "#06b6d4")));
-        String surfaceColor = String.valueOf(designTokens.getOrDefault("surface", designTokens.getOrDefault("surfaceColor", "#f8fafc")));
-        designTokens.put("primary", primaryColor);
-        designTokens.put("primaryColor", primaryColor);
-        designTokens.put("secondary", secondaryColor);
-        designTokens.put("secondaryColor", secondaryColor);
-        designTokens.put("accent", accentColor);
-        designTokens.put("accentColor", accentColor);
-        designTokens.put("surface", surfaceColor);
-        designTokens.put("surfaceColor", surfaceColor);
+        Map<String, Object> activeRel = getLatestRelease(siteId, activeVer);
+        List<Map<String, Object>> allReleases = jdbcTemplate.queryForList("""
+                SELECT id, version_no AS "versionNo", release_note AS "releaseNote", deploy_mode AS "deployMode",
+                       build_status AS "buildStatus", created_by AS "createdBy", created_at AS "createdAt"
+                FROM kkumz_site_release
+                WHERE site_id = ?
+                ORDER BY version_no DESC
+                """, siteId);
 
-        Map<String, Object> layoutSchema = new LinkedHashMap<>(parseJsonMap(rel.get("layoutSchemaText")));
-        if (layoutSchema.get("ctaText") != null && layoutSchema.get("primaryCta") == null) {
-            layoutSchema.put("primaryCta", layoutSchema.get("ctaText"));
-        } else if (layoutSchema.get("primaryCta") != null && layoutSchema.get("ctaText") == null) {
-            layoutSchema.put("ctaText", layoutSchema.get("primaryCta"));
+        Map<String, Object> runtime = new LinkedHashMap<>();
+        runtime.put("site", site);
+        runtime.put("activeVersion", activeVer);
+        runtime.put("deployMode", activeRel.get("deployMode"));
+        runtime.put("releaseNote", activeRel.get("releaseNote"));
+        runtime.put("designTokens", parseJsonObject(String.valueOf(activeRel.get("designTokensJson"))));
+        runtime.put("layoutSchema", parseJsonObject(String.valueOf(activeRel.get("layoutSchemaJson"))));
+        runtime.put("webideFiles", parseJsonList(String.valueOf(activeRel.get("webideFilesJson"))));
+        runtime.put("releases", allReleases);
+        runtime.put("screenSpecs", listIdeaScreens(ideaId));
+
+        if ("COMMERCE".equalsIgnoreCase(siteType) || "HYBRID".equalsIgnoreCase(siteType)) {
+            Long shopSiteId = site.get("shopSiteId") != null ? ((Number) site.get("shopSiteId")).longValue() : null;
+            runtime.put("commerce", loadCommerceData(shopSiteId));
         }
 
-        runtime.put("designTokens", designTokens);
-        runtime.put("layoutSchema", layoutSchema);
-        runtime.put("webideFiles", parseJsonListOfMap(rel.get("webideFilesText")));
-        runtime.put("releaseNote", rel.get("releaseNote"));
-        runtime.put("buildStatus", rel.get("buildStatus"));
-        runtime.put("buildLog", rel.get("buildLog"));
-        runtime.put("minioBundlePath", rel.get("minioBundlePath"));
-        runtime.put("releases", listSiteReleases(siteId));
-
-        String siteType = String.valueOf(site.get("siteType"));
-        String siteName = String.valueOf(site.get("siteName"));
-        String slogan = String.valueOf(site.get("brandSlogan"));
-        Long shopSiteId = site.get("shopSiteId") != null ? ((Number) site.get("shopSiteId")).longValue() : null;
-        Long cmsSiteId = site.get("cmsSiteId") != null ? ((Number) site.get("cmsSiteId")).longValue() : null;
-
-        runtime.put("brandName", siteName);
-        runtime.put("tagline", slogan);
-        runtime.put("activeVersionNo", activeVer);
-
-        Map<String, Object> commerceData;
-        if ("COMMERCE".equals(siteType) || "HYBRID".equals(siteType) || shopSiteId != null) {
-            commerceData = new LinkedHashMap<>(loadCommerceData(shopSiteId != null ? shopSiteId : 2L, siteName, slogan));
-        } else {
-            commerceData = new LinkedHashMap<>(Map.of("banners", List.of(), "categories", List.of(), "products", List.of(), "coupons", List.of()));
+        if ("CMS_SITE".equalsIgnoreCase(siteType) || "HYBRID".equalsIgnoreCase(siteType)) {
+            Long cmsSiteId = site.get("cmsSiteId") != null ? ((Number) site.get("cmsSiteId")).longValue() : null;
+            runtime.put("cms", loadCmsData(cmsSiteId));
         }
-
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> customProducts = layoutSchema.get("customProducts") instanceof List
-                ? (List<Map<String, Object>>) layoutSchema.get("customProducts")
-                : null;
-        if (customProducts != null && !customProducts.isEmpty()) {
-            commerceData.put("products", customProducts);
-        }
-        runtime.put("commerce", commerceData);
-        runtime.put("products", commerceData.getOrDefault("products", List.of()));
-        runtime.put("categories", commerceData.getOrDefault("categories", List.of()));
-        runtime.put("coupons", commerceData.getOrDefault("coupons", List.of()));
-
-        Map<String, Object> cmsData;
-        if ("CMS_SITE".equals(siteType) || "HYBRID".equals(siteType) || cmsSiteId != null) {
-            cmsData = new LinkedHashMap<>(loadCmsData(cmsSiteId != null ? cmsSiteId : 101L, siteName, slogan));
-        } else {
-            cmsData = new LinkedHashMap<>(Map.of("categories", List.of(), "articles", List.of(), "banners", List.of(), "forms", List.of(), "recentSubmissions", List.of()));
-        }
-
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> customArticles = layoutSchema.get("customArticles") instanceof List
-                ? (List<Map<String, Object>>) layoutSchema.get("customArticles")
-                : null;
-        if (customArticles != null && !customArticles.isEmpty()) {
-            cmsData.put("articles", customArticles);
-        }
-        runtime.put("cms", cmsData);
-        runtime.put("articles", cmsData.getOrDefault("articles", List.of()));
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> cmsForms = (List<Map<String, Object>>) cmsData.getOrDefault("forms", List.of());
-        runtime.put("cmsForm", !cmsForms.isEmpty() ? cmsForms.get(0) : null);
 
         runtime.put("recruits", listSiteRecruits(siteId));
         runtime.put("teamMembers", listSiteTeamMembers(siteId));
         runtime.put("comments", listSiteComments(siteId));
+
         return runtime;
     }
 
+    @Transactional
     public Map<String, Object> createCommerceOrder(String siteSlug, CommerceOrderRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteSlug);
-        Long shopSiteId = site.get("shopSiteId") != null ? ((Number) site.get("shopSiteId")).longValue() : 2L;
-        int quantity = (req.getQuantity() != null && req.getQuantity() > 0) ? req.getQuantity() : 1;
-        String orderSn = "KKZ-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + "-" + shopSiteId;
-        String receiverName = (req.getReceiverName() == null || req.getReceiverName().isBlank()) ? "김도현 고객" : req.getReceiverName().trim();
-        String receiverPhone = (req.getReceiverPhone() == null || req.getReceiverPhone().isBlank()) ? "안심번호-기본" : req.getReceiverPhone().trim();
-        String receiverAddress = (req.getReceiverAddress() == null || req.getReceiverAddress().isBlank())
-                ? "서울특별시 강남구 테헤란로 123 엠파시타워"
-                : req.getReceiverAddress().trim();
-
-        Long orderId = System.currentTimeMillis() % 100000L;
-        Long resolvedProductId = req.getProductId() != null ? req.getProductId() : 101L;
-        String productName = site.get("siteName") + " 시그니처 플래그십 에디션";
-        BigDecimal unitPrice = new BigDecimal("42000");
-        BigDecimal discount = req.getDiscountAmount() != null ? req.getDiscountAmount() : BigDecimal.ZERO;
-        BigDecimal payAmount = unitPrice.multiply(BigDecimal.valueOf(quantity)).subtract(discount).max(BigDecimal.ZERO);
-        int remainingStock = Math.max(1, 80 - quantity);
-
-        try {
-            if (shopJdbcTemplate != null) {
-                List<Map<String, Object>> prodRows = shopJdbcTemplate.queryForList(
-                        "SELECT id, name, pic, product_sn, brand_name, product_category_id, price, promotion_price, stock " +
-                        "FROM pms_product WHERE id = ? AND site_id = ? LIMIT 1",
-                        req.getProductId(), shopSiteId
-                );
-                if (prodRows.isEmpty()) {
-                    prodRows = shopJdbcTemplate.queryForList(
-                            "SELECT id, name, pic, product_sn, brand_name, product_category_id, price, promotion_price, stock " +
-                            "FROM pms_product WHERE site_id = ? ORDER BY sort DESC, id ASC LIMIT 1",
-                            shopSiteId
-                    );
-                }
-                if (!prodRows.isEmpty()) {
-                    Map<String, Object> product = prodRows.get(0);
-                    resolvedProductId = ((Number) product.get("id")).longValue();
-                    productName = String.valueOf(product.get("name"));
-                    int currentStock = product.get("stock") != null ? ((Number) product.get("stock")).intValue() : 50;
-                    remainingStock = Math.max(0, currentStock - quantity);
-                    unitPrice = product.get("promotion_price") != null
-                            ? new BigDecimal(String.valueOf(product.get("promotion_price")))
-                            : new BigDecimal(String.valueOf(product.get("price")));
-                    BigDecimal totalAmount = unitPrice.multiply(BigDecimal.valueOf(quantity));
-                    payAmount = totalAmount.subtract(discount).max(BigDecimal.ZERO);
-
-                    orderId = shopJdbcTemplate.queryForObject(
-                            "INSERT INTO oms_order (site_id, member_id, order_sn, create_time, member_username, total_amount, pay_amount, " +
-                            "freight_amount, discount_amount, pay_type, source_type, status, order_type, receiver_name, receiver_phone, " +
-                            "receiver_detail_address, note, confirm_status, delete_status, payment_time, modify_time) " +
-                            "VALUES (?, 1, ?, ?, 'kkumz.buyer', ?, ?, 0.00, ?, 1, 1, 1, 0, ?, ?, ?, ?, 0, 0, ?, ?) RETURNING id",
-                            Long.class,
-                            shopSiteId, orderSn, Timestamp.from(Instant.now()), totalAmount, payAmount, discount,
-                            receiverName, receiverPhone, receiverAddress, req.getNote(),
-                            Timestamp.from(Instant.now()), Timestamp.from(Instant.now())
-                    );
-
-                    shopJdbcTemplate.update(
-                            "INSERT INTO oms_order_item (order_id, order_sn, product_id, product_pic, product_name, product_brand, " +
-                            "product_sn, product_price, product_quantity, product_category_id, real_amount) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            orderId, orderSn, resolvedProductId, product.get("pic"), productName, product.get("brand_name"),
-                            product.get("product_sn"), unitPrice, quantity, product.get("product_category_id"), payAmount
-                    );
-
-                    shopJdbcTemplate.update(
-                            "UPDATE pms_product SET stock = GREATEST(0, COALESCE(stock, 10) - ?), sale = COALESCE(sale, 0) + ? WHERE id = ?",
-                            quantity, quantity, resolvedProductId
-                    );
-                }
-            }
-        } catch (Exception e) {
-            log.info("Standalone 모드 주문 접수 처리 (orderSn={}): {}", orderSn, e.getMessage());
+        if (req == null || req.getProductId() == null) {
+            throw new IllegalArgumentException("주문 상품 ID(productId)는 필수입니다.");
         }
+        if (req.getReceiverName() == null || req.getReceiverName().isBlank()) {
+            throw new IllegalArgumentException("수령인 성함(receiverName)은 필수입니다.");
+        }
+        if (req.getReceiverPhone() == null || req.getReceiverPhone().isBlank()) {
+            throw new IllegalArgumentException("수령인 연락처(receiverPhone)는 필수입니다.");
+        }
+        if (req.getReceiverAddress() == null || req.getReceiverAddress().isBlank()) {
+            throw new IllegalArgumentException("배송지 주소(receiverAddress)는 필수입니다.");
+        }
+        if (shopJdbcTemplate == null) {
+            throw new IllegalStateException("SyncShop 데이터베이스 연결(shopJdbcTemplate)이 초기화되지 않았습니다.");
+        }
+
+        Map<String, Object> site = findSiteByIdOrSlug(siteSlug);
+        Long shopSiteId = site.get("shopSiteId") != null ? ((Number) site.get("shopSiteId")).longValue() : null;
+        if (shopSiteId == null) {
+            throw new IllegalStateException("해당 사이트에 매핑된 SyncShop 스토어 ID(shopSiteId)가 없습니다: " + siteSlug);
+        }
+
+        int quantity = (req.getQuantity() != null && req.getQuantity() > 0) ? req.getQuantity() : 1;
+        String receiverName = req.getReceiverName().trim();
+        String receiverPhone = req.getReceiverPhone().trim();
+        String receiverAddress = req.getReceiverAddress().trim();
+        String orderSn = "KKUMZ-" + Instant.now().toEpochMilli();
+
+        List<Map<String, Object>> prodRows = shopJdbcTemplate.queryForList("""
+                SELECT id, name, pic, product_sn, brand_name, product_category_id, price, promotion_price, stock
+                FROM pms_product WHERE id = ? AND site_id = ? AND delete_status = 0
+                """, req.getProductId(), shopSiteId);
+
+        if (prodRows.isEmpty()) {
+            throw new IllegalArgumentException("주문 대상 상품이 존재하지 않습니다: productId=" + req.getProductId() + ", shopSiteId=" + shopSiteId);
+        }
+
+        Map<String, Object> prod = prodRows.get(0);
+        Long resolvedProductId = ((Number) prod.get("id")).longValue();
+        String productName = String.valueOf(prod.get("name"));
+        String productPic = String.valueOf(prod.getOrDefault("pic", ""));
+        String productSn = String.valueOf(prod.getOrDefault("product_sn", ""));
+        String brandName = String.valueOf(prod.getOrDefault("brand_name", site.get("siteName")));
+        Long categoryId = prod.get("product_category_id") != null ? ((Number) prod.get("product_category_id")).longValue() : null;
+        BigDecimal promo = (BigDecimal) prod.get("promotion_price");
+        BigDecimal base = (BigDecimal) prod.get("price");
+        BigDecimal unitPrice = (promo != null && promo.compareTo(BigDecimal.ZERO) > 0) ? promo : base;
+        int currentStock = prod.get("stock") != null ? ((Number) prod.get("stock")).intValue() : 0;
+        if (currentStock < quantity) {
+            throw new IllegalStateException("상품 재고가 부족합니다: 현재 재고=" + currentStock + ", 요청 수량=" + quantity);
+        }
+
+        BigDecimal totalAmount = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        Long orderId = shopJdbcTemplate.queryForObject("""
+                INSERT INTO oms_order (
+                    site_id, member_id, order_sn, create_time, member_username,
+                    total_amount, pay_amount, freight_amount, promotion_amount, integration_amount, coupon_amount, discount_amount,
+                    pay_type, source_type, status, order_type,
+                    receiver_name, receiver_phone, receiver_detail_address, note, confirm_status, delete_status
+                ) VALUES (?, 1001, ?, CURRENT_TIMESTAMP, ?, ?, ?, 0.00, 0.00, 0.00, 0.00, 0.00, 1, 1, 1, 0, ?, ?, ?, ?, 0, 0)
+                RETURNING id
+                """,
+                Long.class,
+                shopSiteId, orderSn, receiverName, totalAmount, totalAmount,
+                receiverName, receiverPhone, receiverAddress,
+                req.getNote() != null ? req.getNote() : ""
+        );
+
+        shopJdbcTemplate.update("""
+                INSERT INTO oms_order_item (
+                    order_id, order_sn, product_id, product_pic, product_name, product_brand,
+                    product_sn, product_price, product_quantity, product_category_id, real_amount
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                orderId, orderSn, resolvedProductId, productPic, productName, brandName,
+                productSn, unitPrice, quantity, categoryId, totalAmount
+        );
+
+        shopJdbcTemplate.update("""
+                UPDATE pms_product SET stock = GREATEST(0, stock - ?), sale = sale + ?
+                WHERE id = ?
+                """,
+                quantity, quantity, resolvedProductId
+        );
+
+        int remainingStock = Math.max(0, currentStock - quantity);
 
         createNotification(
                 String.valueOf(site.get("ownerUsername")),
                 "COMMERCE_ORDER",
                 "[" + site.get("siteName") + "] 신규 주문 접수 (" + orderSn + ")",
-                receiverName + " 고객님이 " + productName + " " + quantity + "건을 주문했습니다.",
+                receiverName + " 고객님이 '" + productName + "' " + quantity + "건(" + totalAmount + "원)을 주문했습니다.",
                 "/s/" + site.get("siteSlug")
         );
 
@@ -1073,182 +1357,220 @@ public class KkumzService {
         result.put("orderId", orderId);
         result.put("orderSn", orderSn);
         result.put("shopSiteId", shopSiteId);
-        result.put("siteSlug", site.get("siteSlug"));
         result.put("productId", resolvedProductId);
         result.put("productName", productName);
         result.put("quantity", quantity);
-        result.put("payAmount", payAmount);
+        result.put("unitPrice", unitPrice);
+        result.put("payAmount", totalAmount);
         result.put("remainingStock", remainingStock);
         result.put("receiverName", receiverName);
         result.put("status", "PAID_READY_FOR_SHIPMENT");
+        result.put("orderedAt", Timestamp.from(Instant.now()));
         return result;
     }
 
+    @Transactional
     public Map<String, Object> submitCmsForm(String siteSlug, CmsFormSubmitRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteSlug);
-        Long cmsSiteId = site.get("cmsSiteId") != null ? ((Number) site.get("cmsSiteId")).longValue() : 101L;
-        Long formId = req.getFormId() != null ? req.getFormId() : 101L;
+        if (req == null) {
+            throw new IllegalArgumentException("신청 폼 요청 데이터(req)가 비어 있습니다.");
+        }
+        String applicant = (req.getApplicantName() != null && !req.getApplicantName().isBlank())
+                ? req.getApplicantName().trim()
+                : (req.getExtraFields() != null && req.getExtraFields().get("applicant_name") != null
+                ? String.valueOf(req.getExtraFields().get("applicant_name")).trim()
+                : "");
+        if (applicant.isBlank()) {
+            throw new IllegalArgumentException("신청자 성함(applicantName)은 필수입니다.");
+        }
+        String phone = (req.getPhone() != null && !req.getPhone().isBlank())
+                ? req.getPhone().trim()
+                : (req.getExtraFields() != null && req.getExtraFields().get("phone") != null
+                ? String.valueOf(req.getExtraFields().get("phone")).trim()
+                : "");
+        if (phone.isBlank()) {
+            throw new IllegalArgumentException("신청자 연락처(phone)는 필수입니다.");
+        }
+        if (cmsJdbcTemplate == null) {
+            throw new IllegalStateException("SyncCMS 데이터베이스 연결(cmsJdbcTemplate)이 초기화되지 않았습니다.");
+        }
 
-        String applicantName = req.getApplicantName() != null && !req.getApplicantName().isBlank() ? req.getApplicantName().trim() : "김도현 신청자";
+        Map<String, Object> site = findSiteByIdOrSlug(siteSlug);
+        Long cmsSiteId = site.get("cmsSiteId") != null ? ((Number) site.get("cmsSiteId")).longValue() : null;
+        if (cmsSiteId == null) {
+            throw new IllegalStateException("해당 사이트에 매핑된 SyncCMS 사이트 ID(cmsSiteId)가 없습니다: " + siteSlug);
+        }
+        Long formId = req.getFormId();
+        if (formId == null) {
+            List<Map<String, Object>> forms = cmsJdbcTemplate.queryForList(
+                    "SELECT id FROM cms_form WHERE site_id = ? AND status = 'ACTIVE' ORDER BY id ASC LIMIT 1",
+                    cmsSiteId
+            );
+            if (forms.isEmpty()) {
+                throw new IllegalStateException("해당 사이트에 활성화된 CMS 신청 폼이 존재하지 않습니다: cmsSiteId=" + cmsSiteId);
+            }
+            formId = ((Number) forms.get(0).get("id")).longValue();
+        }
+
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("applicantName", applicantName);
-        payload.put("phone", (req.getPhone() != null && !req.getPhone().isBlank()) ? req.getPhone().trim() : "안심번호-기본");
-        payload.put("optionValue", req.getOptionValue() != null ? req.getOptionValue() : "정규 세션 참가 신청");
-        payload.put("message", req.getMessage() != null ? req.getMessage() : "꿈즈 라이브 사이트를 통해 온라인 신청합니다.");
         if (req.getExtraFields() != null) {
             payload.putAll(req.getExtraFields());
         }
-
-        Long submissionId = System.currentTimeMillis() % 100000L;
-        int totalSubmissions = 12;
-        try {
-            if (cmsJdbcTemplate != null) {
-                if (req.getFormId() == null) {
-                    List<Map<String, Object>> forms = cmsJdbcTemplate.queryForList(
-                            "SELECT id FROM cms_form WHERE site_id = ? ORDER BY id ASC LIMIT 1", cmsSiteId.shortValue()
-                    );
-                    if (!forms.isEmpty()) {
-                        formId = ((Number) forms.get(0).get("id")).longValue();
-                    }
-                }
-                submissionId = cmsJdbcTemplate.queryForObject(
-                        "INSERT INTO cms_form_data (form_id, submission_data, client_ip, status, admin_note, create_date) " +
-                        "VALUES (?, ?::jsonb, '127.0.0.1', 'RECEIVED', '꿈즈 라이브 사이트 온라인 접수 완료', CURRENT_TIMESTAMP) RETURNING id",
-                        Long.class, formId, toJson(payload)
-                );
-                Integer count = cmsJdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM cms_form_data WHERE form_id = ?", Integer.class, formId
-                );
-                if (count != null) {
-                    totalSubmissions = count;
-                }
-            }
-        } catch (Exception e) {
-            log.info("Standalone 모드 온라인 신청 폼 접수 (siteSlug={}): {}", siteSlug, e.getMessage());
+        payload.put("applicant_name", applicant);
+        payload.put("phone", phone);
+        if (req.getOptionValue() != null && !req.getOptionValue().isBlank()) {
+            payload.put("option_value", req.getOptionValue().trim());
         }
+        if (req.getMessage() != null && !req.getMessage().isBlank()) {
+            payload.put("message", req.getMessage().trim());
+        }
+
+        Long submissionId = cmsJdbcTemplate.queryForObject("""
+                INSERT INTO cms_form_submission (
+                    form_id, site_id, submitted_data, submitter_ip, status, created_time
+                ) VALUES (?, ?, ?::jsonb, '0.0.0.0', 'RECEIVED', CURRENT_TIMESTAMP)
+                RETURNING id
+                """,
+                Long.class,
+                formId, cmsSiteId, toJson(payload)
+        );
+
+        Integer cnt = cmsJdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM cms_form_submission WHERE form_id = ?",
+                Integer.class, formId
+        );
+        int totalSubmissions = cnt != null ? cnt : 1;
 
         createNotification(
                 String.valueOf(site.get("ownerUsername")),
-                "FORM_SUBMIT",
-                "[" + site.get("siteName") + "] 온라인 참가/문의 신청 접수",
-                applicantName + "님이 [" + payload.get("optionValue") + "] 신청서를 제출했습니다.",
+                "CMS_FORM_SUBMIT",
+                "[" + site.get("siteName") + "] 신규 온라인 신청 접수",
+                applicant + "님이 참가/예약 신청서를 제출했습니다.",
                 "/s/" + site.get("siteSlug")
         );
 
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("submissionId", submissionId);
-        result.put("formId", formId);
-        result.put("cmsSiteId", cmsSiteId);
-        result.put("siteSlug", site.get("siteSlug"));
-        result.put("applicantName", applicantName);
-        result.put("totalSubmissions", totalSubmissions);
-        result.put("submittedData", payload);
-        result.put("status", "RECEIVED");
-        return result;
-    }
-
-    public Map<String, Object> askSiteConcierge(String siteSlug, SiteConciergeRequest req) {
-        Map<String, Object> runtime = getSiteRuntime(siteSlug);
-        String siteName = String.valueOf(runtime.get("siteName"));
-        String siteType = String.valueOf(runtime.get("siteType"));
-        String question = (req != null && req.getQuestion() != null && !req.getQuestion().isBlank())
-                ? req.getQuestion().trim()
-                : "이 사이트의 대표 추천 상품과 특징을 알려주세요.";
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> commerce = (Map<String, Object>) runtime.get("commerce");
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> products = commerce != null ? (List<Map<String, Object>>) commerce.get("products") : List.of();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> cms = (Map<String, Object>) runtime.get("cms");
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> articles = cms != null ? (List<Map<String, Object>>) cms.get("articles") : List.of();
-
-        StringBuilder answer = new StringBuilder();
-        answer.append("안녕하세요! **").append(siteName).append("** AI 컨시어지입니다. 문의하신 [").append(question).append("]에 대해 안내해 드립니다.\n\n");
-        if (!products.isEmpty()) {
-            Map<String, Object> top = products.get(0);
-            answer.append("- **시그니처 추천 상품**: `").append(top.get("name")).append("` (할인가 ")
-                  .append(top.get("promotionPrice") != null ? top.get("promotionPrice") : top.get("price"))
-                  .append("원) — ").append(top.get("subTitle")).append("\n");
-        }
-        if (!articles.isEmpty()) {
-            Map<String, Object> art = articles.get(0);
-            answer.append("- **주요 콘텐츠/세션 안내**: `").append(art.get("title")).append("` — ").append(art.get("description")).append("\n");
-        }
-        answer.append("- **원클릭 이용 안내**: 화면 내 상품 주문 모달 또는 온라인 신청 폼에서 바로 주문·접수하실 수 있습니다.");
-
         Map<String, Object> res = new LinkedHashMap<>();
-        res.put("siteSlug", siteSlug);
-        res.put("siteType", siteType);
-        res.put("question", question);
-        res.put("answer", answer.toString());
-        res.put("recommendedProductCount", products.size());
-        res.put("recommendedArticleCount", articles.size());
+        res.put("submissionId", submissionId);
+        res.put("formId", formId);
+        res.put("cmsSiteId", cmsSiteId);
+        res.put("applicantName", applicant);
+        res.put("submittedData", payload);
+        res.put("totalSubmissions", totalSubmissions);
+        res.put("status", "RECEIVED");
+        res.put("submittedAt", Timestamp.from(Instant.now()));
         return res;
     }
 
+    public Map<String, Object> askSiteConcierge(String siteSlug, SiteConciergeRequest req) {
+        if (req == null || req.getQuestion() == null || req.getQuestion().isBlank()) {
+            throw new IllegalArgumentException("질문 내용(question)은 필수입니다.");
+        }
+        Map<String, Object> runtime = getSiteRuntime(siteSlug);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> site = (Map<String, Object>) runtime.get("site");
+        String siteName = String.valueOf(site.get("siteName"));
+        String slogan = String.valueOf(site.get("brandSlogan"));
+        String question = req.getQuestion().trim();
+
+        String answer = ensureAiGateway().executeStagePrompt("CONCIERGE", Map.of(
+                "siteName", siteName,
+                "brandSlogan", slogan,
+                "question", question
+        ));
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("siteSlug", siteSlug);
+        response.put("siteName", siteName);
+        response.put("question", question);
+        response.put("answer", answer);
+        response.put("answeredAt", Timestamp.from(Instant.now()));
+        return response;
+    }
+
     // =========================================================================
-    // 6. SNS 커뮤니티 쇼케이스 피드, 좋아요, 댓글, 알림 & 팀빌딩 라운지
+    // 6. 창업 커뮤니티 쇼케이스 피드, 팀원 모집/지원, 댓글, 좋아요
     // =========================================================================
 
     public List<Map<String, Object>> getCommunityFeed(String siteType, String recruitRole, String sortBy, String keyword) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT s.id, s.idea_id AS \"ideaId\", s.site_slug AS \"siteSlug\", s.site_name AS \"siteName\", " +
-                "s.site_type AS \"siteType\", s.category, s.brand_slogan AS \"brandSlogan\", s.logo_svg AS \"logoSvg\", " +
-                "s.shop_site_id AS \"shopSiteId\", s.cms_site_id AS \"cmsSiteId\", s.deploy_mode AS \"deployMode\", " +
-                "s.active_version AS \"activeVersion\", s.deployed_url AS \"deployedUrl\", s.custom_domain AS \"customDomain\", " +
-                "s.is_featured AS \"isFeatured\", s.visibility, " +
-                "s.like_count AS \"likeCount\", s.comment_count AS \"commentCount\", s.view_count AS \"viewCount\", " +
-                "s.owner_username AS \"ownerUsername\", s.owner_display_name AS \"ownerDisplayName\", " +
-                "s.status, s.created_at AS \"createdAt\", s.updated_at AS \"updatedAt\", " +
-                "i.prompt_text AS \"promptText\", i.tags_json::text AS \"tagsJson\", i.design_tokens_json::text AS \"designTokensJson\" " +
-                "FROM kkumz_site s " +
-                "JOIN kkumz_idea i ON i.id = s.idea_id " +
-                "WHERE s.status = 'ACTIVE' AND s.visibility = 'PUBLIC' "
-        );
+        StringBuilder sql = new StringBuilder("""
+                SELECT s.id,
+                       s.idea_id AS "ideaId",
+                       s.site_slug AS "siteSlug",
+                       s.site_name AS "siteName",
+                       s.site_type AS "siteType",
+                       s.category,
+                       s.brand_slogan AS "brandSlogan",
+                       s.logo_svg AS "logoSvg",
+                       s.deploy_mode AS "deployMode",
+                       s.active_version AS "activeVersion",
+                       s.deployed_url AS "deployedUrl",
+                       s.custom_domain AS "customDomain",
+                       s.is_featured AS "isFeatured",
+                       s.like_count AS "likeCount",
+                       s.comment_count AS "commentCount",
+                       s.view_count AS "viewCount",
+                       s.owner_username AS "ownerUsername",
+                       s.owner_display_name AS "ownerDisplayName",
+                       s.status,
+                       s.created_at AS "createdAt",
+                       i.prompt_text AS "promptText",
+                       i.tags_json::text AS "tagsJson",
+                       i.design_tokens_json::text AS "designTokensJson"
+                FROM kkumz_site s
+                JOIN kkumz_idea i ON i.id = s.idea_id
+                WHERE s.status = 'ACTIVE' AND s.visibility = 'PUBLIC'
+                """);
         List<Object> params = new ArrayList<>();
+
         if (siteType != null && !siteType.isBlank() && !"ALL".equalsIgnoreCase(siteType)) {
-            sql.append(" AND s.site_type = ? ");
+            sql.append(" AND s.site_type = ?");
             params.add(siteType.trim().toUpperCase(Locale.ROOT));
         }
         if (recruitRole != null && !recruitRole.isBlank() && !"ALL".equalsIgnoreCase(recruitRole)) {
-            sql.append(" AND EXISTS (SELECT 1 FROM kkumz_team_recruit r WHERE r.site_id = s.id AND r.status = 'OPEN' AND r.position_role = ?) ");
+            sql.append(" AND EXISTS (SELECT 1 FROM kkumz_team_recruit r WHERE r.site_id = s.id AND r.status = 'OPEN' AND r.position_role = ?)");
             params.add(recruitRole.trim().toUpperCase(Locale.ROOT));
         }
         if (keyword != null && !keyword.isBlank()) {
-            sql.append(" AND (s.site_name ILIKE ? OR s.brand_slogan ILIKE ? OR i.prompt_text ILIKE ?) ");
+            sql.append(" AND (s.site_name ILIKE ? OR s.brand_slogan ILIKE ? OR i.prompt_text ILIKE ?)");
             String kw = "%" + keyword.trim() + "%";
             params.add(kw);
             params.add(kw);
             params.add(kw);
         }
-        if ("LATEST".equalsIgnoreCase(sortBy)) {
-            sql.append(" ORDER BY s.created_at DESC ");
+
+        if ("RECENT".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY s.created_at DESC");
+        } else if ("VIEWS".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY s.view_count DESC, s.like_count DESC");
         } else {
-            sql.append(" ORDER BY s.is_featured DESC, s.like_count DESC, s.view_count DESC ");
+            sql.append(" ORDER BY s.is_featured DESC, s.like_count DESC, s.view_count DESC");
         }
 
         List<Map<String, Object>> sites = jdbcTemplate.queryForList(sql.toString(), params.toArray());
         for (Map<String, Object> item : sites) {
-            String siteId = String.valueOf(item.get("id"));
-            item.put("tags", parseJsonList(item.remove("tagsJson")));
-            item.put("designTokens", parseJsonMap(item.remove("designTokensJson")));
-            item.put("openRecruits", listSiteRecruits(siteId));
+            String sId = String.valueOf(item.get("id"));
+            item.put("tags", parseJsonList(String.valueOf(item.remove("tagsJson"))));
+            item.put("designTokens", parseJsonObject(String.valueOf(item.remove("designTokensJson"))));
+            item.put("openRecruits", listSiteRecruits(sId));
+            item.put("teamMembers", listSiteTeamMembers(sId));
+            item.put("recentComments", listSiteComments(sId));
         }
         return sites;
     }
 
     @Transactional
     public Map<String, Object> toggleSiteLike(String siteIdOrSlug, String username) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteIdOrSlug);
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("좋아요 처리를 위한 사용자 계정(username)은 필수입니다.");
+        }
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        String user = (username != null && !username.isBlank()) ? username.trim() : "guest." + UUID.randomUUID().toString().substring(0, 6);
+        String user = username.trim();
 
         Integer exists = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM kkumz_feed_like WHERE site_id = ? AND username = ?",
                 Integer.class, siteId, user
         );
+
         boolean liked;
         if (exists != null && exists > 0) {
             jdbcTemplate.update("DELETE FROM kkumz_feed_like WHERE site_id = ? AND username = ?", siteId, user);
@@ -1263,167 +1585,265 @@ public class KkumzService {
             liked = true;
         }
 
-        Integer updatedLikes = jdbcTemplate.queryForObject(
-                "SELECT like_count FROM kkumz_site WHERE id = ?", Integer.class, siteId
-        );
-        return Map.of("siteId", siteId, "liked", liked, "likeCount", updatedLikes != null ? updatedLikes : 0);
+        Integer newCount = jdbcTemplate.queryForObject("SELECT like_count FROM kkumz_site WHERE id = ?", Integer.class, siteId);
+        return Map.of("siteId", siteId, "liked", liked, "likeCount", newCount != null ? newCount : 0);
     }
 
     public List<Map<String, Object>> listSiteComments(String siteIdOrSlug) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteIdOrSlug);
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        return jdbcTemplate.queryForList(
-                "SELECT id, site_id AS \"siteId\", username, display_name AS \"displayName\", " +
-                "author_role_badge AS \"authorRoleBadge\", content, created_at AS \"createdAt\" " +
-                "FROM kkumz_feed_comment WHERE site_id = ? ORDER BY created_at DESC",
-                siteId
-        );
+        return jdbcTemplate.queryForList("""
+                SELECT id,
+                       site_id AS "siteId",
+                       username,
+                       display_name AS "displayName",
+                       author_role_badge AS "authorRoleBadge",
+                       content,
+                       created_at AS "createdAt"
+                FROM kkumz_feed_comment
+                WHERE site_id = ?
+                ORDER BY created_at DESC
+                """, siteId);
     }
 
     @Transactional
     public List<Map<String, Object>> addSiteComment(String siteIdOrSlug, CreateCommentRequest req) {
-        if (req.getContent() == null || req.getContent().isBlank()) {
-            throw new IllegalArgumentException("댓글 내용을 입력해 주세요.");
+        if (req == null || req.getContent() == null || req.getContent().isBlank()) {
+            throw new IllegalArgumentException("댓글 내용(content)을 입력해 주세요.");
         }
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteIdOrSlug);
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        String username = (req.getUsername() != null && !req.getUsername().isBlank()) ? req.getUsername().trim() : "maker.user";
-        String displayName = (req.getDisplayName() != null && !req.getDisplayName().isBlank()) ? req.getDisplayName().trim() : "김도현 메이커";
-        String badge = (req.getAuthorRoleBadge() != null && !req.getAuthorRoleBadge().isBlank()) ? req.getAuthorRoleBadge().trim() : "커뮤니티 멤버";
+        Map<String, String> author = resolveUserIdentity(req.getUsername(), req.getDisplayName());
+        String username = author.get("username");
+        String displayName = author.get("realname");
+        String badge = (req.getAuthorRoleBadge() != null && !req.getAuthorRoleBadge().isBlank())
+                ? req.getAuthorRoleBadge().trim()
+                : "메이커";
 
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_feed_comment (id, site_id, username, display_name, author_role_badge, content, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
-                "cmt-" + UUID.randomUUID().toString().substring(0, 8), siteId, username, displayName, badge, req.getContent().trim()
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_feed_comment (
+                    id, site_id, username, display_name, author_role_badge, content, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                """,
+                "cmt-" + UUID.randomUUID().toString().substring(0, 8),
+                siteId, username, displayName, badge, req.getContent().trim()
         );
+
         jdbcTemplate.update("UPDATE kkumz_site SET comment_count = comment_count + 1 WHERE id = ?", siteId);
         return listSiteComments(siteId);
     }
 
     public List<Map<String, Object>> listSiteRecruits(String siteIdOrSlug) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteIdOrSlug);
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT id, site_id AS \"siteId\", position_role AS \"positionRole\", title, description, " +
-                "required_skills_json::text AS \"requiredSkillsJson\", headcount, recruited_count AS \"recruitedCount\", " +
-                "status, created_at AS \"createdAt\" " +
-                "FROM kkumz_team_recruit WHERE site_id = ? ORDER BY created_at DESC",
-                siteId
-        );
-        for (Map<String, Object> row : rows) {
-            row.put("requiredSkills", parseJsonList(row.remove("requiredSkillsJson")));
-        }
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+                SELECT id,
+                       site_id AS "siteId",
+                       position_role AS "positionRole",
+                       title,
+                       description,
+                       required_skills_json::text AS "requiredSkillsJson",
+                       headcount,
+                       recruited_count AS "recruitedCount",
+                       status,
+                       created_at AS "createdAt"
+                FROM kkumz_team_recruit
+                WHERE site_id = ?
+                ORDER BY created_at DESC
+                """, siteId);
+        rows.forEach(r -> r.put("requiredSkills", parseJsonList(String.valueOf(r.remove("requiredSkillsJson")))));
         return rows;
     }
 
     @Transactional
     public List<Map<String, Object>> createSiteRecruit(String siteIdOrSlug, CreateRecruitRequest req) {
-        if (req.getTitle() == null || req.getTitle().isBlank()) {
-            throw new IllegalArgumentException("모집 공고 제목은 필수입니다.");
+        if (req == null || req.getTitle() == null || req.getTitle().isBlank()) {
+            throw new IllegalArgumentException("팀원 모집 공고 제목(title)은 필수입니다.");
         }
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteIdOrSlug);
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        String role = (req.getPositionRole() != null && !req.getPositionRole().isBlank()) ? req.getPositionRole().trim().toUpperCase(Locale.ROOT) : "FRONTEND";
+        String role = (req.getPositionRole() != null && !req.getPositionRole().isBlank())
+                ? req.getPositionRole().trim().toUpperCase(Locale.ROOT)
+                : "FRONTEND";
         int headcount = (req.getHeadcount() != null && req.getHeadcount() > 0) ? req.getHeadcount() : 1;
-        String skillsJson = toJson(req.getRequiredSkills() != null ? req.getRequiredSkills() : List.of(role));
+        List<String> skills = (req.getRequiredSkills() != null && !req.getRequiredSkills().isEmpty())
+                ? req.getRequiredSkills()
+                : List.of(role);
 
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_team_recruit (id, site_id, position_role, title, description, required_skills_json, headcount, recruited_count, status, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, 0, 'OPEN', CURRENT_TIMESTAMP)",
-                "rec-" + UUID.randomUUID().toString().substring(0, 8), siteId, role, req.getTitle().trim(),
-                req.getDescription() != null ? req.getDescription().trim() : "", skillsJson, headcount
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_team_recruit (
+                    id, site_id, position_role, title, description, required_skills_json, headcount, recruited_count, status, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, 0, 'OPEN', CURRENT_TIMESTAMP)
+                """,
+                "rec-" + UUID.randomUUID().toString().substring(0, 8),
+                siteId, role, req.getTitle().trim(),
+                req.getDescription() != null ? req.getDescription().trim() : "",
+                toJson(skills), headcount
         );
+
         return listSiteRecruits(siteId);
     }
 
     public List<Map<String, Object>> listSiteTeamMembers(String siteIdOrSlug) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteIdOrSlug);
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        return jdbcTemplate.queryForList(
-                "SELECT id, site_id AS \"siteId\", recruit_id AS \"recruitId\", username, display_name AS \"displayName\", " +
-                "member_role AS \"memberRole\", position_role AS \"positionRole\", join_type AS \"joinType\", " +
-                "application_message AS \"applicationMessage\", status, joined_at AS \"joinedAt\" " +
-                "FROM kkumz_team_member WHERE site_id = ? ORDER BY joined_at ASC",
-                siteId
-        );
+        return jdbcTemplate.queryForList("""
+                SELECT id,
+                       site_id AS "siteId",
+                       recruit_id AS "recruitId",
+                       username,
+                       display_name AS "displayName",
+                       member_role AS "memberRole",
+                       position_role AS "positionRole",
+                       join_type AS "joinType",
+                       application_message AS "applicationMessage",
+                       status,
+                       joined_at AS "joinedAt"
+                FROM kkumz_team_member
+                WHERE site_id = ?
+                ORDER BY CASE WHEN member_role = 'OWNER' THEN 0 ELSE 1 END, joined_at ASC
+                """, siteId);
     }
 
     @Transactional
     public List<Map<String, Object>> applyToTeam(String siteIdOrSlug, TeamApplyRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteIdOrSlug);
+        if (req == null) {
+            throw new IllegalArgumentException("팀 합류 신청 정보(req)는 필수입니다.");
+        }
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        String username = (req.getUsername() != null && !req.getUsername().isBlank()) ? req.getUsername().trim() : "applicant." + UUID.randomUUID().toString().substring(0, 4);
-        String displayName = (req.getDisplayName() != null && !req.getDisplayName().isBlank()) ? req.getDisplayName().trim() : "신규 지원자";
-        String posRole = (req.getPositionRole() != null && !req.getPositionRole().isBlank()) ? req.getPositionRole().trim().toUpperCase(Locale.ROOT) : "FRONTEND";
+        Map<String, String> applicant = resolveUserIdentity(req.getUsername(), req.getDisplayName());
+        String username = applicant.get("username");
+        String displayName = applicant.get("realname");
+        String posRole = (req.getPositionRole() != null && !req.getPositionRole().isBlank())
+                ? req.getPositionRole().trim().toUpperCase(Locale.ROOT)
+                : "FRONTEND";
+        String memberRole = "FRONTEND".equals(posRole) ? "DEVELOPER" : ("MD".equals(posRole) ? "MD" : "EDITOR");
 
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_team_member (id, site_id, recruit_id, username, display_name, member_role, position_role, join_type, application_message, status, joined_at) " +
-                "VALUES (?, ?, ?, ?, ?, 'EDITOR', ?, 'APPLIED', ?, 'PENDING', CURRENT_TIMESTAMP)",
-                "tmem-" + UUID.randomUUID().toString().substring(0, 8), siteId, req.getRecruitId(),
-                username, displayName, posRole, req.getApplicationMessage() != null ? req.getApplicationMessage() : "프로젝트 비전에 공감하여 지원합니다."
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_team_member (
+                    id, site_id, recruit_id, username, display_name, member_role, position_role,
+                    join_type, application_message, status, joined_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'APPLIED', ?, 'PENDING', CURRENT_TIMESTAMP)
+                """,
+                "tmem-" + UUID.randomUUID().toString().substring(0, 8),
+                siteId, req.getRecruitId(), username, displayName, memberRole, posRole,
+                req.getApplicationMessage() != null ? req.getApplicationMessage().trim() : ""
         );
 
         createNotification(
                 String.valueOf(site.get("ownerUsername")),
                 "TEAM_APPLY",
-                "[" + site.get("siteName") + "] 신규 팀원 지원 도착",
-                displayName + "님이 " + posRole + " 포지션에 지원했습니다.",
-                "/lounge"
+                "[" + site.get("siteName") + "] " + posRole + " 포지션 신규 지원",
+                displayName + "님이 프로젝트 합류를 신청했습니다.",
+                "/lounge/" + site.get("siteSlug")
         );
+
         return listSiteTeamMembers(siteId);
     }
 
     @Transactional
     public List<Map<String, Object>> inviteTeamMember(String siteIdOrSlug, TeamInviteRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteIdOrSlug);
+        if (req == null || req.getUsername() == null || req.getUsername().isBlank()) {
+            throw new IllegalArgumentException("초대할 팀원 아이디(username)는 필수입니다.");
+        }
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
-        String username = (req.getUsername() != null && !req.getUsername().isBlank()) ? req.getUsername().trim() : "invited." + UUID.randomUUID().toString().substring(0, 4);
-        String displayName = (req.getDisplayName() != null && !req.getDisplayName().isBlank()) ? req.getDisplayName().trim() : username;
-        String memberRole = (req.getMemberRole() != null && !req.getMemberRole().isBlank()) ? req.getMemberRole().trim().toUpperCase(Locale.ROOT) : "EDITOR";
-        String posRole = (req.getPositionRole() != null && !req.getPositionRole().isBlank()) ? req.getPositionRole().trim().toUpperCase(Locale.ROOT) : "PLANNER";
+        Map<String, String> invited = resolveUserIdentity(req.getUsername(), req.getDisplayName());
+        String username = invited.get("username");
+        String displayName = invited.get("realname");
+        String posRole = (req.getPositionRole() != null && !req.getPositionRole().isBlank())
+                ? req.getPositionRole().trim().toUpperCase(Locale.ROOT)
+                : "FRONTEND";
+        String memberRole = (req.getMemberRole() != null && !req.getMemberRole().isBlank())
+                ? req.getMemberRole().trim().toUpperCase(Locale.ROOT)
+                : "EDITOR";
 
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_team_member (id, site_id, recruit_id, username, display_name, member_role, position_role, join_type, application_message, status, joined_at) " +
-                "VALUES (?, ?, NULL, ?, ?, ?, ?, 'INVITED', ?, 'ACTIVE', CURRENT_TIMESTAMP)",
-                "tmem-" + UUID.randomUUID().toString().substring(0, 8), siteId, username, displayName, memberRole, posRole,
-                req.getMessage() != null ? req.getMessage() : "창업자 직접 초대로 합류"
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_team_member (
+                    id, site_id, recruit_id, username, display_name, member_role, position_role,
+                    join_type, application_message, status, joined_at
+                ) VALUES (?, ?, NULL, ?, ?, ?, ?, 'INVITED', ?, 'ACTIVE', CURRENT_TIMESTAMP)
+                """,
+                "tmem-" + UUID.randomUUID().toString().substring(0, 8),
+                siteId, username, displayName, memberRole, posRole,
+                req.getMessage() != null ? req.getMessage().trim() : ""
         );
+
+        createNotification(
+                username,
+                "TEAM_INVITE",
+                "[" + site.get("siteName") + "] 프로젝트 합류 초대 도착",
+                site.get("siteName") + " 팀에 합류되었습니다.",
+                "/lounge/" + site.get("siteSlug")
+        );
+
         return listSiteTeamMembers(siteId);
     }
 
     @Transactional
     public List<Map<String, Object>> updateTeamMemberStatus(String siteIdOrSlug, String memberId, UpdateMemberStatusRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteIdOrSlug);
-        String siteId = String.valueOf(site.get("id"));
-        String status = (req.getStatus() != null && !req.getStatus().isBlank()) ? req.getStatus().trim().toUpperCase(Locale.ROOT) : "ACTIVE";
-        String memberRole = (req.getMemberRole() != null && !req.getMemberRole().isBlank()) ? req.getMemberRole().trim().toUpperCase(Locale.ROOT) : "EDITOR";
-
-        jdbcTemplate.update(
-                "UPDATE kkumz_team_member SET status = ?, member_role = ? WHERE id = ? AND site_id = ?",
-                status, memberRole, memberId, siteId
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT site_id AS \"siteId\", recruit_id AS \"recruitId\", username, display_name AS \"displayName\" FROM kkumz_team_member WHERE id = ?",
+                memberId
         );
-        if ("ACTIVE".equals(status)) {
-            jdbcTemplate.update(
-                    "UPDATE kkumz_team_recruit SET recruited_count = recruited_count + 1 " +
-                    "WHERE id = (SELECT recruit_id FROM kkumz_team_member WHERE id = ?)",
-                    memberId
-            );
+        if (rows.isEmpty()) {
+            throw new IllegalArgumentException("존재하지 않는 팀 지원 내역입니다: " + memberId);
         }
+        Map<String, Object> member = rows.get(0);
+        String siteId = String.valueOf(member.get("siteId"));
+        String status = (req.getStatus() != null && !req.getStatus().isBlank())
+                ? req.getStatus().trim().toUpperCase(Locale.ROOT)
+                : "ACTIVE";
+        String memberRole = (req.getMemberRole() != null && !req.getMemberRole().isBlank())
+                ? req.getMemberRole().trim().toUpperCase(Locale.ROOT)
+                : "EDITOR";
+
+        jdbcTemplate.update("UPDATE kkumz_team_member SET status = ?, member_role = ? WHERE id = ?",
+                status, memberRole, memberId);
+
+        if ("ACTIVE".equals(status) && member.get("recruitId") != null) {
+            jdbcTemplate.update("""
+                    UPDATE kkumz_team_recruit
+                    SET recruited_count = recruited_count + 1,
+                        status = CASE WHEN recruited_count + 1 >= headcount THEN 'CLOSED' ELSE status END
+                    WHERE id = ?
+                    """, member.get("recruitId"));
+        }
+
+        createNotification(
+                String.valueOf(member.get("username")),
+                "TEAM_DECISION",
+                "팀 합류 심사 결과 안내 (" + ("ACTIVE".equals(status) ? "승인" : "반려") + ")",
+                "지원하신 프로젝트 팀 합류 상태가 '" + status + "'(으)로 업데이트되었습니다.",
+                "/lounge"
+        );
+
         return listSiteTeamMembers(siteId);
     }
 
+    // =========================================================================
+    // 7. 사용자 인앱 알림 센터
+    // =========================================================================
+
     public List<Map<String, Object>> listNotifications(String username) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT id, recipient_username AS \"recipientUsername\", notif_type AS \"notifType\", " +
-                "title, message, link_url AS \"linkUrl\", is_read AS \"isRead\", created_at AS \"createdAt\" " +
-                "FROM kkumz_notification WHERE 1=1 "
-        );
+        StringBuilder sql = new StringBuilder("""
+                SELECT id,
+                       recipient_username AS "recipientUsername",
+                       notif_type AS "notifType",
+                       title,
+                       message,
+                       link_url AS "linkUrl",
+                       is_read AS "isRead",
+                       created_at AS "createdAt"
+                FROM kkumz_notification
+                """);
         List<Object> params = new ArrayList<>();
         if (username != null && !username.isBlank()) {
-            sql.append(" AND recipient_username = ? ");
+            sql.append(" WHERE recipient_username = ?");
             params.add(username.trim());
         }
-        sql.append(" ORDER BY created_at DESC LIMIT 30 ");
+        sql.append(" ORDER BY created_at DESC LIMIT 30");
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
 
@@ -1437,140 +1857,127 @@ public class KkumzService {
     }
 
     // =========================================================================
-    // 7. Kkumz 전용 Admin 백오피스 관제 API
+    // 8. Admin 백오피스 (대시보드 KPI, 프롬프트 템플릿, 배포 사이트 제어, 빌드 로그, 신고 심사)
     // =========================================================================
 
     public Map<String, Object> getAdminDashboardSummary() {
         Integer totalIdeas = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_idea", Integer.class);
-        Integer publishedIdeas = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_idea WHERE status IN ('PUBLISHED', 'DEPLOYED')", Integer.class);
-        Integer totalSites = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_site", Integer.class);
-        Integer activeSites = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_site WHERE status = 'ACTIVE'", Integer.class);
-        Integer suspendedSites = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_site WHERE status = 'SUSPENDED'", Integer.class);
-        Integer openRecruits = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_team_recruit WHERE status = 'OPEN'", Integer.class);
-        Integer activeMembers = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_team_member WHERE status = 'ACTIVE'", Integer.class);
-        Integer pendingApplicants = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_team_member WHERE status = 'PENDING'", Integer.class);
-        Integer pendingReports = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_moderation_report WHERE status = 'PENDING'", Integer.class);
-        Integer totalReports = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_moderation_report", Integer.class);
+        Integer totalSites = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_site WHERE status = 'ACTIVE'", Integer.class);
         Integer totalBuilds = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job", Integer.class);
         Integer successBuilds = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job WHERE status = 'SUCCESS'", Integer.class);
-        Integer failedBuilds = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job WHERE status = 'FAILED'", Integer.class);
-        Integer aiPatchedBuilds = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job WHERE ai_patch_applied = TRUE", Integer.class);
+        Integer aiHealedBuilds = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job WHERE ai_patch_applied = TRUE", Integer.class);
+        Integer openRecruits = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_team_recruit WHERE status = 'OPEN'", Integer.class);
+        Integer activeTeamMembers = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_team_member WHERE status = 'ACTIVE'", Integer.class);
+        Integer pendingReports = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_moderation_report WHERE status = 'PENDING'", Integer.class);
+        Integer totalComments = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_feed_comment", Integer.class);
+        Integer activePrompts = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_ai_prompt_template WHERE status = 'ACTIVE'", Integer.class);
+        Integer totalNameSuggestions = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_name_suggestion", Integer.class);
+        Integer totalLogoSuggestions = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_logo_suggestion", Integer.class);
+        Integer totalScreenSpecs = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_screen_spec", Integer.class);
+        Integer avgBuildDurationMs = jdbcTemplate.queryForObject("SELECT COALESCE(ROUND(AVG(duration_ms))::int, 0) FROM kkumz_build_job", Integer.class);
 
-        Integer namingCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_name_suggestion", Integer.class);
-        Integer logoCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_logo_suggestion", Integer.class);
-        Integer specVersionCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_idea_version", Integer.class);
-        Integer screenBlueprintCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_screen_spec", Integer.class);
-        Integer activePromptTemplates = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_ai_prompt_template WHERE status = 'ACTIVE'", Integer.class);
+        List<Map<String, Object>> bySiteType = jdbcTemplate.queryForList("""
+                SELECT site_type AS "siteType",
+                       COUNT(*) AS "count",
+                       COALESCE(SUM(view_count), 0) AS "totalViews",
+                       COALESCE(SUM(like_count), 0) AS "totalLikes"
+                FROM kkumz_site
+                GROUP BY site_type
+                ORDER BY "count" DESC
+                """);
 
-        Integer totalViews = jdbcTemplate.queryForObject("SELECT COALESCE(SUM(view_count), 0) FROM kkumz_site", Integer.class);
-        Integer totalLikes = jdbcTemplate.queryForObject("SELECT COALESCE(SUM(like_count), 0) FROM kkumz_site", Integer.class);
-        Integer totalComments = jdbcTemplate.queryForObject("SELECT COALESCE(SUM(comment_count), 0) FROM kkumz_site", Integer.class);
-
-        int safeTotalBuilds = totalBuilds != null ? totalBuilds : 0;
-        int safeSuccessBuilds = successBuilds != null ? successBuilds : 0;
-        int buildSuccessRate = safeTotalBuilds > 0 ? Math.round((safeSuccessBuilds * 100.0f) / safeTotalBuilds) : 100;
-
-        int safeNamingCount = namingCount != null ? namingCount : 0;
-        int safeLogoCount = logoCount != null ? logoCount : 0;
-        int safeSpecVersionCount = specVersionCount != null ? specVersionCount : 0;
-        int safeScreenBlueprintCount = screenBlueprintCount != null ? screenBlueprintCount : 0;
-        int safeAiPatchedBuilds = aiPatchedBuilds != null ? aiPatchedBuilds : 0;
-        int totalAiPromptCalls = safeNamingCount + safeLogoCount + safeSpecVersionCount + safeScreenBlueprintCount + safeAiPatchedBuilds;
-
-        List<Map<String, Object>> siteTypeDistribution = jdbcTemplate.queryForList(
-                "SELECT site_type AS \"siteType\", COUNT(*) AS \"count\", " +
-                "COALESCE(SUM(view_count), 0) AS \"totalViews\", COALESCE(SUM(like_count), 0) AS \"totalLikes\" " +
-                "FROM kkumz_site GROUP BY site_type ORDER BY \"count\" DESC, site_type ASC"
-        );
-        List<Map<String, Object>> deployModeDistribution = jdbcTemplate.queryForList(
-                "SELECT deploy_mode AS \"deployMode\", COUNT(*) AS \"count\" " +
-                "FROM kkumz_site GROUP BY deploy_mode ORDER BY \"count\" DESC, deploy_mode ASC"
-        );
+        List<Map<String, Object>> byDeployMode = jdbcTemplate.queryForList("""
+                SELECT deploy_mode AS "deployMode",
+                       COUNT(*) AS "count"
+                FROM kkumz_site
+                GROUP BY deploy_mode
+                ORDER BY "count" DESC
+                """);
 
         List<Map<String, Object>> recentBuilds = listAdminBuilds(null, null);
-        if (recentBuilds.size() > 5) {
-            recentBuilds = recentBuilds.subList(0, 5);
-        }
-
         List<Map<String, Object>> recentReports = listModerationReports(null);
-        if (recentReports.size() > 5) {
-            recentReports = recentReports.subList(0, 5);
-        }
+        List<Map<String, Object>> recentIdeas = listIdeas(null, null);
+        List<Map<String, Object>> topSites = listAdminSites(null, null, null);
 
-        List<Map<String, Object>> recentIdeas = listAdminIdeas(null, null, null);
-        if (recentIdeas.size() > 5) {
-            recentIdeas = recentIdeas.subList(0, 5);
-        }
+        int totalB = totalBuilds != null ? totalBuilds : 0;
+        int succB = successBuilds != null ? successBuilds : 0;
+        int buildSuccessRate = totalB > 0 ? Math.round((succB * 100.0f) / totalB) : 100;
+        int totalAiGenerations = (totalNameSuggestions != null ? totalNameSuggestions : 0)
+                + (totalLogoSuggestions != null ? totalLogoSuggestions : 0)
+                + (totalScreenSpecs != null ? totalScreenSpecs : 0)
+                + (aiHealedBuilds != null ? aiHealedBuilds : 0);
 
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("totalIdeas", totalIdeas != null ? totalIdeas : 0);
-        summary.put("publishedIdeas", publishedIdeas != null ? publishedIdeas : 0);
         summary.put("totalSites", totalSites != null ? totalSites : 0);
-        summary.put("activeSites", activeSites != null ? activeSites : 0);
-        summary.put("suspendedSites", suspendedSites != null ? suspendedSites : 0);
-        summary.put("openRecruits", openRecruits != null ? openRecruits : 0);
-        summary.put("activeMembers", activeMembers != null ? activeMembers : 0);
-        summary.put("activeTeamMembers", activeMembers != null ? activeMembers : 0);
-        summary.put("pendingApplicants", pendingApplicants != null ? pendingApplicants : 0);
-        summary.put("pendingReports", pendingReports != null ? pendingReports : 0);
-        summary.put("pendingModerationCount", pendingReports != null ? pendingReports : 0);
-        summary.put("totalReports", totalReports != null ? totalReports : 0);
-        summary.put("totalBuilds", safeTotalBuilds);
-        summary.put("successBuilds", safeSuccessBuilds);
-        summary.put("failedBuilds", failedBuilds != null ? failedBuilds : 0);
-        summary.put("aiPatchedBuilds", safeAiPatchedBuilds);
+        summary.put("totalBuilds", totalB);
+        summary.put("successBuilds", succB);
         summary.put("buildSuccessRate", buildSuccessRate);
-        summary.put("totalAiPromptCalls", totalAiPromptCalls);
-        summary.put("namingCount", safeNamingCount);
-        summary.put("logoCount", safeLogoCount);
-        summary.put("specVersionCount", safeSpecVersionCount);
-        summary.put("screenBlueprintCount", safeScreenBlueprintCount);
-        summary.put("activePromptTemplates", activePromptTemplates != null ? activePromptTemplates : 0);
-        summary.put("totalViews", totalViews != null ? totalViews : 0);
-        summary.put("totalLikes", totalLikes != null ? totalLikes : 0);
+        summary.put("avgBuildDurationMs", avgBuildDurationMs != null ? avgBuildDurationMs : 0);
+        summary.put("aiHealedBuilds", aiHealedBuilds != null ? aiHealedBuilds : 0);
+        summary.put("activePrompts", activePrompts != null ? activePrompts : 0);
+        summary.put("totalAiPromptCalls", totalAiGenerations);
+        summary.put("totalNameSuggestions", totalNameSuggestions != null ? totalNameSuggestions : 0);
+        summary.put("totalLogoSuggestions", totalLogoSuggestions != null ? totalLogoSuggestions : 0);
+        summary.put("totalScreenSpecs", totalScreenSpecs != null ? totalScreenSpecs : 0);
+        summary.put("openRecruits", openRecruits != null ? openRecruits : 0);
+        summary.put("activeTeamMembers", activeTeamMembers != null ? activeTeamMembers : 0);
+        summary.put("pendingReports", pendingReports != null ? pendingReports : 0);
         summary.put("totalComments", totalComments != null ? totalComments : 0);
-        summary.put("siteTypeDistribution", siteTypeDistribution);
-        summary.put("deployModeDistribution", deployModeDistribution);
-        summary.put("recentBuilds", recentBuilds);
-        summary.put("recentBuildJobs", recentBuilds);
-        summary.put("recentReports", recentReports);
-        summary.put("recentIdeas", recentIdeas);
-        summary.put("topSites", listAdminSites(null, null, null));
+        summary.put("siteTypeDistribution", bySiteType);
+        summary.put("deployModeDistribution", byDeployMode);
+        summary.put("recentIdeas", recentIdeas.size() > 5 ? recentIdeas.subList(0, 5) : recentIdeas);
+        summary.put("topSites", topSites.size() > 5 ? topSites.subList(0, 5) : topSites);
+        summary.put("recentBuilds", recentBuilds.size() > 5 ? recentBuilds.subList(0, 5) : recentBuilds);
+        summary.put("recentReports", recentReports.size() > 5 ? recentReports.subList(0, 5) : recentReports);
         return summary;
     }
 
     public List<Map<String, Object>> listAdminIdeas(String siteType, String status, String keyword) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT i.id, i.author_username AS \"authorUsername\", i.author_display_name AS \"authorDisplayName\", " +
-                "i.title, i.prompt_text AS \"promptText\", i.site_type AS \"siteType\", i.category, " +
-                "i.visibility, i.current_step AS \"currentStep\", i.selected_brand_name AS \"selectedBrandName\", " +
-                "i.selected_site_slug AS \"selectedSiteSlug\", i.selected_site_slug AS \"siteSlug\", " +
-                "i.selected_logo_svg AS \"selectedLogoSvg\", i.selected_logo_svg AS \"logoSvg\", " +
-                "i.status, i.created_at AS \"createdAt\", i.updated_at AS \"updatedAt\", " +
-                "(SELECT COUNT(*) FROM kkumz_idea_version v WHERE v.idea_id = i.id) AS \"versionCount\", " +
-                "COALESCE((SELECT MAX(v.version_no) FROM kkumz_idea_version v WHERE v.idea_id = i.id), 1) AS \"currentVersionNo\", " +
-                "(SELECT COUNT(*) FROM kkumz_name_suggestion n WHERE n.idea_id = i.id) AS \"nameCandidateCount\", " +
-                "(SELECT COUNT(*) FROM kkumz_logo_suggestion l WHERE l.idea_id = i.id) AS \"logoCandidateCount\" " +
-                "FROM kkumz_idea i WHERE 1=1 "
-        );
+        StringBuilder sql = new StringBuilder("""
+                SELECT id,
+                       author_username AS "authorUsername",
+                       author_display_name AS "authorDisplayName",
+                       title,
+                       prompt_text AS "promptText",
+                       site_type AS "siteType",
+                       category,
+                       tags_json::text AS "tagsJson",
+                       visibility,
+                       current_step AS "currentStep",
+                       selected_brand_name AS "selectedBrandName",
+                       selected_site_slug AS "selectedSiteSlug",
+                       selected_logo_svg AS "selectedLogoSvg",
+                       design_tokens_json::text AS "designTokensJson",
+                       spec_markdown AS "specMarkdown",
+                       screens_json::text AS "screensJson",
+                       status,
+                       created_at AS "createdAt",
+                       updated_at AS "updatedAt"
+                FROM kkumz_idea
+                WHERE 1=1
+                """);
         List<Object> params = new ArrayList<>();
         if (siteType != null && !siteType.isBlank() && !"ALL".equalsIgnoreCase(siteType)) {
-            sql.append(" AND i.site_type = ? ");
+            sql.append(" AND site_type = ?");
             params.add(siteType.trim().toUpperCase(Locale.ROOT));
         }
         if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
-            sql.append(" AND i.status = ? ");
+            sql.append(" AND status = ?");
             params.add(status.trim().toUpperCase(Locale.ROOT));
         }
         if (keyword != null && !keyword.isBlank()) {
-            sql.append(" AND (i.title ILIKE ? OR i.prompt_text ILIKE ? OR i.selected_brand_name ILIKE ?) ");
+            sql.append(" AND (title ILIKE ? OR prompt_text ILIKE ? OR selected_brand_name ILIKE ?)");
             String kw = "%" + keyword.trim() + "%";
             params.add(kw);
             params.add(kw);
             params.add(kw);
         }
-        sql.append(" ORDER BY i.updated_at DESC ");
-        return jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        sql.append(" ORDER BY updated_at DESC");
+
+        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        list.forEach(this::enrichIdeaRow);
+        return list;
     }
 
     @Transactional
@@ -1579,897 +1986,748 @@ public class KkumzService {
     }
 
     public List<Map<String, Object>> listAdminPromptTemplates(String stageType) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT id, template_code AS \"templateCode\", template_name AS \"templateName\", " +
-                "stage_type AS \"stageType\", model_name AS \"modelName\", temperature, " +
-                "system_prompt AS \"systemPrompt\", user_prompt_template AS \"userPromptTemplate\", " +
-                "forbidden_words_json::text AS \"forbiddenWordsJson\", status, updated_at AS \"updatedAt\" " +
-                "FROM kkumz_ai_prompt_template WHERE 1=1 "
-        );
+        StringBuilder sql = new StringBuilder("""
+                SELECT id,
+                       template_code AS "templateCode",
+                       template_name AS "templateName",
+                       stage_type AS "stageType",
+                       model_name AS "modelName",
+                       temperature,
+                       system_prompt AS "systemPrompt",
+                       user_prompt_template AS "userPromptTemplate",
+                       forbidden_words_json::text AS "forbiddenWordsJson",
+                       status,
+                       updated_by AS "updatedBy",
+                       updated_at AS "updatedAt"
+                FROM kkumz_ai_prompt_template
+                """);
         List<Object> params = new ArrayList<>();
         if (stageType != null && !stageType.isBlank() && !"ALL".equalsIgnoreCase(stageType)) {
-            sql.append(" AND stage_type = ? ");
+            sql.append(" WHERE stage_type = ?");
             params.add(stageType.trim().toUpperCase(Locale.ROOT));
         }
-        sql.append(" ORDER BY id ASC ");
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        sql.append(" ORDER BY stage_type ASC, template_code ASC");
 
-        Integer namingCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_name_suggestion", Integer.class);
-        Integer logoCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_logo_suggestion", Integer.class);
-        Integer specCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_idea_version", Integer.class);
-        Integer patchCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_build_job WHERE ai_patch_applied = TRUE", Integer.class);
-
-        for (Map<String, Object> r : rows) {
-            List<String> words = parseJsonList(r.remove("forbiddenWordsJson"));
-            r.put("forbiddenWords", words);
-            r.put("forbiddenKeywords", words);
-            String st = String.valueOf(r.get("stageType"));
-            int calls = switch (st) {
-                case "NAMING" -> namingCount != null ? namingCount : 0;
-                case "LOGO_SVG" -> logoCount != null ? logoCount : 0;
-                case "SPEC_FRS", "FRS_SPEC" -> specCount != null ? specCount : 0;
-                case "BUILD_FIX", "WEBIDE_FIX" -> patchCount != null ? patchCount : 0;
-                default -> 0;
-            };
-            r.put("totalCalls", calls);
-        }
-        return rows;
+        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        list.forEach(p -> p.put("forbiddenWords", parseJsonList(String.valueOf(p.remove("forbiddenWordsJson")))));
+        return list;
     }
 
     @Transactional
     public Map<String, Object> saveAdminPromptTemplate(SavePromptTemplateRequest req) {
-        if (req.getTemplateName() == null || req.getTemplateName().isBlank()) {
-            throw new IllegalArgumentException("프롬프트 템플릿명은 필수입니다.");
+        if (req == null || req.getTemplateName() == null || req.getTemplateName().isBlank()) {
+            throw new IllegalArgumentException("프롬프트 템플릿 이름(templateName)은 필수입니다.");
         }
-        String id = (req.getId() != null && !req.getId().isBlank())
-                ? req.getId().trim()
-                : "prm-kkumz-" + UUID.randomUUID().toString().substring(0, 6);
-        String code = (req.getTemplateCode() != null && !req.getTemplateCode().isBlank())
-                ? req.getTemplateCode().trim()
-                : "KKUMZ_" + id.toUpperCase(Locale.ROOT).replace("-", "_");
-        String stage = (req.getStageType() != null && !req.getStageType().isBlank()) ? req.getStageType().trim() : "NAMING";
-        String model = (req.getModelName() != null && !req.getModelName().isBlank()) ? req.getModelName().trim() : "qwen-plus";
+        List<String> words = req.getForbiddenWords() != null ? req.getForbiddenWords()
+                : (req.getForbiddenKeywords() != null ? req.getForbiddenKeywords() : Collections.emptyList());
+        String forbiddenJson = toJson(words);
         BigDecimal temp = req.getTemperature() != null ? req.getTemperature() : new BigDecimal("0.70");
-        List<String> words = req.getForbiddenWords() != null && !req.getForbiddenWords().isEmpty()
-                ? req.getForbiddenWords()
-                : (req.getForbiddenKeywords() != null ? req.getForbiddenKeywords() : List.of());
-        String forbidden = toJson(words);
+        String modelName = (req.getModelName() != null && !req.getModelName().isBlank()) ? req.getModelName().trim() : "";
+        if (modelName.isBlank()) {
+            throw new IllegalArgumentException("대상 모델명(modelName)은 필수입니다.");
+        }
         String status = (req.getStatus() != null && !req.getStatus().isBlank()) ? req.getStatus().trim() : "ACTIVE";
+        String id;
 
-        Integer exists = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM kkumz_ai_prompt_template WHERE id = ?", Integer.class, id);
-        if (exists != null && exists > 0) {
-            jdbcTemplate.update(
-                    "UPDATE kkumz_ai_prompt_template SET template_code = ?, template_name = ?, stage_type = ?, " +
-                    "model_name = ?, temperature = ?, system_prompt = ?, user_prompt_template = ?, " +
-                    "forbidden_words_json = ?::jsonb, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                    code, req.getTemplateName().trim(), stage, model, temp,
-                    req.getSystemPrompt(), req.getUserPromptTemplate(), forbidden, status, id
+        if (req.getId() != null && !req.getId().isBlank()) {
+            id = req.getId().trim();
+            jdbcTemplate.update("""
+                    UPDATE kkumz_ai_prompt_template
+                    SET template_name = ?,
+                        stage_type = COALESCE(?, stage_type),
+                        model_name = ?,
+                        temperature = ?,
+                        system_prompt = ?,
+                        user_prompt_template = COALESCE(?, user_prompt_template),
+                        forbidden_words_json = ?::jsonb,
+                        status = ?,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """,
+                    req.getTemplateName().trim(),
+                    req.getStageType(),
+                    modelName,
+                    temp,
+                    req.getSystemPrompt(),
+                    req.getUserPromptTemplate(),
+                    forbiddenJson,
+                    status,
+                    id
             );
         } else {
-            jdbcTemplate.update(
-                    "INSERT INTO kkumz_ai_prompt_template (id, template_code, template_name, stage_type, model_name, " +
-                    "temperature, system_prompt, user_prompt_template, forbidden_words_json, status, created_by, created_at, updated_at) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-                    id, code, req.getTemplateName().trim(), stage, model, temp,
+            id = "tpl-" + UUID.randomUUID().toString().substring(0, 8);
+            String code = (req.getTemplateCode() != null && !req.getTemplateCode().isBlank())
+                    ? req.getTemplateCode().trim().toUpperCase(Locale.ROOT)
+                    : "TPL_" + UUID.randomUUID().toString().substring(0, 6).toUpperCase(Locale.ROOT);
+            jdbcTemplate.update("""
+                    INSERT INTO kkumz_ai_prompt_template (
+                        id, template_code, template_name, stage_type, model_name, temperature,
+                        system_prompt, user_prompt_template, forbidden_words_json, status, created_by, updated_by, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    """,
+                    id, code, req.getTemplateName().trim(),
+                    req.getStageType() != null ? req.getStageType() : "NAMING",
+                    modelName, temp,
                     req.getSystemPrompt() != null ? req.getSystemPrompt() : "",
                     req.getUserPromptTemplate() != null ? req.getUserPromptTemplate() : "",
-                    forbidden, status
+                    forbiddenJson, status
             );
         }
-        return Map.of("id", id, "templateName", req.getTemplateName());
+
+        List<Map<String, Object>> all = listAdminPromptTemplates(null);
+        return all.stream()
+                .filter(p -> id.equals(String.valueOf(p.get("id"))))
+                .findFirst()
+                .orElse(all.isEmpty() ? Map.of("id", id) : all.get(0));
     }
 
     @Transactional
-    public void deleteAdminPromptTemplate(String id) {
-        jdbcTemplate.update("DELETE FROM kkumz_ai_prompt_template WHERE id = ?", id);
+    public void deleteAdminPromptTemplate(String promptId) {
+        jdbcTemplate.update("DELETE FROM kkumz_ai_prompt_template WHERE id = ?", promptId);
     }
 
     public List<Map<String, Object>> listAdminSites(String siteType, String status, String keyword) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT s.id, s.idea_id AS \"ideaId\", s.site_slug AS \"siteSlug\", s.site_name AS \"siteName\", " +
-                "s.site_name AS \"brandName\", s.site_type AS \"siteType\", s.category, s.brand_slogan AS \"brandSlogan\", " +
-                "s.logo_svg AS \"logoSvg\", s.shop_site_id AS \"shopSiteId\", s.cms_site_id AS \"cmsSiteId\", " +
-                "s.deploy_mode AS \"deployMode\", s.active_version AS \"activeVersion\", s.active_version AS \"activeVersionNo\", " +
-                "s.deployed_url AS \"deployedUrl\", s.custom_domain AS \"customDomain\", " +
-                "s.is_featured AS \"isFeatured\", s.visibility, " +
-                "s.like_count AS \"likeCount\", s.comment_count AS \"commentCount\", s.view_count AS \"viewCount\", " +
-                "s.owner_username AS \"ownerUsername\", s.owner_display_name AS \"ownerDisplayName\", " +
-                "s.status, s.created_at AS \"createdAt\", s.updated_at AS \"updatedAt\" " +
-                "FROM kkumz_site s WHERE 1=1 "
-        );
+        StringBuilder sql = new StringBuilder("""
+                SELECT s.id,
+                       s.idea_id AS "ideaId",
+                       s.site_slug AS "siteSlug",
+                       s.site_name AS "siteName",
+                       s.site_type AS "siteType",
+                       s.category,
+                       s.brand_slogan AS "brandSlogan",
+                       s.logo_svg AS "logoSvg",
+                       s.shop_site_id AS "shopSiteId",
+                       s.cms_site_id AS "cmsSiteId",
+                       s.deploy_mode AS "deployMode",
+                       s.active_version AS "activeVersion",
+                       s.deployed_url AS "deployedUrl",
+                       s.custom_domain AS "customDomain",
+                       s.is_featured AS "isFeatured",
+                       s.visibility,
+                       s.like_count AS "likeCount",
+                       s.comment_count AS "commentCount",
+                       s.view_count AS "viewCount",
+                       s.owner_username AS "ownerUsername",
+                       s.owner_display_name AS "ownerDisplayName",
+                       s.status,
+                       s.created_at AS "createdAt",
+                       s.updated_at AS "updatedAt"
+                FROM kkumz_site s
+                WHERE 1=1
+                """);
         List<Object> params = new ArrayList<>();
         if (siteType != null && !siteType.isBlank() && !"ALL".equalsIgnoreCase(siteType)) {
-            sql.append(" AND s.site_type = ? ");
+            sql.append(" AND s.site_type = ?");
             params.add(siteType.trim().toUpperCase(Locale.ROOT));
         }
         if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
-            sql.append(" AND s.status = ? ");
+            sql.append(" AND s.status = ?");
             params.add(status.trim().toUpperCase(Locale.ROOT));
         }
         if (keyword != null && !keyword.isBlank()) {
-            sql.append(" AND (s.site_name ILIKE ? OR s.site_slug ILIKE ? OR s.owner_display_name ILIKE ?) ");
+            sql.append(" AND (s.site_name ILIKE ? OR s.site_slug ILIKE ? OR s.brand_slogan ILIKE ?)");
             String kw = "%" + keyword.trim() + "%";
             params.add(kw);
             params.add(kw);
             params.add(kw);
         }
-        sql.append(" ORDER BY s.view_count DESC, s.created_at DESC ");
+        sql.append(" ORDER BY s.created_at DESC");
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
 
     @Transactional
     public Map<String, Object> updateAdminSiteStatus(String siteId, UpdateSiteStatusRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteId);
+        Map<String, Object> site = findSiteByIdOrSlug(siteId);
         String resolvedId = String.valueOf(site.get("id"));
-        String newStatus = (req.getStatus() != null && !req.getStatus().isBlank()) ? req.getStatus().trim().toUpperCase(Locale.ROOT) : String.valueOf(site.get("status"));
-        String newVis = (req.getVisibility() != null && !req.getVisibility().isBlank()) ? req.getVisibility().trim().toUpperCase(Locale.ROOT) : String.valueOf(site.get("visibility"));
-        String domain = (req.getCustomDomain() != null && !req.getCustomDomain().isBlank()) ? req.getCustomDomain().trim() : (site.get("customDomain") != null ? String.valueOf(site.get("customDomain")) : null);
-        boolean featured = req.getIsFeatured() != null ? req.getIsFeatured() : Boolean.TRUE.equals(site.get("isFeatured"));
 
-        jdbcTemplate.update(
-                "UPDATE kkumz_site SET status = ?, visibility = ?, custom_domain = ?, is_featured = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                newStatus, newVis, domain, featured, resolvedId
-        );
-        return getSiteRecordBySlugOrId(resolvedId);
+        if (req.getStatus() != null && !req.getStatus().isBlank()) {
+            jdbcTemplate.update("UPDATE kkumz_site SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    req.getStatus().trim().toUpperCase(Locale.ROOT), resolvedId);
+        }
+        if (req.getVisibility() != null && !req.getVisibility().isBlank()) {
+            jdbcTemplate.update("UPDATE kkumz_site SET visibility = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    req.getVisibility().trim().toUpperCase(Locale.ROOT), resolvedId);
+        }
+        if (req.getIsFeatured() != null) {
+            jdbcTemplate.update("UPDATE kkumz_site SET is_featured = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    req.getIsFeatured(), resolvedId);
+        }
+        if (req.getCustomDomain() != null && !req.getCustomDomain().isBlank()) {
+            jdbcTemplate.update("UPDATE kkumz_site SET custom_domain = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    req.getCustomDomain().trim(), resolvedId);
+        }
+        return findSiteByIdOrSlug(resolvedId);
     }
 
     public List<Map<String, Object>> listAdminBuilds(String status, String deployMode) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT b.id, b.site_id AS \"siteId\", s.site_name AS \"siteName\", s.site_name AS \"brandName\", " +
-                "s.site_slug AS \"siteSlug\", b.release_id AS \"releaseId\", " +
-                "COALESCE(r.version_no, s.active_version) AS \"versionNo\", " +
-                "b.job_type AS \"jobType\", b.job_type AS \"triggerType\", b.deploy_mode AS \"deployMode\", " +
-                "b.status, b.duration_ms AS \"durationMs\", b.error_summary AS \"errorSummary\", " +
-                "b.ai_patch_applied AS \"aiPatchApplied\", " +
-                "CASE WHEN b.ai_patch_applied THEN '자동 구문 검증 및 태그 복구 패치 적용됨' ELSE NULL END AS \"aiFixSuggestion\", " +
-                "b.build_log AS \"buildLog\", b.build_log AS \"logOutput\", " +
-                "b.triggered_by AS \"triggeredBy\", b.started_at AS \"startedAt\", b.started_at AS \"createdAt\", " +
-                "b.finished_at AS \"finishedAt\" " +
-                "FROM kkumz_build_job b " +
-                "JOIN kkumz_site s ON s.id = b.site_id " +
-                "LEFT JOIN kkumz_site_release r ON r.id = b.release_id WHERE 1=1 "
-        );
+        StringBuilder sql = new StringBuilder("""
+                SELECT b.id,
+                       b.site_id AS "siteId",
+                       s.site_slug AS "siteSlug",
+                       s.site_name AS "siteName",
+                       s.site_name AS "brandName",
+                       b.release_id AS "releaseId",
+                       COALESCE(r.version_no, s.active_version) AS "versionNo",
+                       b.job_type AS "jobType",
+                       b.deploy_mode AS "deployMode",
+                       b.status,
+                       b.duration_ms AS "durationMs",
+                       b.error_summary AS "errorSummary",
+                       b.ai_patch_applied AS "aiPatchApplied",
+                       b.build_log AS "buildLog",
+                       b.triggered_by AS "triggeredBy",
+                       b.started_at AS "startedAt",
+                       b.finished_at AS "finishedAt",
+                       b.started_at AS "createdAt"
+                FROM kkumz_build_job b
+                JOIN kkumz_site s ON s.id = b.site_id
+                LEFT JOIN kkumz_site_release r ON r.id = b.release_id
+                WHERE 1=1
+                """);
         List<Object> params = new ArrayList<>();
         if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
-            sql.append(" AND b.status = ? ");
+            sql.append(" AND b.status = ?");
             params.add(status.trim().toUpperCase(Locale.ROOT));
         }
         if (deployMode != null && !deployMode.isBlank() && !"ALL".equalsIgnoreCase(deployMode)) {
-            sql.append(" AND b.deploy_mode = ? ");
+            sql.append(" AND b.deploy_mode = ?");
             params.add(deployMode.trim().toUpperCase(Locale.ROOT));
         }
-        sql.append(" ORDER BY b.started_at DESC ");
+        sql.append(" ORDER BY b.started_at DESC");
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
 
-    public List<Map<String, Object>> listAdminCommunityProjects(String keyword) {
-        return listAdminCommunityProjects(null, keyword);
-    }
-
     public List<Map<String, Object>> listAdminCommunityProjects(String siteType, String keyword) {
-        List<Map<String, Object>> sites = listAdminSites(siteType, null, keyword);
-        for (Map<String, Object> site : sites) {
-            String siteId = String.valueOf(site.get("id"));
-            site.put("siteId", siteId);
-            site.put("brandName", site.get("siteName"));
-            site.put("tagline", site.get("brandSlogan"));
-            site.put("authorDisplayName", site.get("ownerDisplayName"));
-            List<Map<String, Object>> recruits = listSiteRecruits(siteId);
-            for (Map<String, Object> rec : recruits) {
-                rec.put("currentCount", rec.get("recruitedCount"));
-            }
-            site.put("recruits", recruits);
-            site.put("openRecruits", recruits);
-            site.put("members", listSiteTeamMembers(siteId));
-        }
-        return sites;
+        return getCommunityFeed(siteType, null, "POPULAR", keyword);
     }
 
     public List<Map<String, Object>> listModerationReports(String status) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT r.id, r.target_type AS \"targetType\", r.target_id AS \"targetId\", r.site_id AS \"siteId\", " +
-                "s.site_slug AS \"siteSlug\", s.site_name AS \"siteName\", s.site_name AS \"brandName\", s.site_type AS \"siteType\", " +
-                "r.reporter_username AS \"reporterUsername\", r.reason_category AS \"reasonCategory\", " +
-                "r.reason_detail AS \"reasonDetail\", r.status, r.action_taken AS \"actionTaken\", " +
-                "r.action_taken AS \"resolutionNote\", " +
-                "r.moderator_username AS \"moderatorUsername\", r.resolved_at AS \"resolvedAt\", r.created_at AS \"createdAt\" " +
-                "FROM kkumz_moderation_report r " +
-                "JOIN kkumz_site s ON s.id = r.site_id WHERE 1=1 "
-        );
+        StringBuilder sql = new StringBuilder("""
+                SELECT r.id,
+                       r.target_type AS "targetType",
+                       r.target_id AS "targetId",
+                       r.site_id AS "siteId",
+                       s.site_slug AS "siteSlug",
+                       s.site_name AS "siteName",
+                       s.site_name AS "brandName",
+                       r.reporter_username AS "reporterUsername",
+                       r.reason_category AS "reasonCategory",
+                       r.reason_detail AS "reasonDetail",
+                       r.status,
+                       r.action_taken AS "actionTaken",
+                       r.moderator_username AS "moderatorUsername",
+                       r.moderator_username AS "resolvedBy",
+                       r.resolved_at AS "resolvedAt",
+                       r.created_at AS "createdAt"
+                FROM kkumz_moderation_report r
+                JOIN kkumz_site s ON s.id = r.site_id
+                WHERE 1=1
+                """);
         List<Object> params = new ArrayList<>();
         if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
-            sql.append(" AND r.status = ? ");
+            sql.append(" AND r.status = ?");
             params.add(status.trim().toUpperCase(Locale.ROOT));
         }
-        sql.append(" ORDER BY CASE WHEN r.status = 'PENDING' THEN 0 ELSE 1 END, r.created_at DESC ");
+        sql.append(" ORDER BY CASE WHEN r.status = 'PENDING' THEN 0 ELSE 1 END, r.created_at DESC");
         return jdbcTemplate.queryForList(sql.toString(), params.toArray());
     }
 
     @Transactional
     public Map<String, Object> createModerationReport(String siteIdOrSlug, CreateReportRequest req) {
-        Map<String, Object> site = getSiteRecordBySlugOrId(siteIdOrSlug);
+        if (req == null || req.getReasonDetail() == null || req.getReasonDetail().isBlank()) {
+            throw new IllegalArgumentException("신고 상세 사유(reasonDetail)를 입력해 주세요.");
+        }
+        if (req.getReporterUsername() == null || req.getReporterUsername().isBlank()) {
+            throw new IllegalArgumentException("신고자 계정(reporterUsername)은 필수입니다.");
+        }
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
+        String targetType = (req.getTargetType() != null && !req.getTargetType().isBlank())
+                ? req.getTargetType().trim().toUpperCase(Locale.ROOT)
+                : "SITE";
+        String targetId = (req.getTargetId() != null && !req.getTargetId().isBlank())
+                ? req.getTargetId().trim()
+                : siteId;
         String reportId = "rep-" + UUID.randomUUID().toString().substring(0, 8);
-        String targetType = (req.getTargetType() != null && !req.getTargetType().isBlank()) ? req.getTargetType().trim().toUpperCase(Locale.ROOT) : "SITE";
-        String targetId = (req.getTargetId() != null && !req.getTargetId().isBlank()) ? req.getTargetId().trim() : siteId;
-        String reporter = (req.getReporterUsername() != null && !req.getReporterUsername().isBlank()) ? req.getReporterUsername().trim() : "community.member";
-        String category = (req.getReasonCategory() != null && !req.getReasonCategory().isBlank()) ? req.getReasonCategory().trim() : "SPAM_PROMOTION";
-        String detail = (req.getReasonDetail() != null && !req.getReasonDetail().isBlank()) ? req.getReasonDetail().trim() : "커뮤니티 운영 정책 검토 요청";
 
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_moderation_report (id, target_type, target_id, site_id, reporter_username, reason_category, reason_detail, status, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', CURRENT_TIMESTAMP)",
-                reportId, targetType, targetId, siteId, reporter, category, detail
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_moderation_report (
+                    id, target_type, target_id, site_id, reporter_username, reason_category, reason_detail, status, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', CURRENT_TIMESTAMP)
+                """,
+                reportId,
+                targetType, targetId, siteId,
+                req.getReporterUsername().trim(),
+                req.getReasonCategory() != null ? req.getReasonCategory() : "SPAM_PROMOTION",
+                req.getReasonDetail().trim()
         );
         return Map.of("id", reportId, "siteId", siteId, "status", "PENDING");
     }
 
     @Transactional
     public List<Map<String, Object>> resolveModerationReport(String reportId, ResolveReportRequest req) {
-        String status = (req.getStatus() != null && !req.getStatus().isBlank()) ? req.getStatus().trim().toUpperCase(Locale.ROOT) : "RESOLVED";
-        String rawAction = (req.getActionTaken() != null && !req.getActionTaken().isBlank())
+        String status = (req.getStatus() != null && !req.getStatus().isBlank())
+                ? req.getStatus().trim().toUpperCase(Locale.ROOT)
+                : "RESOLVED";
+        String actionTaken = (req.getActionTaken() != null && !req.getActionTaken().isBlank())
                 ? req.getActionTaken().trim()
-                : (req.getResolutionNote() != null && !req.getResolutionNote().isBlank() ? req.getResolutionNote().trim() : null);
-        String actionTaken = rawAction != null
-                ? rawAction
-                : ("RESOLVED".equals(status) ? "커뮤니티 가이드라인에 따라 조치 완료" : "검토 결과 위반 사항 없음으로 기각 처리");
+                : (req.getResolutionNote() != null && !req.getResolutionNote().isBlank()
+                ? req.getResolutionNote().trim()
+                : "모더레이터 심사 완료");
         String moderator = (req.getModeratorUsername() != null && !req.getModeratorUsername().isBlank())
                 ? req.getModeratorUsername().trim()
                 : (req.getResolvedBy() != null && !req.getResolvedBy().isBlank() ? req.getResolvedBy().trim() : "admin");
 
-        jdbcTemplate.update(
-                "UPDATE kkumz_moderation_report SET status = ?, action_taken = ?, moderator_username = ?, resolved_at = CURRENT_TIMESTAMP WHERE id = ?",
+        jdbcTemplate.update("""
+                UPDATE kkumz_moderation_report
+                SET status = ?, action_taken = ?, moderator_username = ?, resolved_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
                 status, actionTaken, moderator, reportId
         );
 
-        if (Boolean.TRUE.equals(req.getSuspendSite())) {
-            jdbcTemplate.update(
-                    "UPDATE kkumz_site SET status = 'SUSPENDED', updated_at = CURRENT_TIMESTAMP " +
-                    "WHERE id = (SELECT site_id FROM kkumz_moderation_report WHERE id = ?)",
-                    reportId
-            );
+        boolean shouldSuspend = Boolean.TRUE.equals(req.getSuspendSite())
+                || ("RESOLVED".equals(status) && actionTaken.contains("정지"));
+        if (shouldSuspend) {
+            jdbcTemplate.update("""
+                    UPDATE kkumz_site SET status = 'SUSPENDED', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = (SELECT site_id FROM kkumz_moderation_report WHERE id = ?)
+                    """, reportId);
         }
+
         return listModerationReports(null);
     }
 
     // =========================================================================
-    // 내부 헬퍼 메서드
+    // 9. Cross-DB (SyncShop / SyncCMS) 실데이터 조회 및 프로비저닝 헬퍼
     // =========================================================================
 
-    private void syncScreenSpecsToTable(String ideaId, List<Map<String, Object>> screens) {
-        if (screens == null || screens.isEmpty()) {
-            return;
-        }
-        jdbcTemplate.update("DELETE FROM kkumz_screen_spec WHERE idea_id = ?", ideaId);
-        int sort = 1;
-        for (Map<String, Object> s : screens) {
-            String key = String.valueOf(s.getOrDefault("screenKey", s.getOrDefault("screenCode", "SECTION_" + sort)));
-            String title = String.valueOf(s.getOrDefault("screenTitle", s.getOrDefault("title", "화면 섹션 " + sort)));
-            String layout = String.valueOf(s.getOrDefault("layoutType", s.getOrDefault("layout", "STANDARD_GRID")));
-            String route = String.valueOf(s.getOrDefault("routePath", "/" + key.toLowerCase(Locale.ROOT)));
-            String desc = String.valueOf(s.getOrDefault("description", title + " 화면 구성 및 핵심 전환 기능"));
-            Object compsObj = s.get("components");
-            String compsJson = compsObj != null ? toJson(compsObj) : "[\"HeroBanner\"]";
-            jdbcTemplate.update(
-                    "INSERT INTO kkumz_screen_spec (id, idea_id, screen_key, screen_title, route_path, layout_type, description, components_json, sort_no, created_at) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, CURRENT_TIMESTAMP)",
-                    "scr-" + ideaId + "-" + sort, ideaId, key, title, route, layout, desc, compsJson, sort
+    private Map<String, Object> loadCommerceData(Long shopSiteId) {
+        if (shopSiteId == null || shopJdbcTemplate == null) {
+            return Map.of(
+                    "shopSiteId", 0L,
+                    "products", List.of(),
+                    "banners", List.of(),
+                    "categories", List.of(),
+                    "coupons", List.of()
             );
-            sort++;
         }
+        List<Map<String, Object>> products = shopJdbcTemplate.queryForList("""
+                SELECT id,
+                       site_id AS "siteId",
+                       name,
+                       sub_title AS "subTitle",
+                       description,
+                       pic,
+                       product_sn AS "productSn",
+                       brand_name AS "brandName",
+                       product_category_name AS "categoryName",
+                       price,
+                       promotion_price AS "promotionPrice",
+                       original_price AS "originalPrice",
+                       stock,
+                       sale,
+                       unit,
+                       keywords
+                FROM pms_product
+                WHERE site_id = ? AND delete_status = 0 AND publish_status = 1
+                ORDER BY sort ASC, id ASC
+                """, shopSiteId);
+
+        List<Map<String, Object>> banners = shopJdbcTemplate.queryForList("""
+                SELECT id, name, pic, url, note
+                FROM sms_home_advertise
+                WHERE site_id = ? AND status = 1
+                ORDER BY sort ASC, id ASC
+                """, shopSiteId);
+
+        List<Map<String, Object>> categories = shopJdbcTemplate.queryForList("""
+                SELECT id, name, icon, product_count AS "productCount"
+                FROM pms_product_category
+                WHERE site_id = ? AND show_status = 1
+                ORDER BY sort ASC, id ASC
+                """, shopSiteId);
+
+        List<Map<String, Object>> coupons = shopJdbcTemplate.queryForList("""
+                SELECT id, name, amount, min_point AS "minPoint", code, note
+                FROM sms_coupon
+                WHERE site_id = ?
+                ORDER BY id ASC
+                """, shopSiteId);
+
+        Map<String, Object> commerce = new LinkedHashMap<>();
+        commerce.put("shopSiteId", shopSiteId);
+        commerce.put("products", products);
+        commerce.put("banners", banners);
+        commerce.put("categories", categories);
+        commerce.put("coupons", coupons);
+        return commerce;
     }
 
-    private void recordBuildJob(String siteId, String releaseId, String jobType, String deployMode, String status,
-                                int durationMs, String errorSummary, boolean aiPatch, String buildLog, String triggeredBy) {
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_build_job (id, site_id, release_id, job_type, deploy_mode, status, duration_ms, error_summary, ai_patch_applied, build_log, triggered_by, started_at, finished_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-                "job-" + UUID.randomUUID().toString().substring(0, 8), siteId, releaseId, jobType, deployMode,
-                status, durationMs, errorSummary, aiPatch, buildLog, triggeredBy
+    private Map<String, Object> loadCmsData(Long cmsSiteId) {
+        if (cmsSiteId == null || cmsJdbcTemplate == null) {
+            return Map.of(
+                    "cmsSiteId", 0L,
+                    "articles", List.of(),
+                    "banners", List.of(),
+                    "forms", List.of()
+            );
+        }
+        List<Map<String, Object>> articles = cmsJdbcTemplate.queryForList("""
+                SELECT id,
+                       site_id AS "siteId",
+                       title,
+                       summary,
+                       content_html AS "contentHtml",
+                       thumbnail_url AS "thumbnailUrl",
+                       author_name AS "authorName",
+                       view_count AS "viewCount",
+                       published_time AS "publishedTime"
+                FROM cms_article
+                WHERE site_id = ? AND status = 'PUBLISHED' AND del_flag = 0
+                ORDER BY is_top DESC, published_time DESC, id ASC
+                """, cmsSiteId);
+
+        List<Map<String, Object>> banners = cmsJdbcTemplate.queryForList("""
+                SELECT id, title, image_url AS "imageUrl", link_url AS "linkUrl", position
+                FROM cms_banner
+                WHERE site_id = ? AND status = 1 AND del_flag = 0
+                ORDER BY sort_order ASC, id ASC
+                """, cmsSiteId);
+
+        List<Map<String, Object>> forms = cmsJdbcTemplate.queryForList("""
+                SELECT id, form_name AS "formName", form_code AS "formCode", description, fields_json::text AS "fieldsJson"
+                FROM cms_form
+                WHERE site_id = ? AND status = 'ACTIVE' AND del_flag = 0
+                ORDER BY id ASC
+                """, cmsSiteId);
+        forms.forEach(f -> f.put("fields", parseJsonList(String.valueOf(f.remove("fieldsJson")))));
+
+        Map<String, Object> cms = new LinkedHashMap<>();
+        cms.put("cmsSiteId", cmsSiteId);
+        cms.put("articles", articles);
+        cms.put("banners", banners);
+        cms.put("forms", forms);
+        return cms;
+    }
+
+    private Long provisionSyncShopSite(String siteSlug, String brandName, String slogan) {
+        if (shopJdbcTemplate == null) {
+            return null;
+        }
+        List<Map<String, Object>> existing = shopJdbcTemplate.queryForList(
+                "SELECT id FROM ums_site WHERE site_code = ?", siteSlug
+        );
+        if (!existing.isEmpty()) {
+            return ((Number) existing.get(0).get("id")).longValue();
+        }
+        return shopJdbcTemplate.queryForObject("""
+                INSERT INTO ums_site (site_code, site_name, domain_url, theme_code, description, status)
+                VALUES (?, ?, ?, 'modern-studio', ?, 1)
+                RETURNING id
+                """,
+                Long.class,
+                siteSlug, brandName, siteSlug + ".kkumz.io", slogan
         );
     }
 
-    private void createNotification(String recipient, String type, String title, String message, String linkUrl) {
-        jdbcTemplate.update(
-                "INSERT INTO kkumz_notification (id, recipient_username, notif_type, title, message, link_url, is_read, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, FALSE, CURRENT_TIMESTAMP)",
-                "noti-" + UUID.randomUUID().toString().substring(0, 8),
-                recipient != null && !recipient.isBlank() ? recipient : "admin",
-                type, title, message, linkUrl
+    private Long provisionSyncCmsSite(String siteSlug, String brandName, String slogan) {
+        if (cmsJdbcTemplate == null) {
+            return null;
+        }
+        List<Map<String, Object>> existing = cmsJdbcTemplate.queryForList(
+                "SELECT id FROM cms_site WHERE site_code = ?", siteSlug
+        );
+        if (!existing.isEmpty()) {
+            return ((Number) existing.get(0).get("id")).longValue();
+        }
+        return cmsJdbcTemplate.queryForObject("""
+                INSERT INTO cms_site (site_code, site_name, domain, description, theme_name, status, create_by)
+                VALUES (?, ?, ?, ?, 'kkumz-editorial', 1, 'admin')
+                RETURNING id
+                """,
+                Long.class,
+                siteSlug, brandName, siteSlug + ".kkumz.io", slogan
         );
     }
 
-    private Map<String, Object> loadCommerceData(Long shopSiteId, String siteName, String slogan) {
-        String domain = detectDomainKey(siteName + " " + slogan);
-        boolean isMismatchDefaultElectronics = (shopSiteId != null && shopSiteId == 1L && !"TECH".equals(domain));
-        try {
-            if (shopJdbcTemplate != null && !isMismatchDefaultElectronics) {
-                List<Map<String, Object>> products = shopJdbcTemplate.queryForList(
-                        "SELECT id, site_id AS \"siteId\", brand_id AS \"brandId\", product_category_id AS \"productCategoryId\", " +
-                        "name, pic, product_sn AS \"productSn\", price, promotion_price AS \"promotionPrice\", " +
-                        "original_price AS \"originalPrice\", sub_title AS \"subTitle\", description, stock, unit, " +
-                        "brand_name AS \"brandName\", product_category_name AS \"productCategoryName\", sale, note " +
-                        "FROM pms_product WHERE site_id = ? AND delete_status = 0 AND publish_status = 1 " +
-                        "ORDER BY sort DESC, id ASC LIMIT 24",
-                        shopSiteId
+    // =========================================================================
+    // 10. 내부 유틸리티 & 검증 헬퍼
+    // =========================================================================
+
+    private KkumzAiGatewayService ensureAiGateway() {
+        if (this.aiGatewayService == null) {
+            KkumzAiGatewayService provided = this.aiGatewayProvider != null ? this.aiGatewayProvider.getIfAvailable() : null;
+            this.aiGatewayService = provided != null ? provided : new KkumzAiGatewayService(this.jdbcTemplate, this.objectMapper, null);
+        }
+        return this.aiGatewayService;
+    }
+
+    private Map<String, String> resolveUserIdentity(String requestedUsername, String requestedDisplayName) {
+        if (requestedUsername != null && !requestedUsername.isBlank()) {
+            String uname = requestedUsername.trim();
+            if (requestedDisplayName != null && !requestedDisplayName.isBlank()) {
+                return Map.of("username", uname, "realname", requestedDisplayName.trim());
+            }
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                    "SELECT username, realname FROM sys_user WHERE username = ? AND del_flag = 0 LIMIT 1",
+                    uname
+            );
+            if (!rows.isEmpty()) {
+                return Map.of(
+                        "username", String.valueOf(rows.get(0).get("username")),
+                        "realname", String.valueOf(rows.get(0).get("realname"))
                 );
-                if (!products.isEmpty()) {
-                    List<Map<String, Object>> banners = shopJdbcTemplate.queryForList(
-                            "SELECT id, name, pic, url, note, sort FROM sms_home_advertise " +
-                            "WHERE site_id = ? AND status = 1 ORDER BY sort DESC, id DESC LIMIT 6",
-                            shopSiteId
-                    );
-                    List<Map<String, Object>> categories = shopJdbcTemplate.queryForList(
-                            "SELECT id, parent_id AS \"parentId\", name, level, product_count AS \"productCount\", " +
-                            "product_unit AS \"productUnit\", icon, keywords, description " +
-                            "FROM pms_product_category WHERE site_id = ? AND show_status = 1 ORDER BY sort DESC, id ASC",
-                            shopSiteId
-                    );
-                    List<Map<String, Object>> coupons = shopJdbcTemplate.queryForList(
-                            "SELECT id, name, amount, min_point AS \"minPoint\", note, code " +
-                            "FROM sms_coupon WHERE site_id = ? ORDER BY id DESC LIMIT 6",
-                            shopSiteId
-                    );
-                    Map<String, Object> commerce = new LinkedHashMap<>();
-                    commerce.put("shopSiteId", shopSiteId);
-                    commerce.put("banners", banners);
-                    commerce.put("categories", categories);
-                    commerce.put("products", products);
-                    commerce.put("coupons", coupons);
-                    return commerce;
+            }
+            return Map.of("username", uname, "realname", uname);
+        }
+
+        List<Map<String, Object>> defaultRows = jdbcTemplate.queryForList(
+                "SELECT username, realname FROM sys_user WHERE del_flag = 0 ORDER BY create_time ASC LIMIT 1"
+        );
+        if (!defaultRows.isEmpty()) {
+            String uname = String.valueOf(defaultRows.get(0).get("username"));
+            String rname = (requestedDisplayName != null && !requestedDisplayName.isBlank())
+                    ? requestedDisplayName.trim()
+                    : String.valueOf(defaultRows.get(0).get("realname"));
+            return Map.of("username", uname, "realname", rname);
+        }
+        String fallbackName = (requestedDisplayName != null && !requestedDisplayName.isBlank())
+                ? requestedDisplayName.trim()
+                : "admin";
+        return Map.of("username", "admin", "realname", fallbackName);
+    }
+
+    private List<Map<String, Object>> parseAiJsonArray(String rawJson, String stageName) {
+        try {
+            JsonNode root = objectMapper.readTree(rawJson);
+            if (root.isArray()) {
+                return objectMapper.convertValue(root, new TypeReference<List<Map<String, Object>>>() {});
+            }
+            if (root.isObject()) {
+                for (String key : List.of("items", "candidates", "suggestions", "files", "data", "result")) {
+                    if (root.has(key) && root.get(key).isArray()) {
+                        return objectMapper.convertValue(root.get(key), new TypeReference<List<Map<String, Object>>>() {});
+                    }
                 }
             }
+            throw new IllegalStateException("AI 응답(" + stageName + ")이 JSON 배열 형식이 아닙니다.");
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
-            log.debug("Standalone 커머스 카탈로그 기본값 로드 (shopSiteId={}): {}", shopSiteId, e.getMessage());
+            throw new IllegalStateException("AI 응답(" + stageName + ") JSON 파싱에 실패했습니다: " + e.getMessage(), e);
         }
-
-        return buildDomainFallbackCommerce(shopSiteId, siteName, slogan, domain);
     }
 
-    private Map<String, Object> loadCmsData(Long cmsSiteId, String siteName, String slogan) {
-        try {
-            if (cmsJdbcTemplate != null) {
-                short sid = cmsSiteId.shortValue();
-                List<Map<String, Object>> rawArticles = cmsJdbcTemplate.queryForList(
-                        "SELECT id, title, author, description, content, cover, scores, comments, clicks, publish_date AS \"publishDate\" " +
-                        "FROM cms_content WHERE site_id = ? AND disabled = false ORDER BY sort DESC, id DESC LIMIT 12",
-                        sid
-                );
-                if (!rawArticles.isEmpty()) {
-                    List<Map<String, Object>> categories = cmsJdbcTemplate.queryForList(
-                            "SELECT id, name, code, sort FROM cms_category WHERE site_id = ? AND disabled = false ORDER BY sort ASC, id ASC",
-                            sid
-                    );
-                    String defaultCatName = !categories.isEmpty() ? String.valueOf(categories.get(0).get("name")) : (siteName + " 저널");
-                    List<Map<String, Object>> articles = new ArrayList<>();
-                    for (Map<String, Object> row : rawArticles) {
-                        Map<String, Object> art = new LinkedHashMap<>(row);
-                        String desc = art.get("description") != null ? String.valueOf(art.get("description")) : slogan;
-                        String contentHtml = art.get("content") != null && !String.valueOf(art.get("content")).isBlank()
-                                ? String.valueOf(art.get("content"))
-                                : "<p>" + escapeXml(desc) + "</p>";
-                        art.put("summary", desc);
-                        art.put("bodyHtml", contentHtml);
-                        art.put("viewCount", art.getOrDefault("clicks", 240));
-                        art.put("categoryName", defaultCatName);
-                        articles.add(art);
-                    }
-                    List<Map<String, Object>> banners = cmsJdbcTemplate.queryForList(
-                            "SELECT id, title, sub_title AS \"subTitle\", image_url AS \"imageUrl\", link_url AS \"linkUrl\" " +
-                            "FROM cms_banner WHERE site_id = ? AND status = 1 ORDER BY sort DESC, id DESC LIMIT 6",
-                            sid
-                    );
-                    List<Map<String, Object>> forms = cmsJdbcTemplate.queryForList(
-                            "SELECT id, code, title, description, schema_json::text AS \"schemaText\", privacy_policy AS \"privacyPolicy\" " +
-                            "FROM cms_form WHERE site_id = ? AND status = 1 ORDER BY id ASC",
-                            sid
-                    );
-                    for (Map<String, Object> form : forms) {
-                        form.put("formName", form.getOrDefault("title", siteName + " 온라인 신청"));
-                        form.put("fields", parseJsonListOfMap(form.remove("schemaText")));
-                    }
-                    Map<String, Object> cms = new LinkedHashMap<>();
-                    cms.put("cmsSiteId", cmsSiteId);
-                    cms.put("categories", categories);
-                    cms.put("articles", articles);
-                    cms.put("banners", banners);
-                    cms.put("forms", forms);
-                    cms.put("recentSubmissions", List.of());
-                    return cms;
+    private List<String> validateWebIdeSourceFiles(List<Map<String, Object>> files) {
+        List<String> errors = new ArrayList<>();
+        for (Map<String, Object> f : files) {
+            String path = String.valueOf(f.getOrDefault("path", "unknown"));
+            String content = String.valueOf(f.getOrDefault("content", ""));
+            if (path.endsWith(".json")) {
+                try {
+                    objectMapper.readTree(content);
+                } catch (Exception e) {
+                    errors.add(path + ": 유효하지 않은 JSON 구문 (" + e.getMessage() + ")");
+                }
+            } else if (path.endsWith(".vue")) {
+                if (content.contains("<template>") && !content.contains("</template>")) {
+                    errors.add(path + ": 닫히지 않은 <template> 태그가 존재합니다.");
+                }
+                if (content.contains("<script") && !content.contains("</script>")) {
+                    errors.add(path + ": 닫히지 않은 <script> 태그가 존재합니다.");
                 }
             }
-        } catch (Exception e) {
-            log.debug("Standalone 매거진/커뮤니티 기본값 로드 (cmsSiteId={}): {}", cmsSiteId, e.getMessage());
         }
-
-        return buildDomainFallbackCms(cmsSiteId, siteName, slogan, detectDomainKey(siteName + " " + slogan));
+        return errors;
     }
 
-    private Long provisionSyncShopSite(String slug, String siteName, String siteType, String logoSvg, String slogan,
-                                       Map<String, Object> tokens, Map<String, Object> layout) {
-        try {
-            if (shopJdbcTemplate == null) {
-                return 2L;
-            }
-            List<Map<String, Object>> existing = shopJdbcTemplate.queryForList(
-                    "SELECT id FROM shop_site WHERE site_slug = ? LIMIT 1", slug
-            );
-            if (!existing.isEmpty()) {
-                return ((Number) existing.get(0).get("id")).longValue();
-            }
-            Long newSiteId = shopJdbcTemplate.queryForObject(
-                    "INSERT INTO shop_site (site_slug, site_name, site_type, logo_svg, brand_slogan, " +
-                    "design_tokens_json, layout_schema_json, owner_username, status, create_time, update_time) " +
-                    "VALUES (?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, 'admin', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id",
-                    Long.class, slug, siteName, siteType, logoSvg, slogan, toJson(tokens), toJson(layout)
-            );
-            return newSiteId;
-        } catch (Exception e) {
-            log.info("SyncShop 멀티사이트 자동 프로비저닝 기본 ID 대체 (slug={}): {}", slug, e.getMessage());
-            return 2L;
+    private List<Map<String, Object>> buildWebIdeFilesFromScreens(
+            String brandName,
+            Map<String, Object> tokens,
+            Map<String, Object> layout,
+            List<Map<String, Object>> screenSpecs
+    ) {
+        StringBuilder sectionMarkup = new StringBuilder();
+        for (Map<String, Object> screen : screenSpecs) {
+            String key = String.valueOf(screen.getOrDefault("screenKey", "SECTION"));
+            String title = String.valueOf(screen.getOrDefault("screenTitle", brandName));
+            sectionMarkup.append("    <section class=\"screen-block\" data-screen=\"")
+                    .append(escapeXml(key))
+                    .append("\">\n      <h2>")
+                    .append(escapeXml(title))
+                    .append("</h2>\n    </section>\n");
         }
+        String appVue = "<template>\n  <div class=\"kkumz-live-shell\">\n    <header class=\"brand-hero\">\n      <h1>{{ layout.heroTitle }}</h1>\n      <p>{{ layout.heroSubtitle }}</p>\n    </header>\n"
+                + sectionMarkup
+                + "  </div>\n</template>\n<script setup lang=\"ts\">\ndefineProps<{ tokens: Record<string, any>; layout: Record<string, any> }>();\n</script>";
+
+        List<Map<String, Object>> files = new ArrayList<>();
+        files.add(new LinkedHashMap<>(Map.of("path", "src/App.vue", "language", "vue", "content", appVue)));
+        files.add(new LinkedHashMap<>(Map.of("path", "src/theme.json", "language", "json", "content", toJson(tokens))));
+        files.add(new LinkedHashMap<>(Map.of("path", "src/layout.json", "language", "json", "content", toJson(layout))));
+        return files;
     }
 
-    private Long provisionSyncCmsSite(String slug, String siteName, String slogan) {
-        try {
-            if (cmsJdbcTemplate == null) {
-                return 101L;
-            }
-            Integer maxSiteId = cmsJdbcTemplate.queryForObject(
-                    "SELECT COALESCE(MAX(site_id), 102) FROM cms_category WHERE site_id >= 100", Integer.class
-            );
-            return (long) ((maxSiteId != null ? maxSiteId : 102) + 1);
-        } catch (Exception e) {
-            log.info("SyncCMS 멀티사이트 자동 프로비저닝 기본 ID 대체 (slug={}): {}", slug, e.getMessage());
-            return 101L;
-        }
-    }
+    private Map<String, Object> findSiteByIdOrSlug(String siteIdOrSlug) {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+                SELECT id,
+                       idea_id AS "ideaId",
+                       site_slug AS "siteSlug",
+                       site_name AS "siteName",
+                       site_type AS "siteType",
+                       category,
+                       brand_slogan AS "brandSlogan",
+                       logo_svg AS "logoSvg",
+                       shop_site_id AS "shopSiteId",
+                       cms_site_id AS "cmsSiteId",
+                       deploy_mode AS "deployMode",
+                       active_version AS "activeVersion",
+                       deployed_url AS "deployedUrl",
+                       custom_domain AS "customDomain",
+                       is_featured AS "isFeatured",
+                       visibility,
+                       like_count AS "likeCount",
+                       comment_count AS "commentCount",
+                       view_count AS "viewCount",
+                       owner_username AS "ownerUsername",
+                       owner_display_name AS "ownerDisplayName",
+                       status,
+                       created_at AS "createdAt",
+                       updated_at AS "updatedAt"
+                FROM kkumz_site WHERE site_slug = ? OR id = ?
+                LIMIT 1
+                """, siteIdOrSlug, siteIdOrSlug);
 
-    private Map<String, Object> getSiteRecordBySlugOrId(String siteSlugOrId) {
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT id, idea_id AS \"ideaId\", site_slug AS \"siteSlug\", site_name AS \"siteName\", " +
-                "site_type AS \"siteType\", category, brand_slogan AS \"brandSlogan\", logo_svg AS \"logoSvg\", " +
-                "shop_site_id AS \"shopSiteId\", cms_site_id AS \"cmsSiteId\", deploy_mode AS \"deployMode\", " +
-                "active_version AS \"activeVersion\", deployed_url AS \"deployedUrl\", custom_domain AS \"customDomain\", " +
-                "is_featured AS \"isFeatured\", visibility, " +
-                "like_count AS \"likeCount\", comment_count AS \"commentCount\", view_count AS \"viewCount\", " +
-                "owner_username AS \"ownerUsername\", owner_display_name AS \"ownerDisplayName\", " +
-                "status, created_at AS \"createdAt\", updated_at AS \"updatedAt\" " +
-                "FROM kkumz_site WHERE site_slug = ? OR id = ? LIMIT 1",
-                siteSlugOrId, siteSlugOrId
-        );
         if (rows.isEmpty()) {
-            throw new IllegalArgumentException("존재하지 않는 꿈즈 사이트입니다: " + siteSlugOrId);
+            throw new IllegalArgumentException("존재하지 않는 멀티사이트입니다: " + siteIdOrSlug);
         }
         return new LinkedHashMap<>(rows.get(0));
     }
 
-    private Map<String, Object> getReleaseRecord(String siteId, int versionNo) {
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT id, site_id AS \"siteId\", version_no AS \"versionNo\", release_note AS \"releaseNote\", " +
-                "deploy_mode AS \"deployMode\", design_tokens_json::text AS \"designTokensText\", " +
-                "layout_schema_json::text AS \"layoutSchemaText\", webide_files_json::text AS \"webideFilesText\", " +
-                "minio_bundle_path AS \"minioBundlePath\", build_status AS \"buildStatus\", build_log AS \"buildLog\", " +
-                "created_by AS \"createdBy\", created_at AS \"createdAt\" " +
-                "FROM kkumz_site_release WHERE site_id = ? AND version_no = ? LIMIT 1",
-                siteId, versionNo
-        );
-        if (rows.isEmpty()) {
-            rows = jdbcTemplate.queryForList(
-                    "SELECT id, site_id AS \"siteId\", version_no AS \"versionNo\", release_note AS \"releaseNote\", " +
-                    "deploy_mode AS \"deployMode\", design_tokens_json::text AS \"designTokensText\", " +
-                    "layout_schema_json::text AS \"layoutSchemaText\", webide_files_json::text AS \"webideFilesText\", " +
-                    "minio_bundle_path AS \"minioBundlePath\", build_status AS \"buildStatus\", build_log AS \"buildLog\", " +
-                    "created_by AS \"createdBy\", created_at AS \"createdAt\" " +
-                    "FROM kkumz_site_release WHERE site_id = ? ORDER BY version_no DESC LIMIT 1",
-                    siteId
-            );
+    private Map<String, Object> getLatestRelease(String siteId, int versionNo) {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+                SELECT id,
+                       site_id AS "siteId",
+                       version_no AS "versionNo",
+                       release_note AS "releaseNote",
+                       deploy_mode AS "deployMode",
+                       design_tokens_json::text AS "designTokensJson",
+                       layout_schema_json::text AS "layoutSchemaJson",
+                       webide_files_json::text AS "webideFilesJson",
+                       minio_bundle_path AS "minioBundlePath",
+                       build_status AS "buildStatus",
+                       build_log AS "buildLog",
+                       created_by AS "createdBy",
+                       created_at AS "createdAt"
+                FROM kkumz_site_release
+                WHERE site_id = ? AND version_no = ?
+                LIMIT 1
+                """, siteId, versionNo);
+
+        if (!rows.isEmpty()) {
+            return rows.get(0);
         }
-        if (rows.isEmpty()) {
-            throw new IllegalArgumentException("사이트 릴리즈 정보를 찾을 수 없습니다: " + siteId);
+
+        List<Map<String, Object>> fallback = jdbcTemplate.queryForList("""
+                SELECT id,
+                       site_id AS "siteId",
+                       version_no AS "versionNo",
+                       release_note AS "releaseNote",
+                       deploy_mode AS "deployMode",
+                       design_tokens_json::text AS "designTokensJson",
+                       layout_schema_json::text AS "layoutSchemaJson",
+                       webide_files_json::text AS "webideFilesJson",
+                       minio_bundle_path AS "minioBundlePath",
+                       build_status AS "buildStatus",
+                       build_log AS "buildLog",
+                       created_by AS "createdBy",
+                       created_at AS "createdAt"
+                FROM kkumz_site_release
+                WHERE site_id = ?
+                ORDER BY version_no DESC
+                LIMIT 1
+                """, siteId);
+
+        if (fallback.isEmpty()) {
+            throw new IllegalStateException("사이트 릴리즈 스냅샷이 존재하지 않습니다: " + siteId);
         }
-        return rows.get(0);
+        return fallback.get(0);
     }
 
-    private List<Map<String, Object>> listSiteReleases(String siteId) {
-        return jdbcTemplate.queryForList(
-                "SELECT id, version_no AS \"versionNo\", release_note AS \"releaseNote\", deploy_mode AS \"deployMode\", " +
-                "minio_bundle_path AS \"minioBundlePath\", build_status AS \"buildStatus\", created_by AS \"createdBy\", created_at AS \"createdAt\" " +
-                "FROM kkumz_site_release WHERE site_id = ? ORDER BY version_no DESC",
-                siteId
-        );
-    }
-
-    private String normalizeSiteType(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return "COMMERCE";
+    private void createNotification(String recipient, String type, String title, String message, String linkUrl) {
+        if (recipient == null || recipient.isBlank()) {
+            return;
         }
-        String u = raw.trim().toUpperCase(Locale.ROOT);
-        if ("CMS_SITE".equals(u) || "HYBRID".equals(u) || "COMMERCE".equals(u)) {
-            return u;
-        }
-        return "COMMERCE";
-    }
-
-    private String detectDomainKey(String text) {
-        if (text == null) {
-            return "LIFESTYLE";
-        }
-        String t = text.toLowerCase(Locale.ROOT);
-        if (Pattern.compile("(coffee|bean|espresso|roast)").matcher(t).find() || Pattern.compile("(커피|원두)").matcher(t).find()) {
-            return "COFFEE";
-        }
-        if (Pattern.compile("(matcha|tea|botanical)").matcher(t).find() || Pattern.compile("(말차|녹차)").matcher(t).find()) {
-            return "TEA";
-        }
-        if (Pattern.compile("(desk|orbit|tech|keyboard)").matcher(t).find() || Pattern.compile("(데스크|키보드)").matcher(t).find()) {
-            return "TECH";
-        }
-        if (Pattern.compile("(run|fitness|yoga|pilates)").matcher(t).find() || Pattern.compile("(러닝|피트니스)").matcher(t).find()) {
-            return "FITNESS";
-        }
-        if (Pattern.compile("(vegan|beauty|aroma|perfume)").matcher(t).find() || Pattern.compile("(비건|뷰티)").matcher(t).find()) {
-            return "BEAUTY";
-        }
-        if (Pattern.compile("(bakery|dessert|crumb|wine)").matcher(t).find() || Pattern.compile("(베이커리|디저트)").matcher(t).find()) {
-            return "BAKERY";
-        }
-        if (Pattern.compile("(fashion|apparel|noir|street)").matcher(t).find() || Pattern.compile("(패션|의류)").matcher(t).find()) {
-            return "FASHION";
-        }
-        return "LIFESTYLE";
-    }
-
-    private String resolveDomainKoKeyword(String domain, String prompt) {
-        return switch (domain) {
-            case "COFFEE" -> "빈 크로니클";
-            case "TEA" -> "말차 아뜰리에";
-            case "TECH" -> "데스크 오빗";
-            case "FITNESS" -> "서울 런 클럽";
-            case "BEAUTY" -> "보태니컬 듀";
-            case "BAKERY" -> "메종 드 크럼브";
-            case "FASHION" -> "아카이브 느와르";
-            default -> extractCoreKeyword(prompt);
-        };
-    }
-
-    private String resolveDomainEngKeyword(String domain, String hint) {
-        if (hint != null && hint.matches(".*[a-zA-Z]{3,}.*")) {
-            return hint.replaceAll("[^a-zA-Z0-9\\s]", "").trim();
-        }
-        return switch (domain) {
-            case "COFFEE" -> "Bean";
-            case "TEA" -> "Matcha";
-            case "TECH" -> "Desk";
-            case "FITNESS" -> "Run";
-            case "BEAUTY" -> "Dew";
-            case "BAKERY" -> "Maison";
-            case "FASHION" -> "Noir";
-            default -> "Atelier";
-        };
-    }
-
-    private String toLogoDisplayText(String brandName, String slugSource) {
-        if (brandName != null && brandName.matches("^[A-Za-z0-9\\s\\-&.]+$")) {
-            String trimmed = brandName.trim().toUpperCase(Locale.ROOT);
-            return trimmed.length() > 15 ? trimmed.substring(0, 15) : trimmed;
-        }
-        if (slugSource != null && !slugSource.isBlank()) {
-            String fromSlug = slugSource.replace("-", " ").trim().toUpperCase(Locale.ROOT);
-            if (!fromSlug.isBlank() && !fromSlug.startsWith("KKUMZ ")) {
-                return fromSlug.length() > 15 ? fromSlug.substring(0, 15) : fromSlug;
-            }
-        }
-        if (brandName == null || brandName.isBlank()) {
-            return "KKUMZ STUDIO";
-        }
-        return brandName.length() > 10 ? brandName.substring(0, 10) : brandName;
-    }
-
-    private String[][] buildDomainNameTemplates(String domain, String hint, String engBase, String slugBase) {
-        String cleanHint = hint.replace(" 아뜰리에", "").replace(" 크로니클", "").replace(" 오빗", "").trim();
-        if (cleanHint.isBlank()) {
-            cleanHint = hint;
-        }
-        return new String[][]{
-                {cleanHint + " 아뜰리에", slugBase + "-atelier", engBase + " Atelier", "장인정신과 모던 라이프스타일 큐레이션의 가치를 담은 대표 프리미엄 네이밍입니다.", "99"},
-                {cleanHint + " 크로니클", slugBase + "-chronicle", engBase + " Chronicle", "원산지부터 사용자 경험까지의 진정성 있는 기록을 강조한 에디토리얼 브랜드명입니다.", "97"},
-                {cleanHint + " 오빗", slugBase + "-orbit", engBase + " Orbit", "고객의 일상과 몰입의 궤도를 완벽하게 연결한다는 감각적인 스토리를 담았습니다.", "95"},
-                {"아카이브 " + cleanHint, "archive-" + slugBase, "Archive " + engBase, "엄선된 컬렉션과 깊이 있는 커뮤니티 매거진 감성을 동시에 전달합니다.", "94"},
-                {cleanHint + " 콜렉티브", slugBase + "-collective", engBase + " Collective", "크리에이터와 소비자가 함께 취향을 공유하는 젊은 커뮤니티형 브랜드명입니다.", "92"},
-                {"스튜디오 " + cleanHint, "studio-" + slugBase, "Studio " + engBase, "직관적이고 기억하기 쉬운 모던 디자인 하우스 스타일의 네이밍입니다.", "91"},
-                {cleanHint + " 리추얼", slugBase + "-ritual", engBase + " Ritual", "매일 반복되는 일상을 특별한 감각의 루틴으로 바꾸어 주는 브랜드 철학을 담았습니다.", "90"},
-                {"메종 " + cleanHint + " 서울", "maison-" + slugBase, "Maison " + engBase + " Seoul", "서울의 감각적인 큐레이션과 하이엔드 브랜드 경험을 상징하는 시그니처 네이밍입니다.", "89"}
-        };
-    }
-
-    private Map<String, Object> buildDomainFallbackCommerce(Long shopSiteId, String siteName, String slogan, String domain) {
-        List<Map<String, Object>> products = switch (domain) {
-            case "COFFEE" -> List.of(
-                    Map.of("id", 401L, "name", "콜롬비아 엘 파라이소 96시간 무산소 발효 게이샤 원두 (200g)", "pic", "/images/studio/prod-balmuda-brew.jpg", "price", 36000, "promotionPrice", 31500, "subTitle", "백도 복숭아, 자스민, 열대과일 노트의 직교역 스페셜티 마이크로랏", "stock", 75, "unit", "팩", "brandName", siteName, "productCategoryName", "싱글오리진 원두"),
-                    Map.of("id", 402L, "name", "에티오피아 예가체프 아리차 내추럴 드립백 기프트 박스 (12입)", "pic", "/images/studio/ed-1.jpg", "price", 26000, "promotionPrice", 21900, "subTitle", "베르가못과 블루베리 향미를 언제 어디서나 간편하게 즐기는 드립백", "stock", 140, "unit", "박스", "brandName", siteName, "productCategoryName", "드립백 & 캡슐"),
-                    Map.of("id", 403L, "name", "발뮤다 더 브루 스페셜티 정밀 드립 커피머신 (로스터리 에디션)", "pic", "/images/studio/prod-balmuda-brew.jpg", "price", 599000, "promotionPrice", 539000, "subTitle", "정밀 온도 제어와 바이패스 추출 기술로 완성하는 클린컵 브루어", "stock", 18, "unit", "대", "brandName", siteName, "productCategoryName", "브루잉 기어"),
-                    Map.of("id", 404L, "name", "펠로우 오드 브루 그라인더 Gen 2 (64mm 플랫버 탑재)", "pic", "/images/studio/ed-6.jpg", "price", 490000, "promotionPrice", 445000, "subTitle", "싱글오리진 필터 브루잉에 최적화된 31단계 정밀 분쇄 그라인더", "stock", 24, "unit", "대", "brandName", siteName, "productCategoryName", "브루잉 기어")
-            );
-            case "TEA" -> List.of(
-                    Map.of("id", 201L, "name", "제주 첫물 유기농 세레모니얼 말차 틴케이스 (100g)", "pic", "/images/studio/ed-5.jpg", "price", 42000, "promotionPrice", 36900, "subTitle", "15일 차광 재배 찻잎을 맷돌로 정밀 분쇄한 최상급 다도용 말차", "stock", 90, "unit", "캔", "brandName", siteName, "productCategoryName", "세레모니얼 말차"),
-                    Map.of("id", 202L, "name", "한라산 야생 화산암반 우전 녹차 잎차 에디션 (80g)", "pic", "/images/studio/ed-1.jpg", "price", 38000, "promotionPrice", 33000, "subTitle", "곡우 전 수확한 여린 찻잎의 은은한 감칠맛과 깔끔한 피니시", "stock", 65, "unit", "박스", "brandName", siteName, "productCategoryName", "싱글오리진 잎차"),
-                    Map.of("id", 203L, "name", "수제 백자 다완 & 대나무 백본 차선 다도 스타터 키트", "pic", "/images/studio/prod-balmuda-brew.jpg", "price", 68000, "promotionPrice", 58000, "subTitle", "집에서도 정통 말차 격불을 경험할 수 있는 프리미엄 다구 세트", "stock", 40, "unit", "세트", "brandName", siteName, "productCategoryName", "다도 기프트"),
-                    Map.of("id", 204L, "name", "제주 호지차 로스티드 밀크티 베이스 원액 (500ml)", "pic", "/images/studio/ed-6.jpg", "price", 24000, "promotionPrice", 19800, "subTitle", "우유만 부으면 완성되는 구수하고 깊은 풍미의 무설탕 호지차 베이스", "stock", 110, "unit", "병", "brandName", siteName, "productCategoryName", "티 베리에이션")
-            );
-            case "TECH" -> List.of(
-                    Map.of("id", 301L, "name", "풀 알루미늄 CNC 가스켓 커스텀 기계식 키보드 75% 베어본", "pic", "/images/studio/prod-keychron-q1.jpg", "price", 249000, "promotionPrice", 219000, "subTitle", "QMK/VIA 완벽 지원 및 더블 가스켓 마운트로 완성한 도각거리는 타건감", "stock", 45, "unit", "대", "brandName", siteName, "productCategoryName", "커스텀 키보드"),
-                    Map.of("id", 302L, "name", "모듈러 마그네틱 월넛 모니터 받침대 & 맥세이프 충전 독 세트", "pic", "/images/studio/prod-caldigit-ts4.jpg", "price", 168000, "promotionPrice", 142000, "subTitle", "북미산 호두나무 원목과 마그네틱 트레이로 완성하는 데스크테리어", "stock", 60, "unit", "세트", "brandName", siteName, "productCategoryName", "데스크 모듈"),
-                    Map.of("id", 303L, "name", "비대칭 광학 눈부심 방지 무선 컨트롤 모니터 라이트바 Pro", "pic", "/images/studio/prod-lg-32un880.jpg", "price", 129000, "promotionPrice", 109000, "subTitle", "화면 반사 없이 책상 위만 선명하게 비추는 Ra97 고연색성 워크 라이트", "stock", 85, "unit", "대", "brandName", siteName, "productCategoryName", "조명 & 액세서리"),
-                    Map.of("id", 304L, "name", "천연 메리노 울 펠트 & 비건 레더 양면 데스크 매트 (900x400)", "pic", "/images/studio/ed-6.jpg", "price", 54000, "promotionPrice", 45000, "subTitle", "정밀한 마우스 트래킹과 포근한 손목 쿠션감을 동시에 제공하는 매트", "stock", 130, "unit", "매", "brandName", siteName, "productCategoryName", "데스크 모듈")
-            );
-            case "BEAUTY" -> List.of(
-                    Map.of("id", 501L, "name", "제주 비자나무 & 시카 카밍 배리어 비건 세럼 (50ml)", "pic", "/images/studio/ed-5.jpg", "price", 44000, "promotionPrice", 36000, "subTitle", "민감성 피부 장벽을 편안하게 진정시키는 저분자 비건 액티브 앰플", "stock", 95, "unit", "병", "brandName", siteName, "productCategoryName", "스킨케어"),
-                    Map.of("id", 502L, "name", "피토 세라마이드 딥 모이스처 리차징 크림 (70ml)", "pic", "/images/studio/ed-1.jpg", "price", 48000, "promotionPrice", 39900, "subTitle", "끈적임 없이 72시간 수분 보호막을 유지하는 클린 뷰티 보습 크림", "stock", 80, "unit", "개", "brandName", siteName, "productCategoryName", "스킨케어"),
-                    Map.of("id", 503L, "name", "보태니컬 우디 & 베르가못 릴렉싱 오 드 퍼퓸 (50ml)", "pic", "/images/studio/prod-balmuda-brew.jpg", "price", 89000, "promotionPrice", 76000, "subTitle", "비 온 뒤 숲속의 젖은 이끼와 시트러스 잔향을 담은 시그니처 향수", "stock", 50, "unit", "병", "brandName", siteName, "productCategoryName", "프래그런스")
-            );
-            default -> List.of(
-                    Map.of("id", 101L, "name", siteName + " 시그니처 플래그십 에디션", "pic", "/images/studio/prod-balmuda-brew.jpg", "price", 49000, "promotionPrice", 42000, "subTitle", slogan, "stock", 85, "unit", "세트", "brandName", siteName, "productCategoryName", "시그니처 컬렉션"),
-                    Map.of("id", 102L, "name", siteName + " 프레스티지 기프트 패키지", "pic", "/images/studio/ed-5.jpg", "price", 79000, "promotionPrice", 68000, "subTitle", "전용 선물 포장 및 커스텀 메시지 카드 포함", "stock", 60, "unit", "박스", "brandName", siteName, "productCategoryName", "기프트 에디션"),
-                    Map.of("id", 103L, "name", siteName + " 데일리 스타터 팩", "pic", "/images/studio/ed-1.jpg", "price", 32000, "promotionPrice", 27900, "subTitle", "일상 속에서 부담 없이 시작하는 베스트셀러", "stock", 120, "unit", "개", "brandName", siteName, "productCategoryName", "스타터 라인")
-            );
-        };
-        return Map.of(
-                "shopSiteId", shopSiteId != null ? shopSiteId : 2L,
-                "banners", List.of(Map.of("id", 1L, "name", siteName + " 공식 런칭 기획전", "pic", "/images/studio/banner-acoustic-lounge.jpg", "note", slogan)),
-                "categories", List.of(
-                        Map.of("id", 1L, "name", "시그니처 컬렉션", "productCount", products.size()),
-                        Map.of("id", 2L, "name", "기프트 & 베스트", "productCount", 2)
-                ),
-                "products", products,
-                "coupons", List.of(Map.of("id", 1L, "name", siteName + " 첫 구매 5,000원 웰컴 쿠폰", "amount", 5000, "minPoint", 30000, "code", "WELCOME-5K"))
+        jdbcTemplate.update("""
+                INSERT INTO kkumz_notification (
+                    id, recipient_username, notif_type, title, message, link_url, is_read, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, FALSE, CURRENT_TIMESTAMP)
+                """,
+                "noti-" + UUID.randomUUID().toString().substring(0, 8),
+                recipient.trim(), type, title, message, linkUrl
         );
     }
 
-    private Map<String, Object> buildDomainFallbackCms(Long cmsSiteId, String siteName, String slogan, String domain) {
-        List<Map<String, Object>> fallbackArticles = List.of(
-                Map.of(
-                        "id", 201L,
-                        "title", "[브랜드 스토리] " + siteName + " 공식 런칭 및 디렉터 인터뷰",
-                        "author", "브랜드 에디터",
-                        "description", slogan,
-                        "summary", slogan,
-                        "bodyHtml", "<p>" + escapeXml(slogan) + "</p><p>엄선된 원료와 디자인 철학으로 완성된 시그니처 컬렉션의 탄생 비하인드를 소개합니다.</p>",
-                        "categoryName", "브랜드 저널",
-                        "cover", "/images/studio/ed-5.jpg",
-                        "clicks", 420,
-                        "viewCount", 420
-                ),
-                Map.of(
-                        "id", 202L,
-                        "title", "[큐레이션 가이드] " + siteName + " 시그니처 라인업 200% 활용법 & 오프라인 세션 안내",
-                        "author", "커뮤니티 매니저",
-                        "description", "초기 멤버를 위한 오프라인 쇼룸 클래스 및 온라인 커뮤니티 참여 안내 가이드입니다.",
-                        "summary", "초기 멤버를 위한 오프라인 쇼룸 클래스 및 온라인 커뮤니티 참여 안내 가이드입니다.",
-                        "bodyHtml", "<p>매주 주말 진행되는 프라이빗 체험 클래스와 B2B 파트너십 프로그램 일정을 확인하고 온라인으로 간편하게 신청하세요.</p>",
-                        "categoryName", "커뮤니티 가이드",
-                        "cover", "/images/studio/ed-1.jpg",
-                        "clicks", 315,
-                        "viewCount", 315
-                )
-        );
-        String formTitle = "COFFEE".equals(domain)
-                ? siteName + " 주말 프라이빗 커핑 클래스 & 원두 납품 신청"
-                : ("FITNESS".equals(domain) ? siteName + " 정규 러닝 세션 참가 신청서" : siteName + " 온라인 클래스 예약 및 제휴 문의");
-        List<Map<String, Object>> fallbackForms = List.of(
-                Map.of(
-                        "id", 101L,
-                        "code", "online-apply",
-                        "title", formTitle,
-                        "formName", formTitle,
-                        "description", "아래 양식을 작성해 제출해 주시면 담당 매니저가 빠르게 안내해 드립니다.",
-                        "fields", List.of(
-                                Map.of("field", "applicantName", "label", "신청자 성명", "type", "text", "required", true),
-                                Map.of("field", "phone", "label", "연락처", "type", "tel", "required", true),
-                                Map.of("field", "optionValue", "label", "신청 프로그램", "type", "select", "options", List.of("정규 세션/클래스 참여 신청", "파트너십 및 제휴 문의"), "required", true)
-                        )
-                )
-        );
-        return Map.of(
-                "cmsSiteId", cmsSiteId != null ? cmsSiteId : 101L,
-                "categories", List.of(Map.of("id", 1, "name", siteName + " 매거진 & 소식", "code", "news")),
-                "articles", fallbackArticles,
-                "banners", List.of(Map.of("id", 1, "title", siteName + " 공식 커뮤니티 오픈", "subTitle", slogan, "imageUrl", "/images/studio/banner-urban-techwear.jpg")),
-                "forms", fallbackForms,
-                "recentSubmissions", List.of()
-        );
+    private void enrichIdeaRow(Map<String, Object> row) {
+        row.put("tags", parseJsonList(String.valueOf(row.remove("tagsJson"))));
+        row.put("designTokens", parseJsonObject(String.valueOf(row.remove("designTokensJson"))));
+        row.put("screens", parseJsonList(String.valueOf(row.remove("screensJson"))));
     }
 
-    private String extractCoreKeyword(String prompt) {
-        if (prompt == null || prompt.isBlank()) {
-            return "아뜰리에";
-        }
-        String cleaned = prompt.replaceAll("[^가-힣a-zA-Z0-9\\s]", " ").trim();
-        String[] words = cleaned.split("\\s+");
-        for (String w : words) {
-            if (w.length() >= 2) {
-                return w.length() > 6 ? w.substring(0, 6) : w;
-            }
-        }
-        return "드림랩";
+    private String summarizeTitle(String promptText) {
+        String cleaned = promptText.replaceAll("\\s+", " ").trim();
+        return cleaned.length() > 42 ? cleaned.substring(0, 42) + "..." : cleaned;
     }
 
-    private String toSlugBase(String input) {
-        if (input == null || input.isBlank()) {
-            return "kkumz-brand";
-        }
-        String ascii = input.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
-        if (ascii.length() >= 3) {
-            return ascii;
-        }
-        return "kkumz-" + Math.abs(input.hashCode() % 9000 + 1000);
-    }
-
-    private String ensureAvailableSlug(String candidate, String ideaId) {
-        String slug = candidate.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9-]", "");
-        if (slug.isBlank()) {
-            slug = "kkumz-site";
-        }
-        Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM kkumz_site WHERE site_slug = ? AND idea_id <> ?",
-                Integer.class, slug, ideaId
-        );
-        if (count != null && count > 0) {
-            return slug + "-" + UUID.randomUUID().toString().substring(0, 4);
-        }
-        return slug;
-    }
-
-    private String buildDefaultMarkdownSpec(String title, String prompt, String siteType, String brandName) {
-        String typeDesc = "COMMERCE".equals(siteType)
-                ? "프리미엄 D2C 브랜드 쇼핑몰 스토어"
-                : ("CMS_SITE".equals(siteType) ? "브랜드 스토리 & 커뮤니티 웹사이트" : "매거진 아카이브 + 쇼핑몰 복합 사이트");
-        String featureDesc = "COMMERCE".equals(siteType)
-                ? "카테고리별 상품 카탈로그, 기프트 옵션, 장바구니 및 원클릭 주문서"
-                : ("CMS_SITE".equals(siteType) ? "에디토리얼 매거진 아티클, 주간 일정 배너 및 온라인 참가/문의 신청 폼" : "브랜드 저널 아티클과 상품 즉시 구매, 온라인 클래스/제휴 신청 폼 통합");
-        return "## 1. 프로젝트 개요 및 브랜드 정의\n" +
-                "- **브랜드명**: " + brandName + "\n" +
-                "- **사이트 유형**: " + typeDesc + "\n" +
-                "- **핵심 아이디어**: " + prompt + "\n\n" +
-                "## 2. 주요 화면 및 기능 명세\n" +
-                "1. **브랜드 히어로 & 비주얼 아이덴티티**: SVG 벡터 로고, 전용 컬러 팔레트 토큰 및 핵심 가치 제안 배너\n" +
-                "2. **핵심 비즈니스 기능**: " + featureDesc + "\n" +
-                "3. **AI 브랜드 컨시어지 & 팀빌딩**: 방문자 실시간 질의응답 컨시어지 및 초기 창업 팀원 모집 라운지 연동";
-    }
-
-    private List<Map<String, Object>> buildDefaultScreens(String siteType) {
-        List<Map<String, Object>> list = new ArrayList<>();
-        list.add(Map.of(
-                "screenKey", "HERO_SECTION",
-                "title", "브랜드 시그니처 히어로 & 핵심 슬로건 배너",
-                "routePath", "/",
-                "layout", "SPLIT_SHOWCASE",
-                "description", "브랜드 로고, 시그니처 컬러 테마 배너 및 핵심 가치 슬로건을 전면에 배치하여 첫인상을 완성합니다.",
-                "components", List.of("BrandSvgLogoHeader", "HeroBannerCarousel", "AiConciergeTrigger")
-        ));
-        if ("COMMERCE".equals(siteType) || "HYBRID".equals(siteType)) {
-            list.add(Map.of(
-                    "screenKey", "COMMERCE_CATALOG",
-                    "title", "시그니처 상품 카탈로그 & 원클릭 주문",
-                    "routePath", "/shop",
-                    "layout", "FILTERABLE_3COL_GRID",
-                    "description", "카테고리별 필터링, 웰컴 할인 쿠폰 적용 및 장바구니·원클릭 즉시 결제 모달을 제공합니다.",
-                    "components", List.of("CategoryFilterPills", "ProductCardGrid", "InstantCheckoutModal")
-            ));
-        }
-        if ("CMS_SITE".equals(siteType) || "HYBRID".equals(siteType)) {
-            list.add(Map.of(
-                    "screenKey", "EDITORIAL_AND_FORM",
-                    "title", "브랜드 아카이브 저널 & 온라인 참가/문의 신청 폼",
-                    "routePath", "/journal",
-                    "layout", "EDITORIAL_MAGAZINE_LAYOUT",
-                    "description", "깊이 있는 브랜드 스토리 아티클 열람과 오프라인 클래스·세션 온라인 신청 폼을 연결합니다.",
-                    "components", List.of("ArticleStoryGrid", "OnlineApplicationForm")
-            ));
-        }
-        return list;
-    }
-
-    private List<Map<String, Object>> buildDefaultWebIdeFiles(String brandName, String siteSlug, String siteType,
-                                                              Map<String, Object> tokens, Map<String, Object> layout) {
-        List<Map<String, Object>> files = new ArrayList<>();
-        files.add(new LinkedHashMap<>(Map.of(
-                "path", "src/App.vue",
-                "language", "vue",
-                "content", "<template>\n" +
-                        "  <div class=\"kkumz-live-shell\" :style=\"{ '--brand-primary': tokens.primary }\">\n" +
-                        "    <HeroSection :title=\"layout.heroTitle\" :subtitle=\"layout.heroSubtitle\" :badge=\"layout.customBadge\" />\n" +
-                        "    <CatalogSection v-if=\"siteType !== 'CMS_SITE'\" :products=\"commerce.products\" />\n" +
-                        "    <JournalSection v-if=\"siteType !== 'COMMERCE'\" :articles=\"cms.articles\" />\n" +
-                        "  </div>\n" +
-                        "</template>\n" +
-                        "<script setup lang=\"ts\">\n" +
-                        "// Generated by Kkumz AI Studio (" + siteSlug + ")\n" +
-                        "const siteType = '" + siteType + "';\n" +
-                        "</script>"
-        )));
-        files.add(new LinkedHashMap<>(Map.of(
-                "path", "src/sections/HeroSection.vue",
-                "language", "vue",
-                "content", "<template>\n" +
-                        "  <section class=\"kkumz-hero-banner\">\n" +
-                        "    <span class=\"hero-badge\">{{ badge }}</span>\n" +
-                        "    <h1>{{ title }}</h1>\n" +
-                        "    <p>{{ subtitle }}</p>\n" +
-                        "  </section>\n" +
-                        "</template>\n" +
-                        "<script setup lang=\"ts\">\n" +
-                        "defineProps<{ title: string; subtitle: string; badge?: string }>();\n" +
-                        "</script>"
-        )));
-        files.add(new LinkedHashMap<>(Map.of(
-                "path", "src/sections/CatalogSection.vue",
-                "language", "vue",
-                "content", "<template>\n" +
-                        "  <section class=\"kkumz-catalog-grid\">\n" +
-                        "    <article v-for=\"item in products\" :key=\"item.id\" class=\"product-item\">\n" +
-                        "      <h3>{{ item.name }}</h3>\n" +
-                        "      <p>{{ item.subTitle }}</p>\n" +
-                        "    </article>\n" +
-                        "  </section>\n" +
-                        "</template>\n" +
-                        "<script setup lang=\"ts\">\n" +
-                        "defineProps<{ products: any[] }>();\n" +
-                        "</script>"
-        )));
-        files.add(new LinkedHashMap<>(Map.of(
-                "path", "src/theme.json",
-                "language", "json",
-                "content", toJson(tokens)
-        )));
-        return files;
+    private String normalizeSlug(String raw) {
+        String slug = raw.toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9-]+", "-")
+                .replaceAll("-{2,}", "-")
+                .replaceAll("^-|-$", "");
+        return slug.isBlank() ? "brand-" + UUID.randomUUID().toString().substring(0, 6) : slug;
     }
 
     private String escapeXml(String input) {
         if (input == null) {
             return "";
         }
-        return input.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
-    }
-
-    private Map<String, Object> parseJsonMap(Object raw) {
-        if (raw == null) {
-            return Collections.emptyMap();
-        }
-        try {
-            return objectMapper.readValue(String.valueOf(raw), new TypeReference<Map<String, Object>>() {});
-        } catch (Exception e) {
-            return Collections.emptyMap();
-        }
-    }
-
-    private List<String> parseJsonList(Object raw) {
-        if (raw == null) {
-            return Collections.emptyList();
-        }
-        try {
-            return objectMapper.readValue(String.valueOf(raw), new TypeReference<List<String>>() {});
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
-    }
-
-    private List<Map<String, Object>> parseJsonListOfMap(Object raw) {
-        if (raw == null) {
-            return Collections.emptyList();
-        }
-        try {
-            return objectMapper.readValue(String.valueOf(raw), new TypeReference<List<Map<String, Object>>>() {});
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
+        return input.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 
     private String toJson(Object obj) {
+        if (obj == null) {
+            return "{}";
+        }
         try {
             return objectMapper.writeValueAsString(obj);
         } catch (Exception e) {
-            return "{}";
+            throw new IllegalStateException("JSON 직렬화 실패", e);
+        }
+    }
+
+    private Map<String, Object> parseJsonObject(String json) {
+        if (json == null || json.isBlank() || "null".equalsIgnoreCase(json)) {
+            return new LinkedHashMap<>();
+        }
+        try {
+            return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            return new LinkedHashMap<>();
+        }
+    }
+
+    private List<Object> parseJsonList(String json) {
+        if (json == null || json.isBlank() || "null".equalsIgnoreCase(json)) {
+            return new ArrayList<>();
+        }
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<Object>>() {});
+        } catch (Exception e) {
+            return new ArrayList<>();
         }
     }
 }

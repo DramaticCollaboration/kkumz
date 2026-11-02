@@ -50,10 +50,10 @@ export const rollbackAdminSiteRelease = (siteSlug: string, versionNo: number) =>
 export const getAdminBuildList = (params?: Recordable) =>
   defHttp.get({ url: KkumzAdminApi.Builds, params });
 
-export const triggerAdminAiFixBuild = (siteSlug: string, errorContext?: string) =>
+export const triggerAdminAiFixBuild = (siteSlug: string, errorContext?: string, username?: string) =>
   defHttp.post({
     url: `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/ai-fix-build`,
-    params: { errorContext: errorContext || 'Admin triggered AI build patch', username: 'admin' },
+    params: { errorContext: errorContext || 'Admin triggered AI build patch', username },
   });
 
 // 6. 커뮤니티 프로젝트 & 팀빌딩 관리

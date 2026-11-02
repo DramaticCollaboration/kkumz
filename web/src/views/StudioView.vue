@@ -86,17 +86,17 @@
             </button>
           </div>
 
-          <div class="starter-preset-bar">
-            <span class="starter-label">✨ 원클릭 업종별 스타터 프롬프트</span>
+          <div v-if="studioPresets.length > 0" class="starter-preset-bar">
+            <span class="starter-label">원클릭 업종별 스타터 프롬프트</span>
             <div class="starter-chips">
               <button
-                v-for="preset in starterPresets"
-                :key="preset.label"
+                v-for="preset in studioPresets"
+                :key="preset.code || preset.title"
                 type="button"
                 class="starter-chip"
                 @click="applyStarterPreset(preset)"
               >
-                {{ preset.label }}
+                {{ preset.title || preset.label }}
               </button>
             </div>
           </div>
@@ -279,7 +279,7 @@
             </div>
             <div class="header-btns">
               <button type="button" class="secondary-btn" @click="specEditMode = !specEditMode">
-                {{ specEditMode ? '📋 시각적 기획서 카드 보기' : '✏️ 마크다운 원문 직접 편집' }}
+                {{ specEditMode ? '시각적 기획서 카드 보기' : '마크다운 원문 직접 편집' }}
               </button>
               <button type="button" class="secondary-btn" :disabled="busy" @click="saveSpecVersion">
                 현재 기획서 스냅샷 저장
@@ -339,7 +339,7 @@
                         class="comp-chip"
                         :title="String(c)"
                       >
-                        🧩 {{ formatComponentLabel(c) }}
+                        {{ formatComponentLabel(c) }}
                       </span>
                     </div>
                   </div>
@@ -420,21 +420,21 @@
                   :class="{ active: step4Tab === 'AI_CHAT' }"
                   @click="step4Tab = 'AI_CHAT'"
                 >
-                  🤖 AI 대화 수정
+                  AI 대화 수정
                 </button>
                 <button
                   type="button"
                   :class="{ active: step4Tab === 'VISUAL_THEME' }"
                   @click="step4Tab = 'VISUAL_THEME'"
                 >
-                  🎨 배너·컬러 편집
+                  배너·컬러 편집
                 </button>
                 <button
                   type="button"
                   :class="{ active: step4Tab === 'CATALOG_EDIT' }"
                   @click="step4Tab = 'CATALOG_EDIT'"
                 >
-                  🛍️ 상품·매거진
+                  상품·매거진
                 </button>
               </div>
 
@@ -453,26 +453,26 @@
                 <div class="preset-group">
                   <span class="preset-title">원클릭 컬러 테마 프리셋</span>
                   <button type="button" @click="applyQuickTheme('보태니컬 포레스트 그린 테마로 변경해줘')">
-                    🌿 보태니컬 포레스트 그린 테마
+                    보태니컬 포레스트 그린 테마
                   </button>
                   <button type="button" @click="applyQuickTheme('다크 인디고 테크 테마로 변경해줘')">
-                    🌌 다크 인디고 테크 테마
+                    다크 인디고 테크 테마
                   </button>
                   <button type="button" @click="applyQuickTheme('웜 앰버 크래프트 테마로 변경해줘')">
-                    ☕ 웜 앰버 크래프트 테마
+                    웜 앰버 크래프트 테마
                   </button>
                   <button type="button" @click="applyQuickTheme('코랄 로즈 부티크 테마로 변경해줘')">
-                    🌸 코랄 로즈 부티크 테마
+                    코랄 로즈 부티크 테마
                   </button>
                 </div>
 
                 <div class="preset-group">
                   <span class="preset-title">원클릭 배너 카피 & 레이아웃 지시</span>
                   <button type="button" @click="applyQuickTheme('히어로 배너 문구를 더 감성적인 에디토리얼 톤으로 변경해줘')">
-                    ✨ 감성 에디토리얼 헤드라인으로 다듬기
+                    감성 에디토리얼 헤드라인으로 다듬기
                   </button>
                   <button type="button" @click="applyQuickTheme('그랜드 런칭 스페셜 프로모션 배너 문구로 변경해줘')">
-                    🎉 런칭 프로모션 배너 문구로 변경
+                    런칭 프로모션 배너 문구로 변경
                   </button>
                 </div>
               </div>
@@ -610,7 +610,7 @@
                 >
                   <div class="frame-top">
                     <span class="frame-badge">{{ siteRuntime.layoutSchema?.customBadge || '공식 브랜드 쇼케이스' }}</span>
-                    <span v-if="siteRuntime.layoutSchema?.showFlashDeal !== false" class="flash-pill">🎁 첫 구매 웰컴 혜택 적용 중</span>
+                    <span v-if="siteRuntime.layoutSchema?.showFlashDeal !== false" class="flash-pill">첫 구매 웰컴 혜택 적용 중</span>
                   </div>
                   <h3>{{ siteRuntime.layoutSchema?.heroTitle || siteRuntime.siteName }}</h3>
                   <p>{{ siteRuntime.layoutSchema?.heroSubtitle || siteRuntime.brandSlogan }}</p>
@@ -619,7 +619,7 @@
                       {{ siteRuntime.layoutSchema?.ctaText || '시그니처 컬렉션 살펴보기' }} →
                     </span>
                     <span v-if="siteRuntime.layoutSchema?.showAiConcierge !== false" class="hero-concierge-pill">
-                      🤖 AI 브랜드 컨시어지 상시 대기
+                      AI 브랜드 컨시어지 상시 대기
                     </span>
                   </div>
                 </div>
@@ -645,7 +645,7 @@
                   <div class="mini-cards">
                     <div v-for="p in previewProducts.slice(0, 4)" :key="p.id" class="mini-card">
                       <div class="mini-card-img-wrap">
-                        <img :src="p.pic || '/images/studio/prod-balmuda-brew.jpg'" :alt="p.name" />
+                        <img v-if="p.pic" :src="p.pic" :alt="p.name" />
                         <span v-if="p.productCategoryName" class="prod-cat-tag">{{ p.productCategoryName }}</span>
                       </div>
                       <div class="mini-card-body">
@@ -715,8 +715,8 @@
         <div v-else-if="activeStep === 5" class="canvas-panel">
           <div class="non-dev-banner">
             <div>
-              <strong>💡 일반 창업자·마케터 안내: 코드 편집 없이 바로 6단계로 이동하실 수 있습니다!</strong>
-              <p>4단계에서 설정한 디자인·상품·매거진 구성만으로도 완벽한 라이브 사이트가 배포됩니다. 이 단계는 프론트엔드 개발자가 Vue 3 코드를 직접 커스텀하거나 AI 코드 자가치유를 테스트할 때만 사용하세요.</p>
+              <strong>일반 창업자·마케터 안내: 코드 편집 없이 바로 6단계로 이동하실 수 있습니다.</strong>
+              <p>4단계에서 설정한 디자인·상품·매거진 구성만으로도 완성도 높은 라이브 사이트가 배포됩니다. 이 단계는 프론트엔드 개발자가 Vue 3 코드를 직접 커스텀하거나 AI 코드 자가치유를 실행할 때만 사용하세요.</p>
             </div>
             <button type="button" class="primary-btn" @click="goToStep(6)">
               코드 수정 건너뛰고 6단계(빌드·배포)로 이동 →
@@ -730,17 +730,8 @@
               <p>Vue 3 컴포넌트와 테마 JSON 코드를 직접 커스텀하고, 빌드 오류 발생 시 AI로 즉시 복구합니다.</p>
             </div>
             <div class="header-btns">
-              <button type="button" class="secondary-btn" :disabled="busy" @click="saveAndBuildWebIde(false)">
+              <button type="button" class="secondary-btn" :disabled="busy" @click="saveAndBuildWebIde()">
                 코드 저장 & 번들 빌드
-              </button>
-              <button
-                type="button"
-                class="warn-btn"
-                :disabled="busy"
-                title="AI가 빌드 문법 오류를 스스로 진단하고 고치는 자가치유(Self-Healing) 기능을 체험하기 위해 샘플 오류를 주입합니다."
-                @click="saveAndBuildWebIde(true)"
-              >
-                🧪 AI 자가치유 테스트 (오류 샘플 주입)
               </button>
               <button
                 v-if="webIdeData?.buildStatus === 'FAILED'"
@@ -749,7 +740,7 @@
                 :disabled="busy"
                 @click="runAiFixBuild"
               >
-                ✨ AI 빌드 오류 자동 패치 실행
+                AI 빌드 오류 자동 패치 실행
               </button>
               <button type="button" class="primary-btn" @click="goToStep(6)">
                 6단계: 빌드 & 배포 →
@@ -768,7 +759,7 @@
                 :class="{ active: activeFileIndex === idx }"
                 @click="activeFileIndex = idx"
               >
-                📄 {{ file.path }}
+                {{ file.path }}
               </button>
             </div>
 
@@ -827,7 +818,7 @@
                   :class="{ selected: deployForm.deployMode === 'DYNAMIC_SDUI' }"
                   @click="deployForm.deployMode = 'DYNAMIC_SDUI'"
                 >
-                  <strong>⚡ 즉시 디자인 배포 (권장 · 무중단 스키마)</strong>
+                  <strong>즉시 디자인 배포 (권장 · 무중단 스키마)</strong>
                   <p>별도 빌드 대기 없이 컬러 토큰, 배너 문구, 상품·매거진 구성을 1초 만에 라이브 사이트에 즉시 반영합니다.</p>
                 </div>
                 <div
@@ -835,7 +826,7 @@
                   :class="{ selected: deployForm.deployMode === 'CUSTOM_BUNDLE' }"
                   @click="deployForm.deployMode = 'CUSTOM_BUNDLE'"
                 >
-                  <strong>📦 코드 번들 배포 (WebIDE 커스텀)</strong>
+                  <strong>코드 번들 배포 (WebIDE 커스텀)</strong>
                   <p>5단계 WebIDE에서 직접 수정한 Vue 컴포넌트 코드를 번들로 빌드하여 배포합니다.</p>
                 </div>
               </div>
@@ -928,90 +919,9 @@ const siteTypes = [
   },
 ];
 
-const starterPresets = [
-  {
-    label: '☕ 스페셜티 커피 로스터리 (복합)',
-    siteType: 'HYBRID',
-    title: '스페셜티 커피 로스터리 아카이브 매거진 & 싱글오리진 원두 스토어 복합 사이트',
-    promptText:
-      '콜롬비아·에티오피아 산지 농장 직교역(Direct Trade) 인터뷰 매거진과 로스팅 프로파일 아티클을 발행하면서, 매월 로스터가 선별한 싱글오리진 원두와 드립백은 바로 주문하고 시음 클래스도 예약할 수 있는 매거진+스토어 복합 사이트를 만들고 싶습니다.',
-  },
-  {
-    label: '🍵 제주 유기농 말차 & 다구 (쇼핑몰)',
-    siteType: 'COMMERCE',
-    title: '제주 서귀포 첫물 유기농 차광 말차 & 도예가 수제 다기 D2C 브랜드 스토어',
-    promptText:
-      '제주 화산송이 토양에서 해풍을 맞고 자란 첫물 세레모니얼 말차와 청년 도예가가 빚은 백자 다완, 대나무 차선 다도 스타터 키트를 큐레이션해 판매하는 프리미엄 보태니컬 D2C 쇼핑몰입니다.',
-  },
-  {
-    label: '⌨️ 데스크테리어 & 커스텀 키보드 (쇼핑몰)',
-    siteType: 'COMMERCE',
-    title: '풀 알루미늄 커스텀 기계식 키보드 & 모듈러 월넛 데스크테리어 기어 셀렉트샵',
-    promptText:
-      '개발자와 크리에이터를 위한 CNC 풀 알루미늄 커스텀 키보드, 북미산 호두나무 모니터 선반, 고연색성 스크린 라이트바 등 몰입형 워크스테이션 장비를 선보이는 다크 인디고 테크 기어 스토어입니다.',
-  },
-  {
-    label: '🏃 도심 나이트 러닝 크루 (커뮤니티)',
-    siteType: 'CMS_SITE',
-    title: '서울 한강 & 도심 나이트 러닝 크루 주간 세션 매거진 및 온라인 참가 신청 사이트',
-    promptText:
-      '매주 수요일 저녁 반포한강공원과 남산에서 진행되는 도심 러닝 코스를 소개하고, 러닝 훈련 매거진과 페이서 인터뷰, 신규 크루원 정규 세션 참가 신청 폼을 운영하는 커뮤니티 웹사이트입니다.',
-  },
-  {
-    label: '🌿 비건 클린뷰티 스킨케어 (쇼핑몰)',
-    siteType: 'COMMERCE',
-    title: '제주 비자나무 & 시카 저자극 비건 스킨케어 D2C 공식 브랜드몰',
-    promptText:
-      '민감성 피부를 위한 무향료·비건 인증 시카 세럼과 피토 세라마이드 장벽 크림, 친환경 리필 패키지를 판매하며 성분 연구소 리포트를 제공하는 클린뷰티 브랜드 스토어입니다.',
-  },
-  {
-    label: '🥐 아티장 구움과자 & 그로서리 (복합)',
-    siteType: 'HYBRID',
-    title: '프렌치 발효 버터 구움과자 부티크 & 베이킹 클래스 예약 복합 사이트',
-    promptText:
-      '프랑스 고메 버터와 바닐라빈으로 매일 아침 구워내는 휘낭시에·까눌레 기프트 박스를 온라인 주문하고, 주말 원데이 베이킹 클래스와 답례품 대량 주문을 신청할 수 있는 부티크 사이트입니다.',
-  },
-];
-
-const layoutLabelMap: Record<string, string> = {
-  HYBRID_EDITORIAL_COMMERCE: '매거진+스토어 복합 쇼케이스',
-  SPLIT_SHOWCASE: '브랜드 스플릿 히어로 배너',
-  FILTERABLE_3COL_GRID: '카테고리 필터 + 3열 상품 진열장',
-  EDITORIAL_MAGAZINE_LAYOUT: '에디토리얼 매거진 & 신청 폼',
-  BENTO_SHOWCASE: '모던 벤토 그리드 쇼케이스',
-  MASONRY_3COL_GRID: '3열 매거진 카드 그리드',
-  STEP_WIZARD_FORM: '온라인 참가·예약 신청 폼',
-  STANDARD_GRID: '표준 반응형 그리드 섹션',
-};
-
-const componentLabelMap: Record<string, string> = {
-  FeaturedStoryHero: '메인 스토리 히어로 배너',
-  CommerceCatalogSection: '시그니처 상품 카탈로그',
-  EditorialJournalSection: '브랜드 저널 아티클',
-  BrandSvgLogoHeader: '벡터 SVG 로고 헤더',
-  HeroBannerCarousel: '와이드 메인 배너',
-  AiConciergeTrigger: 'AI 브랜드 컨시어지 상담',
-  CategoryFilterPills: '카테고리 필터 탭',
-  ProductCardGrid: '상품 카드 진열 그리드',
-  InstantCheckoutModal: '원클릭 즉시 결제창',
-  ArticleStoryGrid: '매거진 스토리 카드',
-  OnlineApplicationForm: '온라인 참가·문의 신청 폼',
-  DirectTradeMapSection: '산지 직교역 스토리 섹션',
-  RoastingProfileChart: '로스팅 프로파일 가이드',
-  BrewingRecipeGuide: '브루잉 추출 레시피',
-  CuppingSessionCalendar: '주말 클래스 예약 캘린더',
-  B2BWholesaleSampleForm: 'B2B 제휴·샘플 신청 폼',
-  DeskSetupHotspotBanner: '데스크 셋업 인터랙티브 배너',
-  AiConciergeFloatingBtn: 'AI 기어 추천 컨시어지',
-  CouponBannerStrip: '웰컴 할인 쿠폰 배너',
-  QuickOrderDrawer: '간편 주문 슬라이드창',
-  NextRunCountdownHero: '다음 세션 카운트다운 배너',
-  WeeklyScheduleStrip: '주간 일정 안내 바',
-  CourseMapCardGrid: '코스 안내 카드 그리드',
-  PacerReviewSection: '멤버 후기 섹션',
-  CmsDynamicFormRenderer: '온라인 신청서 접수 폼',
-  ApplicantNoticeBox: '참가자 유의사항 안내',
-};
+const studioPresets = ref<any[]>([]);
+const layoutLabels = ref<Record<string, string>>({});
+const componentLabels = ref<Record<string, string>>({});
 
 const ideas = ref<any[]>([]);
 const selectedIdeaId = ref('');
@@ -1106,12 +1016,12 @@ const parsedSpecHighlights = computed(() => {
 
 function formatLayoutTypeLabel(code: string) {
   if (!code) return '반응형 표준 섹션';
-  return layoutLabelMap[code] || code;
+  return layoutLabels.value[code] || code;
 }
 
 function formatComponentLabel(code: string) {
   if (!code) return '기능 모듈';
-  return componentLabelMap[code] || code;
+  return componentLabels.value[code] || code;
 }
 
 function showToast(msg: string) {
@@ -1121,21 +1031,35 @@ function showToast(msg: string) {
   }, 3400);
 }
 
-function applyStarterPreset(preset: { siteType: string; title: string; promptText: string }) {
-  formStep1.value.siteType = preset.siteType;
-  formStep1.value.title = preset.title;
-  formStep1.value.promptText = preset.promptText;
-  showToast('업종별 스타터 프롬프트가 입력되었습니다. 바로 2단계로 이동하거나 새 프로젝트로 생성해 보세요!');
+function applyStarterPreset(preset: any) {
+  formStep1.value.siteType = preset.siteType || 'COMMERCE';
+  formStep1.value.title = preset.title || preset.label || '';
+  formStep1.value.promptText = preset.prompt || preset.promptText || '';
+  showToast('업종별 스타터 프롬프트가 입력되었습니다. 바로 2단계로 이동하거나 새 프로젝트로 생성해 보세요.');
+}
+
+function normalizeRuntime(raw: any) {
+  if (!raw) return null;
+  const site = raw.site || raw;
+  const rel = raw.release || {};
+  return {
+    ...site,
+    ...raw,
+    layoutSchema: raw.layoutSchema || rel.layoutSchema || {},
+    designTokens: raw.designTokens || rel.designTokens || {},
+  };
 }
 
 function syncVisualFormFromRuntime(rt: any) {
   if (!rt) return;
-  const layout = rt.layoutSchema || {};
-  const tokens = rt.designTokens || {};
+  const normalized = normalizeRuntime(rt);
+  siteRuntime.value = normalized;
+  const layout = normalized.layoutSchema || {};
+  const tokens = normalized.designTokens || {};
   visualForm.value = {
     customBadge: layout.customBadge || '공식 브랜드 쇼케이스',
-    heroTitle: layout.heroTitle || rt.siteName || '',
-    heroSubtitle: layout.heroSubtitle || rt.brandSlogan || '',
+    heroTitle: layout.heroTitle || normalized.siteName || '',
+    heroSubtitle: layout.heroSubtitle || normalized.brandSlogan || '',
     ctaText: layout.ctaText || layout.primaryCta || '시그니처 컬렉션 탐색하기',
     primaryColor: tokens.primary || tokens.primaryColor || '#14532d',
     surfaceColor: tokens.surface || tokens.surfaceColor || '#f8fafc',
@@ -1144,35 +1068,45 @@ function syncVisualFormFromRuntime(rt: any) {
     showCmsForm: layout.showCmsForm !== false,
     showAiConcierge: layout.showAiConcierge !== false,
   };
-  const prods = rt.products || rt.commerce?.products || [];
+  const prods = normalized.products || normalized.commerce?.products || [];
   editableProducts.value = prods.map((p: any) => ({
     id: p.id,
     name: p.name,
-    pic: p.pic || '/images/studio/prod-balmuda-brew.jpg',
-    price: Number(p.price || p.promotionPrice || 35000),
-    promotionPrice: Number(p.promotionPrice || p.price || 32000),
+    pic: p.pic || '',
+    price: Number(p.price || p.promotionPrice || 0),
+    promotionPrice: Number(p.promotionPrice || p.price || 0),
     subTitle: p.subTitle || '',
-    stock: Number(p.stock ?? 50),
+    stock: Number(p.stock ?? 0),
     unit: p.unit || '개',
-    brandName: p.brandName || rt.siteName,
-    productCategoryName: p.productCategoryName || '시그니처',
+    brandName: p.brandName || normalized.siteName,
+    productCategoryName: p.productCategoryName || p.categoryName || '',
   }));
-  const arts = rt.articles || rt.cms?.articles || [];
+  const arts = normalized.articles || normalized.cms?.articles || [];
   editableArticles.value = arts.map((a: any) => ({
     id: a.id,
     title: a.title,
-    author: a.author || '브랜드 에디터',
+    author: a.author || a.authorName || '',
     description: a.description || a.summary || '',
     summary: a.summary || a.description || '',
-    bodyHtml: a.bodyHtml || `<p>${a.description || a.summary || ''}</p>`,
-    categoryName: a.categoryName || '브랜드 저널',
-    cover: a.cover || '/images/studio/ed-5.jpg',
-    clicks: a.clicks || a.viewCount || 250,
-    viewCount: a.viewCount || a.clicks || 250,
+    bodyHtml: a.bodyHtml || a.contentHtml || `<p>${a.description || a.summary || ''}</p>`,
+    categoryName: a.categoryName || '',
+    cover: a.cover || a.thumbnailUrl || '',
+    clicks: a.clicks || a.viewCount || 0,
+    viewCount: a.viewCount || a.clicks || 0,
   }));
 }
 
 async function initStudio() {
+  try {
+    const meta = await kkumzApi.getStudioMetadata();
+    layoutLabels.value = meta?.layoutLabels || {};
+    componentLabels.value = meta?.componentLabels || {};
+    studioPresets.value = meta?.starterPresets || [];
+  } catch {
+    layoutLabels.value = {};
+    componentLabels.value = {};
+    studioPresets.value = [];
+  }
   ideas.value = (await kkumzApi.listIdeas()) || [];
   const routeIdeaId = route.params.ideaId ? String(route.params.ideaId) : '';
   const targetId = routeIdeaId || (ideas.value[0]?.id ?? '');
@@ -1458,30 +1392,30 @@ async function saveVisualThemeOverrides() {
 function addEditableProduct() {
   editableProducts.value.push({
     id: Date.now(),
-    name: `${siteRuntime.value?.siteName || '브랜드'} 신규 시그니처 상품`,
-    pic: '/images/studio/prod-balmuda-brew.jpg',
-    price: 38000,
-    promotionPrice: 32000,
-    subTitle: '한정 수량으로 선보이는 스페셜 큐레이션 에디션',
-    stock: 50,
+    name: '',
+    pic: '',
+    price: 0,
+    promotionPrice: 0,
+    subTitle: '',
+    stock: 0,
     unit: '개',
-    brandName: siteRuntime.value?.siteName || '브랜드',
-    productCategoryName: '신상품',
+    brandName: siteRuntime.value?.siteName || '',
+    productCategoryName: '',
   });
 }
 
 function addEditableArticle() {
   editableArticles.value.push({
     id: Date.now(),
-    title: `[신규 아티클] ${siteRuntime.value?.siteName || '브랜드'} 비하인드 스토리`,
-    author: '브랜드 에디터',
-    description: '브랜드 철학과 제작 과정을 담은 에디토리얼 아티클입니다.',
-    summary: '브랜드 철학과 제작 과정을 담은 에디토리얼 아티클입니다.',
-    bodyHtml: '<p>브랜드 철학과 제작 과정을 담은 에디토리얼 아티클입니다.</p>',
-    categoryName: '브랜드 저널',
-    cover: '/images/studio/ed-5.jpg',
-    clicks: 120,
-    viewCount: 120,
+    title: '',
+    author: '',
+    description: '',
+    summary: '',
+    bodyHtml: '',
+    categoryName: '',
+    cover: '',
+    clicks: 0,
+    viewCount: 0,
   });
 }
 
@@ -1507,7 +1441,7 @@ async function saveCatalogAndArticlesOverrides() {
       },
     });
     syncVisualFormFromRuntime(siteRuntime.value);
-    showToast('진열 상품 및 매거진 아티클 구성이 즉시 업데이트되었습니다!');
+    showToast('진열 상품 및 매거진 아티클 구성이 즉시 업데이트되었습니다.');
   } finally {
     busy.value = false;
   }
@@ -1520,20 +1454,19 @@ async function loadWebIde(slug: string) {
   activeFileIndex.value = 0;
 }
 
-async function saveAndBuildWebIde(simulateSyntaxError: boolean) {
+async function saveAndBuildWebIde() {
   if (!activeSiteSlug.value) return;
   busy.value = true;
   try {
     const res = await kkumzApi.updateWebIdeFiles(activeSiteSlug.value, {
       files: webIdeFiles.value,
-      simulateSyntaxError,
     });
     webIdeData.value = res;
     webIdeFiles.value = (res.files || []).map((f: any) => ({ ...f }));
     showToast(
-      simulateSyntaxError
-        ? '테스트용 문법 오류가 주입되었습니다. 우측 상단 [✨ AI 빌드 오류 자동 패치 실행] 버튼을 눌러 복구해 보세요!'
-        : '번들 빌드가 성공적으로 완료되었습니다.',
+      res.buildStatus === 'FAILED'
+        ? '빌드 검증 중 구문 오류가 감지되었습니다. 우측 상단 AI 빌드 오류 자동 패치 실행 버튼으로 복구할 수 있습니다.'
+        : '번들 빌드가 정상 완료되었습니다.',
     );
   } finally {
     busy.value = false;
@@ -1547,7 +1480,7 @@ async function runAiFixBuild() {
     const res = await kkumzApi.aiFixBuildError(activeSiteSlug.value);
     webIdeData.value = res;
     webIdeFiles.value = (res.files || []).map((f: any) => ({ ...f }));
-    showToast('AI가 템플릿 문법 오류를 자동으로 수정하고 빌드를 완료했습니다!');
+    showToast('AI가 템플릿 구문 오류를 수정하고 빌드를 완료했습니다.');
   } finally {
     busy.value = false;
   }

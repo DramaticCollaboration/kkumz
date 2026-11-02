@@ -61,8 +61,8 @@
           componentProps: {
             options: [
               { label: '전체', value: '' },
-              { label: '성공 (SUCCESS)', value: 'SUCCESS' },
-              { label: '실패 (FAILED)', value: 'FAILED' },
+              { label: '성공', value: 'SUCCESS' },
+              { label: '실패', value: 'FAILED' },
             ],
           },
           colProps: { span: 8 },

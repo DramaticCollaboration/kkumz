@@ -20,7 +20,7 @@
         </template>
         <template v-else-if="column.key === 'status'">
           <Tag :color="record.status === 'ACTIVE' ? 'success' : 'error'">
-            {{ record.status === 'ACTIVE' ? '정상 가동 (ACTIVE)' : '일시 정지 (SUSPENDED)' }}
+            {{ record.status === 'ACTIVE' ? '정상 가동' : '일시 정지' }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'action'">
@@ -84,8 +84,8 @@
           componentProps: {
             options: [
               { label: '전체', value: '' },
-              { label: '정상 가동 (ACTIVE)', value: 'ACTIVE' },
-              { label: '일시 정지 (SUSPENDED)', value: 'SUSPENDED' },
+              { label: '정상 가동', value: 'ACTIVE' },
+              { label: '일시 정지', value: 'SUSPENDED' },
             ],
           },
           colProps: { span: 8 },

@@ -54,12 +54,29 @@ export function formatPositionRoleLabel(role?: string): string {
     MARKETER: '그로스 마케터',
     MD: '커머스 상품 MD',
     PLANNER: '서비스 기획·PM',
-    CO_FOUNDER: '공동창업자(Co-Founder)',
+    CO_FOUNDER: '공동창업자',
   };
   return map[(role || '').toUpperCase()] || role || '팀원';
 }
 
 export const kkumzApi = {
+  // 0. 스튜디오 메타데이터 (레이아웃/컴포넌트 사전 및 스타터 프리셋)
+  async getStudioMetadata() {
+    const res = await http.get('/studio/metadata');
+    return unwrap<{
+      layoutLabels: Record<string, string>;
+      componentLabels: Record<string, string>;
+      starterPresets: Array<{
+        code: string;
+        label: string;
+        siteType: string;
+        category: string;
+        prompt: string;
+        tags: string[];
+      }>;
+    }>(res);
+  },
+
   // 1. 아이디어 & 버전/화면설계
   async listIdeas(params?: { authorUsername?: string; siteType?: string }) {
     const res = await http.get('/ideas', { params });
@@ -182,10 +199,10 @@ export const kkumzApi = {
     const res = await http.put(`/sites/${encodeURIComponent(siteSlug)}/webide/files`, payload);
     return unwrap<any>(res);
   },
-  async aiFixBuildError(siteSlug: string, errorContext?: string) {
+  async aiFixBuildError(siteSlug: string, errorContext?: string, username?: string) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/ai-fix-build`, {
       errorContext: errorContext || 'Auto-detect compiler error',
-      username: 'admin',
+      username,
     });
     return unwrap<any>(res);
   },
@@ -250,7 +267,7 @@ export const kkumzApi = {
     const res = await http.get('/feed', { params });
     return unwrap<any[]>(res);
   },
-  async toggleSiteLike(siteId: string, username = 'soyeon.jeju') {
+  async toggleSiteLike(siteId: string, username: string) {
     const res = await http.post(`/sites/${encodeURIComponent(siteId)}/like`, { username });
     return unwrap<any>(res);
   },

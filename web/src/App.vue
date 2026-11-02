@@ -44,7 +44,7 @@
         <div class="gnb-actions">
           <div class="notif-wrapper">
             <button class="notif-btn" type="button" @click="toggleNotifDropdown">
-              <span class="notif-icon">🔔</span>
+              <span class="notif-icon" style="font-size: 11px; font-weight: 800; color: #334155">알림</span>
               <span v-if="unreadCount > 0" class="notif-badge">{{ unreadCount }}</span>
             </button>
             <div v-if="showNotifDropdown" class="notif-dropdown">

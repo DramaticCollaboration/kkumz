@@ -72,11 +72,12 @@
           componentProps: {
             options: [
               { label: '전체', value: '' },
-              { label: '브랜드 네이밍 (NAMING)', value: 'NAMING' },
-              { label: '벡터 SVG 로고 (LOGO_SVG)', value: 'LOGO_SVG' },
-              { label: '기능명세서 (FRS_SPEC)', value: 'FRS_SPEC' },
-              { label: '프리뷰 수정 (CHAT_REFINE)', value: 'CHAT_REFINE' },
-              { label: '빌드 오류 패치 (WEBIDE_FIX)', value: 'WEBIDE_FIX' },
+              { label: '브랜드 네이밍', value: 'NAMING' },
+              { label: '벡터 SVG 로고', value: 'LOGO_SVG' },
+              { label: '기능명세서', value: 'SPEC_FRS' },
+              { label: '프리뷰 수정', value: 'CHAT_REFINE' },
+              { label: '사이트 컨시어지 상담', value: 'CONCIERGE' },
+              { label: '빌드 오류 패치', value: 'BUILD_FIX' },
             ],
           },
           colProps: { span: 8 },

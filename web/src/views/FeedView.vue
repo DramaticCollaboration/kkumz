@@ -56,7 +56,6 @@
               @click="startStudioWithPrompt"
             >
               <span v-if="creating" class="btn-spinner"></span>
-              <span v-else class="btn-icon">⚡</span>
               <span>{{ creating ? '스튜디오 준비 중...' : 'AI 스튜디오에서 만들기' }}</span>
               <span class="arrow">→</span>
             </button>
@@ -64,29 +63,17 @@
         </div>
 
         <!-- 4. 정제된 추천 키워드 태그 -->
-        <div class="sample-keywords">
+        <div v-if="presetKeywords.length > 0" class="sample-keywords">
           <span class="sample-label">추천 키워드:</span>
           <div class="sample-list">
             <button
+              v-for="preset in presetKeywords"
+              :key="preset.code"
               type="button"
               class="sample-pill"
-              @click="applySample('COMMERCE', '제주 서귀포 유기농 다원의 첫물 말차와 수제 백자 다완을 판매하는 프리미엄 다도 브랜드 스토어')"
+              @click="applySample(preset.siteType, preset.prompt)"
             >
-              # 제주 유기농 말차 & 다기 스토어
-            </button>
-            <button
-              type="button"
-              class="sample-pill"
-              @click="applySample('CMS_SITE', '매주 화·목 한강에서 달리는 나이트 러닝 크루 커뮤니티 및 코스 가이드·게스트 런 신청 웹사이트')"
-            >
-              # 서울 나이트 러닝 크루
-            </button>
-            <button
-              type="button"
-              class="sample-pill"
-              @click="applySample('HYBRID', '스페셜티 커피 산지 직교역 인터뷰 매거진과 싱글오리진 원두 구매·시음 클래스 예약 복합 사이트')"
-            >
-              # 스페셜티 커피 매거진 & 스토어
+              # {{ preset.title || preset.label }}
             </button>
           </div>
         </div>
@@ -122,7 +109,7 @@
               <option value="MARKETER">그로스 마케터</option>
               <option value="MD">커머스 상품 MD</option>
               <option value="PLANNER">서비스 기획·PM</option>
-              <option value="CO_FOUNDER">공동창업자(Co-Founder)</option>
+              <option value="CO_FOUNDER">공동창업자</option>
             </select>
           </div>
 
@@ -171,9 +158,8 @@
     </section>
 
     <section v-else-if="feedItems.length === 0" class="empty-state">
-      <div class="empty-icon">💡</div>
       <h3>발견된 쇼케이스가 없습니다</h3>
-      <p>새로운 아이디어로 첫 번째 브랜드 쇼케이스의 주인공이 되어보세요!</p>
+      <p>새로운 아이디어로 첫 번째 브랜드 쇼케이스의 주인공이 되어보세요.</p>
       <button class="empty-cta" type="button" @click="router.push('/studio')">
         새 아이디어 만들기
       </button>
@@ -234,7 +220,7 @@
               <span class="like-icon">♥</span> {{ item.likeCount }}
             </button>
             <button type="button" class="comment-btn" @click="openCommentModal(item)">
-              💬 {{ item.commentCount }}
+              댓글 {{ item.commentCount }}
             </button>
             <span class="view-stat">조회 {{ item.viewCount }}</span>
           </div>
@@ -275,6 +261,12 @@
 
         <div class="comment-form">
           <input
+            v-model="newCommentAuthor"
+            type="text"
+            placeholder="작성자 닉네임"
+            style="max-width: 140px"
+          />
+          <input
             v-model="newCommentText"
             type="text"
             placeholder="브랜드 피드백이나 응원 메시지를 남겨주세요..."
@@ -313,6 +305,7 @@ const filterTabs = [
 ];
 
 const feedItems = ref<any[]>([]);
+const presetKeywords = ref<any[]>([]);
 const loading = ref(false);
 const creating = ref(false);
 
@@ -326,7 +319,17 @@ const keyword = ref('');
 
 const activeSiteForComments = ref<any | null>(null);
 const comments = ref<any[]>([]);
+const newCommentAuthor = ref('');
 const newCommentText = ref('');
+
+async function loadStudioPresets() {
+  try {
+    const meta = await kkumzApi.getStudioMetadata();
+    presetKeywords.value = meta?.starterPresets || [];
+  } catch {
+    presetKeywords.value = [];
+  }
+}
 
 async function loadFeed() {
   loading.value = true;
@@ -382,7 +385,7 @@ async function startStudioWithPrompt() {
 }
 
 async function handleLike(item: any) {
-  const res = await kkumzApi.toggleSiteLike(item.id);
+  const res = await kkumzApi.toggleSiteLike(item.id, item.ownerUsername || item.siteSlug);
   item.likeCount = res.likeCount;
 }
 
@@ -393,8 +396,13 @@ async function openCommentModal(item: any) {
 
 async function submitComment() {
   if (!activeSiteForComments.value || !newCommentText.value.trim()) return;
+  if (!newCommentAuthor.value.trim()) {
+    alert('작성자 닉네임을 입력해 주세요.');
+    return;
+  }
   comments.value = await kkumzApi.addSiteComment(activeSiteForComments.value.id, {
-    displayName: '김도현 창업가',
+    username: newCommentAuthor.value.trim(),
+    displayName: newCommentAuthor.value.trim(),
     authorRoleBadge: '메이커 멤버',
     content: newCommentText.value.trim(),
   });
@@ -416,6 +424,7 @@ function openLiveSite(item: any) {
 }
 
 onMounted(() => {
+  loadStudioPresets();
   loadFeed();
 });
 </script>

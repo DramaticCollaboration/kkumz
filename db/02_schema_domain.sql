@@ -21,8 +21,8 @@ DROP TABLE IF EXISTS kkumz_idea CASCADE;
 -- 1. 아이디어 마스터 (kkumz_idea)
 CREATE TABLE kkumz_idea (
     id VARCHAR(64) PRIMARY KEY,
-    author_username VARCHAR(64) NOT NULL DEFAULT 'admin',
-    author_display_name VARCHAR(100) NOT NULL DEFAULT '김도현 창업가',
+    author_username VARCHAR(64) NOT NULL,
+    author_display_name VARCHAR(100) NOT NULL,
     title VARCHAR(200) NOT NULL,
     prompt_text TEXT NOT NULL,
     site_type VARCHAR(32) NOT NULL DEFAULT 'COMMERCE',
@@ -117,8 +117,8 @@ CREATE TABLE kkumz_site (
     like_count INTEGER NOT NULL DEFAULT 0,
     comment_count INTEGER NOT NULL DEFAULT 0,
     view_count INTEGER NOT NULL DEFAULT 0,
-    owner_username VARCHAR(64) NOT NULL DEFAULT 'admin',
-    owner_display_name VARCHAR(100) NOT NULL DEFAULT '김도현 창업가',
+    owner_username VARCHAR(64) NOT NULL,
+    owner_display_name VARCHAR(100) NOT NULL,
     status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,

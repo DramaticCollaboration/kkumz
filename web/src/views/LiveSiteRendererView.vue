@@ -26,7 +26,7 @@
           <span v-if="customBadge">{{ customBadge }}</span>
           <span v-if="customBadge && primaryCoupon" class="opacity-50">|</span>
           <span v-if="primaryCoupon">
-            🎁 {{ primaryCoupon.name }} — <strong>{{ Number(primaryCoupon.amount).toLocaleString() }}원 즉시 할인</strong> (코드:
+            {{ primaryCoupon.name }} — <strong>{{ Number(primaryCoupon.amount).toLocaleString() }}원 즉시 할인</strong> (코드:
             <code class="px-1.5 py-0.5 rounded bg-white/20 font-mono">{{ primaryCoupon.code }}</code>)
           </span>
         </div>
@@ -364,7 +364,7 @@
                 class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 space-y-1"
               >
                 <div class="font-extrabold">
-                  ✅ 신청이 정상 접수되었습니다! (접수번호 #{{ formSubmitResult.submissionId }})
+                  신청이 정상 접수되었습니다. (접수번호 #{{ formSubmitResult.submissionId }})
                 </div>
                 <div>
                   신청자: {{ formSubmitResult.applicantName }} · 총 누적 신청 {{ formSubmitResult.totalSubmissions }}건
@@ -430,7 +430,7 @@
                   <span
                     class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-extrabold border border-indigo-400/30"
                   >
-                    🤖 AI 브랜드 컨시어지
+                    AI 브랜드 컨시어지
                   </span>
                   <span class="text-xs text-slate-400">24시간 실시간 응대</span>
                 </div>
@@ -446,19 +446,19 @@
                     class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 transition"
                     @click="askPreset('대표 추천 상품과 가격을 알려주세요')"
                   >
-                    💡 대표 추천 상품과 가격
+                    대표 추천 상품과 가격
                   </button>
                   <button
                     class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 transition"
                     @click="askPreset('브랜드 핵심 가치와 특징이 궁금해요')"
                   >
-                    ✨ 브랜드 핵심 가치
+                    브랜드 핵심 가치
                   </button>
                   <button
                     class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 transition"
                     @click="askPreset('현재 참여 가능한 오프라인 클래스나 모임이 있나요?')"
                   >
-                    📅 클래스/모임 신청 안내
+                    클래스/모임 신청 안내
                   </button>
                 </div>
               </div>
@@ -610,7 +610,7 @@ import { kkumzApi } from '@/api/kkumzApi';
 
 const route = useRoute();
 
-const currentSlug = computed(() => (route.params.siteSlug as string) || 'matcha-atelier');
+const currentSlug = computed(() => (route.params.siteSlug as string) || '');
 const loading = ref(false);
 const runtime = ref<any>(null);
 const selectedCategoryId = ref<number | null>(null);
@@ -740,14 +740,28 @@ const conciergeQuestion = ref('');
 const conciergeAnswer = ref('');
 const askingConcierge = ref(false);
 
+function normalizeRuntimePayload(raw: any) {
+  if (!raw) return null;
+  const site = raw.site || raw;
+  const rel = raw.release || {};
+  return {
+    ...site,
+    ...raw,
+    layoutSchema: raw.layoutSchema || rel.layoutSchema || {},
+    designTokens: raw.designTokens || rel.designTokens || {},
+  };
+}
+
 async function loadRuntime() {
+  if (!currentSlug.value) return;
   loading.value = true;
   orderResult.value = null;
   formSubmitResult.value = null;
   conciergeAnswer.value = '';
   selectedCategoryId.value = null;
   try {
-    runtime.value = await kkumzApi.getSiteRuntime(currentSlug.value);
+    const raw = await kkumzApi.getSiteRuntime(currentSlug.value);
+    runtime.value = normalizeRuntimePayload(raw);
     if (runtime.value) {
       document.title = `${brandName.value} — Official Brand Site`;
     }

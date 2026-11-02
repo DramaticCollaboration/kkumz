@@ -30,8 +30,13 @@ public class KkumzController {
     private final KkumzService kkumzService;
 
     // =========================================================================
-    // 1. 아이디어, 기획서 버전 및 화면설계 관리
+    // 1. 스튜디오 공통 사전 메타데이터 및 아이디어/화면설계 관리
     // =========================================================================
+
+    @GetMapping("/studio/metadata")
+    public Result<Map<String, Object>> getStudioMetadata() {
+        return Result.OK(kkumzService.getStudioMetadata());
+    }
 
     @GetMapping("/ideas")
     public Result<List<Map<String, Object>>> listIdeas(

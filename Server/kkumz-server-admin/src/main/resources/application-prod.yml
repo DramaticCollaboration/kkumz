@@ -19,5 +19,10 @@ kkumz:
     cms-url: ${KKUMZ_CMS_DB_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+  ai:
+    llm:
+      base-url: ${SYNC_LLM_GATEWAY_URL}
+      api-key: ${SYNC_LLM_API_KEY}
+      model: ${SYNC_LLM_MODEL}
   nacos:
     enabled: true

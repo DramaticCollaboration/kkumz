@@ -102,9 +102,10 @@ class KkumzServiceTest {
         childMenu.put("icon", "ant-design:fund-projection-screen-outlined");
         childMenu.put("isRoute", true);
 
-        when(jdbcTemplate.queryForList(contains("FROM sys_permission"))).thenReturn(List.of(rootMenu, childMenu));
+        when(jdbcTemplate.queryForList(contains("FROM sys_permission"), any(Object[].class))).thenReturn(List.of(rootMenu, childMenu));
 
-        mockMvc.perform(get("/api/v1/kkumz/sys/permission/getUserPermissionByToken"))
+        mockMvc.perform(get("/api/v1/kkumz/sys/permission/getUserPermissionByToken")
+                        .header("X-Access-Token", "kkumz-jwt-token-admin-1700000000"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.result.menu[0].path").value("/dashboard"))
@@ -172,7 +173,7 @@ class KkumzServiceTest {
                 .thenReturn(List.of(siteRow));
         when(shopJdbcTemplate.queryForList(contains("FROM pms_product WHERE id = ?"), eq(201L), eq(2L)))
                 .thenReturn(List.of(prodRow));
-        when(shopJdbcTemplate.queryForObject(contains("INSERT INTO oms_order"), eq(Long.class), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(shopJdbcTemplate.queryForObject(contains("INSERT INTO oms_order"), eq(Long.class), any(Object[].class)))
                 .thenReturn(9001L);
 
         CommerceOrderRequest req = CommerceOrderRequest.builder()
@@ -233,9 +234,29 @@ class KkumzServiceTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.result.totalIdeas").value(4))
                 .andExpect(jsonPath("$.result.buildSuccessRate").value(100))
-                .andExpect(jsonPath("$.result.totalAiPromptCalls").value(20))
+                .andExpect(jsonPath("$.result.totalAiPromptCalls").value(16))
                 .andExpect(jsonPath("$.result.siteTypeDistribution[0].siteType").value("COMMERCE"))
                 .andExpect(jsonPath("$.result.recentBuilds[0].brandName").value("말차 아뜰리에 제주"))
                 .andExpect(jsonPath("$.result.recentReports[0].brandName").value("데스크 오빗"));
+    }
+
+    @Test
+    @DisplayName("7. [스튜디오 메타데이터 조회] GET /api/v1/kkumz/studio/metadata DB 사전 연동 검증")
+    void testGetStudioMetadata() throws Exception {
+        when(jdbcTemplate.queryForList(contains("FROM sys_dict_item i")))
+                .thenReturn(List.of(
+                        Map.of("dictCode", "kkumz_layout_type", "itemValue", "HERO_SPLIT", "itemText", "히어로 스플릿 배너", "description", ""),
+                        Map.of("dictCode", "kkumz_component_type", "itemValue", "BrandSplitHero", "itemText", "브랜드 스플릿 히어로", "description", ""),
+                        Map.of("dictCode", "kkumz_starter_preset", "itemValue", "COMMERCE_ORGANIC_TEA", "itemText", "유기농 D2C 티 스토어",
+                                "description", "{\"siteType\":\"COMMERCE\",\"category\":\"F&B · 웰니스\",\"prompt\":\"제주 유기농 말차 다기 D2C 스토어\",\"tags\":[\"제주말차\",\"D2C\"]}")
+                ));
+
+        mockMvc.perform(get("/api/v1/kkumz/studio/metadata"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.layoutLabels.HERO_SPLIT").value("히어로 스플릿 배너"))
+                .andExpect(jsonPath("$.result.componentLabels.BrandSplitHero").value("브랜드 스플릿 히어로"))
+                .andExpect(jsonPath("$.result.starterPresets[0].code").value("COMMERCE_ORGANIC_TEA"))
+                .andExpect(jsonPath("$.result.starterPresets[0].siteType").value("COMMERCE"));
     }
 }

@@ -15,8 +15,10 @@
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { BasicForm, useForm } from '/@/components/Form';
   import { resolveModerationReport } from '/@/api/kkumz';
+  import { useUserStore } from '/@/store/modules/user';
 
   const emit = defineEmits(['success', 'register']);
+  const userStore = useUserStore();
   const reportId = ref('');
 
   const [registerForm, { resetFields, setFieldsValue, validate }] = useForm({
@@ -53,8 +55,8 @@
         defaultValue: 'RESOLVED',
         componentProps: {
           options: [
-            { label: '조치 완료 (RESOLVED)', value: 'RESOLVED' },
-            { label: '반려 / 이상 없음 (DISMISSED)', value: 'DISMISSED' },
+            { label: '조치 완료', value: 'RESOLVED' },
+            { label: '반려 / 이상 없음', value: 'DISMISSED' },
           ],
         },
         colProps: { span: 12 },
@@ -100,7 +102,7 @@
         status: values.status,
         resolutionNote: values.resolutionNote,
         suspendSite: !!values.suspendSite,
-        resolvedBy: 'admin',
+        resolvedBy: userStore.getUserInfo?.username || '',
       });
       closeModal();
       emit('success');

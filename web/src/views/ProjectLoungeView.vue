@@ -5,7 +5,7 @@
       <div class="flex flex-wrap items-center gap-2">
         <span class="text-xs font-extrabold text-slate-500 mr-1">팀빌딩 라운지 선택</span>
         <button
-          v-for="p in projectList"
+          v-for="p in activeProjects"
           :key="p.slug"
           class="px-3.5 py-1.5 rounded-full text-xs font-bold border transition"
           :class="
@@ -29,7 +29,7 @@
           class="kkumz-btn-primary text-xs py-1.5"
           @click="openLiveSiteInNewTab(runtime.siteSlug)"
         >
-          라이브 사이트 방문 ↗
+          라이브 사이트 방문
         </button>
       </div>
     </div>
@@ -66,7 +66,7 @@
             class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-extrabold border border-rose-200 transition"
             @click="showReportModal = true"
           >
-            🚨 프로젝트 신고
+            프로젝트 신고
           </button>
         </div>
       </div>
@@ -104,12 +104,12 @@
                   <option value="MARKETER">그로스 마케터</option>
                   <option value="MD">커머스 상품 MD</option>
                   <option value="PLANNER">서비스 기획·PM</option>
-                  <option value="CO_FOUNDER">공동창업자(Co-Founder)</option>
+                  <option value="CO_FOUNDER">공동창업자</option>
                 </select>
                 <input
                   v-model="newRecruit.title"
                   type="text"
-                  placeholder="공고 제목 (예: 브랜드 스토어 UI 디자이너 모십니다)"
+                  placeholder="공고 제목 입력"
                   class="kkumz-input text-xs py-2 bg-white md:col-span-2"
                 />
               </div>
@@ -123,7 +123,7 @@
                 <input
                   v-model="newRecruit.skillsText"
                   type="text"
-                  placeholder="요구 스킬 쉼표 구분 (예: Vue3, Figma, 브랜딩)"
+                  placeholder="요구 스킬 쉼표 구분 입력"
                   class="kkumz-input text-xs py-1.5 bg-white flex-1"
                 />
                 <button class="kkumz-btn-primary text-xs py-2 shrink-0" @click="handleCreateRecruit">
@@ -153,7 +153,7 @@
                         : 'bg-slate-200 text-slate-600'
                     "
                   >
-                    {{ rec.status === 'OPEN' ? '모집중' : '마감' }} ({{ rec.currentCount }}/{{ rec.headcount }}명)
+                    {{ rec.status === 'OPEN' ? '모집중' : '마감' }} ({{ rec.recruitedCount ?? rec.currentCount ?? 0 }}/{{ rec.headcount }}명)
                   </span>
                 </div>
                 <p class="text-xs text-slate-600 leading-relaxed">{{ rec.description }}</p>
@@ -203,13 +203,13 @@
               <input
                 v-model="inviteForm.username"
                 type="text"
-                placeholder="아이디 (예: dev.hana)"
+                placeholder="초대할 아이디"
                 class="kkumz-input text-xs py-2 bg-white"
               />
               <input
                 v-model="inviteForm.displayName"
                 type="text"
-                placeholder="이름/닉네임 (예: 정하나)"
+                placeholder="이름 / 닉네임"
                 class="kkumz-input text-xs py-2 bg-white"
               />
               <select v-model="inviteForm.memberRole" class="kkumz-input text-xs py-2 bg-white">
@@ -254,14 +254,14 @@
                     :class="{
                       'bg-emerald-50 text-emerald-700 border border-emerald-200': m.status === 'ACTIVE',
                       'bg-amber-50 text-amber-700 border border-amber-200':
-                        m.status === 'APPLIED' || m.status === 'INVITED',
+                        m.status === 'APPLIED' || m.status === 'INVITED' || m.status === 'PENDING',
                       'bg-rose-50 text-rose-700': m.status === 'REJECTED',
                     }"
                   >
                     {{ formatMemberStatusLabel(m.status) }}
                   </span>
 
-                  <template v-if="m.status === 'APPLIED' || m.status === 'INVITED'">
+                  <template v-if="m.status === 'APPLIED' || m.status === 'INVITED' || m.status === 'PENDING'">
                     <button
                       class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500"
                       @click="handleMemberStatus(m.id, 'ACTIVE', 'EDITOR')"
@@ -315,7 +315,7 @@
                 <input
                   v-model="newComment.content"
                   type="text"
-                  placeholder="아이디어와 라이브 사이트에 대한 피드백을 남겨주세요!"
+                  placeholder="아이디어와 라이브 사이트에 대한 피드백을 남겨주세요."
                   class="kkumz-input text-xs py-2 flex-1"
                   @keyup.enter="handleAddComment"
                 />
@@ -372,13 +372,13 @@
           <input
             v-model="applyForm.username"
             type="text"
-            placeholder="아이디 (예: fe.jihoon)"
+            placeholder="지원자 아이디"
             class="kkumz-input text-xs"
           />
           <input
             v-model="applyForm.displayName"
             type="text"
-            placeholder="이름 / 닉네임 (예: 최지훈)"
+            placeholder="이름 / 닉네임"
             class="kkumz-input text-xs"
           />
           <textarea
@@ -402,12 +402,18 @@
     >
       <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-extrabold text-slate-900">🚨 프로젝트 모더레이션 신고</h3>
+          <h3 class="text-lg font-extrabold text-slate-900">프로젝트 모더레이션 신고</h3>
           <button class="text-slate-400 hover:text-slate-700 font-bold" @click="showReportModal = false">
             ✕
           </button>
         </div>
         <div class="space-y-3">
+          <input
+            v-model="reportForm.reporterUsername"
+            type="text"
+            placeholder="신고자 아이디 입력"
+            class="kkumz-input text-xs bg-white"
+          />
           <select v-model="reportForm.reasonCategory" class="kkumz-input text-xs bg-white">
             <option value="SPAM">스팸 / 도배성 사이트</option>
             <option value="PHISHING">피싱 / 사기 의심 커머스</option>
@@ -448,14 +454,11 @@ import {
 const route = useRoute();
 const router = useRouter();
 
-const projectList = [
-  { slug: 'matcha-atelier', brandName: '말차 아뜰리에 제주' },
-  { slug: 'seoul-run-club', brandName: '서울 나이트 런 클럽' },
-  { slug: 'bean-chronicle', brandName: '빈 크로니클 서울' },
-  { slug: 'desk-orbit', brandName: '데스크 오빗' },
-];
+const activeProjects = ref<Array<{ slug: string; brandName: string }>>([]);
 
-const currentSlug = computed(() => (route.params.siteSlug as string) || 'matcha-atelier');
+const currentSlug = computed(
+  () => (route.params.siteSlug as string) || activeProjects.value[0]?.slug || '',
+);
 
 const loading = ref(false);
 const runtime = ref<any>(null);
@@ -468,7 +471,7 @@ const newRecruit = ref({
   positionRole: 'FRONTEND',
   title: '',
   description: '',
-  skillsText: 'Vue3, TypeScript, TailwindCSS',
+  skillsText: '',
 });
 
 const showInviteForm = ref(false);
@@ -480,19 +483,21 @@ const inviteForm = ref({
 
 const applyingRecruit = ref<any>(null);
 const applyForm = ref({
-  username: 'maker.joy',
-  displayName: '조이 메이커',
+  username: '',
+  displayName: '',
   applicationMessage: '',
 });
 
 const newComment = ref({
-  displayName: '김서연 (프로덕트 메이커)',
+  username: '',
+  displayName: '',
   authorRoleBadge: '프로덕트 디자이너',
   content: '',
 });
 
 const showReportModal = ref(false);
 const reportForm = ref({
+  reporterUsername: '',
   reasonCategory: 'SPAM',
   reasonDetail: '',
 });
@@ -521,6 +526,7 @@ function formatMemberStatusLabel(status?: string) {
     case 'ACTIVE':
       return '합류 완료';
     case 'APPLIED':
+    case 'PENDING':
       return '지원 대기';
     case 'INVITED':
       return '초대 대기';
@@ -531,11 +537,30 @@ function formatMemberStatusLabel(status?: string) {
   }
 }
 
+async function loadProjectDirectory() {
+  const feed = await kkumzApi.getCommunityFeed({ sortBy: 'POPULAR' });
+  activeProjects.value = (feed || []).map((item: any) => ({
+    slug: item.siteSlug,
+    brandName: item.siteName || item.brandName || item.siteSlug,
+  }));
+}
+
 async function loadLoungeData() {
+  if (!currentSlug.value) {
+    await loadProjectDirectory();
+  }
+  if (!currentSlug.value) return;
   loading.value = true;
   try {
     const data = await kkumzApi.getSiteRuntime(currentSlug.value);
-    runtime.value = data;
+    const siteInfo = data.site || data;
+    runtime.value = {
+      ...siteInfo,
+      ...data,
+      siteId: siteInfo.id || data.siteId || siteInfo.siteId,
+      brandName: siteInfo.siteName || siteInfo.brandName,
+      tagline: siteInfo.brandSlogan || siteInfo.tagline,
+    };
     recruits.value = data.recruits || [];
     members.value = data.teamMembers || [];
     comments.value = data.comments || [];
@@ -565,15 +590,19 @@ async function handleCreateRecruit() {
 
 function openApplyModal(rec: any) {
   applyingRecruit.value = rec;
-  applyForm.value.applicationMessage = `${rec.title} 포지션에 합류하여 함께 브랜드를 성장시키고 싶습니다!`;
+  applyForm.value.applicationMessage = `${rec.title} 포지션에 합류하여 함께 브랜드를 성장시키고 싶습니다.`;
 }
 
 async function submitTeamApplication() {
   if (!runtime.value || !applyingRecruit.value) return;
+  if (!applyForm.value.username.trim() || !applyForm.value.displayName.trim()) {
+    alert('지원자 아이디와 이름을 입력해 주세요.');
+    return;
+  }
   members.value = await kkumzApi.applyToTeam(runtime.value.siteId, {
     recruitId: applyingRecruit.value.id,
-    username: applyForm.value.username,
-    displayName: applyForm.value.displayName,
+    username: applyForm.value.username.trim(),
+    displayName: applyForm.value.displayName.trim(),
     positionRole: applyingRecruit.value.positionRole,
     applicationMessage: applyForm.value.applicationMessage,
   });
@@ -605,9 +634,13 @@ async function handleMemberStatus(memberId: string, status: string, memberRole?:
 
 async function handleAddComment() {
   if (!runtime.value || !newComment.value.content.trim()) return;
+  if (!newComment.value.displayName.trim()) {
+    alert('작성자 닉네임을 입력해 주세요.');
+    return;
+  }
   comments.value = await kkumzApi.addSiteComment(runtime.value.siteId, {
-    username: 'community.maker',
-    displayName: newComment.value.displayName,
+    username: newComment.value.username.trim() || newComment.value.displayName.trim(),
+    displayName: newComment.value.displayName.trim(),
     authorRoleBadge: newComment.value.authorRoleBadge,
     content: newComment.value.content,
   });
@@ -616,12 +649,16 @@ async function handleAddComment() {
 
 async function submitReport() {
   if (!runtime.value) return;
+  if (!reportForm.value.reporterUsername.trim() || !reportForm.value.reasonDetail.trim()) {
+    alert('신고자 아이디와 상세 사유를 입력해 주세요.');
+    return;
+  }
   await kkumzApi.reportContent(runtime.value.siteId, {
     targetType: 'SITE',
     targetId: runtime.value.siteId,
-    reporterUsername: 'community.guardian',
+    reporterUsername: reportForm.value.reporterUsername.trim(),
     reasonCategory: reportForm.value.reasonCategory,
-    reasonDetail: reportForm.value.reasonDetail,
+    reasonDetail: reportForm.value.reasonDetail.trim(),
   });
   showReportModal.value = false;
   reportForm.value.reasonDetail = '';
@@ -635,7 +672,8 @@ watch(
   },
 );
 
-onMounted(() => {
-  loadLoungeData();
+onMounted(async () => {
+  await loadProjectDirectory();
+  await loadLoungeData();
 });
 </script>

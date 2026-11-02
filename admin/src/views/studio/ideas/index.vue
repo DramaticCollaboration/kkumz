@@ -76,9 +76,9 @@
           componentProps: {
             options: [
               { label: '전체', value: '' },
-              { label: '쇼핑몰 스토어 (COMMERCE)', value: 'COMMERCE' },
-              { label: '브랜드·커뮤니티 웹 (CMS_SITE)', value: 'CMS_SITE' },
-              { label: '매거진+스토어 복합 (HYBRID)', value: 'HYBRID' },
+              { label: '쇼핑몰 스토어', value: 'COMMERCE' },
+              { label: '브랜드·커뮤니티 웹', value: 'CMS_SITE' },
+              { label: '매거진+스토어 복합', value: 'HYBRID' },
             ],
           },
           colProps: { span: 8 },

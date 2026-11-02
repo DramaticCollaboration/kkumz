@@ -7,7 +7,7 @@
         </template>
         <template v-else-if="column.key === 'status'">
           <Tag :color="record.status === 'PENDING' ? 'warning' : record.status === 'RESOLVED' ? 'success' : 'default'">
-            {{ record.status === 'PENDING' ? '심사 대기 (PENDING)' : record.status }}
+            {{ record.status === 'PENDING' ? '심사 대기' : record.status === 'RESOLVED' ? '조치 완료' : '반려' }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'action'">
@@ -53,9 +53,9 @@
           componentProps: {
             options: [
               { label: '전체', value: '' },
-              { label: '심사 대기 (PENDING)', value: 'PENDING' },
-              { label: '조치 완료 (RESOLVED)', value: 'RESOLVED' },
-              { label: '반려 (DISMISSED)', value: 'DISMISSED' },
+              { label: '심사 대기', value: 'PENDING' },
+              { label: '조치 완료', value: 'RESOLVED' },
+              { label: '반려', value: 'DISMISSED' },
             ],
           },
           colProps: { span: 8 },

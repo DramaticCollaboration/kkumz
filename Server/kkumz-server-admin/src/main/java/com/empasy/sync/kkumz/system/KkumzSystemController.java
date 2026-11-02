@@ -76,8 +76,9 @@ public class KkumzSystemController {
                     return body.substring(0, lastDash);
                 }
             }
+            return rawToken;
         }
-        return "admin";
+        throw new IllegalArgumentException("인증 토큰(X-Access-Token 또는 Authorization)이 필요합니다.");
     }
 
     @GetMapping("/user/list")

@@ -19,5 +19,10 @@ kkumz:
     cms-url: ${KKUMZ_CMS_DB_URL:jdbc:postgresql://${DB_HOST:kkumz-postgres}:${DB_PORT:5432}/sync_cms?currentSchema=public&stringtype=unspecified}
     username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:syncadmin}}
     password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:syncpass}}
+  ai:
+    llm:
+      base-url: ${SYNC_LLM_GATEWAY_URL:http://sync-llm-server:8080/v1}
+      api-key: ${SYNC_LLM_API_KEY:sk-kkumz-dev-key}
+      model: ${SYNC_LLM_MODEL:qwen-plus}
   nacos:
     enabled: false
