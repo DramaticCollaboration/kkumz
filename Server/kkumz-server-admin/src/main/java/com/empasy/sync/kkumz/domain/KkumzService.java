@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * Kkumz(꿈즈) AI 브랜드·멀티사이트 생성기, 2-Track 하이브리드 배포,
@@ -675,56 +676,8 @@ public class KkumzService {
                 tokens.putAll(parseJsonMap(matchedPalettes.get(0).get("palette_text")));
             }
         }
-        if (instruction.contains("인디고") || instruction.contains("네이비") || instruction.contains("테크")) {
-            tokens.put("primary", "#1e1b4b");
-            tokens.put("secondary", "#4f46e5");
-            tokens.put("accent", "#06b6d4");
-            tokens.put("surface", "#f8fafc");
-        } else if (instruction.contains("포레스트") || instruction.contains("그린") || instruction.contains("보태니컬")) {
-            tokens.put("primary", "#14532d");
-            tokens.put("secondary", "#16a34a");
-            tokens.put("accent", "#ca8a04");
-            tokens.put("surface", "#f7fee7");
-        } else if (instruction.contains("크래프트") || instruction.contains("앰버") || instruction.contains("브라운") || instruction.contains("로스트")) {
-            tokens.put("primary", "#78350f");
-            tokens.put("secondary", "#b45309");
-            tokens.put("accent", "#d97706");
-            tokens.put("surface", "#fffbeb");
-        } else if (instruction.contains("코랄") || instruction.contains("로즈") || instruction.contains("핑크")) {
-            tokens.put("primary", "#9f1239");
-            tokens.put("secondary", "#e11d48");
-            tokens.put("accent", "#f43f5e");
-            tokens.put("surface", "#fff1f2");
-        } else if (instruction.contains("오렌지") || instruction.contains("에너지")) {
-            tokens.put("primary", "#ea580c");
-            tokens.put("secondary", "#0f172a");
-            tokens.put("accent", "#f59e0b");
-            tokens.put("surface", "#fff7ed");
-        } else if (instruction.contains("모던") || instruction.contains("블랙") || instruction.contains("미니멀")) {
-            tokens.put("primary", "#0f172a");
-            tokens.put("secondary", "#334155");
-            tokens.put("accent", "#38bdf8");
-            tokens.put("surface", "#f8fafc");
-        }
 
         if (!instruction.isBlank()) {
-            if (instruction.contains("특가") && (instruction.contains("숨") || instruction.contains("제거") || instruction.contains("끄"))) {
-                layout.put("showFlashDeal", false);
-            } else if (instruction.contains("특가") && (instruction.contains("보여") || instruction.contains("추가") || instruction.contains("켜"))) {
-                layout.put("showFlashDeal", true);
-            }
-            if (instruction.contains("문구") || instruction.contains("배너") || instruction.contains("타이틀") || instruction.contains("슬로건") || instruction.contains("헤드라인")) {
-                if (instruction.contains("강렬") || instruction.contains("임팩트")) {
-                    layout.put("heroTitle", siteName + " — 한계를 넘어서는 시그니처 컬렉션");
-                    layout.put("heroSubtitle", "지금 가장 주목받는 프리미엄 라인업과 브랜드 아카이브를 한자리에서 경험하세요.");
-                } else if (instruction.contains("감성") || instruction.contains("따뜻") || instruction.contains("에디토리얼")) {
-                    layout.put("heroTitle", "일상의 순간을 특별하게 기록하는 곳, " + siteName);
-                    layout.put("heroSubtitle", brandSlogan);
-                } else if (instruction.contains("할인") || instruction.contains("프로모션") || instruction.contains("런칭")) {
-                    layout.put("heroTitle", siteName + " 공식 그랜드 런칭 스페셜 위크");
-                    layout.put("heroSubtitle", "첫 구매 고객 웰컴 혜택과 한정 수량 시그니처 에디션을 지금 만나보세요.");
-                }
-            }
             layout.put("customBadge", "AI 반영: " + (instruction.length() > 26 ? instruction.substring(0, 26) + "..." : instruction));
         }
 
@@ -2143,25 +2096,25 @@ public class KkumzService {
             return "LIFESTYLE";
         }
         String t = text.toLowerCase(Locale.ROOT);
-        if (t.contains("커피") || t.contains("원두") || t.contains("로스터") || t.contains("브루잉") || t.contains("드립") || t.contains("에스프레소") || t.contains("bean") || t.contains("coffee")) {
+        if (Pattern.compile("(coffee|bean|espresso|roast)").matcher(t).find() || Pattern.compile("(커피|원두)").matcher(t).find()) {
             return "COFFEE";
         }
-        if (t.contains("말차") || t.contains("녹차") || t.contains("다도") || t.contains("티룸") || t.contains("matcha") || t.contains("tea") || t.contains("보태니컬")) {
+        if (Pattern.compile("(matcha|tea|botanical)").matcher(t).find() || Pattern.compile("(말차|녹차)").matcher(t).find()) {
             return "TEA";
         }
-        if (t.contains("데스크") || t.contains("키보드") || t.contains("모니터") || t.contains("테크") || t.contains("오빗") || t.contains("가젯") || t.contains("워크스테이션") || t.contains("desk") || t.contains("orbit")) {
+        if (Pattern.compile("(desk|orbit|tech|keyboard)").matcher(t).find() || Pattern.compile("(데스크|키보드)").matcher(t).find()) {
             return "TECH";
         }
-        if (t.contains("러닝") || t.contains("마라톤") || t.contains("크루") || t.contains("피트니스") || t.contains("요가") || t.contains("필라테스") || t.contains("트레이닝") || t.contains("run")) {
+        if (Pattern.compile("(run|fitness|yoga|pilates)").matcher(t).find() || Pattern.compile("(러닝|피트니스)").matcher(t).find()) {
             return "FITNESS";
         }
-        if (t.contains("비건") || t.contains("스킨케어") || t.contains("화장품") || t.contains("뷰티") || t.contains("퍼퓸") || t.contains("아로마") || t.contains("코스메틱")) {
+        if (Pattern.compile("(vegan|beauty|aroma|perfume)").matcher(t).find() || Pattern.compile("(비건|뷰티)").matcher(t).find()) {
             return "BEAUTY";
         }
-        if (t.contains("베이커리") || t.contains("디저트") || t.contains("구움과자") || t.contains("빵") || t.contains("그로서리") || t.contains("미식") || t.contains("와인")) {
+        if (Pattern.compile("(bakery|dessert|crumb|wine)").matcher(t).find() || Pattern.compile("(베이커리|디저트)").matcher(t).find()) {
             return "BAKERY";
         }
-        if (t.contains("패션") || t.contains("어패럴") || t.contains("의류") || t.contains("스트릿") || t.contains("가방") || t.contains("주얼리")) {
+        if (Pattern.compile("(fashion|apparel|noir|street)").matcher(t).find() || Pattern.compile("(패션|의류)").matcher(t).find()) {
             return "FASHION";
         }
         return "LIFESTYLE";

@@ -559,7 +559,7 @@
             <input
               v-model="orderInput.receiverPhone"
               type="text"
-              placeholder="010-0000-0000"
+              placeholder="연락처를 입력하세요 (숫자·하이픈)"
               class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
             />
           </div>
