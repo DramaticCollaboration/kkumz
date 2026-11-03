@@ -41,7 +41,7 @@ class KkumzServiceTest {
         shopJdbcTemplate = Mockito.mock(JdbcTemplate.class);
         cmsJdbcTemplate = Mockito.mock(JdbcTemplate.class);
 
-        kkumzService = new KkumzService(jdbcTemplate, new ObjectMapper());
+        kkumzService = new KkumzService(jdbcTemplate, new ObjectMapper(), null);
         ReflectionTestUtils.setField(kkumzService, "shopJdbcTemplate", shopJdbcTemplate);
         ReflectionTestUtils.setField(kkumzService, "cmsJdbcTemplate", cmsJdbcTemplate);
 

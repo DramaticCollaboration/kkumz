@@ -59,12 +59,6 @@ public class KkumzService {
     private JdbcTemplate shopJdbcTemplate;
     private JdbcTemplate cmsJdbcTemplate;
 
-    public KkumzService(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.objectMapper = objectMapper;
-        this.aiGatewayProvider = null;
-    }
-
     @PostConstruct
     public void initCrossDomainJdbcTemplates() {
         if (shopDbUrl != null && !shopDbUrl.isBlank() && crossDbUsername != null && !crossDbUsername.isBlank()) {
