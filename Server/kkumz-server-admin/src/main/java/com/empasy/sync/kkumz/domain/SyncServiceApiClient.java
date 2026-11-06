@@ -133,7 +133,7 @@ public class SyncServiceApiClient {
             return ServiceEndpointCredentials.builder()
                     .keyId(null)
                     .serviceCode("SYNC_CMS")
-                    .baseUrl(trimTrailingSlash(defaultCmsBaseUrl != null ? defaultCmsBaseUrl : "http://localhost:18085"))
+                    .baseUrl(trimTrailingSlash(defaultCmsBaseUrl))
                     .accessKey(defaultCmsAccessKey != null ? defaultCmsAccessKey : "ak_cms_kkumz_live_01")
                     .secretKey(defaultCmsSecretKey != null ? defaultCmsSecretKey : "sk_cms_kkumz_secret_2026_prod_99")
                     .build();
@@ -141,7 +141,7 @@ public class SyncServiceApiClient {
         return ServiceEndpointCredentials.builder()
                 .keyId(null)
                 .serviceCode("SYNC_SHOP")
-                .baseUrl(trimTrailingSlash(defaultShopBaseUrl != null ? defaultShopBaseUrl : "http://localhost:8501"))
+                .baseUrl(trimTrailingSlash(defaultShopBaseUrl))
                 .accessKey(defaultShopAccessKey != null ? defaultShopAccessKey : "ak_shop_kkumz_live_01")
                 .secretKey(defaultShopSecretKey != null ? defaultShopSecretKey : "sk_shop_kkumz_secret_2026_prod_88")
                 .build();

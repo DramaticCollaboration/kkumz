@@ -1118,7 +1118,7 @@
                         <option value="MAGAZINE_LIST">브랜드 매거진 & 스토리 저널</option>
                         <option value="RESERVATION_FORM">온라인 예약 · 문의 · 신청 폼</option>
                         <option value="FAQ_CONCIERGE">AI 브랜드 컨시어지 & 오시는 길 안내</option>
-                        <option v-if="scr.layoutType && !['HERO_BANNER_GRID','PRODUCT_CATALOG_GRID','GALLERY_SHOWCASE','MAGAZINE_LIST','RESERVATION_FORM','FAQ_CONCIERGE'].includes(scr.layoutType)" :value="scr.layoutType">
+                        <option v-if="scr.layoutType && !isStandardLayoutType(scr.layoutType)" :value="scr.layoutType">
                           {{ formatLayoutTypeLabel(scr.layoutType) }}
                         </option>
                       </select>
@@ -2811,15 +2811,7 @@ function renderLogoWithBrand(svgCode: any, overrideBrandName?: string): string {
     const trimmed = String(innerText || '').trim();
     if (!trimmed) return full;
     const upper = trimmed.toUpperCase();
-    if (
-      upper.includes('OFFICIAL') ||
-      upper.includes('BRAND') ||
-      upper.includes('ARCHIVE') ||
-      upper.includes('STUDIO') ||
-      upper.includes('COLLECTION') ||
-      upper.includes('EST.') ||
-      upper.includes('SINCE')
-    ) {
+    if (/\b(OFFICIAL|BRAND|ARCHIVE|STUDIO|COLLECTION|SINCE)\b|EST\./.test(upper)) {
       return full;
     }
     if (trimmed.length === 1) {
@@ -3082,14 +3074,13 @@ function parseHighlightsFromMarkdown(raw: string): string[] {
     .filter((line) => line.length > 0 && !line.startsWith('#'))
     .map((line) => line.replace(/^[\-*\d.\s✓]+/, '').replace(/\*\*/g, '').trim())
     .filter((line) => line.length > 4);
-  return lines.length > 0
-    ? lines.slice(0, 8)
-    : [
-        '브랜드 스토리 및 공간/상품 핵심 매력 소개 히어로 섹션',
-        '시그니처 객실·메뉴·상품 카탈로그 및 실시간 예약·주문 연동',
-        '현장 포토 갤러리 아카이브 및 안내문·요금표 다운로드 제공',
-        '24시간 AI 브랜드 컨시어지 상담 및 온라인 예약 신청 폼',
-      ];
+  return lines.slice(0, 8);
+}
+
+function isStandardLayoutType(code?: string): boolean {
+  return /^(HERO_BANNER_GRID|PRODUCT_CATALOG_GRID|GALLERY_SHOWCASE|MAGAZINE_LIST|RESERVATION_FORM|FAQ_CONCIERGE)$/.test(
+    String(code || ''),
+  );
 }
 
 function formatLayoutTypeLabel(code: string) {
@@ -3113,7 +3104,7 @@ function isImageAsset(asset: any) {
   const ext = String(asset.fileExt || '').toLowerCase();
   return (
     mime.startsWith('image/') ||
-    ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif', 'svg'].includes(ext)
+    /^(jpg|jpeg|png|webp|gif|bmp|avif|svg)$/.test(ext)
   );
 }
 

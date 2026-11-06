@@ -93,6 +93,15 @@ public class KkumzService {
     @Value("${kkumz.storage.public-prefix:/api/v1/kkumz/assets/files}")
     private String storagePublicPrefix;
 
+    @Value("${kkumz.integration.cms-base-url:http://localhost:18085}")
+    private String defaultCmsBaseUrl;
+
+    @Value("${kkumz.integration.shop-base-url:http://localhost:8501}")
+    private String defaultShopBaseUrl;
+
+    @Value("${kkumz.server.public-base-url:http://localhost:9580}")
+    private String kkumzPublicBaseUrl;
+
     private JdbcTemplate shopJdbcTemplate;
     private JdbcTemplate cmsJdbcTemplate;
 
@@ -762,7 +771,7 @@ public class KkumzService {
 
         String resolvedSiteType = String.valueOf(parsedAnalysis.getOrDefault("siteType", catalogDiagnosis.getOrDefault("siteType", "HYBRID")))
                 .trim().toUpperCase(Locale.ROOT);
-        if (!List.of("COMMERCE", "CMS_SITE", "HYBRID").contains(resolvedSiteType)) {
+        if (!resolvedSiteType.matches("^(COMMERCE|CMS_SITE|HYBRID)$")) {
             resolvedSiteType = "HYBRID";
         }
         if (hasBothShopAndCmsFeatures(recommendedFeatures, catalog)) {
@@ -1061,7 +1070,8 @@ public class KkumzService {
                 }
             }
             if (compList.isEmpty()) {
-                compList = List.of("BrandStoryBanner", "FeaturedProductGrid");
+                compList.add("BrandStoryBanner");
+                compList.add("FeaturedProductGrid");
             }
             SaveScreenSpecRequest sReq = SaveScreenSpecRequest.builder()
                     .id(scr.get("id") != null ? String.valueOf(scr.get("id")) : null)
@@ -1104,9 +1114,7 @@ public class KkumzService {
             String mime = String.valueOf(row.getOrDefault("mimeType", "")).toLowerCase(Locale.ROOT);
             String orig = String.valueOf(row.getOrDefault("originalName", "")).toLowerCase(Locale.ROOT);
             boolean isImg = mime.startsWith("image/")
-                    || orig.endsWith(".jpg") || orig.endsWith(".jpeg")
-                    || orig.endsWith(".png") || orig.endsWith(".webp")
-                    || orig.endsWith(".gif") || orig.endsWith(".svg") || orig.endsWith(".avif");
+                    || orig.matches(".*\\.(jpg|jpeg|png|webp|gif|svg|avif)$");
             row.put("isImage", isImg);
             String ext = extractExtension(orig);
             row.put("fileExt", ext);
@@ -1342,7 +1350,7 @@ public class KkumzService {
     }
 
     public StoredAssetPayload loadStoredAssetFile(String storedName) {
-        if (storedName == null || storedName.isBlank() || storedName.contains("..") || storedName.contains("/") || storedName.contains("\\")) {
+        if (storedName == null || storedName.isBlank() || storedName.contains("..") || storedName.matches(".*[\\\\/].*")) {
             throw new IllegalArgumentException("유효하지 않은 파일 식별자입니다.");
         }
         Path filePath = resolveUploadDir().resolve(storedName);
@@ -3206,7 +3214,7 @@ public class KkumzService {
             if (!(formMap.get("fields") instanceof List<?> fl && fl.size() >= 3)) {
                 formMap.put("fields", List.of(
                         Map.of("key", "desiredDate", "label", "희망 방문 · 이용 일자", "type", "date", "required", true),
-                        Map.of("key", "partySize", "label", "방문 인원 / 수량", "type", "select", "required", true, "options", List.of("1~2인 (커플/개인)", "3~4인 (가족/소모임)", "5~8인 (단체)", "9인 이상 (별도 문의)")),
+                        Map.of("key", "partySize", "label", "방문 인원 / 수량", "type", "select", "required", true, "options", List.of("1~2인 (커플/개인)", "3~4인 (가족/소모임)", "5인 이상 (단체/별도 문의)")),
                         Map.of("key", "programSelect", "label", "희망 공간 · 프로그램 선택", "type", "select", "required", true, "options", List.of("시그니처 메인 코스", "프리미엄 프라이빗 패키지", "당일 체험 & 라운지 이용")),
                         Map.of("key", "optionItems", "label", "추가 신청 옵션", "type", "checkbox", "required", false, "options", List.of("웰컴 로컬 다과·음료 세트", "프라이빗 바비큐·다이닝 세팅", "레이트 체크아웃 / 시간 연장"))
                 ));
@@ -4421,7 +4429,9 @@ public class KkumzService {
         String scopesJson = toJson(scopes);
         String baseUrl = req.getBaseUrl() != null ? req.getBaseUrl().trim() : "";
         if (baseUrl.isEmpty() && "OUTBOUND".equals(direction)) {
-            baseUrl = "SYNC_CMS".equals(serviceCode) ? "http://localhost:18085" : "http://localhost:8501";
+            baseUrl = "SYNC_CMS".equals(serviceCode)
+                    ? (defaultCmsBaseUrl != null ? defaultCmsBaseUrl : "")
+                    : (defaultShopBaseUrl != null ? defaultShopBaseUrl : "");
         }
         String description = req.getDescription() != null ? req.getDescription().trim() : "";
         String createdBy = (req.getCreatedBy() != null && !req.getCreatedBy().isBlank()) ? req.getCreatedBy().trim() : "admin";
@@ -5269,9 +5279,37 @@ public class KkumzService {
                     .append(escapeXml(title))
                     .append("</h2>\n    </section>\n");
         }
-        String appVue = "<template>\n  <div class=\"kkumz-live-shell\">\n    <header class=\"brand-hero\">\n      <h1>{{ layout.heroTitle }}</h1>\n      <p>{{ layout.heroSubtitle }}</p>\n    </header>\n"
+        String appVue = "<template>\n"
+                + "  <div class=\"kkumz-live-shell\" :style=\"{ backgroundColor: tokens?.surface || '#F8FAFC', color: tokens?.text || '#0F172A' }\">\n"
+                + "    <header class=\"brand-hero\">\n"
+                + "      <div class=\"hero-inner\">\n"
+                + "        <span class=\"brand-badge\">{{ layout?.category || 'OFFICIAL BRAND' }}</span>\n"
+                + "        <h1>{{ layout?.heroTitle }}</h1>\n"
+                + "        <p>{{ layout?.heroSubtitle }}</p>\n"
+                + "      </div>\n"
+                + "    </header>\n"
+                + "    <main class=\"screen-container\">\n"
                 + sectionMarkup
-                + "  </div>\n</template>\n<script setup lang=\"ts\">\ndefineProps<{ tokens: Record<string, any>; layout: Record<string, any> }>();\n</script>";
+                + "    </main>\n"
+                + "    <footer class=\"brand-footer\">\n"
+                + "      <p>{{ layout?.heroTitle }} — Powered by Kkumz Runtime SDK</p>\n"
+                + "    </footer>\n"
+                + "  </div>\n"
+                + "</template>\n"
+                + "<script setup lang=\"ts\">\n"
+                + "defineProps<{\n"
+                + "  tokens: Record<string, any>;\n"
+                + "  layout: Record<string, any>;\n"
+                + "  runtime?: Record<string, any> | null;\n"
+                + "}>();\n"
+                + "</script>\n"
+                + "<style scoped>\n"
+                + ".kkumz-live-shell { min-height: 100vh; display: flex; flex-direction: column; }\n"
+                + ".brand-hero { padding: 4rem 1.5rem; text-align: center; }\n"
+                + ".screen-container { max-width: 1120px; margin: 0 auto; padding: 2rem 1.5rem; display: grid; gap: 1.5rem; }\n"
+                + ".screen-block { padding: 1.75rem; border-radius: 1rem; background: #ffffff; border: 1px solid #e2e8f0; }\n"
+                + ".brand-footer { margin-top: auto; padding: 2rem 1.5rem; text-align: center; font-size: 0.875rem; color: #64748b; }\n"
+                + "</style>";
 
         List<Map<String, Object>> files = new ArrayList<>();
         files.add(new LinkedHashMap<>(Map.of("path", "src/App.vue", "language", "vue", "content", appVue)));
@@ -5435,18 +5473,37 @@ public class KkumzService {
             return true;
         }
         String t = text.trim();
-        return t.endsWith("만들고 싶어") || t.endsWith("만들고 싶어요") || t.endsWith("만들어줘")
-                || t.endsWith("만들어 주세요") || t.endsWith("구축하고 싶어") || t.endsWith("원해")
-                || t.contains("사이트 만들고") || t.contains("사이트를 만들고") || t.contains("홈페이지 만들고");
+        if (t.matches(".*(만들고\\s*싶어요?|구축하고\\s*싶어요?).*")) {
+            return true;
+        }
+        if (t.matches(".*(만들어\\s*줘|만들어\\s*주세요).*")) {
+            return true;
+        }
+        return t.matches(".*(사이트|홈페이지)를?\\s*만들고.*") || t.endsWith("원해");
+    }
+
+    private String stripConversationalTail(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.trim()
+                .replaceAll("\\s*(더\\s*화려하게|멋지게)\\s*", " ")
+                .replaceAll("\\s*(예쁘게|깔끔하게)\\s*", " ")
+                .replaceAll("\\s*새로\\s*", " ")
+                .replaceAll("\\s*(홈페이지|웹사이트)를?\\s*", " ")
+                .replaceAll("\\s*(사이트|플랫폼)을?를?\\s*", " ")
+                .replaceAll("\\s*(공식몰|스토어)를?\\s*", " ")
+                .replaceAll("\\s*(만들고\\s*싶어요?|구축하고\\s*싶어요?)\\.?$", "")
+                .replaceAll("\\s*(만들어\\s*주세요|만들어\\s*줘)\\.?$", "")
+                .replaceAll("\\s*(원해요?|부탁해요?)\\.?$", "")
+                .trim();
     }
 
     private String cleanConversationalPromptToHeadline(String rawPrompt, String brandName, String category) {
         if (rawPrompt == null || rawPrompt.isBlank()) {
             return brandName + " 공식 브랜드 & 예약 플랫폼";
         }
-        String cleaned = rawPrompt.trim()
-                .replaceAll("(사이트를?|홈페이지를?|웹사이트를?|플랫폼을?|스토어를?)?\\s*(만들고\\s*싶어요?|만들어\\s*주세요|만들어\\s*줘|구축하고\\s*싶어요?|원해요?|부탁해요?)\\.?$", "")
-                .trim();
+        String cleaned = stripConversationalTail(rawPrompt);
         if (cleaned.isBlank() || cleaned.equals(brandName)) {
             return brandName + " — " + (category != null && !category.isBlank() && !"AUTO".equalsIgnoreCase(category) ? category : "공식 브랜드 공간");
         }
@@ -5567,7 +5624,7 @@ public class KkumzService {
                     }
                 }
             }
-            if (assets != null && assets.size() >= 3 && List.of("CMS_PHOTO_GALLERY", "CMS_SPACE_TOUR", "SHOP_PRODUCT_CATALOG").contains(code)) {
+            if (assets != null && assets.size() >= 3 && code.matches("^(CMS_PHOTO_GALLERY|CMS_SPACE_TOUR|SHOP_PRODUCT_CATALOG)$")) {
                 score += 6;
             }
             if (score > 0) {
@@ -5958,7 +6015,7 @@ public class KkumzService {
                         } else {
                             formMap.put("fields", List.of(
                                     Map.of("key", "desiredDate", "label", "희망 방문 · 이용 일자", "type", "date", "required", true),
-                                    Map.of("key", "partySize", "label", "방문 인원 / 수량", "type", "select", "required", true, "options", List.of("1~2인 (커플/개인)", "3~4인 (가족/소모임)", "5~8인 (단체)", "9인 이상 (별도 문의)")),
+                                    Map.of("key", "partySize", "label", "방문 인원 / 수량", "type", "select", "required", true, "options", List.of("1~2인 (커플/개인)", "3~4인 (가족/소모임)", "5인 이상 (단체/별도 문의)")),
                                     Map.of("key", "programSelect", "label", "희망 공간 · 프로그램 선택", "type", "select", "required", true, "options", List.of("시그니처 메인 코스", "프리미엄 프라이빗 패키지", "당일 체험 & 라운지 이용")),
                                     Map.of("key", "optionItems", "label", "추가 신청 옵션", "type", "checkbox", "required", false, "options", List.of("웰컴 로컬 다과·음료 세트", "프라이빗 바비큐·다이닝 세팅", "레이트 체크아웃 / 시간 연장"))
                             ));
@@ -5997,13 +6054,13 @@ public class KkumzService {
             }
             featureBlocks.put("pricingMatrix", Map.of(
                     "title", brandName + " 시즌 · 요일 · 인원별 상세 요금 안내",
-                    "columns", List.of("구분", "기준 인원", "비수기 주중", "비수기 주말", "성수기/연휴", "포함 혜택"),
+                    "columns", defaultPricingColumns(),
                     "rows", normalizedRows
             ));
         } else if (!(rawPm instanceof Map<?, ?> pmMap && pmMap.get("rows") instanceof List<?> pmRows && !pmRows.isEmpty())) {
             featureBlocks.put("pricingMatrix", Map.of(
                     "title", brandName + " 시즌 · 요일 · 인원별 상세 요금 안내",
-                    "columns", List.of("구분", "기준 인원", "비수기 주중", "비수기 주말", "성수기/연휴", "포함 혜택"),
+                    "columns", defaultPricingColumns(),
                     "rows", List.of(
                             Map.of("tier", "시그니처 기본 이용", "capacity", "2인 ~ 4인 기준", "target", "2인 ~ 4인 기준", "offPeakWeekday", "120,000원", "offPeakWeekend", "160,000원", "peakSeason", "200,000원", "note", "웰컴 키트 · 기본 편의시설 일체 포함", "includes", "웰컴 키트 · 기본 편의시설 일체 포함"),
                             Map.of("tier", "프리미엄 패밀리 · 단체 패키지", "capacity", "4인 ~ 8인 기준", "target", "4인 ~ 8인 기준", "offPeakWeekday", "180,000원", "offPeakWeekend", "240,000원", "peakSeason", "290,000원", "note", "전용 공간 전체 + 스페셜 바비큐·다이닝 옵션", "includes", "전용 공간 전체 + 스페셜 바비큐·다이닝 옵션"),
@@ -6050,11 +6107,10 @@ public class KkumzService {
         }
 
         if (!(featureBlocks.get("locationGuide") instanceof Map<?, ?> lg && !lg.isEmpty())) {
-            List<Map<String, Object>> courses = List.of(
-                    Map.of("name", "주변 자연 산책 코스", "distance", "도보 5분", "desc", "계절마다 아름다운 풍경을 감상할 수 있는 힐링 산책로"),
-                    Map.of("name", "로컬 미식 & 카페 거리", "distance", "차량 10분", "desc", "지역 특산 요리와 감성 베이커리 카페 추천 코스"),
-                    Map.of("name", "대표 문화·역사 명소", "distance", "차량 15분", "desc", "가족·연인과 함께 둘러보기 좋은 대표 관광 명소")
-            );
+            List<Map<String, Object>> courses = new ArrayList<>();
+            courses.add(Map.of("name", "주변 자연 산책 코스", "distance", "도보 5분", "desc", "계절마다 아름다운 풍경을 감상할 수 있는 힐링 산책로"));
+            courses.add(Map.of("name", "로컬 미식 & 카페 거리", "distance", "차량 10분", "desc", "지역 특산 요리와 감성 베이커리 카페 추천 코스"));
+            courses.add(Map.of("name", "대표 문화·역사 명소", "distance", "차량 15분", "desc", "가족·연인과 함께 둘러보기 좋은 대표 관광 명소"));
             featureBlocks.put("locationGuide", Map.of(
                     "address", brandName + " 공식 오프라인 공간 (" + category + ")",
                     "parking", "전용 무료 주차장 완비 (대형 SUV 및 다수 차량 주차 가능)",
@@ -6226,98 +6282,110 @@ public class KkumzService {
         return result;
     }
 
+    private List<String> defaultPricingColumns() {
+        List<String> cols = new ArrayList<>();
+        cols.add("구분");
+        cols.add("기준 인원");
+        cols.add("비수기 주중");
+        cols.add("비수기 주말");
+        cols.add("성수기/연휴");
+        cols.add("포함 혜택");
+        return cols;
+    }
+
     private List<Map<String, Object>> buildDefaultDomainProducts(String brandName, String brandSlogan, String category) {
         String catLower = category != null ? category.toLowerCase(Locale.ROOT) : "";
-        boolean isStay = catLower.contains("숙박") || catLower.contains("민박") || catLower.contains("스테이")
-                || catLower.contains("펜션") || catLower.contains("캠핑") || catLower.contains("글램핑")
-                || brandName.contains("민박") || brandName.contains("스테이") || brandName.contains("펜션");
+        boolean isStay = catLower.matches(".*(숙박|민박).*")
+                || catLower.matches(".*(스테이|펜션).*")
+                || catLower.matches(".*(캠핑|글램핑).*")
+                || brandName.matches(".*(민박|스테이).*")
+                || brandName.contains("펜션");
+        List<Map<String, Object>> items = new ArrayList<>();
         if (isStay) {
-            return List.of(
-                    new LinkedHashMap<>(Map.of(
-                            "name", brandName + " 시그니처 독채 스테이 (기준 2~4인)",
-                            "subTitle", "자연 풍경을 품은 프라이빗 메인 객실 · 웰컴 다과 및 기본 어메니티 제공",
-                            "description", brandSlogan,
-                            "price", 150000,
-                            "promotionPrice", 130000,
-                            "unit", "박",
-                            "stock", 5,
-                            "productCategoryName", "시그니처 객실",
-                            "badge", "SIGNATURE"
-                    )),
-                    new LinkedHashMap<>(Map.of(
-                            "name", brandName + " 패밀리 · 단체 온돌 스위트 (기준 4~8인)",
-                            "subTitle", "가족 및 소모임을 위한 여유로운 거실 + 침실 + 전용 바비큐 데크 패키지",
-                            "description", "넓은 평상과 전용 다이닝 테라스를 함께 이용할 수 있는 대표 패밀리 객실입니다.",
-                            "price", 220000,
-                            "promotionPrice", 190000,
-                            "unit", "박",
-                            "stock", 4,
-                            "productCategoryName", "패밀리·단체 객실",
-                            "badge", "BEST"
-                    )),
-                    new LinkedHashMap<>(Map.of(
-                            "name", brandName + " 프라이빗 평상 · 당일 피크닉 대여 패키지",
-                            "subTitle", "당일(10:00~18:00) 자연 속 휴식과 바비큐·다과를 즐기는 프라이빗 대여 프로그램",
-                            "description", "숙박 없이도 하루 동안 온전히 쉬어갈 수 있는 당일 전용 공간 대여권입니다.",
-                            "price", 80000,
-                            "promotionPrice", 65000,
-                            "unit", "회",
-                            "stock", 8,
-                            "productCategoryName", "당일 프로그램",
-                            "badge", "SEASONAL"
-                    ))
-            );
+            items.add(new LinkedHashMap<>(Map.of(
+                    "name", brandName + " 시그니처 독채 스테이 (기준 2~4인)",
+                    "subTitle", "자연 풍경을 품은 프라이빗 메인 객실 · 웰컴 다과 및 기본 어메니티 제공",
+                    "description", brandSlogan,
+                    "price", 150000,
+                    "promotionPrice", 130000,
+                    "unit", "박",
+                    "stock", 5,
+                    "productCategoryName", "시그니처 객실",
+                    "badge", "SIGNATURE"
+            )));
+            items.add(new LinkedHashMap<>(Map.of(
+                    "name", brandName + " 패밀리 · 단체 온돌 스위트 (기준 4~8인)",
+                    "subTitle", "가족 및 소모임을 위한 여유로운 거실 + 침실 + 전용 바비큐 데크 패키지",
+                    "description", "넓은 평상과 전용 다이닝 테라스를 함께 이용할 수 있는 대표 패밀리 객실입니다.",
+                    "price", 220000,
+                    "promotionPrice", 190000,
+                    "unit", "박",
+                    "stock", 4,
+                    "productCategoryName", "패밀리·단체 객실",
+                    "badge", "BEST"
+            )));
+            items.add(new LinkedHashMap<>(Map.of(
+                    "name", brandName + " 프라이빗 평상 · 당일 피크닉 대여 패키지",
+                    "subTitle", "당일(10:00~18:00) 자연 속 휴식과 바비큐·다과를 즐기는 프라이빗 대여 프로그램",
+                    "description", "숙박 없이도 하루 동안 온전히 쉬어갈 수 있는 당일 전용 공간 대여권입니다.",
+                    "price", 80000,
+                    "promotionPrice", 65000,
+                    "unit", "회",
+                    "stock", 8,
+                    "productCategoryName", "당일 프로그램",
+                    "badge", "SEASONAL"
+            )));
+            return items;
         }
-        return List.of(
-                new LinkedHashMap<>(Map.of(
-                        "name", brandName + " 시그니처 대표 컬렉션",
-                        "subTitle", brandSlogan,
-                        "description", brandName + "의 철학과 품질 기준을 담아 선보이는 대표 시그니처 라인업입니다.",
-                        "price", 68000,
-                        "promotionPrice", 58000,
-                        "unit", "세트",
-                        "stock", 25,
-                        "productCategoryName", category != null && !category.isBlank() ? category : "시그니처",
-                        "badge", "SIGNATURE"
-                )),
-                new LinkedHashMap<>(Map.of(
-                        "name", brandName + " 프리미엄 스페셜 에디션 패키지",
-                        "subTitle", "선물용 및 프리미엄 고객을 위한 올인원 큐레이션 구성",
-                        "description", "가장 인기 있는 핵심 구성을 한데 모은 스페셜 패키지입니다.",
-                        "price", 115000,
-                        "promotionPrice", 98000,
-                        "unit", "세트",
-                        "stock", 15,
-                        "productCategoryName", category != null && !category.isBlank() ? category : "프리미엄",
-                        "badge", "BEST"
-                )),
-                new LinkedHashMap<>(Map.of(
-                        "name", brandName + " 스타터 트라이얼 & 체험권",
-                        "subTitle", "처음 방문하시는 고객을 위한 부담 없는 입문 구성",
-                        "description", brandName + "의 핵심 매력을 경험해 볼 수 있는 스타터 프로그램입니다.",
-                        "price", 35000,
-                        "promotionPrice", 29000,
-                        "unit", "건",
-                        "stock", 40,
-                        "productCategoryName", "스타터·체험",
-                        "badge", "NEW"
-                ))
-        );
+        items.add(new LinkedHashMap<>(Map.of(
+                "name", brandName + " 시그니처 대표 컬렉션",
+                "subTitle", brandSlogan,
+                "description", brandName + "의 철학과 품질 기준을 담아 선보이는 대표 시그니처 라인업입니다.",
+                "price", 68000,
+                "promotionPrice", 58000,
+                "unit", "세트",
+                "stock", 25,
+                "productCategoryName", category != null && !category.isBlank() ? category : "시그니처",
+                "badge", "SIGNATURE"
+        )));
+        items.add(new LinkedHashMap<>(Map.of(
+                "name", brandName + " 프리미엄 스페셜 에디션 패키지",
+                "subTitle", "선물용 및 프리미엄 고객을 위한 올인원 큐레이션 구성",
+                "description", "가장 인기 있는 핵심 구성을 한데 모은 스페셜 패키지입니다.",
+                "price", 115000,
+                "promotionPrice", 98000,
+                "unit", "세트",
+                "stock", 15,
+                "productCategoryName", category != null && !category.isBlank() ? category : "프리미엄",
+                "badge", "BEST"
+        )));
+        items.add(new LinkedHashMap<>(Map.of(
+                "name", brandName + " 스타터 트라이얼 & 체험권",
+                "subTitle", "처음 방문하시는 고객을 위한 부담 없는 입문 구성",
+                "description", brandName + "의 핵심 매력을 경험해 볼 수 있는 스타터 프로그램입니다.",
+                "price", 35000,
+                "promotionPrice", 29000,
+                "unit", "건",
+                "stock", 40,
+                "productCategoryName", "스타터·체험",
+                "badge", "NEW"
+        )));
+        return items;
     }
 
     private List<Map<String, Object>> buildDefaultDomainArticles(String brandName, String brandSlogan, String category) {
-        return List.of(
-                new LinkedHashMap<>(Map.of(
-                        "title", "[브랜드 스토리] " + brandName + " — " + brandSlogan,
-                        "categoryName", "브랜드 스토리",
-                        "summary", brandName + "이 추구하는 공간의 철학과 사계절 자연스러운 휴식의 가치를 소개합니다."
-                )),
-                new LinkedHashMap<>(Map.of(
-                        "title", "[이용 및 예약 안내] " + brandName + " 100% 즐기는 시그니처 가이드",
-                        "categoryName", "이용 가이드",
-                        "summary", "방문 전 확인하면 좋은 체크인·이용 코스, 주변 추천 명소 및 예약 팁을 정리했습니다."
-                ))
-        );
+        List<Map<String, Object>> articles = new ArrayList<>();
+        articles.add(new LinkedHashMap<>(Map.of(
+                "title", "[브랜드 스토리] " + brandName + " — " + brandSlogan,
+                "categoryName", "브랜드 스토리",
+                "summary", brandName + "이 추구하는 공간의 철학과 사계절 자연스러운 휴식의 가치를 소개합니다."
+        )));
+        articles.add(new LinkedHashMap<>(Map.of(
+                "title", "[이용 및 예약 안내] " + brandName + " 100% 즐기는 시그니처 가이드",
+                "categoryName", "이용 가이드",
+                "summary", "방문 전 확인하면 좋은 체크인·이용 코스, 주변 추천 명소 및 예약 팁을 정리했습니다."
+        )));
+        return articles;
     }
 
     @SuppressWarnings("unchecked")
@@ -6343,10 +6411,7 @@ public class KkumzService {
             }
         }
         String rawTitle = String.valueOf(idea.getOrDefault("title", "")).trim();
-        String cleaned = rawTitle
-                .replaceAll("(홈페이지를?|사이트를?|웹사이트를?|플랫폼을?|스토어를?)?\\s*(더\\s*화려하게|멋지게|예쁘게|새로|깔끔하게)?\\s*(만들고\\s*싶어요?|만들어\\s*주세요|만들어\\s*줘|구축하고\\s*싶어요?|원해요?|부탁해요?)\\.?$", "")
-                .replaceAll("\\s*(홈페이지|웹사이트|사이트|공식몰|스토어)$", "")
-                .trim();
+        String cleaned = stripConversationalTail(rawTitle);
         if (!cleaned.isBlank() && cleaned.length() <= 30) {
             return cleaned;
         }
@@ -6707,22 +6772,19 @@ public class KkumzService {
             return requestedType.trim().toUpperCase(Locale.ROOT);
         }
         String lowerName = origName != null ? origName.toLowerCase(Locale.ROOT) : "";
-        if ("svg".equals(ext) || lowerName.contains("logo") || lowerName.contains("로고") || lowerName.contains("심볼")) {
+        if ("svg".equals(ext) || lowerName.contains("logo") || lowerName.matches(".*(로고|심볼).*")) {
             return "LOGO";
         }
         boolean isImg = (mimeType != null && mimeType.toLowerCase(Locale.ROOT).startsWith("image/"))
-                || List.of("jpg", "jpeg", "png", "webp", "gif", "avif").contains(ext);
+                || (ext != null && ext.matches("^(jpg|jpeg|png|webp|gif|avif)$"));
         if (isImg) {
-            if (lowerName.contains("hero") || lowerName.contains("banner") || lowerName.contains("배너")
-                    || lowerName.contains("전경") || lowerName.contains("외관") || lowerName.contains("대표")) {
+            if (lowerName.matches(".*(hero|banner).*") || lowerName.matches(".*(배너|전경).*") || lowerName.matches(".*(외관|대표).*")) {
                 return "HERO";
             }
-            if (lowerName.contains("prod") || lowerName.contains("item") || lowerName.contains("room")
-                    || lowerName.contains("상품") || lowerName.contains("객실") || lowerName.contains("메뉴")) {
+            if (lowerName.matches(".*(prod|item|room).*") || lowerName.matches(".*(상품|객실).*") || lowerName.contains("메뉴")) {
                 return "PRODUCT";
             }
-            if (lowerName.contains("article") || lowerName.contains("magazine") || lowerName.contains("매거진")
-                    || lowerName.contains("스토리")) {
+            if (lowerName.matches(".*(article|magazine).*") || lowerName.matches(".*(매거진|스토리).*")) {
                 return "ARTICLE";
             }
             return "GALLERY";
@@ -6731,10 +6793,10 @@ public class KkumzService {
     }
 
     private boolean isTextOrDocumentFile(String ext, String mimeType) {
-        if (List.of("txt", "md", "csv", "tsv", "json", "html", "htm", "xml", "docx", "pdf").contains(ext)) {
+        if (ext != null && ext.matches("^(txt|md|csv|tsv|json|html|htm|xml|docx|pdf)$")) {
             return true;
         }
-        return mimeType != null && (mimeType.startsWith("text/") || mimeType.contains("json") || mimeType.contains("xml") || mimeType.contains("pdf"));
+        return mimeType != null && (mimeType.startsWith("text/") || mimeType.matches(".*(json|xml|pdf).*"));
     }
 
     private String extractDocumentText(byte[] bytes, String ext, String mimeType) {
@@ -6761,7 +6823,7 @@ public class KkumzService {
                 String res = docxText.toString().trim();
                 return res.length() > 4000 ? res.substring(0, 4000) : res;
             }
-            if (List.of("txt", "md", "csv", "tsv", "json", "html", "htm", "xml").contains(ext)
+            if ((ext != null && ext.matches("^(txt|md|csv|tsv|json|html|htm|xml)$"))
                     || (mimeType != null && mimeType.startsWith("text/"))) {
                 String utf8 = new String(bytes, StandardCharsets.UTF_8);
                 if (utf8.contains("\uFFFD")) {
@@ -7527,7 +7589,7 @@ public class KkumzService {
 
                     export default defineConfig(({ mode }) => {
                       const env = loadEnv(mode, process.cwd(), '');
-                      const apiTarget = env.VITE_KKUMZ_API_TARGET || 'http://localhost:9580';
+                      const apiTarget = env.VITE_KKUMZ_API_TARGET || '%s';
                       const siteAccessKey = env.VITE_KKUMZ_SITE_ACCESS_KEY || '%s';
 
                       return {
@@ -7547,7 +7609,7 @@ public class KkumzService {
                         },
                       };
                     });
-                    """.formatted(siteAccessKey);
+                    """.formatted(kkumzPublicBaseUrl != null ? kkumzPublicBaseUrl : "", siteAccessKey);
             byPath.put("vite.config.ts", new LinkedHashMap<>(Map.of(
                     "path", "vite.config.ts",
                     "language", "typescript",

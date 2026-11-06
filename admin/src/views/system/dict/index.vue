@@ -14,7 +14,7 @@
       <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate"> 등록</a-button>
       <a-button type="primary" preIcon="ant-design:export-outlined" @click="onExportXls"> Export</a-button>
       <j-upload-button type="primary" preIcon="ant-design:import-outlined" @click="onImportXls">Import</j-upload-button>
-      <a-button type="primary" @click="handlerRefreshCache" preIcon="ant-design:sync-outlined"> 캐시 새로고침</a-button>
+      <a-button type="primary" @click="handlerRefreshCache" preIcon="ant-design:sync-outlined"> 캐시 갱신</a-button>
       <a-button type="primary" @click="openRecycleModal(true)" preIcon="ant-design:hdd-outlined"> 삭제</a-button>
 
       <a-dropdown v-if="selectedRowKeys.length > 0">
@@ -155,7 +155,7 @@
       removeAuthCache(DB_DICT_DATA_KEY);
       const userStore = useUserStore();
       userStore.setAllDictItems(res.result);
-      createMessage.success('캐시 새로고침이 완료되었습니다!');
+      createMessage.success('캐시 갱신이 완료되었습니다!');
     } else {
       createMessage.error('캐시를 새로 고치지 못했습니다!');
     }

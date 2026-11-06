@@ -31,7 +31,7 @@
             <a-col :md="8" :sm="8" v-if="showAdvancedButton">
               <span style="float: left; overflow: hidden" class="table-page-search-submitButtons">
                 <a-col :lg="6">
-                  <a-button type="primary" preIcon="ant-design:reload-outlined" @click="searchReset">새로고침</a-button>
+                  <a-button type="primary" preIcon="ant-design:reload-outlined" @click="searchReset">초기화</a-button>
                   <a-button type="primary" preIcon="ant-design:search-outlined" @click="searchQuery" style="margin-left: 8px">검색</a-button>
                   <a @click="handleToggleSearch" style="margin-left: 8px">
                     {{ toggleSearchStatus ? '닫기' : '확장' }}

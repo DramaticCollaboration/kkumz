@@ -3,9 +3,9 @@
 - **문서 경로**: `services/kkumz/doc/ai/00_AI_Agentization_Plan.md`
 - **표준 프레임워크**: **AgentScope Java (`io.agentscope:agentscope-harness`)**
 - **상위 참조 문서**:
-  - [`../../../docs/00_SyncSeries_통합_동작방식_및_제품군_연동_가이드.md`](../../../docs/00_SyncSeries_통합_동작방식_및_제품군_연동_가이드.md)
-  - [`../../../docs/02_dev/01_agent_specifications.md`](../../../docs/02_dev/01_agent_specifications.md)
-  - [`../../../docs/02_dev/02_mcp_api_protocol.md`](../../../docs/02_dev/02_mcp_api_protocol.md)
+  - [`../../../../docs/00_SyncSeries_통합_동작방식_및_제품군_연동_가이드.md`](../../../../docs/00_SyncSeries_통합_동작방식_및_제품군_연동_가이드.md)
+  - [`../../../../docs/02_dev/01_agent_specifications.md`](../../../../docs/02_dev/01_agent_specifications.md)
+  - [`../../../../docs/02_dev/02_mcp_api_protocol.md`](../../../../docs/02_dev/02_mcp_api_protocol.md)
 
 ---
 

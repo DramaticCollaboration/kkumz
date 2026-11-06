@@ -358,7 +358,7 @@
                 <thead>
                   <tr class="bg-slate-900 text-white">
                     <th
-                      v-for="col in pricingMatrix.columns || ['구분', '기준 인원', '비수기 주중', '비수기 주말', '성수기/연휴', '포함 혜택']"
+                      v-for="col in pricingMatrix.columns || defaultPricingMatrixColumns"
                       :key="col"
                       class="py-4 px-5 font-extrabold whitespace-nowrap"
                     >
@@ -824,7 +824,7 @@
                     <input
                       v-model="cmsFormInput.phone"
                       type="tel"
-                      placeholder="010-0000-0000"
+                      placeholder="연락처를 입력하세요 (숫자 및 하이픈)"
                       class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-slate-900"
                     />
                   </div>
@@ -1230,13 +1230,22 @@ const featureBlocks = computed<Record<string, any>>(
   () => runtime.value?.featureBlocks || runtime.value?.layoutSchema?.featureBlocks || {},
 );
 
+const defaultPricingMatrixColumns = [
+  { id: 'tier', label: '구분' },
+  { id: 'capacity', label: '기준 인원' },
+  { id: 'weekday', label: '비수기 주중' },
+  { id: 'weekend', label: '비수기 주말' },
+  { id: 'peak', label: '성수기/연휴' },
+  { id: 'note', label: '포함 혜택' },
+].map((c) => c.label);
+
 const pricingMatrix = computed<any>(() => {
   const raw = featureBlocks.value?.pricingMatrix;
   if (!raw) return null;
   if (Array.isArray(raw)) {
     return {
       title: '시즌 · 요일 · 인원별 상세 요금 안내',
-      columns: ['구분', '기준 인원', '비수기 주중', '비수기 주말', '성수기/연휴', '포함 혜택'],
+      columns: defaultPricingMatrixColumns,
       rows: raw,
     };
   }
@@ -1270,7 +1279,7 @@ const dynamicCustomFields = computed<any[]>(() => {
     (f: any) =>
       f &&
       f.key &&
-      !['applicantName', 'phone', 'message'].includes(String(f.key)),
+      !/^(applicantName|phone|message)$/.test(String(f.key)),
   );
 });
 
