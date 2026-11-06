@@ -45,7 +45,7 @@
   };
   const [registerTable, { reload, setProps }] = useTable({
     //RowKey를 구성해야 합니다. 그렇지 않으면 경고가 표시됩니다.
-    rowKey:'dictId',
+    rowKey: 'id',
     api: itemList,
     columns: dictItemColumns,
     formConfig: {

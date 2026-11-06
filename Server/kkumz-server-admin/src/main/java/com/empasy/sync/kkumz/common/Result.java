@@ -28,7 +28,7 @@ public class Result<T> {
         return Result.<T>builder()
                 .code(200)
                 .success(true)
-                .message("OK")
+                .message("")
                 .result(payload)
                 .data(payload)
                 .timestamp(System.currentTimeMillis())

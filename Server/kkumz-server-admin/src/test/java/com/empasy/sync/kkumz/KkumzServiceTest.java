@@ -441,4 +441,58 @@ class KkumzServiceTest {
         assertEquals("HYBRID", updated.get("siteType"));
         verify(jdbcTemplate, atLeastOnce()).update(contains("UPDATE kkumz_idea"), any(), any(), eq("HYBRID"), any(), any(), any(), any(), any(), eq("idea-01137479"));
     }
+
+    @Test
+    @DisplayName("12. [자가 치유형 스캐폴딩] 로고(selectedLogoSvg)·디자인 토큰 미선택 상태에서도 예외 없이 자동 복구 및 프로비저닝 검증")
+    void testScaffoldSiteSelfHealingWithoutSelectedLogo() {
+        Map<String, Object> incompleteIdeaRow = new LinkedHashMap<>();
+        incompleteIdeaRow.put("id", "idea-cb4a9d2d");
+        incompleteIdeaRow.put("authorUsername", "admin");
+        incompleteIdeaRow.put("authorDisplayName", "최고관리자");
+        incompleteIdeaRow.put("title", "맑은물 민박 홈페이지를 더 화려하게 만들고 싶어");
+        incompleteIdeaRow.put("promptText", "충남 공주 계곡 옆 자연 친화적인 맑은물 민박 홈페이지");
+        incompleteIdeaRow.put("siteType", "CMS_SITE");
+        incompleteIdeaRow.put("category", "숙박 · 민박 · 스테이");
+        incompleteIdeaRow.put("selectedBrandName", "");
+        incompleteIdeaRow.put("selectedSiteSlug", "");
+        incompleteIdeaRow.put("selectedLogoSvg", "");
+        incompleteIdeaRow.put("designTokensJson", "{}");
+        incompleteIdeaRow.put("enabledFeaturesJson", "[\"CMS_DYNAMIC_FORM\",\"CMS_PHOTO_GALLERY\"]");
+
+        Map<String, Object> provisionedSiteRow = new LinkedHashMap<>();
+        provisionedSiteRow.put("id", "site-self-healed");
+        provisionedSiteRow.put("ideaId", "idea-cb4a9d2d");
+        provisionedSiteRow.put("siteSlug", "malgeunmul-minbak");
+        provisionedSiteRow.put("siteName", "맑은물 민박");
+        provisionedSiteRow.put("siteType", "CMS_SITE");
+        provisionedSiteRow.put("activeVersion", 1);
+        provisionedSiteRow.put("cmsSiteId", 105L);
+        provisionedSiteRow.put("ownerUsername", "admin");
+
+        Map<String, Object> releaseRow = new LinkedHashMap<>();
+        releaseRow.put("id", "rel-self-healed-v1");
+        releaseRow.put("versionNo", 1);
+        releaseRow.put("deployMode", "DYNAMIC_SDUI");
+        releaseRow.put("releaseNote", "Initial Live Multisite Provisioning");
+        releaseRow.put("designTokensJson", "{\"primary\":\"#0284c7\"}");
+        releaseRow.put("layoutSchemaJson", "{\"heroTitle\":\"맑은물 민박\"}");
+        releaseRow.put("webideFilesJson", "[]");
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_idea"), eq("idea-cb4a9d2d")))
+                .thenReturn(List.of(incompleteIdeaRow));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site"), eq("idea-cb4a9d2d")))
+                .thenReturn(List.of(provisionedSiteRow));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), anyString(), anyString()))
+                .thenReturn(List.of(provisionedSiteRow));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site_release"), eq("site-self-healed"), eq(1)))
+                .thenReturn(List.of(releaseRow));
+
+        Map<String, Object> runtime = assertDoesNotThrow(() -> kkumzService.scaffoldSite("idea-cb4a9d2d"));
+        assertNotNull(runtime);
+        verify(jdbcTemplate, atLeastOnce()).update(
+                contains("selected_logo_svg = ?"),
+                anyString(), anyString(), anyString(), anyString(),
+                anyString(), anyString(), contains("<svg"), anyString(), eq("idea-cb4a9d2d")
+        );
+    }
 }

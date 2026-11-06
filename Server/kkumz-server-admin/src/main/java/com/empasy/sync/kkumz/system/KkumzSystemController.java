@@ -38,7 +38,7 @@ public class KkumzSystemController {
 
     @GetMapping("/logout")
     public Result<String> logout() {
-        return Result.OK("로그아웃되었습니다.");
+        return Result.OK("");
     }
 
     @GetMapping("/user/getUserInfo")
@@ -93,18 +93,18 @@ public class KkumzSystemController {
 
     @PostMapping("/user")
     public Result<Map<String, Object>> createUser(@RequestBody SaveUserRequest request) {
-        return Result.OK(systemService.saveUser(request));
+        return Result.OK("등록되었습니다.", systemService.saveUser(request));
     }
 
     @PutMapping("/user")
     public Result<Map<String, Object>> updateUser(@RequestBody SaveUserRequest request) {
-        return Result.OK(systemService.saveUser(request));
+        return Result.OK("수정되었습니다.", systemService.saveUser(request));
     }
 
     @DeleteMapping("/user/{id}")
     public Result<String> deleteUser(@PathVariable String id) {
         systemService.deleteUser(id);
-        return Result.OK("사용자가 삭제 처리되었습니다.");
+        return Result.OK("삭제되었습니다.", null);
     }
 
     @GetMapping("/role/list")
@@ -118,18 +118,18 @@ public class KkumzSystemController {
 
     @PostMapping("/role")
     public Result<Map<String, Object>> createRole(@RequestBody SaveRoleRequest request) {
-        return Result.OK(systemService.saveRole(request));
+        return Result.OK("등록되었습니다.", systemService.saveRole(request));
     }
 
     @PutMapping("/role")
     public Result<Map<String, Object>> updateRole(@RequestBody SaveRoleRequest request) {
-        return Result.OK(systemService.saveRole(request));
+        return Result.OK("수정되었습니다.", systemService.saveRole(request));
     }
 
     @DeleteMapping("/role/{id}")
     public Result<String> deleteRole(@PathVariable String id) {
         systemService.deleteRole(id);
-        return Result.OK("역할이 삭제되었습니다.");
+        return Result.OK("삭제되었습니다.", null);
     }
 
     @GetMapping("/permission/list")
@@ -139,18 +139,18 @@ public class KkumzSystemController {
 
     @PostMapping("/permission")
     public Result<Map<String, Object>> createPermission(@RequestBody SavePermissionRequest request) {
-        return Result.OK(systemService.savePermission(request));
+        return Result.OK("등록되었습니다.", systemService.savePermission(request));
     }
 
     @PutMapping("/permission")
     public Result<Map<String, Object>> updatePermission(@RequestBody SavePermissionRequest request) {
-        return Result.OK(systemService.savePermission(request));
+        return Result.OK("수정되었습니다.", systemService.savePermission(request));
     }
 
     @DeleteMapping("/permission/{id}")
     public Result<String> deletePermission(@PathVariable String id) {
         systemService.deletePermission(id);
-        return Result.OK("메뉴 권한이 삭제되었습니다.");
+        return Result.OK("삭제되었습니다.", null);
     }
 
     @GetMapping("/dict/list")
@@ -172,22 +172,29 @@ public class KkumzSystemController {
 
     @PostMapping("/dict")
     public Result<Map<String, Object>> createDict(@RequestBody SaveDictRequest request) {
-        return Result.OK(systemService.saveDict(request));
+        return Result.OK("등록되었습니다.", systemService.saveDict(request));
     }
 
     @PutMapping("/dict")
     public Result<Map<String, Object>> updateDict(@RequestBody SaveDictRequest request) {
-        return Result.OK(systemService.saveDict(request));
+        return Result.OK("수정되었습니다.", systemService.saveDict(request));
     }
 
     @PostMapping("/dict/item")
     public Result<Map<String, Object>> saveDictItem(@RequestBody SaveDictItemRequest request) {
-        return Result.OK(systemService.saveDictItem(request));
+        boolean isUpdate = request != null && request.getId() != null && !request.getId().isBlank();
+        return Result.OK(isUpdate ? "수정되었습니다." : "등록되었습니다.", systemService.saveDictItem(request));
+    }
+
+    @DeleteMapping("/dict/item/{id}")
+    public Result<String> deleteDictItem(@PathVariable String id) {
+        systemService.deleteDictItem(id);
+        return Result.OK("삭제되었습니다.", null);
     }
 
     @DeleteMapping("/dict/{id}")
     public Result<String> deleteDict(@PathVariable String id) {
         systemService.deleteDict(id);
-        return Result.OK("공통 사전 코드가 삭제되었습니다.");
+        return Result.OK("삭제되었습니다.", null);
     }
 }

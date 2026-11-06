@@ -3,9 +3,10 @@ import { Modal } from 'ant-design-vue';
 
 enum Api {
   list = '/api/v1/kkumz/sys/permission/list',
-  save = '/api/v1/kkumz/sys/permission/add',
-  edit = '/api/v1/kkumz/sys/permission/edit',
-  delete = '/api/v1/kkumz/sys/permission/delete',
+  permission = '/api/v1/kkumz/sys/permission',
+  save = '/api/v1/kkumz/sys/permission',
+  edit = '/api/v1/kkumz/sys/permission',
+  delete = '/api/v1/kkumz/sys/permission',
   deleteBatch = '/api/v1/kkumz/sys/permission/deleteBatch',
   ruleList = '/api/v1/kkumz/sys/permission/queryPermissionRule',
   ruleSave = '/api/v1/kkumz/sys/permission/addPermissionRule',
@@ -20,13 +21,13 @@ enum Api {
  */
 export const list = (params) => {
   return defHttp.get({ url: Api.list, params });
-}
+};
 
 /**
  * 삭제메뉴
  */
 export const deleteMenu = (params, handleSuccess) => {
-  return defHttp.delete({ url: Api.delete, params }, { joinParamsToUrl: true }).then(() => {
+  return defHttp.delete({ url: `${Api.permission}/${params.id}` }, { successMessageMode: 'success' }).then(() => {
     handleSuccess();
   });
 };
@@ -40,10 +41,15 @@ export const batchDeleteMenu = (params, handleSuccess) => {
     content: '선택한 데이터 삭제 여부',
     okText: '확인',
     cancelText: '취소',
-    onOk: () => {
-      return defHttp.delete({ url: Api.deleteBatch, data: params }, { joinParamsToUrl: true }).then(() => {
-        handleSuccess();
-      });
+    onOk: async () => {
+      const ids = String(params?.ids || '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+      for (const id of ids) {
+        await defHttp.delete({ url: `${Api.permission}/${id}` }, { successMessageMode: 'none' });
+      }
+      handleSuccess();
     },
   });
 };
@@ -52,8 +58,10 @@ export const batchDeleteMenu = (params, handleSuccess) => {
  * @param params
  */
 export const saveOrUpdateMenu = (params, isUpdate) => {
-  let url = isUpdate ? Api.edit : Api.save;
-  return defHttp.post({ url: url, params });
+  if (isUpdate) {
+    return defHttp.put({ url: Api.permission, params }, { successMessageMode: 'success' });
+  }
+  return defHttp.post({ url: Api.permission, params }, { successMessageMode: 'success' });
 };
 /**
  * 메뉴 데이터 권한 목록 인터페이스
@@ -66,14 +74,14 @@ export const dataRuleList = (params) => defHttp.get({ url: Api.ruleList, params 
  */
 export const saveOrUpdateRule = (params, isUpdate) => {
   let url = isUpdate ? Api.ruleEdit : Api.ruleSave;
-  return defHttp.post({ url: url, params });
+  return defHttp.post({ url: url, params }, { successMessageMode: 'success' });
 };
 
 /**
  * 데이터 권한 삭제
  */
 export const deleteRule = (params, handleSuccess) => {
-  return defHttp.delete({ url: Api.ruleDelete, params }, { joinParamsToUrl: true }).then(() => {
+  return defHttp.delete({ url: Api.ruleDelete, params }, { joinParamsToUrl: true, successMessageMode: 'success' }).then(() => {
     handleSuccess();
   });
 };
@@ -87,7 +95,11 @@ export const ajaxGetDictItems = (params) => defHttp.get({ url: `/api/v1/kkumz/sy
  * 고유한 검증
  * @param params
  */
-export const getCheckPermDuplication = (params) => defHttp.get({ url: Api.checkPermDuplication, params }, { isTransformResponse: false });
+export const getCheckPermDuplication = async (_params) => ({
+  success: true,
+  code: 200,
+  message: '',
+});
 
 /**
  * 메뉴가 있는지 확인

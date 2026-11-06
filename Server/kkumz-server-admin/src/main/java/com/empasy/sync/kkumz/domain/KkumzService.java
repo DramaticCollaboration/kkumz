@@ -532,7 +532,30 @@ public class KkumzService {
                 WHERE idea_id = ?
                 ORDER BY created_at DESC
                 """, ideaId);
+        String selectedSlugForSite = idea.get("selectedSiteSlug") != null
+                ? String.valueOf(idea.get("selectedSiteSlug")).trim()
+                : "";
+        if (sites.isEmpty() && !selectedSlugForSite.isEmpty()) {
+            sites = jdbcTemplate.queryForList("""
+                    SELECT id,
+                           site_slug AS "siteSlug",
+                           site_name AS "siteName",
+                           site_type AS "siteType",
+                           deploy_mode AS "deployMode",
+                           active_version AS "activeVersion",
+                           deployed_url AS "deployedUrl",
+                           shop_site_id AS "shopSiteId",
+                           cms_site_id AS "cmsSiteId",
+                           status
+                    FROM kkumz_site
+                    WHERE site_slug = ?
+                    ORDER BY created_at DESC
+                    """, selectedSlugForSite);
+        }
         idea.put("deployedSites", sites);
+        if (!sites.isEmpty()) {
+            idea.put("site", sites.get(0));
+        }
 
         return idea;
     }
@@ -665,12 +688,17 @@ public class KkumzService {
 
         Map<String, Object> parsedAnalysis = new LinkedHashMap<>();
         try {
-            String rawAiJson = ensureAiGateway().executeStagePrompt("INTENT_ADVISOR", Map.of(
-                    "title", title,
-                    "promptText", promptText,
-                    "assetsSummary", assetsSummary.toString(),
-                    "catalogSummary", catalogSummary.toString()
-            ));
+            String rawAiJson = ensureAiGateway().executeStagePrompt(
+                    "INTENT_ADVISOR",
+                    Map.of(
+                            "title", title,
+                            "promptText", promptText,
+                            "assetsSummary", assetsSummary.toString(),
+                            "catalogSummary", catalogSummary.toString()
+                    ),
+                    java.time.Duration.ofSeconds(18),
+                    1200
+            );
             parsedAnalysis.putAll(parseJsonObject(rawAiJson));
         } catch (Exception e) {
             log.warn("INTENT_ADVISOR LLM 호출 경고 (DB 카탈로그 키워드 매칭 엔진으로 보완): {}", e.getMessage());
@@ -2002,27 +2030,21 @@ public class KkumzService {
         if ("AUTO".equalsIgnoreCase(category) && aiIntentAnalysis.get("category") != null) {
             category = String.valueOf(aiIntentAnalysis.get("category"));
         }
-        String brandName = idea.get("selectedBrandName") != null && !String.valueOf(idea.get("selectedBrandName")).isBlank()
-                ? String.valueOf(idea.get("selectedBrandName")).trim()
-                : String.valueOf(idea.get("title")).trim();
-        String siteSlug = idea.get("selectedSiteSlug") != null && !String.valueOf(idea.get("selectedSiteSlug")).isBlank()
-                ? String.valueOf(idea.get("selectedSiteSlug")).trim()
-                : normalizeSlug(brandName);
-        String logoSvg = idea.get("selectedLogoSvg") != null ? String.valueOf(idea.get("selectedLogoSvg")) : "";
-        if (logoSvg.isBlank()) {
-            throw new IllegalStateException("사이트 스캐폴딩 전 브랜드 로고(selectedLogoSvg) 선택이 완료되어야 합니다: ideaId=" + ideaId);
-        }
+        String brandName = resolveScaffoldBrandName(idea);
+        String siteSlug = resolveScaffoldSiteSlug(idea, brandName);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> rawTokens = (Map<String, Object>) idea.get("designTokens");
+        Map<String, Object> tokens = resolveOrProvisionDesignTokens(idea, brandName, siteSlug, category, rawTokens);
+
+        String rawLogoSvg = idea.get("selectedLogoSvg") != null ? String.valueOf(idea.get("selectedLogoSvg")) : "";
+        String logoSvg = resolveOrProvisionLogoSvg(ideaId, idea, brandName, siteSlug, category, tokens, rawLogoSvg);
+
         String brandSlogan = resolveBrandSlogan(idea, brandName, category, aiIntentAnalysis);
         String heroStyle = aiIntentAnalysis.get("heroStyle") != null && !String.valueOf(aiIntentAnalysis.get("heroStyle")).isBlank()
                 ? String.valueOf(aiIntentAnalysis.get("heroStyle"))
                 : ("COMMERCE".equalsIgnoreCase(siteType) ? "PROMO_COMMERCE" : "FULL_SCENIC");
         String deployMode = "DYNAMIC_SDUI";
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> tokens = (Map<String, Object>) idea.get("designTokens");
-        if (tokens == null || tokens.isEmpty()) {
-            throw new IllegalStateException("디자인 토큰(designTokens) 정보가 존재하지 않습니다: ideaId=" + ideaId);
-        }
 
         Map<String, Object> layoutSchema = new LinkedHashMap<>();
         layoutSchema.put("heroTitle", brandName);
@@ -2046,7 +2068,7 @@ public class KkumzService {
         }
 
         applyUploadedAssetsToSiteProvisioning(ideaId, brandName, layoutSchema, shopSiteId, cmsSiteId);
-        provisionDomainSiteContent(idea, brandName, brandSlogan, category, enabledFeatures, catalog, layoutSchema, shopSiteId, cmsSiteId);
+        provisionDomainSiteContent(idea, brandName, siteSlug, brandSlogan, category, enabledFeatures, catalog, layoutSchema, shopSiteId, cmsSiteId);
 
         List<Map<String, Object>> existingSite = jdbcTemplate.queryForList(
                 "SELECT id, active_version AS \"activeVersion\" FROM kkumz_site WHERE idea_id = ? OR site_slug = ? ORDER BY updated_at DESC LIMIT 1",
@@ -2060,13 +2082,13 @@ public class KkumzService {
             nextVer = ((Number) existingSite.get(0).get("activeVersion")).intValue() + 1;
             jdbcTemplate.update("""
                     UPDATE kkumz_site
-                    SET site_slug = ?, site_name = ?, site_type = ?, category = ?, brand_slogan = ?, logo_svg = ?,
+                    SET idea_id = ?, site_slug = ?, site_name = ?, site_type = ?, category = ?, brand_slogan = ?, logo_svg = ?,
                         deployed_url = ?, custom_domain = ?,
                         shop_site_id = COALESCE(?, shop_site_id), cms_site_id = COALESCE(?, cms_site_id),
                         deploy_mode = ?, active_version = ?, status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                     """,
-                    siteSlug, brandName, siteType, category, brandSlogan, logoSvg,
+                    ideaId, siteSlug, brandName, siteType, category, brandSlogan, logoSvg,
                     "/s/" + siteSlug, siteSlug + ".kkumz.io",
                     shopSiteId, cmsSiteId, deployMode, nextVer, siteId
             );
@@ -2122,11 +2144,13 @@ public class KkumzService {
                 UPDATE kkumz_idea
                 SET current_step = 6, status = 'PUBLISHED', site_type = ?, category = ?,
                     enabled_features_json = ?::jsonb, ai_intent_analysis_json = ?::jsonb,
-                    selected_site_slug = ?, selected_brand_name = ?, updated_at = CURRENT_TIMESTAMP
+                    selected_site_slug = ?, selected_brand_name = ?,
+                    selected_logo_svg = ?, design_tokens_json = ?::jsonb,
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
                 """,
                 siteType, category, toJson(enabledFeatures), toJson(aiIntentAnalysis),
-                siteSlug, brandName, ideaId
+                siteSlug, brandName, logoSvg, toJson(tokens), ideaId
         );
 
         return getSiteRuntime(siteSlug);
@@ -4853,6 +4877,9 @@ public class KkumzService {
                     siteSlug, safeName, safeSlogan
             );
         }
+        if (shopSiteId == null) {
+            return null;
+        }
 
         List<Map<String, Object>> existingCats = shopJdbcTemplate.queryForList(
                 "SELECT id, name FROM pms_product_category WHERE site_id = ? ORDER BY id ASC LIMIT 1",
@@ -4935,6 +4962,9 @@ public class KkumzService {
                     Long.class,
                     resolvedSiteId, safeName, sitePath, dynamicPath
             );
+        }
+        if (cmsSiteId == null) {
+            return null;
         }
 
         short siteIdShort = cmsSiteId.shortValue();
@@ -5749,6 +5779,7 @@ public class KkumzService {
     private void provisionDomainSiteContent(
             Map<String, Object> idea,
             String brandName,
+            String resolvedSiteSlug,
             String brandSlogan,
             String category,
             List<String> enabledFeatures,
@@ -5758,7 +5789,9 @@ public class KkumzService {
             Long cmsSiteId
     ) {
         String ideaId = String.valueOf(idea.get("id"));
-        String siteSlug = String.valueOf(idea.getOrDefault("selectedSiteSlug", normalizeSlug(brandName)));
+        String siteSlug = (resolvedSiteSlug != null && !resolvedSiteSlug.isBlank())
+                ? resolvedSiteSlug
+                : String.valueOf(idea.getOrDefault("selectedSiteSlug", normalizeSlug(brandName)));
         String siteType = String.valueOf(idea.getOrDefault("siteType", "HYBRID"));
         String promptText = String.valueOf(idea.getOrDefault("promptText", ""));
         List<Map<String, Object>> assets = listIdeaAssets(ideaId);
@@ -5783,28 +5816,40 @@ public class KkumzService {
         } catch (Exception ignored) {
         }
 
-        // 2. SITE_CONTENT_PROVISION 프롬프트 템플릿(tpl-kkumz-008) 실행으로 업종 맞춤 콘텐츠 생성
+        boolean alreadyHasFullProvisionedContent =
+                layoutSchema.get("featureBlocks") instanceof Map<?, ?> fb && !fb.isEmpty()
+                && layoutSchema.get("customProducts") instanceof List<?> cp && !cp.isEmpty()
+                && layoutSchema.get("customCmsForm") instanceof Map<?, ?> cf && !cf.isEmpty();
+
+        // 2. 최초 스캐폴딩이거나 핵심 콘텐츠가 비어 있을 때만 SITE_CONTENT_PROVISION(qwen-flash, 25s 타임아웃) 실행
         Map<String, Object> aiContent = new LinkedHashMap<>();
-        try {
-            StringBuilder assetsSummary = new StringBuilder();
-            for (Map<String, Object> a : assets) {
-                assetsSummary.append("- fileUrl=").append(a.get("fileUrl"))
-                        .append(", assetType=").append(a.get("assetType"))
-                        .append(", caption=").append(a.getOrDefault("caption", ""))
-                        .append("\n");
+        if (!alreadyHasFullProvisionedContent) {
+            try {
+                StringBuilder assetsSummary = new StringBuilder();
+                for (Map<String, Object> a : assets) {
+                    assetsSummary.append("- fileUrl=").append(a.get("fileUrl"))
+                            .append(", assetType=").append(a.get("assetType"))
+                            .append(", caption=").append(a.getOrDefault("caption", ""))
+                            .append("\n");
+                }
+                String rawProvisionJson = ensureAiGateway().executeStagePrompt(
+                        "SITE_CONTENT_PROVISION",
+                        Map.of(
+                                "brandName", brandName,
+                                "brandSlogan", brandSlogan,
+                                "siteType", siteType,
+                                "category", category,
+                                "promptText", promptText,
+                                "enabledFeatures", String.join(", ", enabledFeatures),
+                                "assetsSummary", assetsSummary.toString()
+                        ),
+                        java.time.Duration.ofSeconds(25),
+                        1600
+                );
+                aiContent.putAll(parseJsonObject(rawProvisionJson));
+            } catch (Exception e) {
+                log.warn("SITE_CONTENT_PROVISION 호출 경고 (DB 기능 카탈로그 defaultConfig 스키마로 보완): {}", e.getMessage());
             }
-            String rawProvisionJson = ensureAiGateway().executeStagePrompt("SITE_CONTENT_PROVISION", Map.of(
-                    "brandName", brandName,
-                    "brandSlogan", brandSlogan,
-                    "siteType", siteType,
-                    "category", category,
-                    "promptText", promptText,
-                    "enabledFeatures", String.join(", ", enabledFeatures),
-                    "assetsSummary", assetsSummary.toString()
-            ));
-            aiContent.putAll(parseJsonObject(rawProvisionJson));
-        } catch (Exception e) {
-            log.warn("SITE_CONTENT_PROVISION 호출 경고 (DB 기능 카탈로그 defaultConfig 스키마로 보완): {}", e.getMessage());
         }
 
         if (aiContent.get("heroSubtitle") != null && !String.valueOf(aiContent.get("heroSubtitle")).isBlank()
@@ -5847,6 +5892,12 @@ public class KkumzService {
                     brandName, category, (List<Map<String, Object>>) existingProds, assets, shopSiteId
             );
             layoutSchema.put("customProducts", normalizedProds);
+        } else {
+            List<Map<String, Object>> defaultProds = buildDefaultDomainProducts(brandName, brandSlogan, category);
+            List<Map<String, Object>> normalizedProds = normalizeAndSyncProducts(
+                    brandName, category, defaultProds, assets, shopSiteId
+            );
+            layoutSchema.put("customProducts", normalizedProds);
         }
 
         // 5. 매거진/공지(customArticles) 및 SyncCMS cms_content 동기화
@@ -5857,6 +5908,12 @@ public class KkumzService {
             if (!normalizedArts.isEmpty()) {
                 layoutSchema.put("customArticles", normalizedArts);
             }
+        } else if (!(layoutSchema.get("customArticles") instanceof List<?> existingArts && !existingArts.isEmpty())) {
+            List<Map<String, Object>> defaultArts = buildDefaultDomainArticles(brandName, brandSlogan, category);
+            List<Map<String, Object>> normalizedArts = normalizeAndSyncArticles(
+                    brandName, defaultArts, assets, cmsSiteId
+            );
+            layoutSchema.put("customArticles", normalizedArts);
         }
 
         // 6. 동적 폼(customCmsForm) 및 SyncCMS cms_form.schema_json 동기화
@@ -6167,6 +6224,298 @@ public class KkumzService {
             idx++;
         }
         return result;
+    }
+
+    private List<Map<String, Object>> buildDefaultDomainProducts(String brandName, String brandSlogan, String category) {
+        String catLower = category != null ? category.toLowerCase(Locale.ROOT) : "";
+        boolean isStay = catLower.contains("숙박") || catLower.contains("민박") || catLower.contains("스테이")
+                || catLower.contains("펜션") || catLower.contains("캠핑") || catLower.contains("글램핑")
+                || brandName.contains("민박") || brandName.contains("스테이") || brandName.contains("펜션");
+        if (isStay) {
+            return List.of(
+                    new LinkedHashMap<>(Map.of(
+                            "name", brandName + " 시그니처 독채 스테이 (기준 2~4인)",
+                            "subTitle", "자연 풍경을 품은 프라이빗 메인 객실 · 웰컴 다과 및 기본 어메니티 제공",
+                            "description", brandSlogan,
+                            "price", 150000,
+                            "promotionPrice", 130000,
+                            "unit", "박",
+                            "stock", 5,
+                            "productCategoryName", "시그니처 객실",
+                            "badge", "SIGNATURE"
+                    )),
+                    new LinkedHashMap<>(Map.of(
+                            "name", brandName + " 패밀리 · 단체 온돌 스위트 (기준 4~8인)",
+                            "subTitle", "가족 및 소모임을 위한 여유로운 거실 + 침실 + 전용 바비큐 데크 패키지",
+                            "description", "넓은 평상과 전용 다이닝 테라스를 함께 이용할 수 있는 대표 패밀리 객실입니다.",
+                            "price", 220000,
+                            "promotionPrice", 190000,
+                            "unit", "박",
+                            "stock", 4,
+                            "productCategoryName", "패밀리·단체 객실",
+                            "badge", "BEST"
+                    )),
+                    new LinkedHashMap<>(Map.of(
+                            "name", brandName + " 프라이빗 평상 · 당일 피크닉 대여 패키지",
+                            "subTitle", "당일(10:00~18:00) 자연 속 휴식과 바비큐·다과를 즐기는 프라이빗 대여 프로그램",
+                            "description", "숙박 없이도 하루 동안 온전히 쉬어갈 수 있는 당일 전용 공간 대여권입니다.",
+                            "price", 80000,
+                            "promotionPrice", 65000,
+                            "unit", "회",
+                            "stock", 8,
+                            "productCategoryName", "당일 프로그램",
+                            "badge", "SEASONAL"
+                    ))
+            );
+        }
+        return List.of(
+                new LinkedHashMap<>(Map.of(
+                        "name", brandName + " 시그니처 대표 컬렉션",
+                        "subTitle", brandSlogan,
+                        "description", brandName + "의 철학과 품질 기준을 담아 선보이는 대표 시그니처 라인업입니다.",
+                        "price", 68000,
+                        "promotionPrice", 58000,
+                        "unit", "세트",
+                        "stock", 25,
+                        "productCategoryName", category != null && !category.isBlank() ? category : "시그니처",
+                        "badge", "SIGNATURE"
+                )),
+                new LinkedHashMap<>(Map.of(
+                        "name", brandName + " 프리미엄 스페셜 에디션 패키지",
+                        "subTitle", "선물용 및 프리미엄 고객을 위한 올인원 큐레이션 구성",
+                        "description", "가장 인기 있는 핵심 구성을 한데 모은 스페셜 패키지입니다.",
+                        "price", 115000,
+                        "promotionPrice", 98000,
+                        "unit", "세트",
+                        "stock", 15,
+                        "productCategoryName", category != null && !category.isBlank() ? category : "프리미엄",
+                        "badge", "BEST"
+                )),
+                new LinkedHashMap<>(Map.of(
+                        "name", brandName + " 스타터 트라이얼 & 체험권",
+                        "subTitle", "처음 방문하시는 고객을 위한 부담 없는 입문 구성",
+                        "description", brandName + "의 핵심 매력을 경험해 볼 수 있는 스타터 프로그램입니다.",
+                        "price", 35000,
+                        "promotionPrice", 29000,
+                        "unit", "건",
+                        "stock", 40,
+                        "productCategoryName", "스타터·체험",
+                        "badge", "NEW"
+                ))
+        );
+    }
+
+    private List<Map<String, Object>> buildDefaultDomainArticles(String brandName, String brandSlogan, String category) {
+        return List.of(
+                new LinkedHashMap<>(Map.of(
+                        "title", "[브랜드 스토리] " + brandName + " — " + brandSlogan,
+                        "categoryName", "브랜드 스토리",
+                        "summary", brandName + "이 추구하는 공간의 철학과 사계절 자연스러운 휴식의 가치를 소개합니다."
+                )),
+                new LinkedHashMap<>(Map.of(
+                        "title", "[이용 및 예약 안내] " + brandName + " 100% 즐기는 시그니처 가이드",
+                        "categoryName", "이용 가이드",
+                        "summary", "방문 전 확인하면 좋은 체크인·이용 코스, 주변 추천 명소 및 예약 팁을 정리했습니다."
+                ))
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    private String resolveScaffoldBrandName(Map<String, Object> idea) {
+        if (idea.get("selectedBrandName") != null && !String.valueOf(idea.get("selectedBrandName")).isBlank()) {
+            return String.valueOf(idea.get("selectedBrandName")).trim();
+        }
+        if (idea.get("nameSuggestions") instanceof List<?> names && !names.isEmpty()) {
+            for (Object o : names) {
+                if (o instanceof Map<?, ?> m && Boolean.TRUE.equals(m.get("isSelected")) && m.get("brandName") != null) {
+                    String bn = String.valueOf(m.get("brandName")).trim();
+                    if (!bn.isBlank()) {
+                        return bn;
+                    }
+                }
+            }
+            Object first = names.get(0);
+            if (first instanceof Map<?, ?> m && m.get("brandName") != null) {
+                String bn = String.valueOf(m.get("brandName")).trim();
+                if (!bn.isBlank()) {
+                    return bn;
+                }
+            }
+        }
+        String rawTitle = String.valueOf(idea.getOrDefault("title", "")).trim();
+        String cleaned = rawTitle
+                .replaceAll("(홈페이지를?|사이트를?|웹사이트를?|플랫폼을?|스토어를?)?\\s*(더\\s*화려하게|멋지게|예쁘게|새로|깔끔하게)?\\s*(만들고\\s*싶어요?|만들어\\s*주세요|만들어\\s*줘|구축하고\\s*싶어요?|원해요?|부탁해요?)\\.?$", "")
+                .replaceAll("\\s*(홈페이지|웹사이트|사이트|공식몰|스토어)$", "")
+                .trim();
+        if (!cleaned.isBlank() && cleaned.length() <= 30) {
+            return cleaned;
+        }
+        return !rawTitle.isBlank() ? (rawTitle.length() > 24 ? rawTitle.substring(0, 24).trim() : rawTitle) : "시그니처 브랜드";
+    }
+
+    @SuppressWarnings("unchecked")
+    private String resolveScaffoldSiteSlug(Map<String, Object> idea, String brandName) {
+        if (idea.get("selectedSiteSlug") != null && !String.valueOf(idea.get("selectedSiteSlug")).isBlank()) {
+            return String.valueOf(idea.get("selectedSiteSlug")).trim();
+        }
+        if (idea.get("nameSuggestions") instanceof List<?> names && !names.isEmpty()) {
+            for (Object o : names) {
+                if (o instanceof Map<?, ?> m && Boolean.TRUE.equals(m.get("isSelected")) && m.get("siteSlug") != null) {
+                    String slug = String.valueOf(m.get("siteSlug")).trim();
+                    if (!slug.isBlank()) {
+                        return slug;
+                    }
+                }
+            }
+            Object first = names.get(0);
+            if (first instanceof Map<?, ?> m && m.get("siteSlug") != null) {
+                String slug = String.valueOf(m.get("siteSlug")).trim();
+                if (!slug.isBlank()) {
+                    return slug;
+                }
+            }
+        }
+        try {
+            List<Map<String, Object>> existingByBrand = jdbcTemplate.queryForList(
+                    "SELECT site_slug AS \"siteSlug\" FROM kkumz_site WHERE site_name = ? ORDER BY updated_at DESC LIMIT 1",
+                    brandName
+            );
+            if (!existingByBrand.isEmpty() && existingByBrand.get(0).get("siteSlug") != null) {
+                String foundSlug = String.valueOf(existingByBrand.get(0).get("siteSlug")).trim();
+                if (!foundSlug.isBlank()) {
+                    return foundSlug;
+                }
+            }
+            List<Map<String, Object>> existingIdeaByBrand = jdbcTemplate.queryForList(
+                    "SELECT selected_site_slug AS \"siteSlug\" FROM kkumz_idea WHERE selected_brand_name = ? AND selected_site_slug IS NOT NULL AND selected_site_slug <> '' ORDER BY updated_at DESC LIMIT 1",
+                    brandName
+            );
+            if (!existingIdeaByBrand.isEmpty() && existingIdeaByBrand.get(0).get("siteSlug") != null) {
+                String foundSlug = String.valueOf(existingIdeaByBrand.get(0).get("siteSlug")).trim();
+                if (!foundSlug.isBlank()) {
+                    return foundSlug;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return normalizeSlug(brandName);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> resolveOrProvisionDesignTokens(
+            Map<String, Object> idea,
+            String brandName,
+            String siteSlug,
+            String category,
+            Map<String, Object> existingTokens
+    ) {
+        if (existingTokens != null && !existingTokens.isEmpty() && existingTokens.get("primary") != null) {
+            return new LinkedHashMap<>(existingTokens);
+        }
+        if (idea.get("logoSuggestions") instanceof List<?> logos && !logos.isEmpty()) {
+            for (Object o : logos) {
+                if (o instanceof Map<?, ?> m && Boolean.TRUE.equals(m.get("isSelected")) && m.get("colorPalette") instanceof Map<?, ?> pal && !pal.isEmpty()) {
+                    Map<String, Object> tokens = new LinkedHashMap<>();
+                    pal.forEach((k, v) -> tokens.put(String.valueOf(k), v));
+                    return tokens;
+                }
+            }
+            Object first = logos.get(0);
+            if (first instanceof Map<?, ?> m && m.get("colorPalette") instanceof Map<?, ?> pal && !pal.isEmpty()) {
+                Map<String, Object> tokens = new LinkedHashMap<>();
+                pal.forEach((k, v) -> tokens.put(String.valueOf(k), v));
+                return tokens;
+            }
+        }
+        try {
+            List<Map<String, Object>> siblingIdeas = jdbcTemplate.queryForList(
+                    "SELECT design_tokens_json::text AS \"tokensJson\" FROM kkumz_idea WHERE (selected_brand_name = ? OR selected_site_slug = ?) AND design_tokens_json IS NOT NULL AND design_tokens_json::text <> '{}' ORDER BY updated_at DESC LIMIT 1",
+                    brandName, siteSlug
+            );
+            if (!siblingIdeas.isEmpty()) {
+                Map<String, Object> parsed = parseJsonObject(String.valueOf(siblingIdeas.get(0).get("tokensJson")));
+                if (!parsed.isEmpty()) {
+                    return parsed;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        Map<String, Object> defaults = new LinkedHashMap<>();
+        defaults.put("primary", "#14532d");
+        defaults.put("secondary", "#166534");
+        defaults.put("accent", "#d97706");
+        defaults.put("surface", "#f8fafc");
+        defaults.put("radius", "14px");
+        return defaults;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String resolveOrProvisionLogoSvg(
+            String ideaId,
+            Map<String, Object> idea,
+            String brandName,
+            String siteSlug,
+            String category,
+            Map<String, Object> tokens,
+            String existingLogoSvg
+    ) {
+        if (existingLogoSvg != null && !existingLogoSvg.isBlank()) {
+            return replaceBrandTextInSvg(existingLogoSvg, brandName, List.of(brandName));
+        }
+        if (idea.get("logoSuggestions") instanceof List<?> logos && !logos.isEmpty()) {
+            for (Object o : logos) {
+                if (o instanceof Map<?, ?> m && Boolean.TRUE.equals(m.get("isSelected")) && m.get("svgCode") != null) {
+                    String svg = String.valueOf(m.get("svgCode")).trim();
+                    if (!svg.isBlank()) {
+                        return replaceBrandTextInSvg(svg, brandName, List.of(brandName));
+                    }
+                }
+            }
+            Object first = logos.get(0);
+            if (first instanceof Map<?, ?> m && m.get("svgCode") != null) {
+                String svg = String.valueOf(m.get("svgCode")).trim();
+                if (!svg.isBlank()) {
+                    return replaceBrandTextInSvg(svg, brandName, List.of(brandName));
+                }
+            }
+        }
+        try {
+            List<Map<String, Object>> siblingSites = jdbcTemplate.queryForList(
+                    "SELECT logo_svg AS \"logoSvg\" FROM kkumz_site WHERE (site_name = ? OR site_slug = ?) AND logo_svg IS NOT NULL AND logo_svg <> '' ORDER BY updated_at DESC LIMIT 1",
+                    brandName, siteSlug
+            );
+            if (!siblingSites.isEmpty() && siblingSites.get(0).get("logoSvg") != null) {
+                String svg = String.valueOf(siblingSites.get(0).get("logoSvg")).trim();
+                if (!svg.isBlank()) {
+                    return replaceBrandTextInSvg(svg, brandName, List.of(brandName));
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        String primary = String.valueOf(tokens.getOrDefault("primary", "#14532d"));
+        String accent = String.valueOf(tokens.getOrDefault("accent", "#d97706"));
+        String firstChar = !brandName.isBlank() ? escapeXml(brandName.substring(0, 1)) : "B";
+        String cleanBrand = escapeXml(brandName);
+        String generatedSvg = "<svg viewBox=\"0 0 320 90\" xmlns=\"http://www.w3.org/2000/svg\">"
+                + "<rect x=\"10\" y=\"15\" width=\"60\" height=\"60\" rx=\"16\" fill=\"" + escapeXml(primary) + "\"/>"
+                + "<circle cx=\"56\" cy=\"29\" r=\"6\" fill=\"" + escapeXml(accent) + "\"/>"
+                + "<text x=\"40\" y=\"54\" text-anchor=\"middle\" fill=\"#ffffff\" font-family=\"Pretendard, sans-serif\" font-size=\"26\" font-weight=\"800\">" + firstChar + "</text>"
+                + "<text x=\"86\" y=\"54\" fill=\"" + escapeXml(primary) + "\" font-family=\"Pretendard, sans-serif\" font-size=\"24\" font-weight=\"800\">" + cleanBrand + "</text>"
+                + "</svg>";
+
+        try {
+            String logoId = "logo-auto-" + UUID.randomUUID().toString().substring(0, 8);
+            jdbcTemplate.update("""
+                    INSERT INTO kkumz_logo_suggestion (
+                        id, idea_id, style_name, svg_code, color_palette_json, typography_json, tags_json, is_selected, created_at
+                    ) VALUES (?, ?, '시그니처 워드마크 엠블럼', ?, ?::jsonb, '{"headingFont":"Pretendard","bodyFont":"Pretendard"}'::jsonb, '["시그니처","자동생성"]'::jsonb, TRUE, CURRENT_TIMESTAMP)
+                    """,
+                    logoId, ideaId, generatedSvg, toJson(tokens)
+            );
+        } catch (Exception ignored) {
+        }
+        return generatedSvg;
     }
 
     private String summarizeTitle(String promptText) {

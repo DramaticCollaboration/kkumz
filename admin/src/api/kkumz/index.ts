@@ -31,31 +31,49 @@ export const getAdminPromptList = (params?: Recordable) =>
 
 export const saveAdminPrompt = (params: Recordable, isUpdate = false) =>
   isUpdate
-    ? defHttp.put({ url: `${KkumzAdminApi.Prompts}/${encodeURIComponent(params.id)}`, params })
-    : defHttp.post({ url: KkumzAdminApi.Prompts, params });
+    ? defHttp.put(
+        { url: `${KkumzAdminApi.Prompts}/${encodeURIComponent(params.id)}`, params },
+        { successMessageMode: 'success' },
+      )
+    : defHttp.post(
+        { url: KkumzAdminApi.Prompts, params },
+        { successMessageMode: 'success' },
+      );
 
 export const deleteAdminPrompt = (promptId: string) =>
-  defHttp.delete({ url: `${KkumzAdminApi.Prompts}/${encodeURIComponent(promptId)}` });
+  defHttp.delete(
+    { url: `${KkumzAdminApi.Prompts}/${encodeURIComponent(promptId)}` },
+    { successMessageMode: 'none' },
+  );
 
 // 4. 멀티사이트 & 도메인 관제
 export const getAdminSiteList = (params?: Recordable) =>
   defHttp.get({ url: KkumzAdminApi.Sites, params });
 
 export const updateAdminSiteStatus = (siteId: string, params: { status?: string; visibility?: string }) =>
-  defHttp.put({ url: `${KkumzAdminApi.Sites}/${encodeURIComponent(siteId)}/status`, params });
+  defHttp.put(
+    { url: `${KkumzAdminApi.Sites}/${encodeURIComponent(siteId)}/status`, params },
+    { successMessageMode: 'none' },
+  );
 
 export const rollbackAdminSiteRelease = (siteSlug: string, versionNo: number) =>
-  defHttp.post({ url: `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/rollback/${versionNo}` });
+  defHttp.post(
+    { url: `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/rollback/${versionNo}` },
+    { successMessageMode: 'none' },
+  );
 
 // 5. 빌드 파이프라인 & 에러 로그
 export const getAdminBuildList = (params?: Recordable) =>
   defHttp.get({ url: KkumzAdminApi.Builds, params });
 
 export const triggerAdminAiFixBuild = (siteSlug: string, errorContext?: string, username?: string) =>
-  defHttp.post({
-    url: `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/ai-fix-build`,
-    params: { errorContext: errorContext || 'Admin triggered AI build patch', username },
-  });
+  defHttp.post(
+    {
+      url: `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/ai-fix-build`,
+      params: { errorContext: errorContext || 'Admin triggered AI build patch', username },
+    },
+    { successMessageMode: 'none' },
+  );
 
 // 6. 커뮤니티 프로젝트 & 팀빌딩 관리
 export const getAdminProjectList = (params?: Recordable) =>
@@ -69,10 +87,13 @@ export const resolveModerationReport = (
   reportId: string,
   params: { status: string; resolutionNote: string; suspendSite?: boolean; resolvedBy?: string },
 ) =>
-  defHttp.put({
-    url: `${KkumzAdminApi.ModerationReports}/${encodeURIComponent(reportId)}/resolve`,
-    params,
-  });
+  defHttp.put(
+    {
+      url: `${KkumzAdminApi.ModerationReports}/${encodeURIComponent(reportId)}/resolve`,
+      params,
+    },
+    { successMessageMode: 'success' },
+  );
 
 // 8. 서비스 간 연동 API 액세스키 (Access Key / Secret Key) 발급·회전·검증·관리
 export const getAdminApiKeyList = (params?: Recordable) =>
@@ -80,17 +101,35 @@ export const getAdminApiKeyList = (params?: Recordable) =>
 
 export const saveAdminApiKey = (params: Recordable, isUpdate = false) =>
   isUpdate
-    ? defHttp.put({ url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(params.id)}`, params })
-    : defHttp.post({ url: KkumzAdminApi.ApiKeys, params });
+    ? defHttp.put(
+        { url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(params.id)}`, params },
+        { successMessageMode: 'success' },
+      )
+    : defHttp.post(
+        { url: KkumzAdminApi.ApiKeys, params },
+        { successMessageMode: 'success' },
+      );
 
 export const rotateAdminApiKey = (keyId: string) =>
-  defHttp.post({ url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}/rotate` });
+  defHttp.post(
+    { url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}/rotate` },
+    { successMessageMode: 'none' },
+  );
 
 export const updateAdminApiKeyStatus = (keyId: string, status: string) =>
-  defHttp.put({ url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}/status`, params: { status } });
+  defHttp.put(
+    { url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}/status`, params: { status } },
+    { successMessageMode: 'none' },
+  );
 
 export const verifyAdminApiKey = (keyId: string) =>
-  defHttp.post({ url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}/verify` });
+  defHttp.post(
+    { url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}/verify` },
+    { successMessageMode: 'none' },
+  );
 
 export const deleteAdminApiKey = (keyId: string) =>
-  defHttp.delete({ url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}` });
+  defHttp.delete(
+    { url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}` },
+    { successMessageMode: 'none' },
+  );

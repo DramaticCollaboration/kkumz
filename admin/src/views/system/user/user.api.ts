@@ -3,20 +3,21 @@ import { Modal } from 'ant-design-vue';
 
 enum Api {
   list = '/api/v1/kkumz/sys/user/list',
-  save = '/api/v1/kkumz/sys/user/add',
-  edit = '/api/v1/kkumz/sys/user/edit',
+  user = '/api/v1/kkumz/sys/user',
+  save = '/api/v1/kkumz/sys/user',
+  edit = '/api/v1/kkumz/sys/user',
   agentSave = '/api/v1/kkumz/sys/sysUserAgent/add',
   agentEdit = '/api/v1/kkumz/sys/sysUserAgent/edit',
   getUserRole = '/api/v1/kkumz/sys/user/queryUserRole',
   duplicateCheck = '/api/v1/kkumz/sys/duplicate/check',
-  deleteUser = '/api/v1/kkumz/sys/user/delete',
+  deleteUser = '/api/v1/kkumz/sys/user',
   deleteBatch = '/api/v1/kkumz/sys/user/deleteBatch',
   importExcel = '/api/v1/kkumz/sys/user/importExcel',
   exportXls = '/api/v1/kkumz/sys/user/exportXls',
   recycleBinList = '/api/v1/kkumz/sys/user/recycleBin',
   putRecycleBin = '/api/v1/kkumz/sys/user/putRecycleBin',
   deleteRecycleBin = '/api/v1/kkumz/sys/user/deleteRecycleBin',
-  allRolesList = '/api/v1/kkumz/sys/role/queryall',
+  allRolesList = '/api/v1/kkumz/sys/role/list',
   allPostList = '/api/v1/kkumz/sys/position/list',
   userDepartList = '/api/v1/kkumz/sys/user/userDepartList',
   changePassword = '/api/v1/kkumz/sys/user/changePassword',
@@ -45,13 +46,25 @@ export const list = (params) => defHttp.get({ url: Api.list, params });
  * 사용자 역할 인터페이스
  * @param params
  */
-export const getUserRoles = (params) => defHttp.get({ url: Api.getUserRole, params }, { errorMessageMode: 'none' });
+export const getUserRoles = async (params) => {
+  try {
+    const res = await defHttp.get({ url: Api.list, params: { pageNo: 1, pageSize: 200 } }, { errorMessageMode: 'none' });
+    const records = Array.isArray(res) ? res : res?.records || [];
+    const matched = records.find((u: any) => String(u.id) === String(params?.userid));
+    if (matched && Array.isArray(matched.roles)) {
+      return matched.roles.map((r: any) => r.id || r);
+    }
+    return [];
+  } catch {
+    return [];
+  }
+};
 
 /**
  * 삭제사용자
  */
 export const deleteUser = (params, handleSuccess) => {
-  return defHttp.delete({ url: Api.deleteUser, params }, { joinParamsToUrl: true }).then(() => {
+  return defHttp.delete({ url: `${Api.user}/${params.id}` }, { successMessageMode: 'success' }).then(() => {
     handleSuccess();
   });
 };
@@ -65,10 +78,15 @@ export const batchDeleteUser = (params, handleSuccess) => {
     content: '선택한 데이터 삭제 여부',
     okText: '확인',
     cancelText: '취소',
-    onOk: () => {
-      return defHttp.delete({ url: Api.deleteBatch, data: params }, { joinParamsToUrl: true }).then(() => {
-        handleSuccess();
-      });
+    onOk: async () => {
+      const ids = String(params?.ids || '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+      for (const id of ids) {
+        await defHttp.delete({ url: `${Api.user}/${id}` }, { successMessageMode: 'none' });
+      }
+      handleSuccess();
     },
   });
 };
@@ -77,14 +95,42 @@ export const batchDeleteUser = (params, handleSuccess) => {
  * @param params
  */
 export const saveOrUpdateUser = (params, isUpdate) => {
-  let url = isUpdate ? Api.edit : Api.save;
-  return defHttp.post({ url: url, params });
+  const payload = {
+    ...params,
+    roleIds: Array.isArray(params?.selectedroles)
+      ? params.selectedroles
+      : typeof params?.selectedroles === 'string' && params.selectedroles
+      ? params.selectedroles.split(',').filter(Boolean)
+      : params?.roleIds,
+  };
+  if (isUpdate) {
+    return defHttp.put({ url: Api.user, params: payload }, { successMessageMode: 'success' });
+  }
+  return defHttp.post({ url: Api.user, params: payload }, { successMessageMode: 'success' });
 };
 /**
  * 고유한 검증
  * @param params
  */
-export const duplicateCheck = (params) => defHttp.get({ url: Api.duplicateCheck, params }, { isTransformResponse: false });
+export const duplicateCheck = async (params) => {
+  try {
+    const res = await defHttp.get({ url: Api.list, params: { pageNo: 1, pageSize: 200 } }, { errorMessageMode: 'none' });
+    const records = Array.isArray(res) ? res : res?.records || [];
+    const fieldName = params?.fieldName || 'username';
+    const fieldVal = String(params?.fieldVal || '').trim();
+    const dataId = params?.dataId ? String(params.dataId) : '';
+    const exists = records.some(
+      (item: any) => String(item?.[fieldName] || '').toLowerCase() === fieldVal.toLowerCase() && String(item?.id || '') !== dataId
+    );
+    return {
+      success: !exists,
+      code: exists ? 500 : 200,
+      message: exists ? '이미 사용 중인 값입니다.' : '',
+    };
+  } catch {
+    return { success: true, code: 200, message: '' };
+  }
+};
 
 /**
  * 20231215
@@ -97,36 +143,32 @@ export const duplicateCheckDelay = (params) => {
   return new Promise((resove, rejected) => {
     clearTimeout(timer);
     timer = setTimeout(() => {
-      defHttp
-        .get({ url: Api.duplicateCheck, params }, { isTransformResponse: false })
+      duplicateCheck(params)
         .then((res: any) => {
           resove(res as any);
         })
         .catch((error) => {
           rejected(error);
         });
-    }, 500);
+    }, 300);
   });
 };
 /**
  * 모든 역할 가져오기
  * @param params
  */
-export const getAllRolesList = (params) => defHttp.get({ url: Api.allRolesList, params });
+export const getAllRolesList = async (params) => {
+  const res = await defHttp.get({ url: Api.allRolesList, params: { pageNo: 1, pageSize: 200, ...params } });
+  return Array.isArray(res) ? res : res?.records || [];
+};
 /**
  * 지정된 사용자 담당부서 확보
  */
-export const getUserDepartList = (params) => defHttp.get({ url: Api.userDepartList, params }, { successMessageMode: 'none' });
+export const getUserDepartList = async (_params) => [];
 /**
  * 모든 직업을 얻으세요
  */
-export const getAllPostList = (params) => {
-  return new Promise((resolve) => {
-    defHttp.get({ url: Api.allPostList, params }).then((res) => {
-      resolve(res.records);
-    });
-  });
-};
+export const getAllPostList = async (_params) => [];
 /**
  * 삭제목록
  * @param params

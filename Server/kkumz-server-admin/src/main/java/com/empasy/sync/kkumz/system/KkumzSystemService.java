@@ -533,6 +533,11 @@ public class KkumzSystemService {
         jdbcTemplate.update("UPDATE sys_dict SET del_flag = 1, update_time = CURRENT_TIMESTAMP WHERE id = ?", id);
     }
 
+    @Transactional
+    public void deleteDictItem(String id) {
+        jdbcTemplate.update("DELETE FROM sys_dict_item WHERE id = ?", id);
+    }
+
     private Map<String, Object> toPageResult(List<Map<String, Object>> allRecords, int pageNo, int pageSize) {
         int safePageNo = Math.max(1, pageNo);
         int safePageSize = Math.max(1, pageSize);

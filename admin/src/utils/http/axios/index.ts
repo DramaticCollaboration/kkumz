@@ -55,8 +55,26 @@ const transform: AxiosTransform = {
     const { code, result, message, success } = data;
     const hasSuccess = data && Reflect.has(data, 'code') && (code === ResultEnum.SUCCESS || code === 200);
     if (hasSuccess) {
-      if (success && message && options.successMessageMode === 'success') {
-        createMessage.success(message);
+      const method = (res.config?.method || 'GET').toUpperCase();
+      const requestUrl = String(res.config?.url || '');
+      const isGet = method === RequestEnum.GET;
+      const isScreenTransitionOrSilentApi =
+        /\/(login|phoneLogin|logout|thirdLogin|validateLogin|getUserInfo|getUserPermissionByToken|getPermCode|randomImage|sms|thirdSms|checkOnlyUser|duplicate\/check|dictItemCheck|checkRoleCode|checkPermDuplication|analyze-intent|generate\/|scaffold-site|concierge|verify)(\/|\?|$)/i.test(
+          requestUrl
+        );
+      const rawMsg = typeof message === 'string' ? message.trim() : '';
+      const isGenericOk = /^(ok|success|성공|작업 성공|작업성공|쿼리 성공)$/i.test(rawMsg);
+
+      if (!isGet && !isScreenTransitionOrSilentApi && success && options.successMessageMode === 'success') {
+        if (rawMsg && !isGenericOk) {
+          createMessage.success(rawMsg);
+        } else if (method === RequestEnum.DELETE || /\/delete/i.test(requestUrl)) {
+          createMessage.success('삭제되었습니다.');
+        } else if (method === RequestEnum.PUT || /\/(edit|update)(\/|\?|$)/i.test(requestUrl)) {
+          createMessage.success('수정되었습니다.');
+        } else if (method === RequestEnum.POST) {
+          createMessage.success('등록되었습니다.');
+        }
       }
       return result;
     }
@@ -228,7 +246,7 @@ function createAxios(opt?: Partial<CreateAxiosOptions>) {
           joinParamsToUrl: false,
           formatDate: true,
           errorMessageMode: 'message',
-          successMessageMode: 'success',
+          successMessageMode: 'none',
           apiUrl: globSetting.apiUrl,
           urlPrefix: urlPrefix,
           joinTime: true,

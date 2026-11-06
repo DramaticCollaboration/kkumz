@@ -155,11 +155,6 @@
       );
       if (userInfo) {
         failedCount.value = 0;
-        notification.success({
-          message: t('sys.login.loginSuccessTitle'),
-          description: `${t('sys.login.loginSuccessDesc')}: ${userInfo.realname || userInfo.username}`,
-          duration: 3,
-        });
       }
     } catch (error: any) {
       notification.error({

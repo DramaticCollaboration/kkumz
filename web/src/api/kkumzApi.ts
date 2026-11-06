@@ -350,7 +350,9 @@ export const kkumzApi = {
 
   // 4. 멀티사이트 스캐폴딩, 실시간 프리뷰 편집, WebIDE, 빌드 & 배포
   async scaffoldSite(ideaId: string) {
-    const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/scaffold-site`);
+    const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/scaffold-site`, null, {
+      timeout: AI_TIMEOUT,
+    });
     return unwrap<any>(res);
   },
   async chatRefineSite(

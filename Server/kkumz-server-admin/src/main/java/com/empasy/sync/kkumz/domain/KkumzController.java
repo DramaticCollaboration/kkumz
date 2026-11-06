@@ -525,7 +525,7 @@ public class KkumzController {
 
     @PostMapping("/admin/prompts")
     public Result<Map<String, Object>> createAdminPromptTemplate(@RequestBody SavePromptTemplateRequest request) {
-        return Result.OK(kkumzService.saveAdminPromptTemplate(request));
+        return Result.OK("등록되었습니다.", kkumzService.saveAdminPromptTemplate(request));
     }
 
     @PutMapping("/admin/prompts/{promptId}")
@@ -534,13 +534,13 @@ public class KkumzController {
             @RequestBody SavePromptTemplateRequest request
     ) {
         request.setId(promptId);
-        return Result.OK(kkumzService.saveAdminPromptTemplate(request));
+        return Result.OK("수정되었습니다.", kkumzService.saveAdminPromptTemplate(request));
     }
 
     @DeleteMapping("/admin/prompts/{promptId}")
     public Result<String> deleteAdminPromptTemplate(@PathVariable String promptId) {
         kkumzService.deleteAdminPromptTemplate(promptId);
-        return Result.OK("AI 프롬프트 템플릿이 삭제되었습니다.");
+        return Result.OK("삭제되었습니다.", null);
     }
 
     @GetMapping("/admin/sites")
@@ -588,7 +588,7 @@ public class KkumzController {
             @PathVariable String reportId,
             @RequestBody ResolveReportRequest request
     ) {
-        return Result.OK(kkumzService.resolveModerationReport(reportId, request));
+        return Result.OK("심사 처리가 저장되었습니다.", kkumzService.resolveModerationReport(reportId, request));
     }
 
     // =========================================================================
@@ -607,7 +607,7 @@ public class KkumzController {
 
     @PostMapping("/admin/api-keys")
     public Result<Map<String, Object>> createAdminApiKey(@RequestBody SaveApiAccessKeyRequest request) {
-        return Result.OK(kkumzService.saveAdminApiKey(request));
+        return Result.OK("등록되었습니다.", kkumzService.saveAdminApiKey(request));
     }
 
     @PutMapping("/admin/api-keys/{keyId}")
@@ -616,7 +616,7 @@ public class KkumzController {
             @RequestBody SaveApiAccessKeyRequest request
     ) {
         request.setId(keyId);
-        return Result.OK(kkumzService.saveAdminApiKey(request));
+        return Result.OK("수정되었습니다.", kkumzService.saveAdminApiKey(request));
     }
 
     @PostMapping("/admin/api-keys/{keyId}/rotate")

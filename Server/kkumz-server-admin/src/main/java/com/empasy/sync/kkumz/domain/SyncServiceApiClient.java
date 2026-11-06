@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Kkumz -> SyncCMS / SyncShop 서비스 간 표준 REST API 클라이언트
@@ -53,9 +54,40 @@ public class SyncServiceApiClient {
     @Value("${kkumz.integration.shop-secret-key:sk_shop_kkumz_secret_2026_prod_88}")
     private String defaultShopSecretKey;
 
+    private static final long CIRCUIT_OPEN_COOLDOWN_MS = 60_000L;
+
     private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(5))
+            .connectTimeout(Duration.ofMillis(1500))
             .build();
+
+    private final Map<String, Long> unreachableUntilEpochMs = new ConcurrentHashMap<>();
+
+    private boolean isCircuitOpen(String serviceCode) {
+        if (!StringUtils.hasText(serviceCode)) {
+            return false;
+        }
+        Long until = unreachableUntilEpochMs.get(serviceCode.toUpperCase());
+        if (until == null) {
+            return false;
+        }
+        if (System.currentTimeMillis() < until) {
+            return true;
+        }
+        unreachableUntilEpochMs.remove(serviceCode.toUpperCase());
+        return false;
+    }
+
+    private void markCircuitOpen(String serviceCode) {
+        if (StringUtils.hasText(serviceCode)) {
+            unreachableUntilEpochMs.put(serviceCode.toUpperCase(), System.currentTimeMillis() + CIRCUIT_OPEN_COOLDOWN_MS);
+        }
+    }
+
+    private void markCircuitClosed(String serviceCode) {
+        if (StringUtils.hasText(serviceCode)) {
+            unreachableUntilEpochMs.remove(serviceCode.toUpperCase());
+        }
+    }
 
     @Getter
     @Builder
@@ -178,10 +210,12 @@ public class SyncServiceApiClient {
                 result.put("remoteData", dataMap);
             }
             if (ok) {
+                markCircuitClosed(serviceCode);
                 recordKeyUsage(StringUtils.hasText(keyIdToRecord) ? keyIdToRecord : creds.getKeyId());
             }
             return result;
         } catch (Exception e) {
+            markCircuitOpen(serviceCode);
             result.put("verified", false);
             result.put("latencyMs", System.currentTimeMillis() - startMs);
             result.put("message", "원격 서비스 연결 실패: " + e.getMessage());
@@ -307,12 +341,15 @@ public class SyncServiceApiClient {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> callGet(String serviceCode, String path, Long siteId, String siteSlug) {
+        if (isCircuitOpen(serviceCode)) {
+            throw new IllegalStateException(serviceCode + " 원격 엔드포인트 오프라인 상태 (로컬 DB 어댑터 즉시 폴백)");
+        }
         ServiceEndpointCredentials creds = resolveCredentials(serviceCode);
         String url = creds.getBaseUrl() + path;
         try {
             HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .timeout(Duration.ofSeconds(8))
+                    .timeout(Duration.ofSeconds(3))
                     .header("Accept", "application/json")
                     .header("X-Sync-Access-Key", creds.getAccessKey())
                     .header("X-Sync-Secret-Key", creds.getSecretKey());
@@ -323,6 +360,7 @@ public class SyncServiceApiClient {
                 builder.header("X-Site-Slug", siteSlug);
             }
             HttpResponse<String> response = httpClient.send(builder.GET().build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            markCircuitClosed(serviceCode);
             recordKeyUsage(creds.getKeyId());
 
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
@@ -338,6 +376,7 @@ public class SyncServiceApiClient {
             }
             throw new IllegalStateException(serviceCode + " HTTP " + response.statusCode() + " from " + url);
         } catch (Exception e) {
+            markCircuitOpen(serviceCode);
             log.warn("[SyncServiceApiClient] GET {} 호출 실패: {}", url, e.getMessage());
             throw new IllegalStateException(serviceCode + " API 연동 오류: " + e.getMessage(), e);
         }
@@ -345,13 +384,16 @@ public class SyncServiceApiClient {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> callPost(String serviceCode, String path, Long siteId, String siteSlug, Map<String, Object> payload) {
+        if (isCircuitOpen(serviceCode)) {
+            throw new IllegalStateException(serviceCode + " 원격 엔드포인트 오프라인 상태 (로컬 DB 어댑터 즉시 폴백)");
+        }
         ServiceEndpointCredentials creds = resolveCredentials(serviceCode);
         String url = creds.getBaseUrl() + path;
         try {
             String jsonBody = objectMapper.writeValueAsString(payload != null ? payload : Map.of());
             HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .timeout(Duration.ofSeconds(10))
+                    .timeout(Duration.ofSeconds(3))
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json;charset=UTF-8")
                     .header("X-Sync-Access-Key", creds.getAccessKey())
@@ -366,6 +408,7 @@ public class SyncServiceApiClient {
                     builder.POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8)).build(),
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
             );
+            markCircuitClosed(serviceCode);
             recordKeyUsage(creds.getKeyId());
 
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
@@ -381,6 +424,7 @@ public class SyncServiceApiClient {
             }
             throw new IllegalStateException(serviceCode + " HTTP " + response.statusCode() + " from " + url);
         } catch (Exception e) {
+            markCircuitOpen(serviceCode);
             log.warn("[SyncServiceApiClient] POST {} 호출 실패: {}", url, e.getMessage());
             throw new IllegalStateException(serviceCode + " API 연동 오류: " + e.getMessage(), e);
         }

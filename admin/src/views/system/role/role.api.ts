@@ -3,14 +3,15 @@ import { Modal } from 'ant-design-vue';
 
 enum Api {
   list = '/api/v1/kkumz/sys/role/list',
-  save = '/api/v1/kkumz/sys/role/add',
-  edit = '/api/v1/kkumz/sys/role/edit',
-  deleteRole = '/api/v1/kkumz/sys/role/delete',
+  role = '/api/v1/kkumz/sys/role',
+  save = '/api/v1/kkumz/sys/role',
+  edit = '/api/v1/kkumz/sys/role',
+  deleteRole = '/api/v1/kkumz/sys/role',
   deleteBatch = '/api/v1/kkumz/sys/role/deleteBatch',
   exportXls = '/api/v1/kkumz/sys/role/exportXls',
   importExcel = '/api/v1/kkumz/sys/role/importExcel',
   isRoleExist = '/api/v1/kkumz/sys/role/checkRoleCode',
-  queryTreeListForRole = '/api/v1/kkumz/sys/permission/queryTreeList',
+  queryTreeListForRole = '/api/v1/kkumz/sys/permission/list',
   queryRolePermission = '/api/v1/kkumz/sys/permission/queryRolePermission',
   saveRolePermission = '/api/v1/kkumz/sys/permission/saveRolePermission',
   queryDataRule = '/api/v1/kkumz/sys/role/datarule',
@@ -43,7 +44,7 @@ export const list = (params) => defHttp.get({ url: Api.list, params });
  * 삭제역할
  */
 export const deleteRole = (params, handleSuccess) => {
-  return defHttp.delete({ url: Api.deleteRole, params }, { joinParamsToUrl: true }).then(() => {
+  return defHttp.delete({ url: `${Api.role}/${params.id}` }, { successMessageMode: 'success' }).then(() => {
     handleSuccess();
   });
 };
@@ -57,10 +58,15 @@ export const batchDeleteRole = (params, handleSuccess) => {
     content: '선택한 데이터 삭제 여부',
     okText: '확인',
     cancelText: '취소',
-    onOk: () => {
-      return defHttp.delete({ url: Api.deleteBatch, data: params }, { joinParamsToUrl: true }).then(() => {
-        handleSuccess();
-      });
+    onOk: async () => {
+      const ids = String(params?.ids || '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+      for (const id of ids) {
+        await defHttp.delete({ url: `${Api.role}/${id}` }, { successMessageMode: 'none' });
+      }
+      handleSuccess();
     },
   });
 };
@@ -69,8 +75,10 @@ export const batchDeleteRole = (params, handleSuccess) => {
  * @param params
  */
 export const saveOrUpdateRole = (params, isUpdate) => {
-  let url = isUpdate ? Api.edit : Api.save;
-  return defHttp.post({ url: url, params });
+  if (isUpdate) {
+    return defHttp.put({ url: Api.role, params }, { successMessageMode: 'success' });
+  }
+  return defHttp.post({ url: Api.role, params }, { successMessageMode: 'success' });
 };
 /**
  * 코드 검증
@@ -78,32 +86,78 @@ export const saveOrUpdateRole = (params, isUpdate) => {
  */
 let timer;
 export const isRoleExist = (params) => {
-  return new Promise((resolve, rejected) => {
+  return new Promise((resolve) => {
     clearTimeout(timer);
-    timer = setTimeout(() => {
-      defHttp
-        .get({ url: Api.isRoleExist, params }, { isTransformResponse: false })
-        .then((res) => {
-          resolve(res);
-        })
-        .catch((error) => {
-          rejected(error);
+    timer = setTimeout(async () => {
+      try {
+        const res = await defHttp.get({ url: Api.list, params: { pageNo: 1, pageSize: 200 } }, { errorMessageMode: 'none' });
+        const records = Array.isArray(res) ? res : res?.records || [];
+        const code = String(params?.roleCode || '').trim();
+        const id = params?.id ? String(params.id) : '';
+        const exists = records.some(
+          (r: any) => String(r?.roleCode || '').toLowerCase() === code.toLowerCase() && String(r?.id || '') !== id
+        );
+        resolve({
+          success: !exists,
+          code: exists ? 500 : 200,
+          message: exists ? '이미 사용 중인 역할 코드입니다.' : '',
         });
-    }, 500);
+      } catch {
+        resolve({ success: true, code: 200, message: '' });
+      }
+    }, 300);
   });
 };
 /**
  * 역할에 따른 쿼리 트리 정보
  */
-export const queryTreeListForRole = () => defHttp.get({ url: Api.queryTreeListForRole });
+export const queryTreeListForRole = async () => {
+  const treeList = await defHttp.get({ url: Api.queryTreeListForRole });
+  const ids: string[] = [];
+  const collectIds = (nodes: any[]) => {
+    if (!Array.isArray(nodes)) return;
+    for (const node of nodes) {
+      if (node?.key || node?.id) {
+        ids.push(String(node.key || node.id));
+      }
+      if (Array.isArray(node?.children) && node.children.length > 0) {
+        collectIds(node.children);
+      }
+    }
+  };
+  collectIds(Array.isArray(treeList) ? treeList : []);
+  return { treeList: Array.isArray(treeList) ? treeList : [], ids };
+};
 /**
  * 쿼리 역할 권한
  */
-export const queryRolePermission = (params) => defHttp.get({ url: Api.queryRolePermission, params });
+export const queryRolePermission = async (params) => {
+  const res = await defHttp.get({ url: Api.list, params: { pageNo: 1, pageSize: 200 } });
+  const records = Array.isArray(res) ? res : res?.records || [];
+  const matched = records.find((r: any) => String(r.id) === String(params?.roleId));
+  return Array.isArray(matched?.permissionIds) ? matched.permissionIds : [];
+};
 /**
  * 역할 권한 저장
  */
-export const saveRolePermission = (params) => defHttp.post({ url: Api.saveRolePermission, params });
+export const saveRolePermission = async (params) => {
+  const permissionIds = Array.isArray(params?.permissionIds)
+    ? params.permissionIds
+    : String(params?.permissionIds || '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+  return defHttp.put(
+    {
+      url: Api.role,
+      params: {
+        id: params?.roleId,
+        permissionIds,
+      },
+    },
+    { successMessageMode: 'success' }
+  );
+};
 /**
  * 쿼리 역할 데이터 규칙
  */

@@ -3201,7 +3201,6 @@ function runErrorRetry() {
 function forceMoveToStep2() {
   errorBanner.value = null;
   activeStep.value = 2;
-  showToast('2단계 화면으로 이동했습니다. 상단 버튼으로 네이밍과 로고를 개별 생성할 수 있습니다.', 'info');
 }
 
 function applyStarterPreset(preset: any) {
@@ -3211,7 +3210,6 @@ function applyStarterPreset(preset: any) {
   if (preset.category) {
     formStep1.value.category = preset.category;
   }
-  showToast('업종별 스타터 프롬프트가 입력되었습니다. 바로 2단계로 이동하거나 새 프로젝트로 생성해 보세요.', 'info');
 }
 
 function addStep1Tag() {
@@ -3508,8 +3506,12 @@ async function onSelectIdea(ideaId: string, allowWhenBusy = false) {
   if (busy.value && !allowWhenBusy) return;
   selectedIdeaId.value = ideaId;
   errorBanner.value = null;
+  if (String(route.params.ideaId || '') !== ideaId) {
+    router.replace({ name: 'StudioView', params: { ideaId } }).catch(() => {});
+  }
   try {
     const detail = await kkumzApi.getIdeaDetail(ideaId);
+    if (selectedIdeaId.value !== ideaId) return;
     currentIdea.value = detail;
 
     formStep1.value = {
@@ -3534,7 +3536,7 @@ async function onSelectIdea(ideaId: string, allowWhenBusy = false) {
 
     syncCustomBrandFromSelection(detail);
 
-    const slug = detail.site?.siteSlug || detail.selectedSiteSlug;
+    const slug = detail.site?.siteSlug || detail.deployedSites?.[0]?.siteSlug || detail.selectedSiteSlug;
     if (slug) {
       try {
         siteRuntime.value = await kkumzApi.getSiteRuntime(slug);
@@ -3550,6 +3552,7 @@ async function onSelectIdea(ideaId: string, allowWhenBusy = false) {
       await ensureStep2Candidates();
     }
   } catch (err) {
+    if (selectedIdeaId.value !== ideaId) return;
     reportError(
       err,
       '프로젝트 상세 정보를 불러오지 못했습니다',
@@ -3772,11 +3775,76 @@ async function ensureStep2Candidates() {
   }
 }
 
+async function executeScaffoldWithRecovery(targetIdeaId: string): Promise<any> {
+  // 2단계를 거치지 않았거나 프리뷰 중인 브랜드/로고 변경분이 아직 반영되지 않은 경우 자동 동기화
+  const needsBrandSync =
+    !currentIdea.value?.selectedLogoSvg ||
+    (customBrandForm.value.brandName.trim() &&
+      customBrandForm.value.brandName.trim() !== currentIdea.value?.selectedBrandName);
+  const candidateSvg =
+    customBrandForm.value.svgCode ||
+    selectedLogoObj.value?.svgCode ||
+    currentIdea.value?.selectedLogoSvg ||
+    '';
+  const candidateBrand =
+    customBrandForm.value.brandName.trim() ||
+    selectedNameObj.value?.brandName ||
+    currentIdea.value?.selectedBrandName ||
+    '';
+
+  if (needsBrandSync && (candidateSvg || candidateBrand)) {
+    try {
+      const syncedSvg = candidateSvg && candidateBrand
+        ? renderLogoWithBrand(candidateSvg, candidateBrand)
+        : candidateSvg;
+      currentIdea.value = await kkumzApi.selectBrand(targetIdeaId, {
+        nameSuggestionId: selectedNameId.value || undefined,
+        logoSuggestionId: selectedLogoId.value || undefined,
+        brandName: candidateBrand || undefined,
+        siteSlug: customBrandForm.value.siteSlug.trim() || selectedNameObj.value?.siteSlug || undefined,
+        pronunciation: customBrandForm.value.pronunciation.trim() || selectedNameObj.value?.pronunciation || undefined,
+        brandStory:
+          customBrandForm.value.brandStory.trim() ||
+          sanitizeBrandStoryText(selectedNameObj.value?.brandStory || '') ||
+          undefined,
+        logoSvg: syncedSvg || undefined,
+        designTokens: { ...customBrandForm.value.colorPalette },
+      });
+    } catch {
+      // 백엔드 scaffoldSite 자체의 브랜드·로고 자동 보완(Self-Healing) 로직으로 계속 진행
+    }
+  }
+
+  try {
+    return await kkumzApi.scaffoldSite(targetIdeaId);
+  } catch (err) {
+    // 네트워크 순단·타임아웃 발생 시 서버에 이미 프로비저닝 완료되었는지 자동 복구 확인
+    try {
+      const recovered = await kkumzApi.getIdeaDetail(targetIdeaId);
+      const slug =
+        recovered?.site?.siteSlug ||
+        recovered?.deployedSites?.[0]?.siteSlug ||
+        recovered?.selectedSiteSlug;
+      if (slug) {
+        const rt = await kkumzApi.getSiteRuntime(slug);
+        if (rt && rt.siteSlug) {
+          currentIdea.value = recovered;
+          return rt;
+        }
+      }
+    } catch {
+      // ignore recovery lookup error and rethrow original error
+    }
+    throw err;
+  }
+}
+
 async function goToStep(stepNo: number) {
   if (busy.value) return;
   errorBanner.value = null;
   activeStep.value = stepNo;
-  if (!selectedIdeaId.value) return;
+  const targetIdeaId = selectedIdeaId.value;
+  if (!targetIdeaId) return;
 
   if (stepNo === 2) {
     await ensureStep2Candidates();
@@ -3790,7 +3858,7 @@ async function goToStep(stepNo: number) {
       busy.value = true;
       busyMessage.value = `'${targetBrand}' 브랜드 기준으로 AI 3단계 기능명세서 및 화면 설계를 준비하고 있습니다...`;
       try {
-        currentIdea.value = await kkumzApi.generateSpec(selectedIdeaId.value, false);
+        currentIdea.value = await kkumzApi.generateSpec(targetIdeaId, false);
       } catch {
         // ignore and fallback to existing idea state
       } finally {
@@ -3806,9 +3874,12 @@ async function goToStep(stepNo: number) {
       busy.value = true;
       busyMessage.value = '라이브 멀티사이트를 프로비저닝하고 있습니다...';
       try {
-        siteRuntime.value = await kkumzApi.scaffoldSite(selectedIdeaId.value);
+        const rt = await executeScaffoldWithRecovery(targetIdeaId);
+        if (selectedIdeaId.value !== targetIdeaId) return;
+        siteRuntime.value = rt;
         syncVisualFormFromRuntime(siteRuntime.value);
       } catch (err) {
+        if (selectedIdeaId.value !== targetIdeaId) return;
         reportError(
           err,
           '사이트 프로비저닝에 실패했습니다',
@@ -3827,7 +3898,9 @@ async function goToStep(stepNo: number) {
     try {
       if (!siteRuntime.value) {
         busyMessage.value = '라이브 멀티사이트를 프로비저닝하고 있습니다...';
-        siteRuntime.value = await kkumzApi.scaffoldSite(selectedIdeaId.value);
+        const rt = await executeScaffoldWithRecovery(targetIdeaId);
+        if (selectedIdeaId.value !== targetIdeaId) return;
+        siteRuntime.value = rt;
         syncVisualFormFromRuntime(siteRuntime.value);
       }
       if (activeSiteSlug.value) {
@@ -3835,6 +3908,7 @@ async function goToStep(stepNo: number) {
         await loadWebIde(activeSiteSlug.value);
       }
     } catch (err) {
+      if (selectedIdeaId.value !== targetIdeaId) return;
       reportError(
         err,
         'WebIDE 코드 편집기 준비에 실패했습니다',
@@ -3966,8 +4040,6 @@ async function saveCurrentIdeaAndGoStep2() {
         return;
       }
     }
-
-    showToast('아이디어 설정이 저장되었습니다. 브랜드 네이밍과 로고를 선택해 주세요!', 'success');
   } finally {
     busy.value = false;
     busyMessage.value = '';
@@ -4024,8 +4096,6 @@ async function createNewIdeaFromStep1() {
       );
       return;
     }
-
-    showToast('새 브랜드 프로젝트가 생성되었습니다. AI 네이밍 8종과 로고 6종을 확인해 보세요!', 'success');
   } catch (err) {
     reportError(
       err,
@@ -4145,7 +4215,6 @@ async function confirmBrandAndNext() {
     if (busySteps.value[1]) busySteps.value[1].status = 'done';
     ideas.value = (await kkumzApi.listIdeas()) || [];
     syncStep3FromIdea(currentIdea.value);
-    showToast(`'${finalBrandName}' 브랜드 네이밍·로고·기획서가 확정되었습니다!`, 'success');
   } catch (err) {
     reportError(
       err,
@@ -4239,13 +4308,18 @@ async function rollbackSpecVersion(versionNo: number) {
 }
 
 async function provisionAndGoStep4() {
-  if (!selectedIdeaId.value) return;
+  const targetIdeaId = selectedIdeaId.value;
+  if (!targetIdeaId || busy.value) return;
   errorBanner.value = null;
   busy.value = true;
   busyMessage.value = '기획서·화면설계를 반영하여 라이브 멀티사이트를 프로비저닝하고 있습니다...';
+  busySteps.value = [
+    { label: '1. 브랜드 아이덴티티 · 기획서 블루프린트 저장', status: 'active' },
+    { label: '2. SyncShop · SyncCMS 멀티사이트 프로비저닝 및 초기 콘텐츠 구성', status: 'pending' },
+  ];
   try {
     if (editableScreens.value.length > 0 || editableSpecMarkdown.value) {
-      currentIdea.value = await kkumzApi.updateSpec(selectedIdeaId.value, {
+      currentIdea.value = await kkumzApi.updateSpec(targetIdeaId, {
         title: formStep1.value.title,
         promptText: formStep1.value.promptText,
         siteType: formStep1.value.siteType,
@@ -4255,11 +4329,21 @@ async function provisionAndGoStep4() {
         screens: editableScreens.value,
       });
     }
-    siteRuntime.value = await kkumzApi.scaffoldSite(selectedIdeaId.value);
+    if (busySteps.value[0]) busySteps.value[0].status = 'done';
+    if (busySteps.value[1]) busySteps.value[1].status = 'active';
+    busyMessage.value = '업종 맞춤 초기 콘텐츠와 SDUI 레이아웃 런타임을 생성하고 있습니다...';
+
+    const rt = await executeScaffoldWithRecovery(targetIdeaId);
+    if (selectedIdeaId.value !== targetIdeaId) return;
+    if (busySteps.value[1]) busySteps.value[1].status = 'done';
+
+    siteRuntime.value = rt;
     syncVisualFormFromRuntime(siteRuntime.value);
+    currentIdea.value = await kkumzApi.getIdeaDetail(targetIdeaId);
+    ideas.value = (await kkumzApi.listIdeas()) || [];
     activeStep.value = 4;
-    showToast('라이브 멀티사이트 프로비저닝이 완료되었습니다.', 'success');
   } catch (err) {
+    if (selectedIdeaId.value !== targetIdeaId) return;
     reportError(
       err,
       '라이브 멀티사이트 프로비저닝에 실패했습니다',
