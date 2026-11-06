@@ -241,14 +241,31 @@ class KkumzServiceTest {
     }
 
     @Test
-    @DisplayName("7. [스튜디오 메타데이터 조회] GET /api/v1/kkumz/studio/metadata DB 사전 연동 검증")
+    @DisplayName("7. [스튜디오 메타데이터 조회] GET /api/v1/kkumz/studio/metadata DB 사전 & 52종 기능 카탈로그 연동 검증")
     void testGetStudioMetadata() throws Exception {
         when(jdbcTemplate.queryForList(contains("FROM sys_dict_item i")))
                 .thenReturn(List.of(
                         Map.of("dictCode", "kkumz_layout_type", "itemValue", "HERO_SPLIT", "itemText", "히어로 스플릿 배너", "description", ""),
                         Map.of("dictCode", "kkumz_component_type", "itemValue", "BrandSplitHero", "itemText", "브랜드 스플릿 히어로", "description", ""),
+                        Map.of("dictCode", "kkumz_feature_category", "itemValue", "COMMERCE_CATALOG", "itemText", "상품·객실·메뉴 카탈로그", "description", "커머스 진열"),
+                        Map.of("dictCode", "kkumz_hero_style", "itemValue", "FULL_SCENIC", "itemText", "풀스크린 시닉 히어로", "description", "풍경 강조"),
                         Map.of("dictCode", "kkumz_starter_preset", "itemValue", "COMMERCE_ORGANIC_TEA", "itemText", "유기농 D2C 티 스토어",
                                 "description", "{\"siteType\":\"COMMERCE\",\"category\":\"F&B · 웰니스\",\"prompt\":\"제주 유기농 말차 다기 D2C 스토어\",\"tags\":[\"제주말차\",\"D2C\"]}")
+                ));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_feature_catalog")))
+                .thenReturn(List.of(
+                        new LinkedHashMap<>(Map.of(
+                                "id", "fcat-kkumz-001",
+                                "featureCode", "SHOP_PRODUCT_CATALOG",
+                                "engineCode", "SYNC_SHOP",
+                                "categoryCode", "COMMERCE_CATALOG",
+                                "categoryName", "상품·객실·메뉴 카탈로그",
+                                "title", "시그니처 상품·객실·메뉴 쇼케이스",
+                                "subtitle", "대표 상품과 객실·메뉴를 카드로 진열",
+                                "description", "상세 진열 모듈",
+                                "searchKeywordsJson", "[\"상품\",\"객실\",\"민박\"]",
+                                "recommendedCategoriesJson", "[\"숙박\",\"민박\"]"
+                        ))
                 ));
 
         mockMvc.perform(get("/api/v1/kkumz/studio/metadata"))
@@ -256,7 +273,172 @@ class KkumzServiceTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.result.layoutLabels.HERO_SPLIT").value("히어로 스플릿 배너"))
                 .andExpect(jsonPath("$.result.componentLabels.BrandSplitHero").value("브랜드 스플릿 히어로"))
+                .andExpect(jsonPath("$.result.componentLabels.SHOP_PRODUCT_CATALOG").value("시그니처 상품·객실·메뉴 쇼케이스"))
+                .andExpect(jsonPath("$.result.featureCategories[0].code").value("COMMERCE_CATALOG"))
+                .andExpect(jsonPath("$.result.featureCatalog[0].featureCode").value("SHOP_PRODUCT_CATALOG"))
                 .andExpect(jsonPath("$.result.starterPresets[0].code").value("COMMERCE_ORGANIC_TEA"))
                 .andExpect(jsonPath("$.result.starterPresets[0].siteType").value("COMMERCE"));
+    }
+
+    @Test
+    @DisplayName("8. [SyncCMS 실데이터 연동] cms_content 조회 및 cms_form_data 신청 접수 검증")
+    void testCmsRuntimeAndFormSubmission() {
+        Map<String, Object> siteRow = new LinkedHashMap<>();
+        siteRow.put("id", "site-kkumz-003");
+        siteRow.put("ideaId", "idea-kkumz-003");
+        siteRow.put("siteSlug", "seoul-run-club");
+        siteRow.put("siteName", "서울 나이트 런 클럽");
+        siteRow.put("siteType", "CMS_SITE");
+        siteRow.put("activeVersion", 1);
+        siteRow.put("cmsSiteId", 101L);
+        siteRow.put("ownerUsername", "jihoon.run");
+
+        Map<String, Object> releaseRow = new LinkedHashMap<>();
+        releaseRow.put("id", "rel-kkumz-003-v1");
+        releaseRow.put("versionNo", 1);
+        releaseRow.put("deployMode", "DYNAMIC_SDUI");
+        releaseRow.put("releaseNote", "초기 배포");
+        releaseRow.put("designTokensJson", "{\"primary\":\"#ea580c\"}");
+        releaseRow.put("layoutSchemaJson", "{\"heroTitle\":\"서울 나이트 런 클럽\"}");
+        releaseRow.put("webideFilesJson", "[]");
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), eq("seoul-run-club"), eq("seoul-run-club")))
+                .thenReturn(List.of(siteRow));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), eq("site-kkumz-003"), eq("site-kkumz-003")))
+                .thenReturn(List.of(siteRow));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site_release"), eq("site-kkumz-003"), eq(1)))
+                .thenReturn(List.of(releaseRow));
+        when(cmsJdbcTemplate.queryForList(contains("FROM cms_content c"), eq(101L)))
+                .thenReturn(List.of(Map.of("id", 101001L, "title", "반포 한강 나이트 런", "summary", "7.5K 템포런")));
+        when(cmsJdbcTemplate.queryForList(contains("FROM cms_banner"), eq(101L)))
+                .thenReturn(List.of(Map.of("id", 10101L, "title", "목요일 세션 오픈")));
+        when(cmsJdbcTemplate.queryForList(contains("FROM cms_form"), eq(101L)))
+                .thenReturn(List.of(new LinkedHashMap<>(Map.of("id", 101L, "title", "게스트 런 신청", "fieldsJson", "[]"))));
+
+        Map<String, Object> runtime = kkumzService.getSiteRuntime("seoul-run-club");
+        assertNotNull(runtime.get("cms"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> cms = (Map<String, Object>) runtime.get("cms");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> articles = (List<Map<String, Object>>) cms.get("articles");
+        assertEquals(1, articles.size());
+        assertEquals("반포 한강 나이트 런", articles.get(0).get("title"));
+
+        when(cmsJdbcTemplate.queryForObject(contains("INSERT INTO cms_form_data"), eq(Long.class), eq(101L), anyString()))
+                .thenReturn(5001L);
+        when(cmsJdbcTemplate.queryForObject(contains("SELECT COUNT(*) FROM cms_form_data"), eq(Integer.class), eq(101L)))
+                .thenReturn(2);
+
+        CmsFormSubmitRequest submitReq = CmsFormSubmitRequest.builder()
+                .applicantName("김러너")
+                .phone("010-9999-8888")
+                .optionValue("600 그룹")
+                .message("첫 참가 신청합니다.")
+                .build();
+        Map<String, Object> submitRes = kkumzService.submitCmsForm("seoul-run-club", submitReq);
+        assertEquals(5001L, submitRes.get("submissionId"));
+        assertEquals(2, submitRes.get("totalSubmissions"));
+    }
+
+    @Test
+    @DisplayName("9. [AI 응답 JSON 파서] 한국어 인사말 및 대괄호 서두 포함 응답 파싱 검증")
+    void testParseAiJsonArrayWithConversationalPrefix() {
+        String noisyAiOutput = """
+                물론입니다! 요청하신 [제주 말차 브랜드 네이밍 2종] 후보입니다:
+                [
+                  {"brandName": "말차 아뜰리에 제주", "siteSlug": "matcha-atelier", "score": 98},
+                  {"brandName": "비취다원", "siteSlug": "jade-tea-garden", "score": 95}
+                ]
+                도움이 되셨기를 바랍니다!
+                """;
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> parsed = (List<Map<String, Object>>) ReflectionTestUtils.invokeMethod(
+                kkumzService, "parseAiJsonArray", noisyAiOutput, "NAMING"
+        );
+        assertNotNull(parsed);
+        assertEquals(2, parsed.size());
+        assertEquals("말차 아뜰리에 제주", parsed.get(0).get("brandName"));
+        assertEquals("matcha-atelier", parsed.get(0).get("siteSlug"));
+    }
+
+    @Test
+    @DisplayName("10. [API 연동·액세스키 관제] GET/POST /api/v1/kkumz/admin/api-keys 키 목록 및 신규 발급 검증")
+    void testAdminApiKeyManagement() throws Exception {
+        Map<String, Object> keyRow = new LinkedHashMap<>();
+        keyRow.put("id", "ak-kkumz-out-cms");
+        keyRow.put("keyName", "SyncCMS 멀티사이트 연동 키");
+        keyRow.put("direction", "OUTBOUND");
+        keyRow.put("serviceCode", "SYNC_CMS");
+        keyRow.put("baseUrl", "http://localhost:18085");
+        keyRow.put("accessKey", "ak_cms_kkumz_live_01");
+        keyRow.put("secretKey", "sk_cms_kkumz_secret_2026_prod_99");
+        keyRow.put("scopesJson", "[\"cms:site:read\",\"cms:site:provision\"]");
+        keyRow.put("rateLimitPerMin", 1000);
+        keyRow.put("status", "ACTIVE");
+        keyRow.put("callCount", 42L);
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_api_access_key"), any(Object[].class)))
+                .thenReturn(List.of(new LinkedHashMap<>(keyRow)));
+
+        mockMvc.perform(get("/api/v1/kkumz/admin/api-keys"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result[0].id").value("ak-kkumz-out-cms"))
+                .andExpect(jsonPath("$.result[0].serviceCode").value("SYNC_CMS"))
+                .andExpect(jsonPath("$.result[0].accessKey").value("ak_cms_kkumz_live_01"))
+                .andExpect(jsonPath("$.result[0].scopes[0]").value("cms:site:read"));
+    }
+
+    @Test
+    @DisplayName("11. [AI 의도 분석 & 기능 선택] analyzeIdeaIntent 및 updateIdeaFeatures 하이브리드 자동 판별 검증")
+    void testAnalyzeIdeaIntentAndUpdateFeatures() {
+        Map<String, Object> ideaRow = new LinkedHashMap<>();
+        ideaRow.put("id", "idea-01137479");
+        ideaRow.put("authorUsername", "admin");
+        ideaRow.put("authorDisplayName", "최고관리자");
+        ideaRow.put("title", "맑은물 민박");
+        ideaRow.put("promptText", "충남 공주 시골에 있는 냇가 옆에 위치한 맑은물 민박 사이트 만들고 싶어");
+        ideaRow.put("siteType", "HYBRID");
+        ideaRow.put("category", "숙박 · 민박 · 스테이");
+        ideaRow.put("tagsJson", "[\"공주민박\",\"냇가평상\"]");
+        ideaRow.put("enabledFeaturesJson", "[\"SHOP_PRODUCT_CATALOG\",\"CMS_DYNAMIC_FORM\"]");
+        ideaRow.put("aiIntentAnalysisJson", "{\"siteType\":\"HYBRID\"}");
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_idea"), eq("idea-01137479")))
+                .thenReturn(List.of(new LinkedHashMap<>(ideaRow)));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_feature_catalog")))
+                .thenReturn(List.of(
+                        new LinkedHashMap<>(Map.of(
+                                "id", "fcat-kkumz-001",
+                                "featureCode", "SHOP_PRODUCT_CATALOG",
+                                "engineCode", "SYNC_SHOP",
+                                "categoryCode", "COMMERCE_CATALOG",
+                                "categoryName", "상품·객실·메뉴 카탈로그",
+                                "title", "시그니처 상품·객실·메뉴 쇼케이스",
+                                "subtitle", "객실과 스테이 상품을 진열",
+                                "searchKeywordsJson", "[\"민박\",\"객실\",\"숙박\"]",
+                                "recommendedCategoriesJson", "[\"숙박\",\"민박\"]"
+                        )),
+                        new LinkedHashMap<>(Map.of(
+                                "id", "fcat-kkumz-036",
+                                "featureCode", "CMS_DYNAMIC_FORM",
+                                "engineCode", "SYNC_CMS",
+                                "categoryCode", "FORM_SCHEDULE",
+                                "categoryName", "예약·신청 폼 & 일정",
+                                "title", "맞춤형 온라인 예약·신청 동적 폼",
+                                "subtitle", "체크인 날짜·인원·옵션 예약 폼",
+                                "searchKeywordsJson", "[\"예약\",\"민박\",\"신청\"]",
+                                "recommendedCategoriesJson", "[\"숙박\",\"민박\"]"
+                        ))
+                ));
+
+        UpdateIdeaFeaturesRequest featReq = UpdateIdeaFeaturesRequest.builder()
+                .enabledFeatures(List.of("SHOP_PRODUCT_CATALOG", "CMS_DYNAMIC_FORM"))
+                .syncScreens(true)
+                .build();
+
+        Map<String, Object> updated = kkumzService.updateIdeaFeatures("idea-01137479", featReq);
+        assertEquals("HYBRID", updated.get("siteType"));
+        verify(jdbcTemplate, atLeastOnce()).update(contains("UPDATE kkumz_idea"), any(), any(), eq("HYBRID"), any(), any(), any(), any(), any(), eq("idea-01137479"));
     }
 }

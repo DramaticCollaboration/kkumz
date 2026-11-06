@@ -8,6 +8,7 @@ export enum KkumzAdminApi {
   Builds = '/api/v1/kkumz/admin/builds',
   Projects = '/api/v1/kkumz/admin/projects',
   ModerationReports = '/api/v1/kkumz/admin/moderation/reports',
+  ApiKeys = '/api/v1/kkumz/admin/api-keys',
 }
 
 // 1. 운영 종합 대시보드 KPI
@@ -72,3 +73,24 @@ export const resolveModerationReport = (
     url: `${KkumzAdminApi.ModerationReports}/${encodeURIComponent(reportId)}/resolve`,
     params,
   });
+
+// 8. 서비스 간 연동 API 액세스키 (Access Key / Secret Key) 발급·회전·검증·관리
+export const getAdminApiKeyList = (params?: Recordable) =>
+  defHttp.get({ url: KkumzAdminApi.ApiKeys, params });
+
+export const saveAdminApiKey = (params: Recordable, isUpdate = false) =>
+  isUpdate
+    ? defHttp.put({ url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(params.id)}`, params })
+    : defHttp.post({ url: KkumzAdminApi.ApiKeys, params });
+
+export const rotateAdminApiKey = (keyId: string) =>
+  defHttp.post({ url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}/rotate` });
+
+export const updateAdminApiKeyStatus = (keyId: string, status: string) =>
+  defHttp.put({ url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}/status`, params: { status } });
+
+export const verifyAdminApiKey = (keyId: string) =>
+  defHttp.post({ url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}/verify` });
+
+export const deleteAdminApiKey = (keyId: string) =>
+  defHttp.delete({ url: `${KkumzAdminApi.ApiKeys}/${encodeURIComponent(keyId)}` });

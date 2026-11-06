@@ -132,7 +132,7 @@ public class KkumzAiGatewayService {
         Model registeredModel = agentScopeModelProvider != null ? agentScopeModelProvider.getIfAvailable() : null;
         if (registeredModel != null) {
             ChatResponse response = registeredModel.stream(messages, List.of(), GenerateOptions.builder().build())
-                    .blockLast(Duration.ofSeconds(30));
+                    .blockLast(Duration.ofSeconds(120));
             if (response != null && response.getContent() != null) {
                 StringBuilder sb = new StringBuilder();
                 for (ContentBlock block : response.getContent()) {
@@ -178,6 +178,7 @@ public class KkumzAiGatewayService {
             payload.put("model", resolvedModel);
             payload.put("messages", reqMessages);
             payload.put("temperature", temperature);
+            payload.put("enable_thinking", false);
 
             String requestBody = objectMapper.writeValueAsString(payload);
             HttpRequest request = HttpRequest.newBuilder()
@@ -186,7 +187,7 @@ public class KkumzAiGatewayService {
                     .header("Authorization", "Bearer " + llmApiKey.trim())
                     .header("X-Agent-Id", "KKUMZ_STUDIO")
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .timeout(Duration.ofSeconds(45))
+                    .timeout(Duration.ofSeconds(120))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -234,6 +235,12 @@ public class KkumzAiGatewayService {
             return "";
         }
         String trimmed = raw.trim();
+        java.util.regex.Matcher fenceMatcher = java.util.regex.Pattern
+                .compile("```(?:json|markdown|html|xml|svg)?\\s*\\r?\\n?([\\s\\S]*?)\\r?\\n?```", java.util.regex.Pattern.CASE_INSENSITIVE)
+                .matcher(trimmed);
+        if (fenceMatcher.find()) {
+            return fenceMatcher.group(1).trim();
+        }
         trimmed = trimmed.replaceFirst("^```(?:json|markdown|html|xml|svg)?\\s*\\r?\\n?", "");
         trimmed = trimmed.replaceFirst("\\r?\\n?```$", "");
         return trimmed.trim();

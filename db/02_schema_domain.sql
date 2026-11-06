@@ -2,6 +2,9 @@
 -- Kkumz (꿈즈) 도메인 전용 비즈니스 스키마 (02_schema_domain.sql)
 -- ============================================================================
 
+DROP TABLE IF EXISTS kkumz_feature_catalog CASCADE;
+DROP TABLE IF EXISTS kkumz_site_git_repo CASCADE;
+DROP TABLE IF EXISTS kkumz_api_access_key CASCADE;
 DROP TABLE IF EXISTS kkumz_notification CASCADE;
 DROP TABLE IF EXISTS kkumz_ai_prompt_template CASCADE;
 DROP TABLE IF EXISTS kkumz_moderation_report CASCADE;
@@ -15,6 +18,7 @@ DROP TABLE IF EXISTS kkumz_site CASCADE;
 DROP TABLE IF EXISTS kkumz_screen_spec CASCADE;
 DROP TABLE IF EXISTS kkumz_logo_suggestion CASCADE;
 DROP TABLE IF EXISTS kkumz_name_suggestion CASCADE;
+DROP TABLE IF EXISTS kkumz_idea_asset CASCADE;
 DROP TABLE IF EXISTS kkumz_idea_version CASCADE;
 DROP TABLE IF EXISTS kkumz_idea CASCADE;
 
@@ -26,7 +30,7 @@ CREATE TABLE kkumz_idea (
     title VARCHAR(200) NOT NULL,
     prompt_text TEXT NOT NULL,
     site_type VARCHAR(32) NOT NULL DEFAULT 'COMMERCE',
-    category VARCHAR(64) NOT NULL DEFAULT 'FOOD_BEVERAGE',
+    category VARCHAR(64) NOT NULL DEFAULT 'AUTO',
     tags_json JSONB NOT NULL DEFAULT '[]'::jsonb,
     visibility VARCHAR(32) NOT NULL DEFAULT 'PUBLIC',
     current_step INTEGER NOT NULL DEFAULT 1,
@@ -36,6 +40,8 @@ CREATE TABLE kkumz_idea (
     design_tokens_json JSONB NOT NULL DEFAULT '{}'::jsonb,
     spec_markdown TEXT,
     screens_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    enabled_features_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    ai_intent_analysis_json JSONB NOT NULL DEFAULT '{}'::jsonb,
     status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -255,9 +261,107 @@ CREATE TABLE kkumz_notification (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 16. 아이디어·사이트 업로드 미디어 및 참고 문서 자산 (kkumz_idea_asset)
+CREATE TABLE kkumz_idea_asset (
+    id VARCHAR(64) PRIMARY KEY,
+    idea_id VARCHAR(64) NOT NULL REFERENCES kkumz_idea(id) ON DELETE CASCADE,
+    asset_type VARCHAR(32) NOT NULL DEFAULT 'GALLERY',
+    original_name VARCHAR(255) NOT NULL,
+    stored_name VARCHAR(255) NOT NULL,
+    file_url VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(128) NOT NULL DEFAULT 'application/octet-stream',
+    file_size BIGINT NOT NULL DEFAULT 0,
+    caption VARCHAR(300),
+    extracted_text TEXT,
+    sort_no INTEGER NOT NULL DEFAULT 1,
+    uploaded_by VARCHAR(64) NOT NULL DEFAULT 'admin',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_kkumz_site_type_status ON kkumz_site (site_type, status, like_count DESC);
 CREATE INDEX idx_kkumz_recruit_site_status ON kkumz_team_recruit (site_id, status);
 CREATE INDEX idx_kkumz_comment_site_time ON kkumz_feed_comment (site_id, created_at DESC);
 CREATE INDEX idx_kkumz_report_status ON kkumz_moderation_report (status, created_at DESC);
 CREATE INDEX idx_kkumz_build_site_time ON kkumz_build_job (site_id, started_at DESC);
 CREATE INDEX idx_kkumz_noti_user_read ON kkumz_notification (recipient_username, is_read, created_at DESC);
+CREATE INDEX idx_kkumz_asset_idea_sort ON kkumz_idea_asset (idea_id, asset_type, sort_no ASC, created_at ASC);
+
+-- 17. 서비스 간 API 연동 액세스키 및 클라이언트 인증키 관리 (kkumz_api_access_key)
+CREATE TABLE kkumz_api_access_key (
+    id VARCHAR(64) PRIMARY KEY,
+    direction VARCHAR(32) NOT NULL DEFAULT 'OUTBOUND',
+    service_code VARCHAR(64) NOT NULL,
+    key_name VARCHAR(128) NOT NULL,
+    base_url VARCHAR(255),
+    access_key VARCHAR(128) NOT NULL UNIQUE,
+    secret_key VARCHAR(255) NOT NULL,
+    scopes_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    rate_limit_rpm INTEGER NOT NULL DEFAULT 600,
+    status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    expires_at TIMESTAMP WITH TIME ZONE,
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    call_count BIGINT NOT NULL DEFAULT 0,
+    description VARCHAR(500),
+    created_by VARCHAR(64) NOT NULL DEFAULT 'admin',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_kkumz_api_key_dir_svc ON kkumz_api_access_key (direction, service_code, status);
+
+-- 18. 멀티사이트 Git 리포지토리 프로비저닝 및 개발자 배포 키 원장 (kkumz_site_git_repo)
+CREATE TABLE kkumz_site_git_repo (
+    id VARCHAR(64) PRIMARY KEY,
+    site_id VARCHAR(64) NOT NULL UNIQUE REFERENCES kkumz_site(id) ON DELETE CASCADE,
+    provider VARCHAR(32) NOT NULL DEFAULT 'GITHUB',
+    repo_owner VARCHAR(128) NOT NULL DEFAULT 'kkumz-sites',
+    repo_name VARCHAR(128) NOT NULL,
+    default_branch VARCHAR(64) NOT NULL DEFAULT 'main',
+    visibility VARCHAR(32) NOT NULL DEFAULT 'PRIVATE',
+    repo_html_url VARCHAR(500) NOT NULL,
+    clone_ssh_url VARCHAR(500) NOT NULL,
+    clone_https_url VARCHAR(500) NOT NULL,
+    ssh_key_title VARCHAR(200) NOT NULL,
+    ssh_key_fingerprint VARCHAR(128) NOT NULL,
+    ssh_public_key TEXT NOT NULL,
+    ssh_private_key_pem TEXT NOT NULL,
+    site_api_key_id VARCHAR(64) REFERENCES kkumz_api_access_key(id) ON DELETE SET NULL,
+    site_access_key VARCHAR(128) NOT NULL,
+    site_secret_key VARCHAR(255) NOT NULL,
+    last_commit_sha VARCHAR(64) NOT NULL,
+    last_commit_message VARCHAR(500) NOT NULL,
+    sync_mode VARCHAR(32) NOT NULL DEFAULT 'MANAGED_GIT',
+    github_remote_synced BOOLEAN NOT NULL DEFAULT FALSE,
+    commit_history_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    key_rotated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_synced_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(64) NOT NULL DEFAULT 'admin',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_kkumz_git_repo_site ON kkumz_site_git_repo (site_id);
+
+-- 19. SyncShop × SyncCMS × AI 52종 전체 기능 카탈로그 마스터 (kkumz_feature_catalog)
+CREATE TABLE kkumz_feature_catalog (
+    id                          VARCHAR(64) PRIMARY KEY,
+    feature_code                VARCHAR(64) NOT NULL UNIQUE,
+    engine_code                 VARCHAR(32) NOT NULL DEFAULT 'SYNC_CMS',
+    category_code               VARCHAR(64) NOT NULL,
+    category_name               VARCHAR(100) NOT NULL,
+    title                       VARCHAR(150) NOT NULL,
+    subtitle                    VARCHAR(300) NOT NULL,
+    description                 TEXT NOT NULL,
+    badge_label                 VARCHAR(64) NOT NULL,
+    icon_name                   VARCHAR(64) NOT NULL DEFAULT 'Sparkles',
+    search_keywords_json        JSONB NOT NULL DEFAULT '[]'::jsonb,
+    recommended_categories_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    sdui_archetype              VARCHAR(64) NOT NULL,
+    default_config_json         JSONB NOT NULL DEFAULT '{}'::jsonb,
+    sort_no                     INTEGER NOT NULL DEFAULT 1,
+    status                      VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    created_at                  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_kkumz_fcat_category ON kkumz_feature_catalog (category_code, sort_no ASC);
+CREATE INDEX idx_kkumz_fcat_engine ON kkumz_feature_catalog (engine_code, sort_no ASC);

@@ -27,8 +27,41 @@ public class KkumzDTO {
         private String category;
         private List<String> tags;
         private String visibility;
+        private List<String> enabledFeatures;
+        private Map<String, Object> aiIntentAnalysis;
         private String authorUsername;
         private String authorDisplayName;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AnalyzeIntentRequest {
+        private String title;
+        private String promptText;
+        private String category;
+        private List<String> tags;
+        private Boolean applyExpandedPrompt;
+        private Boolean applyAssetCaptions;
+        private Boolean applyRecommendedFeatures;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateIdeaFeaturesRequest {
+        private String title;
+        private String promptText;
+        private List<String> enabledFeatures;
+        private String siteType;
+        private String category;
+        private List<String> tags;
+        private Map<String, Object> aiIntentAnalysis;
+        private Boolean syncScreens;
     }
 
     @Getter
@@ -43,6 +76,8 @@ public class KkumzDTO {
         private String category;
         private String specMarkdown;
         private List<Map<String, Object>> screens;
+        private List<String> enabledFeatures;
+        private Map<String, Object> aiIntentAnalysis;
         private Integer rollbackToVersionNo;
         private String createdBy;
     }
@@ -55,6 +90,7 @@ public class KkumzDTO {
     public static class GenerateNamesRequest {
         private String keywordHint;
         private String toneStyle;
+        private Boolean forceRegenerate;
     }
 
     @Getter
@@ -66,6 +102,7 @@ public class KkumzDTO {
         private String brandName;
         private String siteSlug;
         private String stylePreference;
+        private Boolean forceRegenerate;
     }
 
     @Getter
@@ -78,6 +115,8 @@ public class KkumzDTO {
         private String logoSuggestionId;
         private String brandName;
         private String siteSlug;
+        private String pronunciation;
+        private String brandStory;
         private String logoSvg;
         private Map<String, Object> designTokens;
     }
@@ -92,8 +131,12 @@ public class KkumzDTO {
         private String promptText;
         private String siteType;
         private String category;
+        private List<String> tags;
+        private String visibility;
         private String specMarkdown;
         private List<Map<String, Object>> screens;
+        private List<String> enabledFeatures;
+        private Map<String, Object> aiIntentAnalysis;
         private String updatedBy;
     }
 
@@ -121,6 +164,9 @@ public class KkumzDTO {
     public static class ChatRefineRequest {
         private String instruction;
         private String viewport;
+        private String siteName;
+        private String brandSlogan;
+        private String logoSvg;
         private Map<String, Object> tokenOverrides;
         private Map<String, Object> layoutOverrides;
         private String username;
@@ -147,6 +193,7 @@ public class KkumzDTO {
         private String deployMode;
         private String releaseNote;
         private String visibility;
+        private String customDomain;
         private String username;
     }
 
@@ -316,5 +363,87 @@ public class KkumzDTO {
         private List<String> forbiddenWords;
         private List<String> forbiddenKeywords;
         private String status;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateIdeaAssetRequest {
+        private String assetType;
+        private String caption;
+        private Integer sortNo;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class StoredAssetPayload {
+        private byte[] bytes;
+        private String mimeType;
+        private String originalName;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SaveApiAccessKeyRequest {
+        private String id;
+        private String keyName;
+        private String direction;
+        private String serviceCode;
+        private String baseUrl;
+        private String accessKey;
+        private String secretKey;
+        private List<String> scopes;
+        private Integer rateLimitPerMin;
+        private String status;
+        private String expiresAt;
+        private String description;
+        private String createdBy;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProvisionGitRepoRequest {
+        private String repoOwner;
+        private String repoName;
+        private String defaultBranch;
+        private String visibility;
+        private String githubPatToken;
+        private Boolean includeFullViteScaffold;
+        private String username;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GitPushSyncRequest {
+        private String commitMessage;
+        private List<Map<String, Object>> files;
+        private String githubPatToken;
+        private String username;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RotateGitKeysRequest {
+        private Boolean rotateSshKey;
+        private Boolean rotateSiteApiKey;
+        private String githubPatToken;
+        private String username;
     }
 }

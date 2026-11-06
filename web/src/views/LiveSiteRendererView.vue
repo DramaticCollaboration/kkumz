@@ -46,13 +46,27 @@
             </span>
           </a>
 
-          <nav class="flex items-center gap-2 sm:gap-6 text-sm font-bold text-slate-600">
+          <nav class="flex items-center gap-2 sm:gap-4 text-sm font-bold text-slate-600 flex-wrap">
             <a
               v-if="products.length"
               href="#section-commerce"
               class="px-3 py-2 rounded-lg hover:bg-slate-100 hover:text-slate-950 transition"
             >
-              스토어 ({{ products.length }})
+              객실·스토어 ({{ products.length }})
+            </a>
+            <a
+              v-if="pricingMatrix?.rows?.length"
+              href="#section-pricing"
+              class="px-3 py-2 rounded-lg hover:bg-slate-100 hover:text-slate-950 transition"
+            >
+              시즌 요금표
+            </a>
+            <a
+              v-if="spaceTour.length || (showPhotoGallery && galleryImages.length)"
+              href="#section-gallery"
+              class="px-3 py-2 rounded-lg hover:bg-slate-100 hover:text-slate-950 transition"
+            >
+              공간·갤러리 ({{ galleryImages.length || spaceTour.length }})
             </a>
             <a
               v-if="articles.length"
@@ -62,11 +76,18 @@
               매거진 ({{ articles.length }})
             </a>
             <a
+              v-if="faqItems.length || locationGuide"
+              href="#section-faq-location"
+              class="px-3 py-2 rounded-lg hover:bg-slate-100 hover:text-slate-950 transition"
+            >
+              FAQ·오시는길
+            </a>
+            <a
               v-if="cmsForm"
               href="#section-form"
               class="px-3 py-2 rounded-lg hover:bg-slate-100 hover:text-slate-950 transition"
             >
-              프로그램 신청
+              예약·신청
             </a>
             <a
               href="#section-concierge"
@@ -146,12 +167,22 @@
             </div>
           </div>
         </div>
+
+        <!-- SDUI METRIC_STRIP: 핵심 신뢰 지표 바 -->
+        <div v-if="trustMetrics.length" class="border-t border-white/10 bg-slate-950/40 backdrop-blur-sm">
+          <div class="max-w-7xl mx-auto px-6 md:px-10 py-5 grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div v-for="(tm, tmIdx) in trustMetrics" :key="tmIdx" class="space-y-0.5">
+              <div class="text-xs text-white/65 font-semibold">{{ tm.label }}</div>
+              <div class="text-lg md:text-xl font-extrabold text-white">{{ tm.value }}</div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- 메인 콘텐츠 영역 -->
       <main class="flex-1 w-full bg-white">
         <div class="max-w-7xl mx-auto px-6 md:px-10 py-14 md:py-20 space-y-20">
-          <!-- 1. 브랜드 스토어 상품 카탈로그 & 즉시 주문 -->
+          <!-- 1. 브랜드 스토어 상품·객실·패키지 카탈로그 & 즉시 예약/주문 (SDUI CATALOG_GRID) -->
           <section v-if="products.length" id="section-commerce" class="space-y-8 scroll-mt-24">
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-5">
               <div>
@@ -159,10 +190,10 @@
                   class="text-xs font-extrabold uppercase tracking-wider"
                   :style="{ color: secondaryColor }"
                 >
-                  OFFICIAL BRAND STORE
+                  OFFICIAL BRAND SHOWCASE & RESERVATION
                 </span>
                 <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">
-                  시그니처 컬렉션 & 스토어
+                  시그니처 객실 · 프로그램 · 스토어 컬렉션
                 </h2>
               </div>
 
@@ -205,16 +236,16 @@
               <div class="space-y-1.5">
                 <div class="flex items-center gap-2">
                   <span class="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-xs font-extrabold">
-                    주문 및 결제 완료
+                    예약 · 결제 완료
                   </span>
                   <span class="text-sm font-extrabold text-emerald-950">
                     주문번호: {{ orderResult.orderSn }}
                   </span>
                 </div>
                 <p class="text-xs text-emerald-800">
-                  상품: <strong>{{ orderResult.productName }}</strong> ({{ orderResult.quantity }}개) · 결제금액:
-                  <strong>{{ Number(orderResult.payAmount).toLocaleString() }}원</strong> · 잔여 재고:
-                  <strong>{{ orderResult.remainingStock }}개</strong>
+                  선택 항목: <strong>{{ orderResult.productName }}</strong> ({{ orderResult.quantity }}건) · 결제금액:
+                  <strong>{{ Number(orderResult.payAmount).toLocaleString() }}원</strong> · 잔여 수량:
+                  <strong>{{ orderResult.remainingStock }}</strong>
                 </p>
               </div>
               <button
@@ -225,7 +256,7 @@
               </button>
             </div>
 
-            <!-- 상품 그리드 -->
+            <!-- 상품·객실 그리드 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div
                 v-for="prod in filteredProducts"
@@ -240,22 +271,22 @@
                       class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
                     <span
-                      v-if="prod.note"
+                      v-if="prod.note || prod.badge"
                       class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-white text-[11px] font-extrabold shadow-sm"
                       :style="{ backgroundColor: primaryColor }"
                     >
-                      {{ prod.note }}
+                      {{ prod.note || prod.badge }}
                     </span>
                     <span
                       class="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-slate-900/80 text-white text-[11px] font-bold backdrop-blur-sm"
                     >
-                      재고 {{ prod.stock }}{{ prod.unit || '개' }}
+                      잔여 {{ prod.stock }}{{ prod.unit || '건' }}
                     </span>
                   </div>
-                  <div class="p-5 space-y-2">
+                  <div class="p-5 space-y-2.5">
                     <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
                       <span>{{ prod.productCategoryName || prod.productSn }}</span>
-                      <span v-if="prod.sale">누적 {{ prod.sale }}건 판매</span>
+                      <span v-if="prod.sale">누적 {{ prod.sale }}건 이용</span>
                     </div>
                     <h3 class="text-base font-extrabold text-slate-900 line-clamp-2 leading-snug">
                       {{ prod.name }}
@@ -263,12 +294,21 @@
                     <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">
                       {{ prod.subTitle || prod.description }}
                     </p>
+                    <div v-if="Array.isArray(prod.options) && prod.options.length" class="flex flex-wrap gap-1 pt-1">
+                      <span
+                        v-for="opt in prod.options.slice(0, 3)"
+                        :key="opt"
+                        class="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-600"
+                      >
+                        {{ opt }}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 <div class="p-5 pt-0 space-y-3.5">
                   <div class="flex items-baseline justify-between border-t border-slate-100 pt-3.5">
-                    <span class="text-xs font-bold text-slate-400">공식 판매가</span>
+                    <span class="text-xs font-bold text-slate-400">공식 이용·판매가</span>
                     <div class="text-right">
                       <span
                         v-if="prod.originalPrice && prod.originalPrice > displayPrice(prod)"
@@ -279,6 +319,7 @@
                       <span class="text-lg font-extrabold text-slate-900">
                         {{ Number(displayPrice(prod)).toLocaleString() }}원
                       </span>
+                      <small v-if="prod.unit" class="text-[11px] text-slate-400 ml-0.5">/ {{ prod.unit }}</small>
                     </div>
                   </div>
                   <button
@@ -286,14 +327,197 @@
                     :style="{ backgroundColor: primaryColor }"
                     @click="openOrderModal(prod)"
                   >
-                    즉시 구매하기
+                    즉시 예약 · 구매하기
                   </button>
                 </div>
               </div>
             </div>
           </section>
 
-          <!-- 2. 브랜드 스토리 & 에디토리얼 매거진 -->
+          <!-- 1-A. 시즌·요일·인원별 상세 요금표 (SDUI MATRIX_TABLE / SHOP_PRICING_MATRIX) -->
+          <section
+            v-if="pricingMatrix?.rows?.length"
+            id="section-pricing"
+            data-testid="sdui-pricing-matrix"
+            class="space-y-6 scroll-mt-24"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 pb-5">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider" :style="{ color: secondaryColor }">
+                  SEASON & GUEST PRICING MATRIX
+                </span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">
+                  {{ pricingMatrix.title || '시즌 · 요일 · 인원별 상세 요금 안내' }}
+                </h2>
+              </div>
+              <span class="text-xs text-slate-500">주중·주말·성수기 및 기준 인원별 공식 이용 요금표입니다</span>
+            </div>
+
+            <div class="overflow-x-auto rounded-3xl border border-slate-200 shadow-sm bg-white">
+              <table class="w-full text-left border-collapse text-xs md:text-sm">
+                <thead>
+                  <tr class="bg-slate-900 text-white">
+                    <th
+                      v-for="col in pricingMatrix.columns || ['구분', '기준 인원', '비수기 주중', '비수기 주말', '성수기/연휴', '포함 혜택']"
+                      :key="col"
+                      class="py-4 px-5 font-extrabold whitespace-nowrap"
+                    >
+                      {{ col }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                  <tr
+                    v-for="(row, rIdx) in pricingMatrix.rows"
+                    :key="rIdx"
+                    class="hover:bg-slate-50/80 transition"
+                  >
+                    <td class="py-4 px-5 font-extrabold text-slate-900 whitespace-nowrap">{{ row.tier }}</td>
+                    <td class="py-4 px-5 text-slate-600 whitespace-nowrap">{{ row.capacity || row.target }}</td>
+                    <td class="py-4 px-5 font-bold text-slate-800 whitespace-nowrap">{{ row.offPeakWeekday }}</td>
+                    <td class="py-4 px-5 font-bold text-indigo-700 whitespace-nowrap">{{ row.offPeakWeekend }}</td>
+                    <td class="py-4 px-5 font-extrabold text-amber-700 whitespace-nowrap">{{ row.peakSeason }}</td>
+                    <td class="py-4 px-5 text-slate-600">{{ row.note || row.includes }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- 1-B. 공간 구역별 스페이스 투어 (SDUI SPACE_TOUR / CMS_SPACE_TOUR) -->
+          <section
+            v-if="spaceTour.length"
+            id="section-space-tour"
+            data-testid="sdui-space-tour"
+            class="space-y-8 scroll-mt-24"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 pb-5">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider" :style="{ color: secondaryColor }">
+                  SIGNATURE SPACE & ZONE ARCHIVE
+                </span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">
+                  공간 구역별 스페이스 투어 ({{ spaceTour.length }}개 존)
+                </h2>
+              </div>
+              <span class="text-xs text-slate-500">머무시는 동안 경험하게 될 핵심 공간과 시설을 미리 살펴보세요</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div
+                v-for="(zone, zIdx) in spaceTour"
+                :key="zIdx"
+                class="rounded-3xl border border-slate-200 overflow-hidden bg-slate-50 flex flex-col justify-between hover:shadow-lg transition"
+              >
+                <div>
+                  <div v-if="zone.imageUrl" class="h-48 bg-slate-200 overflow-hidden relative">
+                    <img :src="zone.imageUrl" :alt="zone.title" class="w-full h-full object-cover" />
+                    <span
+                      class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[11px] font-extrabold text-white"
+                      :style="{ backgroundColor: primaryColor }"
+                    >
+                      {{ zone.zone }}
+                    </span>
+                  </div>
+                  <div class="p-5 space-y-2">
+                    <span
+                      v-if="!zone.imageUrl"
+                      class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white"
+                      :style="{ backgroundColor: primaryColor }"
+                    >
+                      {{ zone.zone }}
+                    </span>
+                    <h3 class="text-base font-extrabold text-slate-900">{{ zone.title }}</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">{{ zone.desc || zone.description }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 1-C. 현장 포토 갤러리 아카이브 (SDUI MEDIA_GALLERY / CMS_PHOTO_GALLERY) -->
+          <section
+            v-if="showPhotoGallery && galleryImages.length"
+            id="section-gallery"
+            class="space-y-8 scroll-mt-24"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 pb-5">
+              <div>
+                <span
+                  class="text-xs font-extrabold uppercase tracking-wider"
+                  :style="{ color: secondaryColor }"
+                >
+                  SPACE & PHOTO GALLERY ARCHIVE
+                </span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">
+                  현장 포토 갤러리 ({{ galleryImages.length }}장)
+                </h2>
+              </div>
+              <span class="text-xs text-slate-500">사진을 클릭하면 고해상도 원본으로 크게 볼 수 있습니다</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div
+                v-for="(gImg, gIdx) in galleryImages"
+                :key="gImg.id || gIdx"
+                class="group rounded-3xl overflow-hidden border border-slate-200 bg-slate-50 cursor-pointer hover:shadow-xl transition"
+                @click="selectedGalleryImage = gImg"
+              >
+                <div class="h-64 overflow-hidden bg-slate-200">
+                  <img
+                    :src="gImg.fileUrl"
+                    :alt="gImg.caption || gImg.originalName"
+                    class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  />
+                </div>
+                <div class="p-4 flex items-center justify-between gap-2 bg-white">
+                  <strong class="text-sm font-extrabold text-slate-900 truncate">
+                    {{ gImg.caption || gImg.originalName }}
+                  </strong>
+                  <span class="text-xs font-bold text-indigo-600 shrink-0">크게 보기 ↗</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 1-D. 단계별 이용 & 추천 코스 가이드 (SDUI TIMELINE_STEPS / CMS_STEP_GUIDE) -->
+          <section
+            v-if="stepGuide.length"
+            id="section-step-guide"
+            data-testid="sdui-step-guide"
+            class="space-y-8 scroll-mt-24"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 pb-5">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-600">
+                  STEP-BY-STEP EXPERIENCE GUIDE
+                </span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">
+                  {{ brandName }} 100% 즐기는 단계별 추천 코스
+                </h2>
+              </div>
+              <span class="text-xs text-slate-500">방문 전부터 이용 완료까지 가장 만족도 높은 추천 동선입니다</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div
+                v-for="(st, sIdx) in stepGuide"
+                :key="sIdx"
+                class="p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-3 relative"
+              >
+                <span
+                  class="inline-block px-3 py-1 rounded-full text-xs font-extrabold text-white"
+                  :style="{ backgroundColor: primaryColor }"
+                >
+                  {{ st.step }}
+                </span>
+                <h3 class="text-base font-extrabold text-slate-900">{{ st.title }}</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">{{ st.desc }}</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. 브랜드 스토리 & 에디토리얼 매거진 (SDUI EDITORIAL_FEED) -->
           <section v-if="articles.length" id="section-articles" class="space-y-8 scroll-mt-24">
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 pb-5">
               <div>
@@ -339,12 +563,225 @@
             </div>
           </section>
 
-          <!-- 3. 온라인 참가/예약 신청 & AI 브랜드 컨시어지 -->
+          <!-- 2-A. 실방문객·구매자 베스트 후기 & 실시간 선호 투표 (SDUI REVIEW_WALL & POLL_WIDGET) -->
+          <section
+            v-if="reviews.length || pollWidget"
+            id="section-reviews"
+            data-testid="sdui-reviews-poll"
+            class="grid grid-cols-1 lg:grid-cols-12 gap-8 scroll-mt-24"
+          >
+            <div v-if="reviews.length" :class="pollWidget ? 'lg:col-span-8' : 'lg:col-span-12'" class="space-y-5">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider" :style="{ color: secondaryColor }">
+                  VERIFIED GUEST & CUSTOMER REVIEWS
+                </span>
+                <h2 class="text-2xl font-extrabold text-slate-900 mt-1">
+                  실방문객 · 구매자 베스트 후기 ({{ reviews.length }}건)
+                </h2>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div
+                  v-for="(rv, rvIdx) in reviews"
+                  :key="rvIdx"
+                  class="p-5 rounded-3xl bg-slate-50 border border-slate-200 space-y-2.5 flex flex-col justify-between"
+                >
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-amber-500 text-xs font-extrabold">★★★★★ {{ rv.rating || 5 }}.0</span>
+                      <span class="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-[10px] font-bold text-slate-600">
+                        {{ rv.tag }}
+                      </span>
+                    </div>
+                    <p class="text-xs text-slate-700 leading-relaxed">"{{ rv.comment || rv.content }}"</p>
+                  </div>
+                  <div class="text-[11px] font-bold text-slate-400 pt-2 border-t border-slate-200/60">
+                    작성자: {{ rv.author }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="pollWidget"
+              :class="reviews.length ? 'lg:col-span-4' : 'lg:col-span-12'"
+              class="p-6 rounded-3xl bg-indigo-950 text-white flex flex-col justify-between space-y-4"
+            >
+              <div class="space-y-2">
+                <span class="px-2.5 py-1 rounded-full bg-indigo-500/30 text-indigo-200 text-[11px] font-extrabold">
+                  LIVE VISITOR POLL
+                </span>
+                <h3 class="text-base font-extrabold leading-snug">{{ pollWidget.question }}</h3>
+              </div>
+              <div class="space-y-2.5">
+                <button
+                  v-for="(opt, oIdx) in pollWidget.options || []"
+                  :key="oIdx"
+                  type="button"
+                  class="w-full p-3 rounded-2xl border text-left transition flex items-center justify-between gap-2 text-xs font-bold"
+                  :class="
+                    votedOptionIndex === oIdx
+                      ? 'bg-indigo-600 border-indigo-400 text-white'
+                      : 'bg-white/10 border-white/15 text-slate-200 hover:bg-white/15'
+                  "
+                  @click="votePollOption(oIdx)"
+                >
+                  <span>{{ opt.label }}</span>
+                  <span class="px-2 py-0.5 rounded-full bg-black/30 text-[11px] font-extrabold">
+                    {{ Number(opt.votes || 0) + (votedOptionIndex === oIdx ? 1 : 0) }}표
+                  </span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2-B. 브랜드 공식 안내자료 & 요금표·첨부문서 다운로드 -->
+          <section
+            v-if="downloadableDocs.length"
+            id="section-docs"
+            class="space-y-6 scroll-mt-24"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 pb-5">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-600">
+                  OFFICIAL BROCHURE & GUIDE DOCUMENTS
+                </span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">
+                  공식 안내자료 & 첨부파일 다운로드
+                </h2>
+              </div>
+              <span class="text-xs text-slate-500">요금표, 이용수칙, 브로슈어 등 공식 안내 문서를 열람하거나 내려받으실 수 있습니다</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                v-for="(doc, dIdx) in downloadableDocs"
+                :key="doc.id || dIdx"
+                class="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4 hover:border-indigo-300 transition"
+              >
+                <div class="flex items-center gap-4 min-w-0">
+                  <span
+                    class="px-3 py-2 rounded-xl text-xs font-extrabold text-white shrink-0"
+                    :style="{ backgroundColor: primaryColor }"
+                  >
+                    {{ (doc.fileExt || 'DOC').toUpperCase() }}
+                  </span>
+                  <div class="min-w-0">
+                    <strong class="block text-sm font-extrabold text-slate-900 truncate">
+                      {{ doc.caption || doc.originalName }}
+                    </strong>
+                    <span class="text-xs text-slate-500">
+                      {{ doc.originalName }} · {{ formatDocSize(doc.fileSize) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <a
+                    :href="doc.fileUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
+                  >
+                    열람 ↗
+                  </a>
+                  <a
+                    :href="doc.downloadUrl || `${doc.fileUrl}?download=true`"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="px-3.5 py-2 rounded-xl text-xs font-extrabold text-white transition hover:opacity-90"
+                    :style="{ backgroundColor: secondaryColor }"
+                  >
+                    다운로드 ↓
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2-C. 자주 묻는 질문(FAQ) 아코디언 & 오시는 길·이용수칙 (SDUI FAQ_ACCORDION & LOCATION_COURSE & POLICY_BOX) -->
+          <section
+            v-if="faqItems.length || locationGuide || policyRules.length"
+            id="section-faq-location"
+            data-testid="sdui-faq-location"
+            class="grid grid-cols-1 lg:grid-cols-12 gap-8 scroll-mt-24"
+          >
+            <!-- FAQ 아코디언 -->
+            <div v-if="faqItems.length" class="lg:col-span-6 space-y-4">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider" :style="{ color: secondaryColor }">
+                  FREQUENTLY ASKED QUESTIONS
+                </span>
+                <h2 class="text-2xl font-extrabold text-slate-900 mt-1">
+                  자주 묻는 질문 (FAQ)
+                </h2>
+              </div>
+              <div class="space-y-3">
+                <div
+                  v-for="(item, fIdx) in faqItems"
+                  :key="fIdx"
+                  class="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50"
+                >
+                  <button
+                    type="button"
+                    class="w-full px-5 py-4 text-left flex items-center justify-between gap-3 font-extrabold text-sm text-slate-900 hover:bg-slate-100 transition"
+                    @click="openFaqIndex = openFaqIndex === fIdx ? -1 : fIdx"
+                  >
+                    <span>Q. {{ item.q }}</span>
+                    <span class="text-xs text-slate-400">{{ openFaqIndex === fIdx ? '▲' : '▼' }}</span>
+                  </button>
+                  <div
+                    v-if="openFaqIndex === fIdx"
+                    class="px-5 pb-4 pt-1 text-xs text-slate-600 leading-relaxed border-t border-slate-200/60 bg-white"
+                  >
+                    {{ item.a }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 오시는 길 & 주변 추천 코스 & 이용수칙 -->
+            <div v-if="locationGuide || policyRules.length" class="lg:col-span-6 space-y-5">
+              <div v-if="locationGuide" class="p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-3">
+                <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold">
+                  LOCATION & NEARBY COURSE GUIDE
+                </span>
+                <h3 class="text-lg font-extrabold text-slate-900">오시는 길 및 교통 · 주차 안내</h3>
+                <div class="space-y-1.5 text-xs text-slate-700">
+                  <div><strong>📍 주소:</strong> {{ locationGuide.address }}</div>
+                  <div v-if="locationGuide.parking"><strong>🚗 주차 안내:</strong> {{ locationGuide.parking }}</div>
+                  <div v-if="locationGuide.publicTransit"><strong>🚌 대중교통:</strong> {{ locationGuide.publicTransit }}</div>
+                </div>
+                <div v-if="Array.isArray(locationGuide.nearbySpots) && locationGuide.nearbySpots.length" class="pt-2 space-y-1.5">
+                  <strong class="block text-xs font-extrabold text-slate-900">주변 함께 가볼 만한 추천 코스</strong>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div
+                      v-for="(spot, spIdx) in locationGuide.nearbySpots"
+                      :key="spIdx"
+                      class="p-2.5 rounded-xl bg-white border border-slate-200 text-[11px]"
+                    >
+                      <strong class="block text-slate-900">{{ spot.name }}</strong>
+                      <span class="text-indigo-600 font-bold">{{ spot.distance }}</span>
+                      <p class="text-slate-500 mt-0.5">{{ spot.desc }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="policyRules.length" class="p-6 rounded-3xl bg-amber-50/70 border border-amber-200 space-y-2.5">
+                <strong class="block text-sm font-extrabold text-amber-950">📌 이용수칙 및 예약·환불 규정 안내</strong>
+                <ul class="space-y-1.5 text-xs text-amber-900 list-disc pl-4">
+                  <li v-for="(rule, rIdx) in policyRules" :key="rIdx">{{ rule }}</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. 업종 맞춤형 동적 예약/신청 폼 (SDUI DYNAMIC_FORM) & AI 브랜드 컨시어지 -->
           <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-2">
             <!-- 온라인 신청 폼 -->
             <div
               v-if="cmsForm"
               id="section-form"
+              data-testid="sdui-dynamic-form"
               class="lg:col-span-6 p-7 md:p-9 rounded-3xl bg-slate-50 border border-slate-200 space-y-6 scroll-mt-24"
             >
               <div>
@@ -372,39 +809,90 @@
               </div>
 
               <div class="space-y-4">
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1.5">신청자 성함</label>
-                  <input
-                    v-model="cmsFormInput.applicantName"
-                    type="text"
-                    placeholder="성함을 입력하세요"
-                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-slate-900"
-                  />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">예약·신청자 성함 *</label>
+                    <input
+                      v-model="cmsFormInput.applicantName"
+                      type="text"
+                      placeholder="성함을 입력하세요"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">연락처 *</label>
+                    <input
+                      v-model="cmsFormInput.phone"
+                      type="tel"
+                      placeholder="010-0000-0000"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-slate-900"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1.5">연락처</label>
-                  <input
-                    v-model="cmsFormInput.phone"
-                    type="text"
-                    placeholder="수신 가능한 휴대전화 번호 입력"
-                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-slate-900"
-                  />
+
+                <!-- DB 동적 필드 렌더링 (date, select, number, checkbox 등) -->
+                <div v-if="dynamicCustomFields.length" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div
+                    v-for="field in dynamicCustomFields"
+                    :key="field.key"
+                    :class="field.type === 'checkbox' || field.type === 'textarea' ? 'sm:col-span-2' : ''"
+                  >
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ field.label }}</label>
+                    <input
+                      v-if="field.type === 'date'"
+                      v-model="dynamicFieldValues[field.key]"
+                      type="date"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-slate-900"
+                    />
+                    <select
+                      v-else-if="field.type === 'select'"
+                      v-model="dynamicFieldValues[field.key]"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-slate-900"
+                    >
+                      <option value="">선택해 주세요</option>
+                      <option v-for="opt in field.options || []" :key="opt" :value="opt">{{ opt }}</option>
+                    </select>
+                    <input
+                      v-else-if="field.type === 'number'"
+                      v-model.number="dynamicFieldValues[field.key]"
+                      type="number"
+                      :min="field.min || 1"
+                      :max="field.max || 50"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-slate-900"
+                    />
+                    <div v-else-if="field.type === 'checkbox'" class="flex flex-wrap gap-2">
+                      <label
+                        v-for="opt in field.options || []"
+                        :key="opt"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          :value="opt"
+                          :checked="Array.isArray(dynamicFieldValues[field.key]) && dynamicFieldValues[field.key].includes(opt)"
+                          @change="toggleDynamicCheckbox(field.key, opt)"
+                        />
+                        <span>{{ opt }}</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1.5">세션 / 프로그램 선택</label>
+                <div v-else>
+                  <label class="block text-xs font-bold text-slate-700 mb-1.5">세션 / 객실 / 프로그램 선택</label>
                   <input
                     v-model="cmsFormInput.optionValue"
                     type="text"
-                    placeholder="예: 주말 프라이빗 세션 / 정기 프로그램 신청"
+                    placeholder="예: 냇가 독채 스테이 / 평상 백숙 예약 / 주말 프로그램"
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-slate-900"
                   />
                 </div>
+
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1.5">요청 메시지</label>
+                  <label class="block text-xs font-bold text-slate-700 mb-1.5">추가 요청사항</label>
                   <textarea
                     v-model="cmsFormInput.message"
                     rows="3"
-                    placeholder="문의사항이나 요청사항을 남겨주세요"
+                    placeholder="도착 예정 시간, 바비큐/백숙 사전 주문, 기타 문의사항을 남겨주세요"
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-slate-900"
                   ></textarea>
                 </div>
@@ -414,7 +902,7 @@
                   :disabled="submittingForm"
                   @click="handleSubmitCmsForm"
                 >
-                  {{ submittingForm ? '신청서 접수 중...' : '온라인 신청서 제출하기' }}
+                  {{ submittingForm ? '신청서 접수 중...' : cmsForm.submitText || '온라인 예약·신청서 제출하기' }}
                 </button>
               </div>
             </div>
@@ -600,6 +1088,35 @@
         </div>
       </div>
     </div>
+
+    <!-- 포토 갤러리 고해상도 라이트박스 모달 -->
+    <div
+      v-if="selectedGalleryImage"
+      class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4"
+      @click.self="selectedGalleryImage = null"
+    >
+      <div class="bg-slate-900 rounded-3xl max-w-4xl w-full overflow-hidden border border-white/15 shadow-2xl">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-white/10 text-white">
+          <strong class="text-sm font-extrabold">
+            {{ selectedGalleryImage.caption || selectedGalleryImage.originalName }}
+          </strong>
+          <button
+            type="button"
+            class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold"
+            @click="selectedGalleryImage = null"
+          >
+            닫기 ✕
+          </button>
+        </div>
+        <div class="p-4 flex items-center justify-center bg-slate-950">
+          <img
+            :src="selectedGalleryImage.fileUrl"
+            :alt="selectedGalleryImage.caption || selectedGalleryImage.originalName"
+            class="max-h-[75vh] w-auto object-contain rounded-xl"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -681,12 +1198,117 @@ const articles = computed<any[]>(() => {
 });
 
 const cmsForm = computed<any>(() => {
+  if (runtime.value?.layoutSchema?.customCmsForm) {
+    return runtime.value.layoutSchema.customCmsForm;
+  }
   if (runtime.value?.cmsForm) return runtime.value.cmsForm;
   const forms = runtime.value?.cms?.forms;
   return Array.isArray(forms) && forms.length > 0 ? forms[0] : null;
 });
 
+const showPhotoGallery = computed<boolean>(() => {
+  return runtime.value?.layoutSchema?.showPhotoGallery !== false;
+});
+
+const galleryImages = computed<any[]>(() => {
+  const list =
+    runtime.value?.galleryImages ||
+    runtime.value?.layoutSchema?.galleryImages ||
+    [];
+  return Array.isArray(list) ? list : [];
+});
+
+const downloadableDocs = computed<any[]>(() => {
+  const list =
+    runtime.value?.downloadableDocs ||
+    runtime.value?.layoutSchema?.downloadableDocs ||
+    [];
+  return Array.isArray(list) ? list : [];
+});
+
+const featureBlocks = computed<Record<string, any>>(
+  () => runtime.value?.featureBlocks || runtime.value?.layoutSchema?.featureBlocks || {},
+);
+
+const pricingMatrix = computed<any>(() => {
+  const raw = featureBlocks.value?.pricingMatrix;
+  if (!raw) return null;
+  if (Array.isArray(raw)) {
+    return {
+      title: '시즌 · 요일 · 인원별 상세 요금 안내',
+      columns: ['구분', '기준 인원', '비수기 주중', '비수기 주말', '성수기/연휴', '포함 혜택'],
+      rows: raw,
+    };
+  }
+  return raw;
+});
+const spaceTour = computed<any[]>(() =>
+  Array.isArray(featureBlocks.value?.spaceTour) ? featureBlocks.value.spaceTour : [],
+);
+const stepGuide = computed<any[]>(() =>
+  Array.isArray(featureBlocks.value?.stepGuide) ? featureBlocks.value.stepGuide : [],
+);
+const faqItems = computed<any[]>(() =>
+  Array.isArray(featureBlocks.value?.faqItems) ? featureBlocks.value.faqItems : [],
+);
+const locationGuide = computed<any>(() => featureBlocks.value?.locationGuide || null);
+const policyRules = computed<string[]>(() =>
+  Array.isArray(featureBlocks.value?.policyRules) ? featureBlocks.value.policyRules : [],
+);
+const reviews = computed<any[]>(() =>
+  Array.isArray(featureBlocks.value?.reviews) ? featureBlocks.value.reviews : [],
+);
+const pollWidget = computed<any>(() => featureBlocks.value?.pollWidget || null);
+const trustMetrics = computed<any[]>(() =>
+  Array.isArray(featureBlocks.value?.trustMetrics) ? featureBlocks.value.trustMetrics : [],
+);
+
+const dynamicCustomFields = computed<any[]>(() => {
+  const rawFields = cmsForm.value?.fields;
+  if (!Array.isArray(rawFields)) return [];
+  return rawFields.filter(
+    (f: any) =>
+      f &&
+      f.key &&
+      !['applicantName', 'phone', 'message'].includes(String(f.key)),
+  );
+});
+
+const dynamicFieldValues = ref<Record<string, any>>({});
+const openFaqIndex = ref<number>(0);
+const votedOptionIndex = ref<number | null>(null);
+
+function toggleDynamicCheckbox(fieldKey: string, opt: string) {
+  const cur = Array.isArray(dynamicFieldValues.value[fieldKey])
+    ? [...dynamicFieldValues.value[fieldKey]]
+    : [];
+  const idx = cur.indexOf(opt);
+  if (idx >= 0) {
+    cur.splice(idx, 1);
+  } else {
+    cur.push(opt);
+  }
+  dynamicFieldValues.value[fieldKey] = cur;
+}
+
+function votePollOption(idx: number) {
+  votedOptionIndex.value = idx;
+}
+
+const selectedGalleryImage = ref<any | null>(null);
+
+function formatDocSize(bytes: any) {
+  const num = Number(bytes || 0);
+  if (!num || num <= 0) return '0 KB';
+  if (num < 1024) return `${num} B`;
+  if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
+  return `${(num / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 const heroBannerImage = computed<string>(() => {
+  if (runtime.value?.layoutSchema?.heroBannerImage) {
+    return String(runtime.value.layoutSchema.heroBannerImage);
+  }
   const shopBanners = runtime.value?.commerce?.banners;
   if (Array.isArray(shopBanners) && shopBanners.length > 0 && shopBanners[0].pic) {
     return shopBanners[0].pic;
@@ -699,6 +1321,19 @@ const heroBannerImage = computed<string>(() => {
 });
 
 const heroBannerCaption = computed<{ title: string; sub: string } | null>(() => {
+  const rawCap = runtime.value?.layoutSchema?.heroBannerCaption;
+  if (rawCap) {
+    if (typeof rawCap === 'object') {
+      return {
+        title: String(rawCap.title || ''),
+        sub: String(rawCap.sub || brandName.value),
+      };
+    }
+    return {
+      title: String(rawCap),
+      sub: brandName.value,
+    };
+  }
   const shopBanners = runtime.value?.commerce?.banners;
   if (Array.isArray(shopBanners) && shopBanners.length > 0) {
     return { title: shopBanners[0].name || '', sub: shopBanners[0].note || '' };
@@ -711,7 +1346,10 @@ const heroBannerCaption = computed<{ title: string; sub: string } | null>(() => 
 });
 
 function displayPrice(prod: any): number {
-  return Number(prod?.promotionPrice ?? prod?.price ?? 0);
+  const promo = Number(prod?.promotionPrice || 0);
+  if (promo > 0) return promo;
+  const price = Number(prod?.price || 0);
+  return price > 0 ? price : 120000;
 }
 
 // 주문 상태
@@ -797,14 +1435,25 @@ async function handleSubmitCmsForm() {
   if (!cmsFormInput.value.applicantName.trim()) return;
   submittingForm.value = true;
   try {
+    const dynSummary = Object.entries(dynamicFieldValues.value)
+      .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== '')
+      .map(([k, v]) => `${k}:${Array.isArray(v) ? v.join(',') : v}`)
+      .join(' | ');
+    const finalOptionValue =
+      cmsFormInput.value.optionValue ||
+      dynamicFieldValues.value.roomOrPackage ||
+      dynSummary ||
+      '온라인 신청';
+
     formSubmitResult.value = await kkumzApi.submitCmsForm(currentSlug.value, {
       formId: cmsForm.value?.id,
       applicantName: cmsFormInput.value.applicantName,
       phone: cmsFormInput.value.phone,
-      optionValue: cmsFormInput.value.optionValue,
+      optionValue: String(finalOptionValue),
       message: cmsFormInput.value.message,
+      extraFields: { ...dynamicFieldValues.value },
     });
-    runtime.value = await kkumzApi.getSiteRuntime(currentSlug.value);
+    runtime.value = normalizeRuntimePayload(await kkumzApi.getSiteRuntime(currentSlug.value));
   } finally {
     submittingForm.value = false;
   }

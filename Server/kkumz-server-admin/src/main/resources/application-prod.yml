@@ -14,6 +14,13 @@ spring:
       password: ${SPRING_DATA_REDIS_PASSWORD}
 
 kkumz:
+  integration:
+    cms-base-url: ${KKUMZ_CMS_BASE_URL}
+    cms-access-key: ${KKUMZ_CMS_ACCESS_KEY}
+    cms-secret-key: ${KKUMZ_CMS_SECRET_KEY}
+    shop-base-url: ${KKUMZ_SHOP_BASE_URL}
+    shop-access-key: ${KKUMZ_SHOP_ACCESS_KEY}
+    shop-secret-key: ${KKUMZ_SHOP_SECRET_KEY}
   cross-db:
     shop-url: ${KKUMZ_SHOP_DB_URL}
     cms-url: ${KKUMZ_CMS_DB_URL}
@@ -24,5 +31,8 @@ kkumz:
       base-url: ${SYNC_LLM_GATEWAY_URL}
       api-key: ${SYNC_LLM_API_KEY}
       model: ${SYNC_LLM_MODEL}
+  storage:
+    upload-dir: ${KKUMZ_STORAGE_UPLOAD_DIR}
+    public-prefix: ${KKUMZ_STORAGE_PUBLIC_PREFIX:/api/v1/kkumz/assets/files}
   nacos:
     enabled: true

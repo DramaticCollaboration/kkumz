@@ -1,8 +1,10 @@
 import axios from 'axios';
 
+const AI_TIMEOUT = 120000;
+
 const http = axios.create({
   baseURL: '/api/v1/kkumz',
-  timeout: 25000,
+  timeout: 90000,
 });
 
 function unwrap<T = any>(res: any): T {
@@ -60,12 +62,25 @@ export function formatPositionRoleLabel(role?: string): string {
 }
 
 export const kkumzApi = {
-  // 0. 스튜디오 메타데이터 (레이아웃/컴포넌트 사전 및 스타터 프리셋)
+  // 0. 스튜디오 메타데이터 (레이아웃/컴포넌트 사전, 업로드 용도 사전 및 스타터 프리셋)
   async getStudioMetadata() {
     const res = await http.get('/studio/metadata');
     return unwrap<{
       layoutLabels: Record<string, string>;
       componentLabels: Record<string, string>;
+      siteTypeLabels?: Record<string, string>;
+      assetTypeLabels?: Record<string, string>;
+      siteTypes?: Array<{
+        code: string;
+        badge: string;
+        title: string;
+        desc: string;
+      }>;
+      assetTypes?: Array<{
+        code: string;
+        label: string;
+        description: string;
+      }>;
       starterPresets: Array<{
         code: string;
         label: string;
@@ -99,6 +114,41 @@ export const kkumzApi = {
     const res = await http.get(`/ideas/${encodeURIComponent(ideaId)}`);
     return unwrap<any>(res);
   },
+  async analyzeIdeaIntent(
+    ideaId: string,
+    payload?: {
+      title?: string;
+      promptText?: string;
+      category?: string;
+      tags?: string[];
+      applyExpandedPrompt?: boolean;
+      applyAssetCaptions?: boolean;
+      applyRecommendedFeatures?: boolean;
+    },
+  ) {
+    const res = await http.post(
+      `/ideas/${encodeURIComponent(ideaId)}/analyze-intent`,
+      payload || {},
+      { timeout: AI_TIMEOUT },
+    );
+    return unwrap<any>(res);
+  },
+  async updateIdeaFeatures(
+    ideaId: string,
+    payload: {
+      title?: string;
+      promptText?: string;
+      enabledFeatures: string[];
+      siteType?: string;
+      category?: string;
+      tags?: string[];
+      aiIntentAnalysis?: Record<string, any>;
+      syncScreens?: boolean;
+    },
+  ) {
+    const res = await http.put(`/ideas/${encodeURIComponent(ideaId)}/features`, payload);
+    return unwrap<any>(res);
+  },
   async saveOrRollbackIdeaVersion(
     ideaId: string,
     payload: {
@@ -121,14 +171,124 @@ export const kkumzApi = {
     const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/screens`, payload);
     return unwrap<any[]>(res);
   },
+  async deleteIdeaScreen(ideaId: string, screenId: string) {
+    const res = await http.delete(
+      `/ideas/${encodeURIComponent(ideaId)}/screens/${encodeURIComponent(screenId)}`,
+    );
+    return unwrap<any[]>(res);
+  },
 
-  // 2. AI 브랜드 네이밍 8종 & 벡터 SVG 로고 6종
-  async generateNames(ideaId: string, payload?: { keywordHint?: string; toneStyle?: string }) {
-    const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/generate/names`, payload || {});
+  // 1-2. 아이디어·사이트 업로드 자산 (현장/상품 사진, 로고, 안내문·요금표 문서)
+  async listIdeaAssets(ideaId: string) {
+    const res = await http.get(`/ideas/${encodeURIComponent(ideaId)}/assets`);
+    return unwrap<any[]>(res);
+  },
+  async uploadIdeaAssets(
+    ideaId: string,
+    filesOrPayload:
+      | File[]
+      | {
+          files: File[];
+          assetType?: string;
+          caption?: string;
+          applyToPrompt?: boolean;
+          uploadedBy?: string;
+        },
+    assetType?: string,
+    caption?: string,
+    applyToPrompt?: boolean,
+    uploadedBy?: string,
+  ) {
+    const payload = Array.isArray(filesOrPayload)
+      ? {
+          files: filesOrPayload,
+          assetType,
+          caption,
+          applyToPrompt,
+          uploadedBy,
+        }
+      : filesOrPayload;
+    const formData = new FormData();
+    for (const f of payload.files) {
+      formData.append('files', f);
+    }
+    if (payload.assetType) {
+      formData.append('assetType', payload.assetType);
+    }
+    if (payload.caption) {
+      formData.append('caption', payload.caption);
+    }
+    if (payload.applyToPrompt !== undefined) {
+      formData.append('applyToPrompt', String(payload.applyToPrompt));
+    }
+    if (payload.uploadedBy) {
+      formData.append('uploadedBy', payload.uploadedBy);
+    }
+    const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/assets`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return unwrap<any>(res);
   },
-  async generateLogos(ideaId: string, payload?: { brandName?: string; siteSlug?: string; stylePreference?: string }) {
-    const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/generate/logos`, payload || {});
+  async updateIdeaAsset(
+    ideaId: string,
+    assetId: string,
+    payload: { assetType?: string; caption?: string; sortNo?: number; sortOrder?: number },
+  ) {
+    const res = await http.put(
+      `/ideas/${encodeURIComponent(ideaId)}/assets/${encodeURIComponent(assetId)}`,
+      {
+        ...payload,
+        sortNo: payload.sortNo ?? payload.sortOrder,
+      },
+    );
+    return unwrap<any>(res);
+  },
+  async deleteIdeaAsset(ideaId: string, assetId: string) {
+    const res = await http.delete(
+      `/ideas/${encodeURIComponent(ideaId)}/assets/${encodeURIComponent(assetId)}`,
+    );
+    return unwrap<any>(res);
+  },
+  async applyAssetToPrompt(ideaId: string, assetId: string) {
+    const res = await http.post(
+      `/ideas/${encodeURIComponent(ideaId)}/assets/${encodeURIComponent(assetId)}/apply-prompt`,
+    );
+    return unwrap<any>(res);
+  },
+  async uploadCustomBrandLogo(ideaId: string, file: File, styleName?: string) {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (styleName) {
+      formData.append('styleName', styleName);
+    }
+    const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/upload-logo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return unwrap<any>(res);
+  },
+
+  // 2. AI 브랜드 네이밍 8종 & 벡터 SVG 로고 6종
+  async generateNames(
+    ideaId: string,
+    payload?: { keywordHint?: string; toneStyle?: string; forceRegenerate?: boolean },
+  ) {
+    const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/generate/names`, payload || {}, {
+      timeout: AI_TIMEOUT,
+    });
+    return unwrap<any>(res);
+  },
+  async generateLogos(
+    ideaId: string,
+    payload?: {
+      brandName?: string;
+      siteSlug?: string;
+      stylePreference?: string;
+      forceRegenerate?: boolean;
+    },
+  ) {
+    const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/generate/logos`, payload || {}, {
+      timeout: AI_TIMEOUT,
+    });
     return unwrap<any>(res);
   },
   async selectBrand(
@@ -137,18 +297,37 @@ export const kkumzApi = {
       nameSuggestionId?: string;
       logoSuggestionId?: string;
       brandName?: string;
+      customBrandName?: string;
       siteSlug?: string;
+      customSiteSlug?: string;
+      pronunciation?: string;
+      brandStory?: string;
       logoSvg?: string;
+      customLogoSvg?: string;
       designTokens?: Record<string, any>;
+      colorPalette?: Record<string, any>;
     },
   ) {
-    const res = await http.put(`/ideas/${encodeURIComponent(ideaId)}/select-brand`, payload);
+    const normalized = {
+      nameSuggestionId: payload.nameSuggestionId,
+      logoSuggestionId: payload.logoSuggestionId,
+      brandName: payload.brandName || payload.customBrandName,
+      siteSlug: payload.siteSlug || payload.customSiteSlug,
+      pronunciation: payload.pronunciation,
+      brandStory: payload.brandStory,
+      logoSvg: payload.logoSvg || payload.customLogoSvg,
+      designTokens: payload.designTokens || payload.colorPalette,
+    };
+    const res = await http.put(`/ideas/${encodeURIComponent(ideaId)}/select-brand`, normalized);
     return unwrap<any>(res);
   },
 
   // 3. AI 마크다운 서비스 기획서
-  async generateSpec(ideaId: string) {
-    const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/generate/spec`);
+  async generateSpec(ideaId: string, forceRegenerate = false) {
+    const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/generate/spec`, null, {
+      params: { forceRegenerate },
+      timeout: AI_TIMEOUT,
+    });
     return unwrap<any>(res);
   },
   async updateSpec(
@@ -156,6 +335,10 @@ export const kkumzApi = {
     payload: {
       title?: string;
       promptText?: string;
+      siteType?: string;
+      category?: string;
+      tags?: string[];
+      visibility?: string;
       specMarkdown: string;
       screens?: any[];
       updatedBy?: string;
@@ -175,12 +358,17 @@ export const kkumzApi = {
     payload: {
       instruction?: string;
       viewport?: string;
+      siteName?: string;
+      brandSlogan?: string;
+      logoSvg?: string;
       tokenOverrides?: Record<string, any>;
       layoutOverrides?: Record<string, any>;
       username?: string;
     },
   ) {
-    const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/chat-refine`, payload);
+    const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/chat-refine`, payload, {
+      timeout: AI_TIMEOUT,
+    });
     return unwrap<any>(res);
   },
   async getWebIdeFiles(siteSlug: string) {
@@ -200,15 +388,25 @@ export const kkumzApi = {
     return unwrap<any>(res);
   },
   async aiFixBuildError(siteSlug: string, errorContext?: string, username?: string) {
-    const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/ai-fix-build`, {
-      errorContext: errorContext || 'Auto-detect compiler error',
-      username,
-    });
+    const res = await http.post(
+      `/sites/${encodeURIComponent(siteSlug)}/ai-fix-build`,
+      {
+        errorContext: errorContext || 'Auto-detect compiler error',
+        username,
+      },
+      { timeout: AI_TIMEOUT },
+    );
     return unwrap<any>(res);
   },
   async deploySite(
     siteSlug: string,
-    payload?: { deployMode?: string; releaseNote?: string; visibility?: string; username?: string },
+    payload?: {
+      deployMode?: string;
+      releaseNote?: string;
+      visibility?: string;
+      customDomain?: string;
+      username?: string;
+    },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/deploy`, payload || {});
     return unwrap<any>(res);
@@ -216,6 +414,63 @@ export const kkumzApi = {
   async rollbackSiteRelease(siteSlug: string, versionNo: number) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/rollback/${versionNo}`);
     return unwrap<any>(res);
+  },
+
+  // 4-2. GitHub 리포지토리 프로비저닝, Git 커밋/푸시 & 사용자 전용 배포 키 관리
+  async getSiteGitRepo(siteSlug: string) {
+    const res = await http.get(`/sites/${encodeURIComponent(siteSlug)}/git`);
+    return unwrap<any>(res);
+  },
+  async provisionSiteGitRepo(
+    siteSlug: string,
+    payload?: {
+      repoOwner?: string;
+      repoName?: string;
+      defaultBranch?: string;
+      visibility?: string;
+      githubPatToken?: string;
+      includeFullViteScaffold?: boolean;
+      username?: string;
+    },
+  ) {
+    const res = await http.post(
+      `/sites/${encodeURIComponent(siteSlug)}/git/provision`,
+      payload || {},
+    );
+    return unwrap<any>(res);
+  },
+  async pushSiteToGitRepo(
+    siteSlug: string,
+    payload?: {
+      commitMessage?: string;
+      files?: Array<{ path: string; language: string; content: string }>;
+      githubPatToken?: string;
+      username?: string;
+    },
+  ) {
+    const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/git/push`, payload || {});
+    return unwrap<any>(res);
+  },
+  async rotateSiteGitKeys(
+    siteSlug: string,
+    payload?: {
+      rotateSshKey?: boolean;
+      rotateSiteApiKey?: boolean;
+      githubPatToken?: string;
+      username?: string;
+    },
+  ) {
+    const res = await http.post(
+      `/sites/${encodeURIComponent(siteSlug)}/git/rotate-keys`,
+      payload || {},
+    );
+    return unwrap<any>(res);
+  },
+  getSshKeyDownloadUrl(siteSlug: string) {
+    return `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/git/ssh-key/download`;
+  },
+  getGitArchiveDownloadUrl(siteSlug: string) {
+    return `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/git/archive`;
   },
 
   // 5. 라이브 멀티사이트 런타임 & 실주문/폼제출/AI컨시어지
@@ -253,7 +508,11 @@ export const kkumzApi = {
     return unwrap<any>(res);
   },
   async askSiteConcierge(siteSlug: string, question: string) {
-    const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/concierge`, { question });
+    const res = await http.post(
+      `/sites/${encodeURIComponent(siteSlug)}/concierge`,
+      { question },
+      { timeout: AI_TIMEOUT },
+    );
     return unwrap<any>(res);
   },
 

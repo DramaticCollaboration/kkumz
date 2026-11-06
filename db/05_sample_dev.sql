@@ -7,7 +7,7 @@
 INSERT INTO kkumz_idea (
     id, author_username, author_display_name, title, prompt_text, site_type, category,
     tags_json, visibility, current_step, selected_brand_name, selected_site_slug, selected_logo_svg,
-    design_tokens_json, spec_markdown, screens_json, status, created_at, updated_at
+    design_tokens_json, spec_markdown, screens_json, enabled_features_json, ai_intent_analysis_json, status, created_at, updated_at
 ) VALUES
 (
     'idea-kkumz-001',
@@ -39,6 +39,8 @@ INSERT INTO kkumz_idea (
       {"screenKey":"CATALOG","title":"말차 등급 및 다구 카탈로그","layout":"FILTERABLE_3COL_GRID","components":["CategoryTabs","TasteNoteBadge","QuickCartDrawer"]},
       {"screenKey":"CHECKOUT","title":"기프트 패키징 및 즉시 결제","layout":"ONE_PAGE_CHECKOUT","components":["GiftWrapSelector","OrderForm","AiTeaSommelierWidget"]}
     ]'::jsonb,
+    '["CMS_HERO_SHOWCASE","SHOP_PRODUCT_GRID","SHOP_CURATED_BUNDLE","CMS_STEP_RITUAL_GUIDE","SHOP_COUPON_PACK","SHOP_PHOTO_REVIEWS","CMS_BRAND_MAGAZINE","CMS_FAQ_ACCORDION","AI_TASTE_CURATOR","AI_BRAND_CONCIERGE"]'::jsonb,
+    '{"siteType":"COMMERCE","siteTypeReason":"유기농 말차 파우더와 수제 다기 판매 및 선물 포장 결제가 중심인 D2C 브랜드 스토어입니다.","category":"프리미엄 F&B · 다도 D2C 스토어","heroStyle":"EDITORIAL_STORY","brandSlogan":"제주 화산암반수와 해풍이 길러낸 첫물 유기농 차광 말차 & 수제 다기 아뜰리에"}'::jsonb,
     'PUBLISHED',
     CURRENT_TIMESTAMP - INTERVAL '5 days',
     CURRENT_TIMESTAMP - INTERVAL '1 hour'
@@ -72,6 +74,8 @@ INSERT INTO kkumz_idea (
       {"screenKey":"CATALOG","title":"모듈형 기어 카탈로그","layout":"SPEC_COMPARISON_GRID","components":["CompatibilityFilter","ProductCard","CartSidebar"]},
       {"screenKey":"CHECKOUT","title":"익스프레스 주문서","layout":"ONE_PAGE_CHECKOUT","components":["ShippingAddressForm","CouponApplier","InstantOrderButton"]}
     ]'::jsonb,
+    '["CMS_HERO_SHOWCASE","SHOP_PRODUCT_GRID","SHOP_SPEC_COMPARISON","SHOP_CURATED_BUNDLE","SHOP_FLASH_DEAL","SHOP_PHOTO_REVIEWS","CMS_FAQ_ACCORDION","AI_TASTE_CURATOR","AI_BRAND_CONCIERGE"]'::jsonb,
+    '{"siteType":"COMMERCE","siteTypeReason":"하드웨어 상세 스펙 비교와 묶음 세트 구매가 핵심인 테크 기어 스토어입니다.","category":"테크 하드웨어 · 데스크테리어 기어","heroStyle":"PROMO_COMMERCE","brandSlogan":"몰입의 궤도를 설계하는 모듈형 알루미늄 데스크테리어 & 매그세이프 테크 기어"}'::jsonb,
     'PUBLISHED',
     CURRENT_TIMESTAMP - INTERVAL '4 days',
     CURRENT_TIMESTAMP - INTERVAL '2 hours'
@@ -105,6 +109,8 @@ INSERT INTO kkumz_idea (
       {"screenKey":"ARTICLE_FEED","title":"러닝 코스 가이드 & 훈련 칼럼","layout":"EDITORIAL_CARDS","components":["CourseArticleList","PaceCalculatorCard"]},
       {"screenKey":"APPLY_FORM","title":"게스트 런 & 크루 합류 신청 폼","layout":"DYNAMIC_CMS_FORM","components":["SessionSelectField","PaceRadioGroup","SubmitApplicationButton"]}
     ]'::jsonb,
+    '["CMS_HERO_SHOWCASE","CMS_SESSION_TIMETABLE","CMS_BRAND_MAGAZINE","CMS_PHOTO_GALLERY","CMS_DYNAMIC_BOOKING_FORM","CMS_LIVE_POLL","CMS_LOCATION_DIRECTIONS","AI_TEAM_RECRUIT","AI_BRAND_CONCIERGE"]'::jsonb,
+    '{"siteType":"CMS_SITE","siteTypeReason":"주간 러닝 세션 일정표, 코스 매거진, 게스트 참가 신청 폼이 중심인 커뮤니티 웹사이트입니다.","category":"스포츠 크루 · 러닝 커뮤니티 미디어","heroStyle":"FULL_SCENIC","brandSlogan":"서울의 밤을 가르는 페이스, 함께 달릴 때 더 멀리 가는 시티 러닝 커뮤니티"}'::jsonb,
     'PUBLISHED',
     CURRENT_TIMESTAMP - INTERVAL '3 days',
     CURRENT_TIMESTAMP - INTERVAL '3 hours'
@@ -138,9 +144,40 @@ INSERT INTO kkumz_idea (
       {"screenKey":"SHOP_AND_JOURNAL","title":"브루잉 스토어 & 커핑 아카이브 통합 탭","layout":"DUAL_STREAM_GRID","components":["CommerceCatalogSection","EditorialJournalSection"]},
       {"screenKey":"CUPPING_RESERVE","title":"커핑 클래스 예약 및 B2B 샘플 신청","layout":"DYNAMIC_CMS_FORM","components":["ClassBookingForm","AiBrewingConcierge"]}
     ]'::jsonb,
+    '["CMS_HERO_SHOWCASE","SHOP_PRODUCT_GRID","SHOP_SUBSCRIPTION_TIERS","CMS_BRAND_MAGAZINE","CMS_STEP_RITUAL_GUIDE","CMS_DYNAMIC_BOOKING_FORM","SHOP_PHOTO_REVIEWS","CMS_FAQ_ACCORDION","AI_TASTE_CURATOR","AI_BRAND_CONCIERGE"]'::jsonb,
+    '{"siteType":"HYBRID","siteTypeReason":"산지 농장 인터뷰 매거진과 시음 클래스 예약(SyncCMS) + 싱글오리진 원두·브루잉 기어 스토어(SyncShop)가 모두 필요한 복합 브랜드입니다.","category":"스페셜티 커피 로스터리 · 라이프스타일 복합","heroStyle":"SPLIT_VISUAL","brandSlogan":"한 잔의 커피에 담긴 산지의 연대기 — 로스터리 저널 & 스페셜티 셀렉트 샵"}'::jsonb,
     'PUBLISHED',
     CURRENT_TIMESTAMP - INTERVAL '2 days',
     CURRENT_TIMESTAMP - INTERVAL '30 minutes'
+),
+(
+    'idea-01137479',
+    'admin',
+    '김도현 총괄관리자',
+    '충남 공주 시골 맑은 냇가 옆 독채 민박 & 평상 스테이 (맑은물 민박)',
+    '충남 공주 시골 맑은 냇가 바로 옆에 위치한 정겨운 맑은물 민박 공식 사이트입니다. 황토 온돌 독채 객실과 냇가 평상 당일 대여, 능이 토종닭 백숙·숯불 바비큐 세트를 예약받고, 성수기/비수기 상세 요금표와 사계절 현장 사진 갤러리(12장), 공간 구역별 투어, 체크인 날짜·인원·바비큐 옵션을 선택하는 맞춤 예약 신청 폼, 숙박 FAQ, 공주 오시는 길 및 주변 추천 관광코스를 한눈에 제공합니다.',
+    'HYBRID',
+    '숙박 · 민박 · 프라이빗 스테이',
+    '["공주민박", "냇가평상", "황토독채", "능이백숙", "사계절촌캉스", "가족스테이"]'::jsonb,
+    'PUBLIC',
+    6,
+    '맑은물 민박',
+    'malgeunmul-minbak',
+    '<svg viewBox="0 0 185 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#0f766e"/><path d="M8 25 C13 19, 18 19, 23 25 C26 28, 30 28, 33 23" stroke="#99f6e4" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M12 18 L20 11 L28 18" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-size="15" font-weight="800" fill="#0f766e">맑은물 민박</text></svg>',
+    '{"primary":"#0f766e","secondary":"#115e59","accent":"#d97706","surface":"#f0fdf4","radius":"14px","fontHeading":"Pretendard","fontBody":"Pretendard"}'::jsonb,
+    '# 맑은물 민박 서비스 기능명세서\n\n## 핵심 제공 기능 및 공간 경험\n- 충남 공주 청정 냇가 바로 앞 프라이빗 황토 독채 & 별채 온돌방 실시간 예약\n- 여름철 시원한 냇가 평상·정자 당일 대여 및 능이 토종닭 백숙·숯불 바비큐 패키지 주문\n- 비수기·성수기·주중·주말 및 인원 추가 기준이 정리된 투명한 시즌 요금표 매트릭스\n- 사계절 현장 사진 갤러리(12장) 및 실내·평상존·냇가 물놀이장 구역별 스페이스 투어\n- 체크인 날짜, 희망 객실/평상, 방문 인원수, 식사·바비큐 옵션을 선택하는 동적 예약 신청 폼\n- 자주 묻는 질문(FAQ), 공주 오시는 길·주변 관광코스 및 24시간 AI 민박 컨시어지 상담\n',
+    '[
+      {"screenKey":"SCR_HOME","screenTitle":"메인 히어로 & 객실·평상 카탈로그","routePath":"/","layoutType":"HYBRID_EDITORIAL_COMMERCE","description":"공주 냇가 대표 전경 배너와 독채 객실·평상 대여·백숙 패키지 쇼케이스","components":["CMS_HERO_SHOWCASE","CMS_TRUST_METRICS_BAR","SHOP_ROOM_SHOWCASE","SHOP_SEASONAL_MENU","SHOP_PRICING_MATRIX"]},
+      {"screenKey":"SCR_GALLERY","screenTitle":"사계절 현장 포토 갤러리 & 공간 투어","routePath":"/gallery","layoutType":"GALLERY_SHOWCASE","description":"여름 계곡 물놀이, 가을 단풍 정자, 겨울 눈썰매 등 12장의 현장 사진과 구역별 안내","components":["CMS_SPACE_TOUR","CMS_PHOTO_GALLERY","CMS_STEP_RITUAL_GUIDE"]},
+      {"screenKey":"SCR_MAGAZINE","screenTitle":"맑은물 계절 소식 & 방문객 후기","routePath":"/magazine","layoutType":"MAGAZINE_LIST","description":"공주 계절 소식 저널, 실제 가족 방문객 포토 후기 및 선호도 투표","components":["CMS_BRAND_MAGAZINE","SHOP_PHOTO_REVIEWS","CMS_LIVE_POLL"]},
+      {"screenKey":"SCR_RESERVATION","screenTitle":"맞춤 일정·객실·바비큐 온라인 예약","routePath":"/reserve","layoutType":"RESERVATION_FORM","description":"체크인 날짜, 객실/평상 타입, 인원수, 능이백숙·숯불 옵션을 선택하는 동적 예약 폼","components":["CMS_DYNAMIC_BOOKING_FORM","SHOP_COUPON_PACK","CMS_POLICY_RULES_BOX"]},
+      {"screenKey":"SCR_FAQ_CONCIERGE","screenTitle":"숙박 FAQ · 오시는 길 & AI 컨시어지","routePath":"/concierge","layoutType":"FAQ_CONCIERGE","description":"자주 묻는 질문 아코디언, 공주 네비게이션 주소·주변 코스 및 24시간 AI 상담","components":["AI_TASTE_CURATOR","CMS_FAQ_ACCORDION","CMS_LOCATION_DIRECTIONS","AI_BRAND_CONCIERGE"]}
+    ]'::jsonb,
+    '["CMS_HERO_SHOWCASE","CMS_TRUST_METRICS_BAR","SHOP_ROOM_SHOWCASE","SHOP_SEASONAL_MENU","SHOP_PRICING_MATRIX","SHOP_COUPON_PACK","CMS_SPACE_TOUR","CMS_PHOTO_GALLERY","CMS_STEP_RITUAL_GUIDE","CMS_BRAND_MAGAZINE","SHOP_PHOTO_REVIEWS","CMS_LIVE_POLL","CMS_DYNAMIC_BOOKING_FORM","AI_TASTE_CURATOR","CMS_FAQ_ACCORDION","CMS_LOCATION_DIRECTIONS","CMS_POLICY_RULES_BOX","AI_BRAND_CONCIERGE"]'::jsonb,
+    '{"siteType":"HYBRID","siteTypeReason":"독채 객실·냇가 평상·능이백숙 예약 및 요금표(SyncShop)와 사계절 공간 갤러리·맞춤 예약폼·오시는길 가이드(SyncCMS)가 결합된 숙박·스테이 복합 사이트입니다.","category":"숙박 · 민박 · 프라이빗 스테이","heroStyle":"FULL_SCENIC","brandSlogan":"공주 청정 냇가 물소리와 따뜻한 황토 온돌이 맞이하는 사계절 시골 쉼터","expandedPrompt":"충남 공주 시골 맑은 냇가 바로 옆에 자리한 맑은물 민박은 가족과 친구들이 도심을 벗어나 온전한 쉼을 누리는 프라이빗 스테이입니다. 황토 온돌 독채와 별채 객실, 냇가 바로 옆 시원한 평상·정자 대여, 능이 토종닭 백숙과 숯불 바비큐 세트를 투명한 시즌별 요금표와 함께 예약할 수 있으며, 12장의 사계절 현장 사진과 구역별 공간 투어, 동적 예약 신청 폼, 공주 주변 관광코스를 제공합니다.","recommendedFeatures":["CMS_HERO_SHOWCASE","CMS_TRUST_METRICS_BAR","SHOP_ROOM_SHOWCASE","SHOP_SEASONAL_MENU","SHOP_PRICING_MATRIX","SHOP_COUPON_PACK","CMS_SPACE_TOUR","CMS_PHOTO_GALLERY","CMS_STEP_RITUAL_GUIDE","CMS_BRAND_MAGAZINE","SHOP_PHOTO_REVIEWS","CMS_LIVE_POLL","CMS_DYNAMIC_BOOKING_FORM","AI_TASTE_CURATOR","CMS_FAQ_ACCORDION","CMS_LOCATION_DIRECTIONS","CMS_POLICY_RULES_BOX","AI_BRAND_CONCIERGE"],"featureReasons":{"SHOP_ROOM_SHOWCASE":"독채·황토방·냇가 평상 등 공간 타입별 기준 인원과 1박/대여 요금을 한눈에 비교하고 바로 예약할 수 있습니다.","SHOP_PRICING_MATRIX":"비수기·성수기·주중·주말 요금과 인원 추가, 바비큐 숯불 비용을 표로 명확히 안내해 전화 문의를 줄여줍니다.","CMS_SPACE_TOUR":"실내 온돌방, 마당 정자, 냇가 평상존, 물놀이/썰매 체험 구역을 동선별로 생생하게 소개합니다.","CMS_DYNAMIC_BOOKING_FORM":"체크인 날짜, 희망 객실/평상, 방문 인원수, 능이백숙·바비큐 옵션을 선택해 간편하게 예약 신청을 접수합니다.","CMS_LOCATION_DIRECTIONS":"공주 시골길 네비게이션 주소 복사, 주차 공간 안내 및 공산성·마곡사 등 주변 추천 코스를 안내합니다."}}'::jsonb,
+    'PUBLISHED',
+    CURRENT_TIMESTAMP - INTERVAL '1 day',
+    CURRENT_TIMESTAMP - INTERVAL '10 minutes'
 );
 
 INSERT INTO kkumz_idea_version (
@@ -985,3 +1022,74 @@ INSERT INTO kkumz_notification (
 ('noti-kkumz-001', 'soyeon.jeju', 'TEAM_APPLY', '패키지 디자이너 포지션 신규 지원 도착', '이다은 패키지디자이너님이 [말차 아뜰리에 제주] 팀 합류를 신청했습니다.', '/lounge', FALSE, CURRENT_TIMESTAMP - INTERVAL '6 hours'),
 ('noti-kkumz-002', 'minjun.maker', 'TEAM_APPLY', '프론트엔드 엔지니어 포지션 신규 지원 도착', '윤서준 프론트엔드님이 [데스크 오빗] 팀 합류를 신청했습니다.', '/lounge', FALSE, CURRENT_TIMESTAMP - INTERVAL '4 hours'),
 ('noti-kkumz-003', 'soyeon.jeju', 'BUILD_DONE', '말차 아뜰리에 제주 v2 배포 완료', '커스텀 번들 빌드가 성공적으로 완료되어 /s/matcha-atelier 에 즉시 반영되었습니다.', '/s/matcha-atelier', TRUE, CURRENT_TIMESTAMP - INTERVAL '1 hour');
+
+-- ============================================================================
+-- 맑은물 민박 (idea-01137479) 버전·네이밍·로고·화면설계·업로드 사진 자산 시드
+-- ============================================================================
+INSERT INTO kkumz_idea_version (
+    id, idea_id, version_no, title, prompt_text, spec_markdown, screens_json, created_by, created_at
+) VALUES
+(
+    'iver-idea-01137479-v1',
+    'idea-01137479',
+    1,
+    '맑은물 민박 — 공주 냇가 독채 스테이 & 평상 예약 복합 기획안 (v1)',
+    '충남 공주 시골 맑은 냇가 바로 옆에 위치한 정겨운 맑은물 민박 공식 사이트입니다. 황토 온돌 독채 객실과 냇가 평상 당일 대여, 능이 토종닭 백숙·숯불 바비큐 세트를 예약받고, 성수기/비수기 상세 요금표와 사계절 현장 사진 갤러리(12장), 공간 구역별 투어, 체크인 날짜·인원·바비큐 옵션을 선택하는 맞춤 예약 신청 폼, 숙박 FAQ, 공주 오시는 길 및 주변 추천 관광코스를 한눈에 제공합니다.',
+    '# 맑은물 민박 서비스 기능명세서\n\n## 핵심 제공 기능 및 공간 경험\n- 충남 공주 청정 냇가 바로 앞 프라이빗 황토 독채 & 별채 온돌방 실시간 예약\n- 여름철 시원한 냇가 평상·정자 당일 대여 및 능이 토종닭 백숙·숯불 바비큐 패키지 주문\n- 비수기·성수기·주중·주말 및 인원 추가 기준이 정리된 투명한 시즌 요금표 매트릭스\n- 사계절 현장 사진 갤러리(12장) 및 실내·평상존·냇가 물놀이장 구역별 스페이스 투어\n- 체크인 날짜, 희망 객실/평상, 방문 인원수, 식사·바비큐 옵션을 선택하는 동적 예약 신청 폼\n- 자주 묻는 질문(FAQ), 공주 오시는 길·주변 관광코스 및 24시간 AI 민박 컨시어지 상담\n',
+    '[
+      {"screenKey":"SCR_HOME","screenTitle":"메인 히어로 & 객실·평상 카탈로그","routePath":"/","layoutType":"HYBRID_EDITORIAL_COMMERCE","description":"공주 냇가 대표 전경 배너와 독채 객실·평상 대여·백숙 패키지 쇼케이스","components":["CMS_HERO_SHOWCASE","CMS_TRUST_METRICS_BAR","SHOP_ROOM_SHOWCASE","SHOP_SEASONAL_MENU","SHOP_PRICING_MATRIX"]},
+      {"screenKey":"SCR_GALLERY","screenTitle":"사계절 현장 포토 갤러리 & 공간 투어","routePath":"/gallery","layoutType":"GALLERY_SHOWCASE","description":"여름 계곡 물놀이, 가을 단풍 정자, 겨울 눈썰매 등 12장의 현장 사진과 구역별 안내","components":["CMS_SPACE_TOUR","CMS_PHOTO_GALLERY","CMS_STEP_RITUAL_GUIDE"]},
+      {"screenKey":"SCR_MAGAZINE","screenTitle":"맑은물 계절 소식 & 방문객 후기","routePath":"/magazine","layoutType":"MAGAZINE_LIST","description":"공주 계절 소식 저널, 실제 가족 방문객 포토 후기 및 선호도 투표","components":["CMS_BRAND_MAGAZINE","SHOP_PHOTO_REVIEWS","CMS_LIVE_POLL"]},
+      {"screenKey":"SCR_RESERVATION","screenTitle":"맞춤 일정·객실·바비큐 온라인 예약","routePath":"/reserve","layoutType":"RESERVATION_FORM","description":"체크인 날짜, 객실/평상 타입, 인원수, 능이백숙·숯불 옵션을 선택하는 동적 예약 폼","components":["CMS_DYNAMIC_BOOKING_FORM","SHOP_COUPON_PACK","CMS_POLICY_RULES_BOX"]},
+      {"screenKey":"SCR_FAQ_CONCIERGE","screenTitle":"숙박 FAQ · 오시는 길 & AI 컨시어지","routePath":"/concierge","layoutType":"FAQ_CONCIERGE","description":"자주 묻는 질문 아코디언, 공주 네비게이션 주소·주변 코스 및 24시간 AI 상담","components":["AI_TASTE_CURATOR","CMS_FAQ_ACCORDION","CMS_LOCATION_DIRECTIONS","AI_BRAND_CONCIERGE"]}
+    ]'::jsonb,
+    'admin',
+    CURRENT_TIMESTAMP - INTERVAL '1 day'
+);
+
+INSERT INTO kkumz_name_suggestion (
+    id, idea_id, brand_name, site_slug, pronunciation, brand_story, score, slug_available, is_selected, created_at
+) VALUES
+('name-idea-01137479-1', 'idea-01137479', '맑은물 민박', 'malgeunmul-minbak', '맑은물 민박 / Malgeunmul Minbak', '공주 시골 냇가 옆, 맑고 차가운 물소리와 따뜻한 황토 온돌이 어우러진 사계절 정겨운 시골 스테이입니다.', 99, TRUE, TRUE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('name-idea-01137479-2', 'idea-01137479', '공주냇가 민박', 'gongju-netga-minbak', '공주냇가 민박 / Gongju Netga Minbak', '충남 공주의 정겨운 냇가 풍경을 담은 민박으로, 도시를 벗어나 자연 속에서 여유를 되찾는 하루를 선사합니다.', 97, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('name-idea-01137479-3', 'idea-01137479', '맑은냇가 스테이', 'malgeun-netga-stay', '맑은냇가 스테이 / Malgeun Netga Stay', '맑은 물길과 새소리가 어우러진 냇가 옆 프라이빗 독채 스테이 공간입니다.', 95, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('name-idea-01137479-4', 'idea-01137479', '물안개 민박', 'mulangae-minbak', '물안개 민박 / Mulangae Minbak', '아침 냇가 위로 피어오르는 물안개처럼 잔잔하고 포근한 공주 시골의 숨은 휴식 명소입니다.', 93, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('name-idea-01137479-5', 'idea-01137479', '두물머리 민가', 'dumulmeori-minga', '두물머리 민가 / Dumulmeori Minga', '두 물줄기가 만나는 평화로운 냇가 끝자락, 마음이 편안해지는 시골 고택형 민박입니다.', 91, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('name-idea-01137479-6', 'idea-01137479', '청류민가 공주', 'cheongryu-minga', '청류민가 공주 / Cheongryu Minga', '맑은 물줄기(청류)를 품은 시골 집으로 공주 냇가의 사계절 정서를 담아낸 공간입니다.', 89, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('name-idea-01137479-7', 'idea-01137479', '수향민박', 'suhyang-minbak', '수향민박 / Suhyang Minbak', '물의 향기와 솔바람을 머금은 공주 냇가 옆 가족 휴양 민박입니다.', 87, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('name-idea-01137479-8', 'idea-01137479', '네이처브릿지 공주', 'nature-bridge-gongju', '네이처브릿지 공주 / Nature Bridge Gongju', '자연과 도시를 잇는 다리처럼 공주 냇가에서 진정한 회복을 경험하게 해주는 감성 민박입니다.', 85, TRUE, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day');
+
+INSERT INTO kkumz_logo_suggestion (
+    id, idea_id, style_name, svg_code, color_palette_json, typography_json, tags_json, is_selected, created_at
+) VALUES
+('logo-idea-01137479-1', 'idea-01137479', '내추럴 라인아트', '<svg viewBox="0 0 185 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#0f766e"/><path d="M8 25 C13 19, 18 19, 23 25 C26 28, 30 28, 33 23" stroke="#99f6e4" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M12 18 L20 11 L28 18" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-size="15" font-weight="800" fill="#0f766e">맑은물 민박</text></svg>', '{"primary":"#0f766e","secondary":"#115e59","accent":"#d97706","surface":"#f0fdf4","radius":"14px"}'::jsonb, '{"fontHeading":"Pretendard","fontBody":"Pretendard"}'::jsonb, '["자연", "수목", "물결", "시골", "휴식"]'::jsonb, TRUE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('logo-idea-01137479-2', 'idea-01137479', '모던 지오메트릭', '<svg viewBox="0 0 185 40" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="6" width="28" height="28" rx="6" fill="#0f766e"/><polygon points="10,28 19,18 28,28" fill="#ffffff"/><text x="44" y="25" font-family="Pretendard, sans-serif" font-size="15" font-weight="800" fill="#0f172a">맑은물 민박</text></svg>', '{"primary":"#0f766e","secondary":"#0284c7","accent":"#f97316","surface":"#f8fafc","radius":"14px"}'::jsonb, '{"fontHeading":"Pretendard","fontBody":"Pretendard"}'::jsonb, '["기하학", "현대적", "단정함"]'::jsonb, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('logo-idea-01137479-3', 'idea-01137479', '클래식 엠블럼', '<svg viewBox="0 0 185 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="16" fill="#0f172a"/><circle cx="20" cy="20" r="10" fill="#0f766e"/><text x="44" y="25" font-family="Pretendard, sans-serif" font-size="15" font-weight="800" fill="#0f172a">맑은물 민박</text></svg>', '{"primary":"#0f766e","secondary":"#0f172a","accent":"#d97706","surface":"#f1f5f9","radius":"14px"}'::jsonb, '{"fontHeading":"Pretendard","fontBody":"Pretendard"}'::jsonb, '["전통", "엠블럼", "신뢰"]'::jsonb, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('logo-idea-01137479-4', 'idea-01137479', '소프트 워터컬러 배지', '<svg viewBox="0 0 185 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="14" fill="#a7f3d0"/><path d="M12 18 Q18 13 24 18 T30 23" stroke="#0f766e" stroke-width="2.2" fill="none"/><text x="44" y="25" font-family="Pretendard, sans-serif" font-size="15" font-weight="800" fill="#0f172a">맑은물 민박</text></svg>', '{"primary":"#0f766e","secondary":"#059669","accent":"#d97706","surface":"#f0fdf4","radius":"14px"}'::jsonb, '{"fontHeading":"Pretendard","fontBody":"Pretendard"}'::jsonb, '["물결", "자연", "감성"]'::jsonb, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('logo-idea-01137479-5', 'idea-01137479', '미니멀 아치', '<svg viewBox="0 0 185 40" xmlns="http://www.w3.org/2000/svg"><path d="M10 28 Q14 14 22 28 T34 28" stroke="#0f172a" stroke-width="2.5" fill="none"/><text x="44" y="25" font-family="Pretendard, sans-serif" font-size="15" font-weight="800" fill="#0f172a">맑은물 민박</text></svg>', '{"primary":"#0f172a","secondary":"#0f766e","accent":"#10b981","surface":"#f0fdf4","radius":"10px"}'::jsonb, '{"fontHeading":"Pretendard","fontBody":"Pretendard"}'::jsonb, '["아치", "평온", "스테이"]'::jsonb, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('logo-idea-01137479-6', 'idea-01137479', '에디토리얼 시그니처', '<svg viewBox="0 0 185 40" xmlns="http://www.w3.org/2000/svg"><path d="M10 25 L19 15 L28 25" stroke="#0f766e" stroke-width="2.5" fill="none"/><path d="M14 22 Q20 16 26 22" stroke="#d97706" stroke-width="2" fill="none"/><text x="44" y="25" font-family="Pretendard, sans-serif" font-size="15" font-weight="800" fill="#0f172a">맑은물 민박</text></svg>', '{"primary":"#0f766e","secondary":"#1e293b","accent":"#d97706","surface":"#f8fafc","radius":"12px"}'::jsonb, '{"fontHeading":"Pretendard","fontBody":"Pretendard"}'::jsonb, '["시그니처", "정제된감성"]'::jsonb, FALSE, CURRENT_TIMESTAMP - INTERVAL '1 day');
+
+INSERT INTO kkumz_screen_spec (
+    id, idea_id, screen_key, screen_title, route_path, layout_type, description, components_json, sort_no, created_at
+) VALUES
+('scr-01137479-01', 'idea-01137479', 'SCR_HOME', '메인 히어로 & 객실·평상 카탈로그', '/', 'HYBRID_EDITORIAL_COMMERCE', '공주 냇가 대표 전경 배너와 독채 객실·평상 대여·백숙 패키지 쇼케이스', '["CMS_HERO_SHOWCASE","CMS_TRUST_METRICS_BAR","SHOP_ROOM_SHOWCASE","SHOP_SEASONAL_MENU","SHOP_PRICING_MATRIX"]'::jsonb, 1, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('scr-01137479-02', 'idea-01137479', 'SCR_GALLERY', '사계절 현장 포토 갤러리 & 공간 투어', '/gallery', 'GALLERY_SHOWCASE', '여름 계곡 물놀이, 가을 단풍 정자, 겨울 눈썰매 등 12장의 현장 사진과 구역별 안내', '["CMS_SPACE_TOUR","CMS_PHOTO_GALLERY","CMS_STEP_RITUAL_GUIDE"]'::jsonb, 2, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('scr-01137479-03', 'idea-01137479', 'SCR_MAGAZINE', '맑은물 계절 소식 & 방문객 후기', '/magazine', 'MAGAZINE_LIST', '공주 계절 소식 저널, 실제 가족 방문객 포토 후기 및 선호도 투표', '["CMS_BRAND_MAGAZINE","SHOP_PHOTO_REVIEWS","CMS_LIVE_POLL"]'::jsonb, 3, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('scr-01137479-04', 'idea-01137479', 'SCR_RESERVATION', '맞춤 일정·객실·바비큐 온라인 예약', '/reserve', 'RESERVATION_FORM', '체크인 날짜, 객실/평상 타입, 인원수, 능이백숙·숯불 옵션을 선택하는 동적 예약 폼', '["CMS_DYNAMIC_BOOKING_FORM","SHOP_COUPON_PACK","CMS_POLICY_RULES_BOX"]'::jsonb, 4, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('scr-01137479-05', 'idea-01137479', 'SCR_FAQ_CONCIERGE', '숙박 FAQ · 오시는 길 & AI 컨시어지', '/concierge', 'FAQ_CONCIERGE', '자주 묻는 질문 아코디언, 공주 네비게이션 주소·주변 코스 및 24시간 AI 상담', '["AI_TASTE_CURATOR","CMS_FAQ_ACCORDION","CMS_LOCATION_DIRECTIONS","AI_BRAND_CONCIERGE"]'::jsonb, 5, CURRENT_TIMESTAMP - INTERVAL '1 day');
+
+INSERT INTO kkumz_idea_asset (
+    id, idea_id, asset_type, original_name, stored_name, file_url, mime_type, file_size, caption, extracted_text, sort_no, uploaded_by, created_at
+) VALUES
+('ast-4c14d423', 'idea-01137479', 'HERO', 'download1.jpg', 'idea-01137479-ast-4c14d423.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-4c14d423.jpg', 'image/jpeg', 24791, '냇가 바로 옆 시원한 나무 그늘 정자와 평상 대표 전경', NULL, 1, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-ab06955d', 'idea-01137479', 'PRODUCT', 'download2.jpg', 'idea-01137479-ast-ab06955d.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-ab06955d.jpg', 'image/jpeg', 27664, '사계절 맑은 물이 흐르는 공주 청정 시골 냇가 물길', NULL, 2, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-722c5dd5', 'idea-01137479', 'PRODUCT', 'download3.jpg', 'idea-01137479-ast-722c5dd5.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-722c5dd5.jpg', 'image/jpeg', 27804, '아이들과 함께 즐기는 겨울 얼음 냇가 눈썰매 체험', NULL, 3, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-2b5a8627', 'idea-01137479', 'ARTICLE', 'download4.jpg', 'idea-01137479-ast-2b5a8627.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-2b5a8627.jpg', 'image/jpeg', 30526, '봄꽃과 신록이 어우러진 민박 산책로와 계곡 풍경', NULL, 4, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-03809f76', 'idea-01137479', 'GALLERY', 'download5.jpg', 'idea-01137479-ast-03809f76.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-03809f76.jpg', 'image/jpeg', 20569, '가을 낙엽이 내려앉은 마당에서 즐기는 가족 놀이 시간', NULL, 5, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-04ed63a9', 'idea-01137479', 'ARTICLE', 'download6.jpg', 'idea-01137479-ast-04ed63a9.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-04ed63a9.jpg', 'image/jpeg', 31775, '황금빛 은행나무 단풍 아래 자리한 야외 평상 쉼터', NULL, 6, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-89ea84ad', 'idea-01137479', 'GALLERY', 'download8.jpg', 'idea-01137479-ast-89ea84ad.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-89ea84ad.jpg', 'image/jpeg', 30560, '맑고 얕은 여울에서 다슬기 잡기와 물놀이를 즐기는 모습', NULL, 7, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-55f599e5', 'idea-01137479', 'GALLERY', 'download9.jpg', 'idea-01137479-ast-55f599e5.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-55f599e5.jpg', 'image/jpeg', 15387, '자연 그대로의 냇가 바위와 시원한 계곡물 휴식 공간', NULL, 8, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-4244ce43', 'idea-01137479', 'GALLERY', 'download10.jpg', 'idea-01137479-ast-4244ce43.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-4244ce43.jpg', 'image/jpeg', 30063, '가을 단풍 숲으로 둘러싸인 아늑한 민박 마당 풍경', NULL, 9, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-81c33d7e', 'idea-01137479', 'PRODUCT', 'download12.jpg', 'idea-01137479-ast-81c33d7e.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-81c33d7e.jpg', 'image/jpeg', 51921, '독채 객실 앞 전용 정자와 야외 바비큐 테이블 전경', NULL, 10, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-a1a893a3', 'idea-01137479', 'GALLERY', 'download13.jpg', 'idea-01137479-ast-a1a893a3.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-a1a893a3.jpg', 'image/jpeg', 24791, '겨울 눈이 소복이 쌓인 냇가 정자와 고요한 설경', NULL, 11, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-368380cb', 'idea-01137479', 'GALLERY', 'download14.jpg', 'idea-01137479-ast-368380cb.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-368380cb.jpg', 'image/jpeg', 27664, '얼어붙은 겨울 시골 냇가와 산자락이 어우러진 풍경', NULL, 12, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day');

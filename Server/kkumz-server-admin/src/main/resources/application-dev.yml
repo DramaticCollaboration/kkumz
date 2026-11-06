@@ -14,6 +14,13 @@ spring:
       password: ${SPRING_DATA_REDIS_PASSWORD:}
 
 kkumz:
+  integration:
+    cms-base-url: ${KKUMZ_CMS_BASE_URL:http://sync-cms-server:18085}
+    cms-access-key: ${KKUMZ_CMS_ACCESS_KEY:ak_cms_kkumz_live_01}
+    cms-secret-key: ${KKUMZ_CMS_SECRET_KEY:sk_cms_kkumz_secret_2026_prod_99}
+    shop-base-url: ${KKUMZ_SHOP_BASE_URL:http://sync-shop-portal:8501}
+    shop-access-key: ${KKUMZ_SHOP_ACCESS_KEY:ak_shop_kkumz_live_01}
+    shop-secret-key: ${KKUMZ_SHOP_SECRET_KEY:sk_shop_kkumz_secret_2026_prod_88}
   cross-db:
     shop-url: ${KKUMZ_SHOP_DB_URL:jdbc:postgresql://${DB_HOST:kkumz-postgres}:${DB_PORT:5432}/sync_shop?currentSchema=public&stringtype=unspecified}
     cms-url: ${KKUMZ_CMS_DB_URL:jdbc:postgresql://${DB_HOST:kkumz-postgres}:${DB_PORT:5432}/sync_cms?currentSchema=public&stringtype=unspecified}
@@ -21,8 +28,23 @@ kkumz:
     password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:syncpass}}
   ai:
     llm:
-      base-url: ${SYNC_LLM_GATEWAY_URL:http://sync-llm-server:8080/v1}
+      base-url: ${SYNC_LLM_GATEWAY_URL:http://sync-llm-gateway:8080/v1}
       api-key: ${SYNC_LLM_API_KEY:sk-kkumz-dev-key}
       model: ${SYNC_LLM_MODEL:qwen-plus}
+  storage:
+    upload-dir: ${KKUMZ_STORAGE_UPLOAD_DIR:/app/uploads/kkumz}
+    public-prefix: ${KKUMZ_STORAGE_PUBLIC_PREFIX:/api/v1/kkumz/assets/files}
   nacos:
     enabled: false
+
+agentscope:
+  agent:
+    id: ${SYNC_AGENT_ID:KKUMZ_STUDIO}
+    name: ${SYNC_AGENT_NAME:Kkumz AI Studio Agent}
+  llm:
+    provider: ${LLM_PROVIDER:syncllm}
+    gateway-url: ${SYNC_LLM_GATEWAY_URL:http://sync-llm-gateway:8080/v1}
+    api-key: ${SYNC_LLM_API_KEY:sk-kkumz-dev-key}
+    model-name: ${SYNC_LLM_MODEL:qwen-plus}
+    timeout-seconds: 90
+    max-retries: 3
