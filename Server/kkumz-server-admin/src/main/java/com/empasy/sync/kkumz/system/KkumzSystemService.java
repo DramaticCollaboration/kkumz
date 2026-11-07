@@ -32,6 +32,87 @@ public class KkumzSystemService {
         return raw.trim();
     }
 
+    public static String extractUsernameFromToken(String xAccessToken, String authorization) {
+        String rawToken = (xAccessToken != null && !xAccessToken.isBlank()) ? xAccessToken.trim() : authorization;
+        if (rawToken == null || rawToken.isBlank()) {
+            return null;
+        }
+        rawToken = rawToken.trim();
+        if (rawToken.startsWith("Bearer ") || rawToken.startsWith("bearer ")) {
+            rawToken = rawToken.substring(7).trim();
+        }
+        String prefix = "kkumz-jwt-token-";
+        if (rawToken.startsWith(prefix)) {
+            String body = rawToken.substring(prefix.length());
+            int lastDash = body.lastIndexOf('-');
+            if (lastDash > 0) {
+                return body.substring(0, lastDash).trim();
+            }
+        }
+        return rawToken.isEmpty() ? null : rawToken;
+    }
+
+    @Transactional
+    public Map<String, Object> register(RegisterRequest req) {
+        if (req == null || req.getUsername() == null || req.getUsername().isBlank()) {
+            throw new IllegalArgumentException("가입할 아이디(username)를 입력해 주세요.");
+        }
+        String username = req.getUsername().trim();
+        if (username.length() < 3 || username.length() > 32 || !username.matches("^[a-zA-Z0-9._-]+$")) {
+            throw new IllegalArgumentException("아이디는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 조합 3~32자로 입력해 주세요.");
+        }
+        if (req.getPassword() == null || req.getPassword().trim().length() < 4) {
+            throw new IllegalArgumentException("비밀번호는 4자 이상 입력해 주세요.");
+        }
+        if (req.getRealname() == null || req.getRealname().isBlank()) {
+            throw new IllegalArgumentException("이름(또는 메이커 활동명)을 입력해 주세요.");
+        }
+        String realname = req.getRealname().trim();
+
+        Integer dupCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM sys_user WHERE LOWER(username) = LOWER(?) AND del_flag = 0",
+                Integer.class,
+                username
+        );
+        if (dupCount != null && dupCount > 0) {
+            throw new IllegalArgumentException("이미 사용 중인 아이디입니다: " + username);
+        }
+
+        String userId = "u_kkumz_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        String hashedPw = BCrypt.hashpw(req.getPassword().trim(), BCrypt.gensalt(10));
+        String salt = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        String email = (req.getEmail() != null && !req.getEmail().isBlank())
+                ? req.getEmail().trim()
+                : username + "@kkumz.kr";
+        String phone = (req.getPhone() != null && !req.getPhone().isBlank())
+                ? req.getPhone().trim()
+                : null;
+
+        jdbcTemplate.update(
+                "INSERT INTO sys_user (id, username, realname, password, salt, email, phone, org_code, status, del_flag, create_by, create_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'KKUMZ_CREATORS', 1, 0, ?, CURRENT_TIMESTAMP)",
+                userId, username, realname, hashedPw, salt, email, phone, username
+        );
+
+        String requestedRole = req.getRoleCode() != null ? req.getRoleCode().trim().toUpperCase() : "ROLE_CREATOR";
+        String roleId = "ROLE_DEVELOPER".equals(requestedRole) ? "role_developer" : "role_creator";
+        Integer roleExists = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM sys_role WHERE id = ?",
+                Integer.class,
+                roleId
+        );
+        if (roleExists != null && roleExists > 0) {
+            jdbcTemplate.update(
+                    "INSERT INTO sys_user_role (id, user_id, role_id) VALUES (?, ?, ?)",
+                    "sur_kkumz_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8),
+                    userId,
+                    roleId
+            );
+        }
+
+        return buildAuthSessionPayload(userId, username);
+    }
+
     public Map<String, Object> login(LoginRequest req) {
         if (req == null || req.getUsername() == null || req.getUsername().isBlank()) {
             throw new IllegalArgumentException("로그인 아이디(username)는 필수입니다.");
@@ -58,6 +139,19 @@ public class KkumzSystemService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
+        return buildAuthSessionPayload(String.valueOf(user.get("id")), String.valueOf(user.get("username")));
+    }
+
+    private Map<String, Object> buildAuthSessionPayload(String userId, String username) {
+        List<Map<String, Object>> users = jdbcTemplate.queryForList(
+                "SELECT id, username, realname, avatar, email, phone, org_code AS \"orgCode\", status " +
+                "FROM sys_user WHERE id = ? AND del_flag = 0 LIMIT 1",
+                userId
+        );
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException("존재하지 않는 사용자 계정입니다: " + username);
+        }
+        Map<String, Object> user = new LinkedHashMap<>(users.get(0));
         List<Map<String, Object>> firstMenu = jdbcTemplate.queryForList("""
                 SELECT p.url
                 FROM sys_permission p
@@ -66,15 +160,18 @@ public class KkumzSystemService {
                 WHERE ur.user_id = ? AND p.del_flag = 0 AND p.status = 1 AND p.menu_type = 1
                 ORDER BY p.sort_no ASC
                 LIMIT 1
-                """, user.get("id"));
+                """, userId);
         String homePath = !firstMenu.isEmpty() ? String.valueOf(firstMenu.get(0).get("url")) : "/dashboard/analysis";
         user.put("homePath", homePath);
+
+        List<Map<String, Object>> roles = getUserRoles(userId);
+        user.put("roles", roles);
 
         String token = "kkumz-jwt-token-" + user.get("username") + "-" + System.currentTimeMillis();
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("token", token);
         res.put("userInfo", user);
-        res.put("roles", getUserRoles(String.valueOf(user.get("id"))));
+        res.put("roles", roles);
         return res;
     }
 

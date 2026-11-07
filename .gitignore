@@ -15,12 +15,12 @@ $RECYCLE.BIN/
 
 # 2. IDE & Editor Files
 .idea/
-**/.idea/
 *.iml
 *.ipr
 *.iws
 .vscode/
-**/.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
 .history/
 *.suo
 *.ntvs*
@@ -29,21 +29,15 @@ $RECYCLE.BIN/
 *.sw?
 rebel.xml
 .classpath
-**/.classpath
 .project
-**/.project
 .settings/
-**/.settings/
 .factorypath
-**/.factorypath
 .apt_generated/
-**/.apt_generated/
 .cache/
-**/.cache/
 
 # 3. Backend (Java / Maven / Spring Boot / JVM)
 target/
-**/target/
+!**/src/**/target/
 *.class
 *.jar
 *.war
@@ -53,60 +47,47 @@ target/
 *.tar.gz
 *.rar
 .flattened-pom.xml
-**/.flattened-pom.xml
 !.mvn/wrapper/maven-wrapper.jar
 
 # JVM Dumps & Logs
 *.log
-**/logs/
 logs/
 hs_err_pid*.log
 replay_pid*.log
 *.hprof
 *.dump
 dump.txt
-**/dump.txt
 derby.log
 
 # 4. Frontend (Node.js / Vue 3 / Vite / Admin / Web)
 node_modules/
-**/node_modules/
 node/
-**/node/
 dist/
-**/dist/
 dist-ssr/
-**/dist-ssr/
+dist_bak/
+!/admin/build/
+!**/admin/build/
 .pnpm/
 .pnpm-store/
-**/.pnpm-store/
 .local/
 .eslintcache
-**/.eslintcache
 .stylelintcache
-**/.stylelintcache
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .turbo/
-**/.turbo/
 .quasar/
 .nuxt/
 .output/
 *.tsbuildinfo
-**/*.tsbuildinfo
 
 # 5. Environment & Sensitive Configs
 /.env
 .env.local
 .env.*.local
-**/.env.local
-**/.env.*.local
 .env.localsv
-**/.env.localsv
 .local.env
-**/.local.env
 *.local
 !/.env.example
 !**/.env.example
@@ -120,7 +101,6 @@ pnpm-debug.log*
 
 # 6. Python, Test & QA Artifacts
 __pycache__/
-**/__pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
@@ -131,12 +111,9 @@ venv/
 env/
 ENV/
 test-results/
-**/test-results/
 playwright-report/
-**/playwright-report/
 blob-report/
 screenshots/
-**/screenshots/
 /upload/
 /uploads/
 
@@ -144,9 +121,7 @@ screenshots/
 *.bak
 *.tmp
 scratch/
-**/scratch/
 docker-compose.override.yml
-**/docker-compose.override.yml
 docker/postgres/data/
 docker/redis/data/
 /data/

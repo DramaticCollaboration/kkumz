@@ -1,5 +1,6 @@
 package com.empasy.sync.kkumz;
 
+import com.empasy.sync.kkumz.common.GlobalExceptionHandler;
 import com.empasy.sync.kkumz.domain.KkumzController;
 import com.empasy.sync.kkumz.domain.KkumzDTO.*;
 import com.empasy.sync.kkumz.domain.KkumzService;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class KkumzServiceTest {
@@ -49,7 +53,9 @@ class KkumzServiceTest {
 
         KkumzController domainController = new KkumzController(kkumzService);
         KkumzSystemController sysController = new KkumzSystemController(systemService);
-        mockMvc = MockMvcBuilders.standaloneSetup(domainController, sysController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(domainController, sysController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -494,5 +500,192 @@ class KkumzServiceTest {
                 anyString(), anyString(), anyString(), anyString(),
                 anyString(), anyString(), contains("<svg"), anyString(), eq("idea-cb4a9d2d")
         );
+    }
+
+    @Test
+    @DisplayName("13. [셀프 회원가입 & 자동 로그인] POST /api/v1/kkumz/sys/register 신규 메이커 가입 및 토큰 발급 검증")
+    void testSelfRegisterAndAutoLogin() throws Exception {
+        when(jdbcTemplate.queryForObject(contains("SELECT COUNT(*) FROM sys_user WHERE LOWER(username) = LOWER(?)"), eq(Integer.class), eq("new.maker")))
+                .thenReturn(0);
+        when(jdbcTemplate.queryForObject(contains("SELECT COUNT(*) FROM sys_role WHERE id = ?"), eq(Integer.class), eq("role_creator")))
+                .thenReturn(1);
+
+        Map<String, Object> savedUser = new LinkedHashMap<>();
+        savedUser.put("id", "user_kkumz_new001");
+        savedUser.put("username", "new.maker");
+        savedUser.put("realname", "김창업 메이커");
+        savedUser.put("avatar", "/images/studio/prod-keycap-artisan.jpg");
+        savedUser.put("email", "new.maker@kkumz.io");
+        savedUser.put("phone", "010-1234-5678");
+        savedUser.put("status", 1);
+
+        when(jdbcTemplate.queryForList(contains("FROM sys_user WHERE id = ?"), anyString()))
+                .thenReturn(List.of(savedUser));
+        when(jdbcTemplate.queryForList(contains("FROM sys_role r"), anyString()))
+                .thenReturn(List.of(Map.of("roleName", "창업가 메이커", "value", "role_creator")));
+
+        String body = """
+                {
+                  "username": "new.maker",
+                  "password": "password123!",
+                  "realname": "김창업 메이커",
+                  "email": "new.maker@kkumz.io",
+                  "phone": "010-1234-5678",
+                  "roleCode": "ROLE_CREATOR"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/kkumz/sys/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.userInfo.username").value("new.maker"))
+                .andExpect(jsonPath("$.result.userInfo.realname").value("김창업 메이커"))
+                .andExpect(jsonPath("$.result.roles[0].value").value("role_creator"))
+                .andExpect(jsonPath("$.result.token").isNotEmpty());
+
+        verify(jdbcTemplate, times(1)).update(
+                contains("INSERT INTO sys_user"),
+                anyString(), eq("new.maker"), eq("김창업 메이커"), anyString(), anyString(), eq("new.maker@kkumz.io"), eq("010-1234-5678"), eq("new.maker")
+        );
+        verify(jdbcTemplate, times(1)).update(
+                contains("INSERT INTO sys_user_role"),
+                anyString(), anyString(), eq("role_creator")
+        );
+    }
+
+    @Test
+    @DisplayName("14. [소유권 기반 수정 인가(Ownership RBAC)] 본인 소유 사이트 수정 허용(200) 및 타인 수정 차단(403) / 비로그인 차단(401) 검증")
+    void testOwnershipRbacEnforcementOnIdeaEdit() throws Exception {
+        Map<String, Object> ideaRow = new LinkedHashMap<>();
+        ideaRow.put("id", "idea-kkumz-001");
+        ideaRow.put("authorUsername", "soyeon.jeju");
+        ideaRow.put("authorDisplayName", "한소연 대표");
+        ideaRow.put("title", "말차 아뜰리에 제주");
+        ideaRow.put("promptText", "제주 유기농 말차 스토어");
+        ideaRow.put("siteType", "COMMERCE");
+        ideaRow.put("category", "F&B · 로스터리 · 웰니스");
+        ideaRow.put("tagsJson", "[\"말차\"]");
+        ideaRow.put("enabledFeaturesJson", "[\"SHOP_PRODUCT_CATALOG\"]");
+        ideaRow.put("specMarkdown", "# 말차 아뜰리에 제주 기획서");
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_idea"), eq("idea-kkumz-001")))
+                .thenReturn(List.of(ideaRow));
+        when(jdbcTemplate.queryForObject(contains("FROM sys_role r"), eq(Integer.class), anyString()))
+                .thenReturn(0);
+        when(jdbcTemplate.queryForObject(contains("FROM kkumz_team_member tm"), eq(Integer.class), eq("idea-kkumz-001"), anyString()))
+                .thenReturn(0);
+
+        String specUpdateJson = """
+                {
+                  "title": "말차 아뜰리에 제주 리뉴얼",
+                  "promptText": "제주 서귀포 유기농 말차 다도 스토어",
+                  "siteType": "COMMERCE",
+                  "specMarkdown": "# 업데이트된 기획서"
+                }
+                """;
+
+        // 1) 비로그인 사용자가 수정 시도 -> 401 Unauthorized 차단
+        mockMvc.perform(put("/api/v1/kkumz/ideas/idea-kkumz-001/spec")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(specUpdateJson))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(401));
+
+        // 2) 타인(minjun.maker)이 soyeon.jeju 소유 사이트 수정 시도 -> 403 Forbidden 차단
+        mockMvc.perform(put("/api/v1/kkumz/ideas/idea-kkumz-001/spec")
+                        .header("X-Access-Token", "kkumz-jwt-token-minjun.maker-1700000001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(specUpdateJson))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(403));
+
+        // 3) 소유자 본인(soyeon.jeju)이 자신의 사이트 수정 시도 -> 200 OK 정상 허용
+        mockMvc.perform(put("/api/v1/kkumz/ideas/idea-kkumz-001/spec")
+                        .header("X-Access-Token", "kkumz-jwt-token-soyeon.jeju-1700000002")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(specUpdateJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.id").value("idea-kkumz-001"))
+                .andExpect(jsonPath("$.result.canEdit").value(true))
+                .andExpect(jsonPath("$.result.isOwner").value(true));
+    }
+
+    @Test
+    @DisplayName("15. [E2E 소유권 격리 시나리오] 신규 아이디어 생성 귀속 · 피드 소유권 메타데이터 · 타인 사이트 배포/모집 차단 검증")
+    void testEndToEndCreateIdeaFeedOwnershipAndSiteMutationIsolation() throws Exception {
+        // 비로그인 아이디어 생성 시 401 차단
+        mockMvc.perform(post("/api/v1/kkumz/ideas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"promptText\":\"제주 감귤 디저트 스토어\",\"siteType\":\"COMMERCE\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(401));
+
+        // 사이트 소유권 검증: matcha-atelier는 soyeon.jeju 소유, desk-orbit은 minjun.maker 소유
+        Map<String, Object> matchaSite = new LinkedHashMap<>();
+        matchaSite.put("id", "site-kkumz-001");
+        matchaSite.put("ideaId", "idea-kkumz-001");
+        matchaSite.put("siteSlug", "matcha-atelier");
+        matchaSite.put("siteName", "말차 아뜰리에 제주");
+        matchaSite.put("siteType", "COMMERCE");
+        matchaSite.put("ownerUsername", "soyeon.jeju");
+        matchaSite.put("tagsJson", "[\"말차\"]");
+        matchaSite.put("designTokensJson", "{\"primary\":\"#14532d\"}");
+
+        Map<String, Object> deskSite = new LinkedHashMap<>();
+        deskSite.put("id", "site-kkumz-002");
+        deskSite.put("ideaId", "idea-kkumz-002");
+        deskSite.put("siteSlug", "desk-orbit");
+        deskSite.put("siteName", "데스크 오빗");
+        deskSite.put("siteType", "COMMERCE");
+        deskSite.put("ownerUsername", "minjun.maker");
+        deskSite.put("tagsJson", "[\"데스크테리어\"]");
+        deskSite.put("designTokensJson", "{\"primary\":\"#1e293b\"}");
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site s"), any(Object[].class)))
+                .thenReturn(List.of(matchaSite, deskSite));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), eq("site-kkumz-001"), eq("site-kkumz-001")))
+                .thenReturn(List.of(matchaSite));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), eq("matcha-atelier"), eq("matcha-atelier")))
+                .thenReturn(List.of(matchaSite));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), eq("site-kkumz-002"), eq("site-kkumz-002")))
+                .thenReturn(List.of(deskSite));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_team_recruit"), anyString()))
+                .thenReturn(List.of());
+        when(jdbcTemplate.queryForObject(contains("FROM sys_role r"), eq(Integer.class), anyString()))
+                .thenReturn(0);
+        when(jdbcTemplate.queryForObject(contains("FROM kkumz_team_member"), eq(Integer.class), anyString(), anyString()))
+                .thenReturn(0);
+
+        // soyeon.jeju로 로그인하여 피드 조회 시: 본인 사이트(matcha-atelier)만 canEdit=true, 타인 사이트(desk-orbit)는 canEdit=false
+        mockMvc.perform(get("/api/v1/kkumz/feed")
+                        .header("X-Access-Token", "kkumz-jwt-token-soyeon.jeju-1700000010"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result[0].siteSlug").value("matcha-atelier"))
+                .andExpect(jsonPath("$.result[0].isOwner").value(true))
+                .andExpect(jsonPath("$.result[0].canEdit").value(true))
+                .andExpect(jsonPath("$.result[1].siteSlug").value("desk-orbit"))
+                .andExpect(jsonPath("$.result[1].isOwner").value(false))
+                .andExpect(jsonPath("$.result[1].canEdit").value(false));
+
+        // 타인(minjun.maker)이 matcha-atelier 사이트에 팀원 모집 공고 등록 시도 -> 403 Forbidden 차단
+        mockMvc.perform(post("/api/v1/kkumz/sites/site-kkumz-001/recruits")
+                        .header("X-Access-Token", "kkumz-jwt-token-minjun.maker-1700000011")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"positionRole\":\"FRONTEND\",\"title\":\"무단 공고 등록\",\"headcount\":1}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+
+        // 타인(minjun.maker)이 matcha-atelier 사이트에 대화형 디자인 수정 시도 -> 403 Forbidden 차단
+        mockMvc.perform(post("/api/v1/kkumz/sites/matcha-atelier/chat-refine")
+                        .header("X-Access-Token", "kkumz-jwt-token-minjun.maker-1700000011")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"instruction\":\"헤더 색상을 빨간색으로 변경\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
     }
 }

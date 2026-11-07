@@ -47,9 +47,10 @@ public class KkumzController {
     @GetMapping("/ideas")
     public Result<List<Map<String, Object>>> listIdeas(
             @RequestParam(required = false) String authorUsername,
-            @RequestParam(required = false) String siteType
+            @RequestParam(required = false) String siteType,
+            @RequestParam(required = false) Boolean mineOnly
     ) {
-        return Result.OK(kkumzService.listIdeas(authorUsername, siteType));
+        return Result.OK(kkumzService.listIdeas(authorUsername, siteType, mineOnly));
     }
 
     @PostMapping("/ideas")

@@ -18,6 +18,21 @@ public class GlobalExceptionHandler {
                 .body(Result.error(404, "요청하신 API 또는 리소스를 찾을 수 없습니다: /" + e.getResourcePath()));
     }
 
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<Result<Void>> handleSecurityException(SecurityException e) {
+        String msg = e.getMessage() != null ? e.getMessage() : "접근 권한이 없습니다.";
+        if (msg.startsWith("[401]")) {
+            String cleanMsg = msg.substring(5).trim();
+            log.warn("인증 필요 요청 차단 (401): {}", cleanMsg);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Result.error(401, cleanMsg));
+        }
+        String cleanMsg = msg.startsWith("[403]") ? msg.substring(5).trim() : msg;
+        log.warn("권한 없는 리소스 수정 차단 (403): {}", cleanMsg);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Result.error(403, cleanMsg));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Result<Void>> handleIllegalArgument(IllegalArgumentException e) {
         log.warn("잘못된 요청 파라미터: {}", e.getMessage());

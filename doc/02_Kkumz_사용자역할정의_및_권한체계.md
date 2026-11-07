@@ -103,3 +103,27 @@ flowchart LR
 | `user_kkumz_minjun` | `minjun.maker` | 박민준 메이커 | `role_creator` | 데스크 오빗 (`idea-kkumz-002` / `/s/desk-orbit`) | `minjun@deskorbit.io` |
 | `user_kkumz_jihoon` | `jihoon.run` | 정지훈 크루장 | `role_creator` | 서울 나이트 런 클럽 (`idea-kkumz-003` / `/s/seoul-run-club`) | `jihoon@seoulrun.club` |
 | `user_kkumz_hajun` | `hajun.roast` | 최하준 헤드로스터 | `role_creator` | 빈 크로니클 서울 (`idea-kkumz-004` / `/s/bean-chronicle`) | `hajun@beanchronicle.kr` |
+
+---
+
+## 6. 웹 포털 셀프 회원가입 및 소유권 기반 접근 제어 (Ownership RBAC)
+
+### 6.1 셀프 회원가입 및 인증 세션 API (`KkumzSystemController`)
+- **`POST /api/v1/kkumz/sys/register`**:
+  - 신규 메이커/개발자 셀프 회원가입 엔드포인트.
+  - 입력 필드: `username`(중복 검사), `password`(BCrypt 해싱 저장), `realname`, `email`, `phone`, `roleCode`(`ROLE_CREATOR` 기본값 또는 `ROLE_DEVELOPER`).
+  - `sys_user` 및 `sys_user_role` 테이블에 트랜잭션으로 저장하며, 가입 즉시 `{ token, userInfo, roles }`를 반환하여 프론트엔드 자동 로그인을 수행합니다.
+- **토큰 추출 일원화 (`KkumzSystemService.extractUsernameFromToken`)**:
+  - `X-Access-Token` 및 `Authorization: Bearer ...` 헤더에서 현재 로그인 사용자(`username`)를 추출하여 `KkumzSystemController`와 `KkumzService` 전반에서 일관되게 사용합니다.
+
+### 6.2 아이디어·사이트 소유권 검증 원칙 (`KkumzService`)
+- **소유권 귀속**: `POST /api/v1/kkumz/ideas` 호출 시 비로그인 요청은 `HTTP 401`로 차단하며, 인증된 사용자의 `username`과 `realname`을 `kkumz_idea.author_username` / `author_display_name`에 귀속합니다.
+- **편집 인가 판별 (`canEditIdea` / `canEditSite` / `assertIdeaEditable` / `assertSiteEditable`)**:
+  1. **소유자 본인 (`isOwner = true`)**: `kkumz_idea.author_username == currentUser` 또는 `kkumz_site.owner_username == currentUser`
+  2. **승인된 협업 팀원**: `kkumz_team_member.status = 'ACTIVE'` 이고 `member_role IN ('OWNER', 'DEVELOPER', 'EDITOR')`
+  3. **플랫폼 총괄관리자**: `sys_user_role`에 `role_admin` 보유
+- **타인 사이트 수정 원천 차단**:
+  - 위 조건을 충족하지 않는 사용자가 타인의 아이디어/사이트에 대해 변경 API(기능 선택, 기획서 수정, AI 네이밍/로고 생성, 파일 업로드/삭제, 스캐폴딩, 채팅 리파인, WebIDE 저장, 빌드 패치, 사이트 배포/롤백, Git 프로비저닝/푸시/키회전, 팀원 모집 공고 등록, 지원자 승인/거절)를 호출할 경우 `GlobalExceptionHandler`를 통해 즉시 **`HTTP 403 Forbidden`** (비로그인 시 `HTTP 401 Unauthorized`)을 반환합니다.
+- **프론트엔드 UI 격리 (`services/kkumz/web`)**:
+  - 백엔드 조회 응답(`getCommunityFeed`, `getIdeaDetail`, `getSiteRuntime`, `listIdeas`)에 포함된 `canEdit`(boolean) 및 `isOwner`(boolean) 플래그를 기반으로, 본인이 수정 가능한 사이트에만 `내 사이트` 배지와 `[스튜디오 편집]` 버튼을 노출합니다.
+  - 타인의 아이디어 URL(`/studio/:ideaId`)로 직접 접근 시 스튜디오 캔버스를 잠그고 소유권 보호 안내 화면을 표시합니다.

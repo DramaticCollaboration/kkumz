@@ -20,10 +20,11 @@
       </div>
       <div v-if="runtime" class="flex items-center gap-2">
         <button
+          v-if="runtime.canEdit"
           class="kkumz-btn-secondary text-xs py-1.5"
           @click="router.push(`/studio/${runtime.ideaId}`)"
         >
-          AI 스튜디오 열기
+          AI 스튜디오 편집
         </button>
         <button
           class="kkumz-btn-primary text-xs py-1.5"
@@ -48,6 +49,12 @@
           ></div>
           <div>
             <div class="flex flex-wrap items-center gap-2 mb-2">
+              <span
+                v-if="runtime.canEdit"
+                class="kkumz-badge bg-indigo-600 text-white"
+              >
+                {{ runtime.isOwner ? '내 사이트' : '팀 프로젝트' }}
+              </span>
               <span class="kkumz-badge bg-indigo-50 text-indigo-700 border border-indigo-200">
                 {{ formatSiteTypeLabel(runtime.siteType) }}
               </span>
@@ -64,7 +71,7 @@
         <div class="flex flex-wrap items-center gap-2">
           <button
             class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-extrabold border border-rose-200 transition"
-            @click="showReportModal = true"
+            @click="openReportModal"
           >
             프로젝트 신고
           </button>
@@ -84,6 +91,7 @@
                 </p>
               </div>
               <button
+                v-if="runtime.canEdit"
                 class="px-3.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-extrabold border border-indigo-200 hover:bg-indigo-100"
                 @click="showNewRecruitForm = !showNewRecruitForm"
               >
@@ -93,7 +101,7 @@
 
             <!-- 신규 모집 공고 등록 폼 -->
             <div
-              v-if="showNewRecruitForm"
+              v-if="runtime.canEdit && showNewRecruitForm"
               class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 space-y-3"
             >
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
@@ -188,6 +196,7 @@
                 </p>
               </div>
               <button
+                v-if="runtime.canEdit"
                 class="px-3.5 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-extrabold"
                 @click="showInviteForm = !showInviteForm"
               >
@@ -197,7 +206,7 @@
 
             <!-- 팀원 직접 초대 폼 -->
             <div
-              v-if="showInviteForm"
+              v-if="runtime.canEdit && showInviteForm"
               class="p-4 rounded-2xl bg-slate-50 border border-slate-200 grid grid-cols-1 md:grid-cols-4 gap-2"
             >
               <input
@@ -261,7 +270,7 @@
                     {{ formatMemberStatusLabel(m.status) }}
                   </span>
 
-                  <template v-if="m.status === 'APPLIED' || m.status === 'INVITED' || m.status === 'PENDING'">
+                  <template v-if="runtime.canEdit && (m.status === 'APPLIED' || m.status === 'INVITED' || m.status === 'PENDING')">
                     <button
                       class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500"
                       @click="handleMemberStatus(m.id, 'ACTIVE', 'EDITOR')"
@@ -446,6 +455,9 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   kkumzApi,
+  kkumzAuth,
+  isAuthenticated,
+  openAuthModal,
   formatSiteTypeLabel,
   formatDeployModeLabel,
   formatPositionRoleLabel,
@@ -589,20 +601,46 @@ async function handleCreateRecruit() {
 }
 
 function openApplyModal(rec: any) {
+  if (!isAuthenticated.value) {
+    openAuthModal(
+      'login',
+      () => openApplyModal(rec),
+      '팀 포지션에 지원하려면 먼저 로그인 또는 회원가입해 주세요.',
+    );
+    return;
+  }
   applyingRecruit.value = rec;
+  applyForm.value.username = kkumzAuth.user?.username || '';
+  applyForm.value.displayName = kkumzAuth.user?.realname || kkumzAuth.user?.username || '';
   applyForm.value.applicationMessage = `${rec.title} 포지션에 합류하여 함께 브랜드를 성장시키고 싶습니다.`;
+}
+
+function openReportModal() {
+  if (!isAuthenticated.value) {
+    openAuthModal(
+      'login',
+      () => openReportModal(),
+      '프로젝트 모더레이션 신고를 접수하려면 먼저 로그인해 주세요.',
+    );
+    return;
+  }
+  reportForm.value.reporterUsername = kkumzAuth.user?.username || '';
+  showReportModal.value = true;
 }
 
 async function submitTeamApplication() {
   if (!runtime.value || !applyingRecruit.value) return;
-  if (!applyForm.value.username.trim() || !applyForm.value.displayName.trim()) {
+  const applicantUsername = applyForm.value.username.trim() || kkumzAuth.user?.username || '';
+  const applicantDisplayName =
+    applyForm.value.displayName.trim() || kkumzAuth.user?.realname || applicantUsername;
+  if (!applicantUsername || !applicantDisplayName) {
     alert('지원자 아이디와 이름을 입력해 주세요.');
     return;
   }
   members.value = await kkumzApi.applyToTeam(runtime.value.siteId, {
     recruitId: applyingRecruit.value.id,
-    username: applyForm.value.username.trim(),
-    displayName: applyForm.value.displayName.trim(),
+    username: applicantUsername,
+    displayName: applicantDisplayName,
     positionRole: applyingRecruit.value.positionRole,
     applicationMessage: applyForm.value.applicationMessage,
   });
@@ -634,13 +672,19 @@ async function handleMemberStatus(memberId: string, status: string, memberRole?:
 
 async function handleAddComment() {
   if (!runtime.value || !newComment.value.content.trim()) return;
-  if (!newComment.value.displayName.trim()) {
-    alert('작성자 닉네임을 입력해 주세요.');
+  if (!isAuthenticated.value) {
+    openAuthModal(
+      'login',
+      () => handleAddComment(),
+      '커뮤니티 피드백을 남기려면 먼저 로그인해 주세요.',
+    );
     return;
   }
+  const commentDisplayName =
+    newComment.value.displayName.trim() || kkumzAuth.user?.realname || kkumzAuth.user?.username || '메이커';
   comments.value = await kkumzApi.addSiteComment(runtime.value.siteId, {
-    username: newComment.value.username.trim() || newComment.value.displayName.trim(),
-    displayName: newComment.value.displayName.trim(),
+    username: kkumzAuth.user?.username || commentDisplayName,
+    displayName: commentDisplayName,
     authorRoleBadge: newComment.value.authorRoleBadge,
     content: newComment.value.content,
   });
@@ -649,14 +693,15 @@ async function handleAddComment() {
 
 async function submitReport() {
   if (!runtime.value) return;
-  if (!reportForm.value.reporterUsername.trim() || !reportForm.value.reasonDetail.trim()) {
+  const reporter = reportForm.value.reporterUsername.trim() || kkumzAuth.user?.username || '';
+  if (!reporter || !reportForm.value.reasonDetail.trim()) {
     alert('신고자 아이디와 상세 사유를 입력해 주세요.');
     return;
   }
   await kkumzApi.reportContent(runtime.value.siteId, {
     targetType: 'SITE',
     targetId: runtime.value.siteId,
-    reporterUsername: reportForm.value.reporterUsername.trim(),
+    reporterUsername: reporter,
     reasonCategory: reportForm.value.reasonCategory,
     reasonDetail: reportForm.value.reasonDetail.trim(),
   });
@@ -670,6 +715,18 @@ watch(
   () => {
     loadLoungeData();
   },
+);
+
+watch(
+  () => kkumzAuth.user?.username,
+  () => {
+    if (kkumzAuth.user) {
+      newComment.value.username = kkumzAuth.user.username;
+      newComment.value.displayName = kkumzAuth.user.realname || kkumzAuth.user.username;
+    }
+    loadLoungeData();
+  },
+  { immediate: true },
 );
 
 onMounted(async () => {

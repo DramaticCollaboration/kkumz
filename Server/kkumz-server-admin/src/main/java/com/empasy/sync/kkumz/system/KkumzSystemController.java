@@ -36,6 +36,14 @@ public class KkumzSystemController {
         return Result.OK(systemService.login(request));
     }
 
+    @PostMapping("/register")
+    public Result<Map<String, Object>> register(@RequestBody RegisterRequest request) {
+        log.info("Kkumz Web 셀프 회원가입 요청: username={}, roleCode={}",
+                request != null ? request.getUsername() : null,
+                request != null ? request.getRoleCode() : null);
+        return Result.OK("회원가입이 완료되었습니다.", systemService.register(request));
+    }
+
     @GetMapping("/logout")
     public Result<String> logout() {
         return Result.OK("");
@@ -63,20 +71,9 @@ public class KkumzSystemController {
         if (usernameParam != null && !usernameParam.isBlank()) {
             return usernameParam.trim();
         }
-        String rawToken = (xAccessToken != null && !xAccessToken.isBlank()) ? xAccessToken.trim() : authorization;
-        if (rawToken != null && !rawToken.isBlank()) {
-            if (rawToken.startsWith("Bearer ")) {
-                rawToken = rawToken.substring(7).trim();
-            }
-            String prefix = "kkumz-jwt-token-";
-            if (rawToken.startsWith(prefix)) {
-                String body = rawToken.substring(prefix.length());
-                int lastDash = body.lastIndexOf('-');
-                if (lastDash > 0) {
-                    return body.substring(0, lastDash);
-                }
-            }
-            return rawToken;
+        String extracted = KkumzSystemService.extractUsernameFromToken(xAccessToken, authorization);
+        if (extracted != null && !extracted.isBlank()) {
+            return extracted;
         }
         throw new IllegalArgumentException("인증 토큰(X-Access-Token 또는 Authorization)이 필요합니다.");
     }

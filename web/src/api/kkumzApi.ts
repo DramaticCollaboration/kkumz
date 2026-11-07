@@ -1,10 +1,117 @@
 import axios from 'axios';
+import { computed, reactive } from 'vue';
 
 const AI_TIMEOUT = 120000;
+const TOKEN_STORAGE_KEY = 'kkumz_auth_token';
+const USER_STORAGE_KEY = 'kkumz_auth_user';
+
+function readStoredToken(): string {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function readStoredUser(): Record<string, any> | null {
+  try {
+    const raw = localStorage.getItem(USER_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export const kkumzAuth = reactive<{
+  token: string;
+  user: Record<string, any> | null;
+  roles: Array<Record<string, any>>;
+  authModalOpen: boolean;
+  authModalTab: 'login' | 'register';
+  authModalHint: string;
+  onAuthSuccess: (() => void | Promise<void>) | null;
+}>({
+  token: readStoredToken(),
+  user: readStoredUser(),
+  roles: readStoredUser()?.roles || [],
+  authModalOpen: false,
+  authModalTab: 'login',
+  authModalHint: '',
+  onAuthSuccess: null,
+});
+
+export const isAuthenticated = computed(() =>
+  Boolean(kkumzAuth.token && kkumzAuth.user?.username),
+);
+
+export function setAuthSession(payload: {
+  token: string;
+  userInfo: Record<string, any>;
+  roles?: Array<Record<string, any>>;
+}) {
+  const roles = payload.roles || payload.userInfo?.roles || [];
+  const mergedUser = { ...payload.userInfo, roles };
+  kkumzAuth.token = payload.token;
+  kkumzAuth.user = mergedUser;
+  kkumzAuth.roles = roles;
+  try {
+    localStorage.setItem(TOKEN_STORAGE_KEY, payload.token);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser));
+  } catch {
+    // ignore storage quota errors
+  }
+}
+
+export function clearAuthSession() {
+  kkumzAuth.token = '';
+  kkumzAuth.user = null;
+  kkumzAuth.roles = [];
+  try {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function openAuthModal(
+  tab: 'login' | 'register' = 'login',
+  onSuccess?: () => unknown,
+  hint = '',
+) {
+  kkumzAuth.authModalTab = tab;
+  kkumzAuth.authModalHint = hint;
+  kkumzAuth.onAuthSuccess = onSuccess ? () => { onSuccess(); } : null;
+  kkumzAuth.authModalOpen = true;
+}
+
+export function closeAuthModal() {
+  kkumzAuth.authModalOpen = false;
+  kkumzAuth.authModalHint = '';
+  kkumzAuth.onAuthSuccess = null;
+}
+
+export function formatUserRoleLabel(roles?: Array<Record<string, any>>): string {
+  const firstCode = String(roles?.[0]?.roleCode || roles?.[0]?.id || '').toUpperCase();
+  if (firstCode.includes('ADMIN')) return '총괄관리자';
+  if (firstCode.includes('MODERATOR')) return '모더레이터';
+  if (firstCode.includes('DEVELOPER')) return '개발자';
+  return '메이커';
+}
 
 const http = axios.create({
   baseURL: '/api/v1/kkumz',
   timeout: 90000,
+});
+
+http.interceptors.request.use((config) => {
+  const token = kkumzAuth.token || readStoredToken();
+  if (token) {
+    config.headers = config.headers || ({} as any);
+    config.headers['X-Access-Token'] = token;
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
 });
 
 function unwrap<T = any>(res: any): T {
@@ -25,11 +132,11 @@ function unwrap<T = any>(res: any): T {
 export function formatSiteTypeLabel(siteType?: string): string {
   switch ((siteType || '').toUpperCase()) {
     case 'COMMERCE':
-      return '쇼핑몰 스토어';
+      return '온라인 쇼핑몰·예약 사이트';
     case 'CMS_SITE':
-      return '브랜드·커뮤니티 웹';
+      return '브랜드·홍보 홈페이지';
     case 'HYBRID':
-      return '매거진+스토어 복합';
+      return '홍보 + 쇼핑 복합 사이트';
     default:
       return '브랜드 웹사이트';
   }
@@ -40,9 +147,9 @@ export function formatSiteTypeLabel(siteType?: string): string {
  */
 export function formatDeployModeLabel(deployMode?: string): string {
   if ((deployMode || '').toUpperCase() === 'CUSTOM_BUNDLE') {
-    return '코드 번들 배포';
+    return '개발자 코드 맞춤 배포';
   }
-  return '즉시 디자인 배포';
+  return '1초 즉시 오픈 (빌드 대기 없음)';
 }
 
 /**
@@ -62,6 +169,53 @@ export function formatPositionRoleLabel(role?: string): string {
 }
 
 export const kkumzApi = {
+  // 0-0. 인증 (로그인 / 셀프 회원가입 / 현재 사용자 조회 / 로그아웃)
+  async login(payload: { username: string; password: string }) {
+    const res = await http.post('/sys/login', payload);
+    const data = unwrap<any>(res);
+    if (data?.token && data?.userInfo) {
+      setAuthSession(data);
+    }
+    return data;
+  },
+  async register(payload: {
+    username: string;
+    password: string;
+    realname: string;
+    email?: string;
+    phone?: string;
+    roleCode?: string;
+  }) {
+    const res = await http.post('/sys/register', payload);
+    const data = unwrap<any>(res);
+    if (data?.token && data?.userInfo) {
+      setAuthSession(data);
+    }
+    return data;
+  },
+  async fetchCurrentUser() {
+    const res = await http.get('/sys/user/getUserInfo');
+    const data = unwrap<any>(res);
+    const userInfo = data?.userInfo || data;
+    if (userInfo?.username) {
+      const roles = userInfo.roles || data?.roles || [];
+      setAuthSession({
+        token: kkumzAuth.token || readStoredToken(),
+        userInfo,
+        roles,
+      });
+    }
+    return userInfo;
+  },
+  async logout() {
+    try {
+      await http.get('/sys/logout');
+    } catch {
+      // ignore
+    }
+    clearAuthSession();
+  },
+
   // 0. 스튜디오 메타데이터 (레이아웃/컴포넌트 사전, 업로드 용도 사전 및 스타터 프리셋)
   async getStudioMetadata() {
     const res = await http.get('/studio/metadata');
@@ -81,6 +235,17 @@ export const kkumzApi = {
         label: string;
         description: string;
       }>;
+      featureCatalog?: any[];
+      featureCategories?: Array<{
+        code: string;
+        label: string;
+        desc?: string;
+      }>;
+      heroStyles?: Array<{
+        code: string;
+        label: string;
+        desc?: string;
+      }>;
       starterPresets: Array<{
         code: string;
         label: string;
@@ -93,7 +258,7 @@ export const kkumzApi = {
   },
 
   // 1. 아이디어 & 버전/화면설계
-  async listIdeas(params?: { authorUsername?: string; siteType?: string }) {
+  async listIdeas(params?: { authorUsername?: string; siteType?: string; mineOnly?: boolean }) {
     const res = await http.get('/ideas', { params });
     return unwrap<any[]>(res);
   },
@@ -103,6 +268,7 @@ export const kkumzApi = {
     siteType: string;
     category?: string;
     tags?: string[];
+    enabledFeatures?: string[];
     visibility?: string;
     authorUsername?: string;
     authorDisplayName?: string;
@@ -338,6 +504,8 @@ export const kkumzApi = {
       siteType?: string;
       category?: string;
       tags?: string[];
+      enabledFeatures?: string[];
+      aiIntentAnalysis?: Record<string, any>;
       visibility?: string;
       specMarkdown: string;
       screens?: any[];
@@ -469,10 +637,14 @@ export const kkumzApi = {
     return unwrap<any>(res);
   },
   getSshKeyDownloadUrl(siteSlug: string) {
-    return `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/git/ssh-key/download`;
+    const token = kkumzAuth.token || readStoredToken();
+    const qs = token ? `?token=${encodeURIComponent(token)}` : '';
+    return `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/git/ssh-key/download${qs}`;
   },
   getGitArchiveDownloadUrl(siteSlug: string) {
-    return `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/git/archive`;
+    const token = kkumzAuth.token || readStoredToken();
+    const qs = token ? `?token=${encodeURIComponent(token)}` : '';
+    return `/api/v1/kkumz/sites/${encodeURIComponent(siteSlug)}/git/archive${qs}`;
   },
 
   // 5. 라이브 멀티사이트 런타임 & 실주문/폼제출/AI컨시어지

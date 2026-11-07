@@ -10,6 +10,7 @@
         <div class="project-selector">
           <span class="selector-label">작업 프로젝트</span>
           <select v-model="selectedIdeaId" :disabled="busy" @change="onSelectIdea(selectedIdeaId)">
+            <option value="">+ 새 브랜드 아이디어 만들기</option>
             <option v-for="item in ideas" :key="item.id" :value="item.id">
               {{ item.selectedBrandName || item.title }} ({{ formatSiteTypeLabel(item.siteType) }})
             </option>
@@ -18,7 +19,29 @@
       </div>
 
       <div class="topbar-right">
-        <span v-if="activeSiteSlug" class="slug-pill">라이브 경로: /s/{{ activeSiteSlug }}</span>
+        <!-- 이지 모드 vs 전문가·개발자 모드 2-Track 스위치 -->
+        <div class="studio-mode-switch" data-testid="studio-mode-toggle" role="group" aria-label="스튜디오 작업 모드 전환">
+          <button
+            type="button"
+            class="mode-switch-btn"
+            data-testid="mode-easy-btn"
+            :class="{ active: easyMode }"
+            @click="setStudioMode(true)"
+          >
+            ✨ 이지 모드 (초보자 권장)
+          </button>
+          <button
+            type="button"
+            class="mode-switch-btn"
+            data-testid="mode-pro-btn"
+            :class="{ active: !easyMode }"
+            @click="setStudioMode(false)"
+          >
+            🛠️ 전문가·개발자 모드
+          </button>
+        </div>
+
+        <span v-if="activeSiteSlug" class="slug-pill">내 사이트 주소: /s/{{ activeSiteSlug }}</span>
         <button
           v-if="activeSiteSlug"
           type="button"
@@ -31,45 +54,89 @@
       </div>
     </header>
 
-    <!-- 본문: 좌측 수직 6단계 Stepper 사이드바 + 우측 집중형 작업 캔버스 -->
-    <div class="studio-body">
+    <!-- 소유권 보호(타인 프로젝트 수정 차단) 안내 화면 -->
+    <section v-if="accessDenied" class="studio-access-denied">
+      <div class="access-denied-card">
+        <span class="denied-badge">OWNERSHIP PROTECTION · HTTP 403</span>
+        <h2>이 프로젝트의 수정 권한이 없습니다</h2>
+        <p>
+          <strong>{{ accessDeniedBrand }}</strong> 프로젝트는
+          <strong>{{ accessDeniedOwner }}</strong>님이 만든 사이트입니다.<br />
+          꿈즈(Kkumz)에서는 본인이 만든 사이트, 승인된 협업 팀원, 또는 플랫폼 관리자만 AI 스튜디오에서 편집·배포할 수 있습니다.
+        </p>
+        <div class="denied-actions">
+          <button type="button" class="primary-btn" @click="router.push('/workspace')">
+            내 워크스페이스로 이동
+          </button>
+          <button type="button" class="secondary-btn" @click="router.push('/feed')">
+            쇼케이스 피드로 이동
+          </button>
+          <button
+            type="button"
+            class="ghost-btn"
+            @click="openAuthModal('login', () => initStudio(), '이 사이트의 소유자 또는 협업 팀원 계정으로 로그인해 주세요.')"
+          >
+            소유자 계정으로 전환 로그인
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 본문: 좌측 수직 Stepper 사이드바 + 우측 집중형 작업 캔버스 -->
+    <div v-else class="studio-body">
       <aside class="studio-sidebar">
-        <div class="sidebar-brand" v-if="currentIdea">
-          <div v-if="previewLogoSvg" class="mini-logo" v-html="previewLogoSvg"></div>
-          <div class="mini-meta">
-            <strong>{{ previewBrandName }}</strong>
-            <span>{{ formatSiteTypeLabel(formStep1.siteType || currentIdea.siteType) }}</span>
+        <div class="sidebar-top-stack">
+          <div class="sidebar-brand" v-if="currentIdea">
+            <div v-if="previewLogoSvg" class="mini-logo" v-html="previewLogoSvg"></div>
+            <div class="mini-meta">
+              <strong>{{ previewBrandName }}</strong>
+              <span>{{ formatSiteTypeLabel(formStep1.siteType || currentIdea.siteType) }}</span>
+            </div>
           </div>
+
+          <div class="sidebar-mode-badge-box">
+            <span class="sidebar-mode-pill" :class="{ pro: !easyMode }">
+              {{ easyMode ? '✨ 초보자 맞춤 3단계 이지 모드' : '🛠️ 전체 6단계 전문가·개발자 모드' }}
+            </span>
+          </div>
+
+          <nav class="vertical-stepper">
+            <button
+              v-for="step in displayedSteps"
+              :key="step.no"
+              type="button"
+              class="step-nav-btn"
+              :data-testid="`step-nav-btn-${step.no}`"
+              :disabled="busy"
+              :class="{
+                active: isStepNavActive(step.no),
+                done: (currentIdea?.currentStep || 1) > step.no,
+                'is-disabled': busy,
+              }"
+              @click="goToStep(step.no)"
+            >
+              <span class="step-index">{{ step.displayNo }}</span>
+              <div class="step-labels">
+                <div class="step-title-row">
+                  <strong>{{ step.title }}</strong>
+                  <span v-if="step.optional" class="opt-badge">선택</span>
+                </div>
+                <small>{{ step.desc }}</small>
+              </div>
+            </button>
+          </nav>
         </div>
 
-        <nav class="vertical-stepper">
-          <button
-            v-for="step in steps"
-            :key="step.no"
-            type="button"
-            class="step-nav-btn"
-            :disabled="busy"
-            :class="{
-              active: activeStep === step.no,
-              done: (currentIdea?.currentStep || 1) > step.no,
-              'is-disabled': busy,
-            }"
-            @click="goToStep(step.no)"
-          >
-            <span class="step-index">{{ step.no }}</span>
-            <div class="step-labels">
-              <div class="step-title-row">
-                <strong>{{ step.title }}</strong>
-                <span v-if="step.optional" class="opt-badge">선택</span>
-              </div>
-              <small>{{ step.desc }}</small>
-            </div>
-          </button>
-        </nav>
-
         <div class="sidebar-footer">
+          <button
+            type="button"
+            class="sidebar-mode-toggle-btn"
+            @click="setStudioMode(!easyMode)"
+          >
+            {{ easyMode ? '🛠️ 기획서 · 코드 · 고급 배포(6단계) 보기' : '✨ 심플한 3단계 이지 모드로 돌아가기' }}
+          </button>
           <p class="sidebar-tip">
-            모든 변경 사항은 버전 스냅샷으로 안전하게 기록되며 언제든 이전 버전으로 되돌릴 수 있습니다.
+            모든 변경 내역은 자동 저장되며 언제든 이전 상태로 되돌릴 수 있습니다.
           </p>
         </div>
       </aside>
@@ -155,7 +222,7 @@
         </div>
 
         <!-- ================================================================ -->
-        <!-- 1단계: 아이디어 정의 -->
+        <!-- 1단계: 아이디어 정의 (이지 모드 점진적 공개 + 전문가 전체 제어 지원) -->
         <!-- ================================================================ -->
         <div
           v-if="activeStep === 1"
@@ -165,17 +232,34 @@
         >
           <div class="panel-header">
             <div>
-              <span class="step-kicker">STEP 01 · AI INTENT DIAGNOSIS & 52-FEATURE CATALOG</span>
-              <h2>아이디어 프롬프트 입력 및 AI 맞춤 기능 카탈로그 구성</h2>
-              <p>만들고 싶은 사이트의 아이디어를 적어주시면 AI 에이전트가 최적 아키텍처(커머스/브랜드웹/복합)를 자율 판단하고, DB 52종 전체 기능 중 꼭 필요한 기능을 추천합니다.</p>
+              <span class="step-kicker">STEP 01 · 만들고 싶은 사이트 알려주기</span>
+              <h2>어떤 사이트를 만들고 싶으신가요?</h2>
+              <p>만들고 싶은 사이트를 편하게 한 줄로 적어주시면, AI가 어울리는 이름·로고부터 꼭 필요한 기능까지 알아서 챙겨드립니다.</p>
             </div>
-            <button type="button" class="primary-btn" :disabled="busy" @click="saveCurrentIdeaAndGoStep2">
-              {{ busy ? (busyMessage || '저장 및 AI 생성 중...') : '현재 프로젝트 저장 후 2단계 이동 →' }}
-            </button>
+            <div class="header-btns">
+              <button
+                type="button"
+                class="fasttrack-btn"
+                data-testid="step1-fasttrack-btn"
+                :disabled="busy"
+                @click="runOneClickAutoComplete"
+              >
+                {{ busy ? '자동 완성 중...' : '⚡ 1분 자동 완성: 완성된 사이트 바로 보기' }}
+              </button>
+              <button
+                type="button"
+                class="primary-btn"
+                data-testid="step1-next-btn"
+                :disabled="busy"
+                @click="saveCurrentIdeaAndGoStep2"
+              >
+                {{ busy ? (busyMessage || '저장 및 AI 생성 중...') : '다음: 어울리는 이름과 로고 추천받기 →' }}
+              </button>
+            </div>
           </div>
 
           <div v-if="studioPresets.length > 0" class="starter-preset-bar">
-            <span class="starter-label">원클릭 업종별 스타터 프롬프트</span>
+            <span class="starter-label">💡 어떻게 적을지 고민되신다면 예시를 눌러보세요</span>
             <div class="starter-chips">
               <button
                 v-for="preset in studioPresets"
@@ -189,18 +273,9 @@
             </div>
           </div>
 
-          <div class="field-group">
-            <label>프로젝트 제목</label>
-            <input
-              v-model="formStep1.title"
-              type="text"
-              placeholder="예: 충남 공주 냇가 옆 프라이빗 스테이 & 평상 백숙 민박 '맑은물 민박'"
-            />
-          </div>
-
-          <div class="field-group">
+          <div class="field-group prompt-hero-group">
             <div class="field-label-split">
-              <label>아이디어 상세 설명 (AI 프롬프트)</label>
+              <label>만들고 싶은 사이트 설명 (한 줄만 적어도 충분해요!)</label>
               <div class="intent-action-btns">
                 <button
                   type="button"
@@ -208,39 +283,68 @@
                   :disabled="busy || analyzingIntent"
                   @click="runIntentAnalysis(false)"
                 >
-                  {{ analyzingIntent ? 'AI 의도·기능 정밀 분석 중...' : '✨ AI로 아이디어 분석 & 맞춤 기능 추천받기' }}
+                  {{ analyzingIntent ? 'AI 맞춤 기능 분석 중...' : '✨ AI로 내 설명에 맞는 기능 미리 추천받기' }}
                 </button>
                 <button
+                  v-if="!easyMode || showStep1MetaPanel"
                   type="button"
                   class="ai-intent-sub-btn"
                   :disabled="busy || analyzingIntent"
                   @click="runIntentAnalysis(true)"
                 >
-                  ✨ 기획 프롬프트 확장 + 사진 캡션 자동완성
+                  설명 문구 더 풍성하게 자동 확장
                 </button>
               </div>
             </div>
             <textarea
               v-model="formStep1.promptText"
-              rows="4"
-              placeholder="만들고 싶은 공간·브랜드·상품과 원하는 기능(예: 객실/평상 예약, 시즌 요금표, 오시는 길, FAQ, 포토갤러리 등)을 자유롭게 적어주세요."
+              rows="3"
+              data-testid="step1-prompt-textarea"
+              placeholder="예: 엠파시 회사 홈페이지 만들고 싶어 / 충남 공주 냇가 옆 평상 백숙 민박 예약 사이트 만들고 싶어"
+              @input="onStep1PromptInput"
             ></textarea>
           </div>
 
-          <!-- AI 자율 아키텍처 & 의도 진단 리포트 배너 -->
-          <div class="ai-intent-banner">
+          <!-- 초보자 원클릭 행동 유도 바 (스크롤 없이 바로 다음 단계 또는 1분 자동 완성 진행) -->
+          <div class="easy-step1-cta-bar">
+            <div class="easy-cta-left">
+              <strong>한 줄만 적으셨다면 바로 다음으로 넘어가셔도 됩니다!</strong>
+              <span>복잡한 설정과 필요한 기능 구성은 AI가 뒤에서 자동으로 완성해 드립니다.</span>
+            </div>
+            <div class="easy-cta-btns">
+              <button
+                type="button"
+                class="fasttrack-btn"
+                :disabled="busy"
+                @click="runOneClickAutoComplete"
+              >
+                ⚡ 1분 자동 완성 (이름·로고까지 AI에게 맡기고 완성본 바로 보기)
+              </button>
+              <button
+                type="button"
+                class="primary-btn"
+                :disabled="busy"
+                @click="saveCurrentIdeaAndGoStep2"
+              >
+                다음: 어울리는 이름과 로고 추천받기 →
+              </button>
+            </div>
+          </div>
+
+          <!-- AI 맞춤 사이트 추천 & 자동 챙김 기능 요약 카드 -->
+          <div class="ai-intent-banner" data-testid="ai-intent-summary-card">
             <div class="ai-intent-head">
               <div class="ai-intent-badges">
-                <span class="intent-kicker-pill">AI ARCHITECTURE ADVISOR</span>
+                <span class="intent-kicker-pill">AI 맞춤 사이트 추천</span>
                 <span class="intent-arch-badge">
-                  추천 아키텍처: {{ formatSiteTypeLabel(formStep1.siteType) }} ({{ formStep1.siteType }})
+                  추천 사이트 형태: {{ formatSiteTypeLabel(formStep1.siteType) }}
                 </span>
                 <span v-if="aiIntentAnalysis.heroStyle" class="intent-hero-badge">
-                  히어로 무드: {{ formatHeroStyleLabel(aiIntentAnalysis.heroStyle) }}
+                  추천 첫 화면 분위기: {{ formatHeroStyleLabel(aiIntentAnalysis.heroStyle) }}
                 </span>
               </div>
-              <div class="arch-override-group">
-                <span class="override-label">아키텍처 수동 변경:</span>
+              <div v-if="!easyMode || showStep1MetaPanel" class="arch-override-group">
+                <span class="override-label">사이트 형태 직접 변경:</span>
                 <button
                   v-for="t in siteTypes"
                   :key="t.code"
@@ -249,95 +353,180 @@
                   :class="{ active: formStep1.siteType === t.code }"
                   @click="formStep1.siteType = t.code"
                 >
-                  {{ t.title }}
+                  {{ formatSiteTypeLabel(t.code) }}
                 </button>
               </div>
             </div>
 
             <p v-if="aiIntentAnalysis.siteTypeReason" class="ai-intent-reason">
-              <strong>AI 아키텍처 진단:</strong> {{ aiIntentAnalysis.siteTypeReason }}
+              <strong>AI 추천 안내:</strong> {{ aiIntentAnalysis.siteTypeReason }}
             </p>
             <p v-else class="ai-intent-reason muted">
-              프롬프트를 입력한 뒤 <strong>[✨ AI로 아이디어 분석 & 맞춤 기능 추천받기]</strong>를 누르거나 2단계로 이동하면, AI가 최적 사이트 아키텍처와 필요 기능을 자동으로 진단합니다.
+              위 입력창에 만들고 싶은 사이트를 적고 <strong>[다음: 어울리는 이름과 로고 추천받기 →]</strong>를 누르면, AI가 가장 잘 맞는 사이트 형태와 필수 기능을 알아서 세팅합니다.
             </p>
+
+            <!-- AI가 자동으로 챙겨둔 핵심 기능 요약 배지 -->
+            <div class="easy-feature-summary-box" data-testid="easy-feature-summary">
+              <div class="easy-feat-summary-top">
+                <strong>
+                  ✓ 내 사이트에 포함될 기능
+                  <span class="easy-feat-count">
+                    ({{ enabledFeatureSummaries.length > 0 ? `${enabledFeatureSummaries.length}가지 선택됨` : '다음 단계 이동 시 AI가 자동 구성' }})
+                  </span>
+                </strong>
+                <button
+                  type="button"
+                  class="easy-link-btn"
+                  @click="showFeatureCatalogPanel = !showFeatureCatalogPanel"
+                >
+                  {{ showFeatureCatalogPanel ? '기능 목록 접기 ▲' : '+ 다른 기능 더 찾아보기 (총 ' + (featureCatalog.length || 52) + '가지) ▼' }}
+                </button>
+              </div>
+              <div v-if="enabledFeatureSummaries.length > 0" class="easy-feat-pill-row">
+                <span
+                  v-for="item in enabledFeatureSummaries.slice(0, 8)"
+                  :key="item.code"
+                  class="easy-feat-pill"
+                >
+                  ✓ {{ item.title }}
+                </span>
+                <span v-if="enabledFeatureSummaries.length > 8" class="easy-feat-more-pill">
+                  외 {{ enabledFeatureSummaries.length - 8 }}가지
+                </span>
+              </div>
+              <p v-else class="easy-feat-empty-hint">
+                일일이 고르지 않으셔도 괜찮아요! 다음 버튼을 누르면 소개 배너, 주요 안내, 자주 묻는 질문, 문의·신청창 등 꼭 필요한 기능을 AI가 자동으로 담아드립니다.
+              </p>
+            </div>
 
             <div
               v-if="aiIntentAnalysis.expandedPrompt && aiIntentAnalysis.expandedPrompt !== formStep1.promptText"
               class="expanded-prompt-box"
             >
               <div class="expanded-prompt-top">
-                <strong>💡 AI가 구체화한 상세 기획 프롬프트 제안</strong>
+                <strong>AI가 더 자세하게 다듬은 사이트 설명 제안</strong>
                 <button type="button" class="apply-expanded-btn" @click="applyExpandedPrompt">
-                  이 기획 프롬프트로 교체 적용 →
+                  이 설명으로 적용하기 →
                 </button>
               </div>
               <p>{{ aiIntentAnalysis.expandedPrompt }}</p>
             </div>
           </div>
 
-          <!-- 1단계: 업종 카테고리 및 핵심 키워드 태그 직접 편집 -->
-          <div class="step1-meta-grid">
-            <div class="field-group">
-              <label>업종 · 도메인 카테고리 (AI 네이밍·기획서 톤앤매너 반영)</label>
-              <select v-model="formStep1.category" class="step1-select">
-                <option value="AUTO">AI 에이전트 자율 추론 (프롬프트 기반 자동 판단)</option>
-                <option
-                  v-if="
-                    formStep1.category &&
-                    ![
-                      'AUTO',
-                      'ACCOMMODATION',
-                      'FOOD_BEVERAGE',
-                      'RETAIL_CRAFT',
-                      'CULTURE_CLASS',
-                      'LOCAL_BRAND',
-                      'TECH_SERVICE',
-                    ].includes(formStep1.category)
-                  "
-                  :value="formStep1.category"
-                >
-                  AI 자율 추론 업종: {{ formStep1.category }}
-                </option>
-                <option value="ACCOMMODATION">숙박 · 민박 · 감성 스테이 · 펜션</option>
-                <option value="FOOD_BEVERAGE">식음료 · 식당 · 로스터리 카페 · 베이커리</option>
-                <option value="RETAIL_CRAFT">공예 · 리빙 · 패션 · 라이프스타일 편집숍</option>
-                <option value="CULTURE_CLASS">원데이 클래스 · 전시 · 살롱 · 공간 대관</option>
-                <option value="LOCAL_BRAND">로컬 특산물 · 농수산 직거래 · 팜투테이블</option>
-                <option value="TECH_SERVICE">IT · SaaS · 크리에이터 · 디지털 서비스</option>
-              </select>
+          <!-- 점진적 공개(Progressive Disclosure) 선택형 접이식 버튼 바 -->
+          <div class="progressive-disclosure-bar">
+            <button
+              type="button"
+              class="disclosure-toggle-btn"
+              data-testid="toggle-feature-catalog-btn"
+              :class="{ open: showFeatureCatalogPanel || !easyMode }"
+              @click="showFeatureCatalogPanel = !showFeatureCatalogPanel"
+            >
+              <span>🧩 {{ showFeatureCatalogPanel ? '원하는 기능 직접 골라 담기 닫기 ▲' : '+ 원하는 기능 직접 골라 담기 (총 ' + (featureCatalog.length || 52) + '가지 전체 보기) ▼' }}</span>
+              <small>선택 {{ enabledFeatures.length }}가지</small>
+            </button>
+
+            <button
+              type="button"
+              class="disclosure-toggle-btn"
+              data-testid="toggle-asset-upload-btn"
+              :class="{ open: showAssetUploadPanel || !easyMode || ideaAssets.length > 0 }"
+              @click="showAssetUploadPanel = !showAssetUploadPanel"
+            >
+              <span>📷 {{ showAssetUploadPanel ? '내 사진·로고·소개자료 올리기 닫기 ▲' : '+ 내 사진·로고·소개자료 올리기 (선택) ▼' }}</span>
+              <small>{{ ideaAssets.length }}건 등록됨</small>
+            </button>
+
+            <button
+              type="button"
+              class="disclosure-toggle-btn"
+              data-testid="toggle-step1-meta-btn"
+              :class="{ open: showStep1MetaPanel || !easyMode }"
+              @click="showStep1MetaPanel = !showStep1MetaPanel"
+            >
+              <span>⚙️ {{ showStep1MetaPanel ? '업종·키워드 세부 설정 닫기 ▲' : '+ 업종·키워드 세부 설정 (선택) ▼' }}</span>
+              <small>AI 자동 판단 중</small>
+            </button>
+          </div>
+
+          <!-- [접이식 1] 1단계: 프로젝트 제목, 사이트 형태, 업종 카테고리 및 핵심 키워드 태그 직접 편집 -->
+          <div v-show="showStep1MetaPanel || !easyMode" class="step1-collapsible-section" data-testid="step1-meta-panel">
+            <div class="field-group" style="margin-bottom: 14px">
+              <label>프로젝트 관리용 제목 (비워두면 사이트 설명 첫 줄로 자동 저장됩니다)</label>
+              <input
+                v-model="formStep1.title"
+                type="text"
+                placeholder="예: 엠파시 공식 브랜드 홈페이지 / 공주 맑은물 민박"
+              />
             </div>
 
-            <div class="field-group">
-              <label>핵심 브랜드 키워드 태그 (네이밍·SEO·컨시어지 핵심 어휘)</label>
-              <div class="tag-editor-box">
-                <div class="tag-chip-list">
-                  <span v-for="(tag, tIdx) in formStep1.tags" :key="tag + tIdx" class="editable-tag-chip">
-                    #{{ tag }}
-                    <button type="button" class="tag-del-x" @click="formStep1.tags.splice(tIdx, 1)">×</button>
-                  </span>
-                  <input
-                    v-model="newTagInput"
-                    type="text"
-                    class="tag-inline-input"
-                    placeholder="키워드 입력 후 Enter (예: 냇가민박, 평상백숙, 독채스테이)"
-                    @keydown.enter.prevent="addStep1Tag"
-                  />
-                  <button type="button" class="tiny-add-btn" @click="addStep1Tag">+ 태그 추가</button>
+            <div class="step1-meta-grid">
+              <div class="field-group">
+                <label>업종 · 분야 선택 (선택하지 않아도 AI가 자동으로 파악합니다)</label>
+                <select v-model="formStep1.category" class="step1-select">
+                  <option value="AUTO">AI 자동 파악 (설명을 읽고 가장 알맞은 업종으로 설정)</option>
+                  <option
+                    v-if="
+                      formStep1.category &&
+                      ![
+                        'AUTO',
+                        'ACCOMMODATION',
+                        'FOOD_BEVERAGE',
+                        'RETAIL_CRAFT',
+                        'CULTURE_CLASS',
+                        'LOCAL_BRAND',
+                        'TECH_SERVICE',
+                      ].includes(formStep1.category)
+                    "
+                    :value="formStep1.category"
+                  >
+                    AI 자동 파악 업종: {{ formStep1.category }}
+                  </option>
+                  <option value="ACCOMMODATION">숙박 · 민박 · 감성 스테이 · 펜션</option>
+                  <option value="FOOD_BEVERAGE">식음료 · 식당 · 로스터리 카페 · 베이커리</option>
+                  <option value="RETAIL_CRAFT">공예 · 리빙 · 패션 · 라이프스타일 편집숍</option>
+                  <option value="CULTURE_CLASS">원데이 클래스 · 전시 · 살롱 · 공간 대관</option>
+                  <option value="LOCAL_BRAND">로컬 특산물 · 농수산 직거래 · 팜투테이블</option>
+                  <option value="TECH_SERVICE">회사 소개 · IT · 크리에이터 · 일반 서비스</option>
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label>핵심 키워드 태그 (선택 · 검색 노출 및 브랜드 소개에 활용)</label>
+                <div class="tag-editor-box">
+                  <div class="tag-chip-list">
+                    <span v-for="(tag, tIdx) in formStep1.tags" :key="tag + tIdx" class="editable-tag-chip">
+                      #{{ tag }}
+                      <button type="button" class="tag-del-x" @click="formStep1.tags.splice(tIdx, 1)">×</button>
+                    </span>
+                    <input
+                      v-model="newTagInput"
+                      type="text"
+                      class="tag-inline-input"
+                      placeholder="키워드 입력 후 Enter (예: 회사소개, 냇가민박, 평상백숙)"
+                      @keydown.enter.prevent="addStep1Tag"
+                    />
+                    <button type="button" class="tiny-add-btn" @click="addStep1Tag">+ 태그 추가</button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 1단계: 보유 사진·로고·참고문서 통합 업로드 & 자산 보관함 -->
-          <div class="asset-upload-panel">
+          <!-- [접이식 2] 1단계: 보유 사진·로고·참고문서 통합 업로드 & 자산 보관함 -->
+          <div
+            v-show="showAssetUploadPanel || !easyMode"
+            class="asset-upload-panel"
+            data-testid="asset-upload-panel"
+          >
             <div class="asset-panel-head">
               <div>
                 <div class="asset-title-row">
-                  <strong>보유 사진 · 로고 · 참고자료 업로드</strong>
+                  <strong>보유 사진 · 로고 · 소개자료 올리기 (선택)</strong>
                   <span class="asset-count-pill">현재 {{ ideaAssets.length }}건 등록됨</span>
                 </div>
                 <p>
-                  민박·매장 전경, 객실·상품 사진, 기존 로고(SVG/PNG), 요금표·안내문(PDF/DOCX/TXT/CSV)을 올리면 AI가 사진별 최적 용도(배너/객실·상품/갤러리/매거진)와 한국어 설명을 자동 부여합니다.
+                  매장·회사 전경, 상품 사진, 기존 로고 이미지, 안내문·요금표 문서(PDF/DOCX/TXT)를 올리면 AI가 사이트 곳곳에 알맞게 배치해 드립니다.
                 </p>
               </div>
               <div class="asset-head-controls">
@@ -374,9 +563,9 @@
               @click="triggerStep1FileSelect"
             >
               <div class="dropzone-inner">
-                <span class="dropzone-badge">DRAG & DROP MULTI-UPLOAD</span>
-                <strong>여기로 사진이나 문서 파일을 끌어다 놓거나 클릭하여 여러 파일을 한 번에 업로드하세요</strong>
-                <span>지원 형식: JPG, PNG, WEBP, GIF, SVG(로고), PDF, DOCX, TXT, CSV, MD (파일당 최대 50MB · 문서 텍스트 자동 추출)</span>
+                <span class="dropzone-badge">사진 · 문서 간편 업로드</span>
+                <strong>여기로 사진이나 문서 파일을 끌어다 놓거나 클릭해서 올려주세요</strong>
+                <span>지원 형식: JPG, PNG, WEBP, GIF, SVG(로고), PDF, DOCX, TXT, CSV, MD (파일당 최대 50MB)</span>
               </div>
             </div>
 
@@ -422,7 +611,7 @@
                       v-model="asset.caption"
                       type="text"
                       class="asset-caption-input"
-                      placeholder="사진·자료 설명 (예: 냇가 평상 전경, 황토방 객실, 2026 성수기 요금표)"
+                      placeholder="사진·자료 설명 (예: 회사 로비 전경, 대표 상품, 2026 안내문)"
                       @change="onAssetMetaChange(asset)"
                     />
                   </div>
@@ -438,7 +627,7 @@
                       :disabled="busy"
                       @click="applyAssetTextToPrompt(asset)"
                     >
-                      AI 프롬프트에 내용 반영
+                      사이트 설명에 내용 반영
                     </button>
                     <button
                       type="button"
@@ -454,19 +643,23 @@
             </div>
           </div>
 
-          <!-- 1단계: DB 단일 원천 52종 전체 기능 카탈로그 실시간 검색·필터·선택 보드 -->
-          <div class="feature-catalog-panel" data-testid="feature-catalog-panel">
+          <!-- [접이식 3] 1단계: 52종 전체 기능 카탈로그 실시간 검색·필터·선택 보드 -->
+          <div
+            v-show="showFeatureCatalogPanel || !easyMode"
+            class="feature-catalog-panel"
+            data-testid="feature-catalog-panel"
+          >
             <div class="feature-catalog-head">
               <div>
                 <div class="feature-head-title-row">
-                  <span class="step-kicker">SYNC-SHOP · SYNC-CMS · AI CORE CAPABILITY MARKETPLACE</span>
-                  <span class="feature-stat-pill">전체 {{ featureCatalog.length }}종</span>
-                  <span class="feature-stat-pill recommended">✨ AI 추천 {{ recommendedFeatureCodes.length }}종</span>
-                  <span class="feature-stat-pill active">✅ 현재 선택 {{ enabledFeatures.length }}종</span>
+                  <span class="step-kicker">내 사이트에 추가할 수 있는 편리한 기능 모음 (총 {{ featureCatalog.length || 52 }}가지)</span>
+                  <span class="feature-stat-pill">전체 {{ featureCatalog.length }}가지</span>
+                  <span class="feature-stat-pill recommended">AI 추천 {{ recommendedFeatureCodes.length }}가지</span>
+                  <span class="feature-stat-pill active">현재 선택 {{ enabledFeatures.length }}가지</span>
                 </div>
-                <h3>사이트에 탑재할 세부 기능 카드 검색 및 선택 (DB 단일 원천 {{ featureCatalog.length }}종)</h3>
+                <h3>내 사이트에 넣고 싶은 세부 기능 골라 담기</h3>
                 <p>
-                  검색창에 원하는 기능 키워드(예: <strong>요금표, 객실, 평상, 쿠폰, 포토갤러리, FAQ, 오시는 길, 투표, 후기</strong>)를 입력하거나 카테고리별로 필터링하여 원하는 기능을 자유롭게 켜고 끌 수 있습니다.
+                  검색창에 원하는 기능(예: <strong>요금표, 객실, 평상, 쿠폰, 사진첩, 자주 묻는 질문, 오시는 길, 투표, 후기</strong>)을 검색하거나 클릭해서 자유롭게 켜고 끌 수 있습니다.
                 </p>
               </div>
               <div class="feature-head-actions">
@@ -476,7 +669,7 @@
                   :disabled="busy"
                   @click="selectRecommendedFeatures"
                 >
-                  ✨ AI 추천 기능({{ recommendedFeatureCodes.length }}종) 일괄 적용
+                  AI 추천 기능({{ recommendedFeatureCodes.length }}가지) 한 번에 켜기
                 </button>
                 <button
                   type="button"
@@ -484,7 +677,7 @@
                   :disabled="busy || !selectedIdeaId"
                   @click="saveEnabledFeaturesToServer(true)"
                 >
-                  선택 기능 즉시 저장 ({{ enabledFeatures.length }}종)
+                  선택한 기능 저장 ({{ enabledFeatures.length }}가지)
                 </button>
               </div>
             </div>
@@ -492,13 +685,13 @@
             <!-- 실시간 검색바 & 엔진 필터 -->
             <div class="feature-search-bar">
               <div class="feature-search-input-wrap">
-                <span class="search-icon-label">🔍 기능 검색</span>
+                <span class="search-icon-label">기능 검색</span>
                 <input
                   v-model="featureSearchQuery"
                   type="text"
                   data-testid="feature-search-input"
                   class="feature-search-input"
-                  placeholder="기능명, 설명, 유의어 검색 (예: 요금표, 객실, 예약폼, 스페이스 투어, FAQ, 오시는 길, 쿠폰, 타임특가, 투표, 방명록...)"
+                  placeholder="원하는 기능 검색 (예: 요금표, 객실, 예약폼, 공간 소개, 자주 묻는 질문, 오시는 길, 쿠폰, 후기...)"
                 />
                 <button
                   v-if="featureSearchQuery"
@@ -539,7 +732,7 @@
                 :class="{ active: activeFeatureCategoryTab === 'RECOMMENDED' }"
                 @click="activeFeatureCategoryTab = 'RECOMMENDED'"
               >
-                ✨ AI 맞춤 추천 ({{ recommendedFeatureCodes.length }})
+                AI 맞춤 추천 ({{ recommendedFeatureCodes.length }})
               </button>
               <button
                 type="button"
@@ -547,7 +740,7 @@
                 :class="{ active: activeFeatureCategoryTab === 'SELECTED' }"
                 @click="activeFeatureCategoryTab = 'SELECTED'"
               >
-                ✅ 선택됨 ({{ enabledFeatures.length }})
+                선택됨 ({{ enabledFeatures.length }})
               </button>
               <button
                 v-for="cat in featureCategories"
@@ -581,11 +774,11 @@
                     </span>
                     <span class="feat-cat-badge">{{ feat.badgeLabel || feat.categoryName }}</span>
                     <span v-if="isFeatureRecommended(feat.featureCode)" class="feat-ai-rec-badge">
-                      ✨ AI 추천
+                      AI 추천
                     </span>
                   </div>
                   <span class="feat-toggle-pill" :class="{ on: isFeatureEnabled(feat.featureCode) }">
-                    {{ isFeatureEnabled(feat.featureCode) ? '✓ 탑재됨' : '+ 선택' }}
+                    {{ isFeatureEnabled(feat.featureCode) ? '✓ 포함됨' : '+ 담기' }}
                   </span>
                 </div>
 
@@ -594,7 +787,7 @@
                 <p class="feat-card-desc">{{ feat.description }}</p>
 
                 <div v-if="getFeatureReason(feat.featureCode)" class="feat-ai-reason-box">
-                  <strong>AI 추천 사유:</strong> {{ getFeatureReason(feat.featureCode) }}
+                  <strong>추천 이유:</strong> {{ getFeatureReason(feat.featureCode) }}
                 </div>
 
                 <div v-if="Array.isArray(feat.searchKeywords) && feat.searchKeywords.length" class="feat-keyword-row">
@@ -609,8 +802,8 @@
               </div>
             </div>
             <div v-else class="feature-empty-box">
-              <strong>조건에 맞는 기능 카드가 없습니다.</strong>
-              <p>검색어를 지우거나 '전체 기능 ({{ featureCatalog.length }})' 탭을 선택해 모든 기능을 확인해 보세요.</p>
+              <strong>찾으시는 기능 카드가 없습니다.</strong>
+              <p>검색어를 지우거나 '전체 기능 ({{ featureCatalog.length }})' 탭을 눌러 모든 기능을 확인해 보세요.</p>
               <button
                 type="button"
                 class="secondary-btn"
@@ -627,10 +820,13 @@
 
           <div class="panel-actions-split">
             <button type="button" class="primary-btn" :disabled="busy" @click="saveCurrentIdeaAndGoStep2">
-              {{ busy ? (busyMessage || '저장 및 AI 생성 중...') : '현재 프로젝트에 반영하고 2단계(네이밍·로고)로 이동 →' }}
+              {{ busy ? (busyMessage || '저장 및 AI 생성 중...') : '다음: 어울리는 이름과 로고 추천받기 →' }}
+            </button>
+            <button type="button" class="fasttrack-btn" :disabled="busy" @click="runOneClickAutoComplete">
+              {{ busy ? '자동 완성 중...' : '⚡ 1분 자동 완성: 완성된 사이트 바로 보기' }}
             </button>
             <button type="button" class="secondary-btn" :disabled="busy" @click="createNewIdeaFromStep1">
-              {{ busy ? '처리 중...' : '+ 완전히 새로운 브랜드 프로젝트로 생성하기' }}
+              {{ busy ? '처리 중...' : '+ 완전히 새로운 사이트 프로젝트로 시작하기' }}
             </button>
           </div>
         </div>
@@ -646,29 +842,35 @@
         >
           <div class="panel-header">
             <div>
-              <span class="step-kicker">STEP 02 · AI BRAND NAMING & VECTOR LOGO</span>
-              <h2>AI 브랜드 네이밍 8종 & 벡터 SVG 로고 6종</h2>
-              <p>AI 후보를 선택하거나, 브랜드명·슬러그 주소·스토리·컬러 팔레트·SVG 로고를 직접 커스텀 편집할 수 있습니다.</p>
+              <span class="step-kicker">STEP 02 · 이름 &amp; 로고 고르기</span>
+              <h2>AI 추천 브랜드 이름 8가지 &amp; 고화질 브랜드 로고 6가지</h2>
+              <p>
+                마음에 드는 이름 카드 1개와 로고 카드 1개를 클릭한 뒤
+                <strong>[{{ easyMode ? '이 이름과 로고로 내 사이트 화면 만들기 →' : '브랜드 확정 및 3단계 이동 →' }}]</strong>
+                버튼만 누르세요.
+              </p>
             </div>
             <div class="header-btns">
-              <select v-model="namingTonePreference" class="tone-select" title="네이밍 톤앤매너 선택">
-                <option value="ALL">전체 조화형 톤</option>
-                <option value="PURE_KOREAN">순우리말 · 자연 감성</option>
-                <option value="HANJA_CLASSIC">단아한 한자 · 전통미</option>
-                <option value="MODERN_EDITORIAL">모던 에디토리얼 · 라이프스타일</option>
-                <option value="GLOBAL_ENGLISH">글로벌 영문 · 미니멀</option>
-              </select>
-              <input
-                v-model="keywordHint"
-                type="text"
-                class="hint-input"
-                placeholder="네이밍 키워드 힌트 (예: 냇가, 평상, 로스터리)"
-              />
+              <template v-if="!easyMode || showBrandDirectEditor">
+                <select v-model="namingTonePreference" class="tone-select" title="네이밍 톤앤매너 선택">
+                  <option value="ALL">전체 조화형 톤</option>
+                  <option value="PURE_KOREAN">순우리말 · 자연 감성</option>
+                  <option value="HANJA_CLASSIC">단아한 한자 · 전통미</option>
+                  <option value="MODERN_EDITORIAL">모던 에디토리얼 · 라이프스타일</option>
+                  <option value="GLOBAL_ENGLISH">글로벌 영문 · 미니멀</option>
+                </select>
+                <input
+                  v-model="keywordHint"
+                  type="text"
+                  class="hint-input"
+                  placeholder="네이밍 키워드 힌트 (예: 냇가, 평상, 로스터리)"
+                />
+              </template>
               <button type="button" class="secondary-btn" :disabled="busy" @click="regenerateNames">
-                {{ busy ? '생성 중...' : '네이밍 8종 재생성' }}
+                {{ busy ? '생성 중...' : '다른 이름 8가지 추천받기' }}
               </button>
               <button type="button" class="secondary-btn" :disabled="busy" @click="regenerateLogos">
-                {{ busy ? '생성 중...' : 'SVG 로고 6종 재생성' }}
+                {{ busy ? '생성 중...' : '다른 로고 6가지 추천받기' }}
               </button>
               <input
                 ref="step2LogoInputRef"
@@ -683,10 +885,16 @@
                 :disabled="busy || assetUploading"
                 @click="triggerStep2LogoUpload"
               >
-                {{ assetUploading ? '로고 업로드 중...' : '+ 보유 로고 업로드 (SVG/PNG)' }}
+                {{ assetUploading ? '로고 업로드 중...' : '+ 내 로고 이미지 올리기' }}
               </button>
-              <button type="button" class="primary-btn" :disabled="busy" @click="confirmBrandAndNext">
-                브랜드 확정 및 3단계 이동 →
+              <button
+                type="button"
+                class="primary-btn"
+                data-testid="step2-confirm-brand-btn"
+                :disabled="busy"
+                @click="confirmBrandAndNext"
+              >
+                {{ easyMode ? '이 이름과 로고로 내 사이트 화면 만들기 →' : '브랜드 확정 및 3단계 이동 →' }}
               </button>
             </div>
           </div>
@@ -702,13 +910,14 @@
             <div class="kit-main-row">
               <div class="kit-left">
                 <div class="kit-tag-row">
-                  <span class="kit-tag">선택된 브랜드 아이덴티티 키트 (실시간 동기화)</span>
+                  <span class="kit-tag">내가 고른 브랜드 이름 &amp; 고화질 브랜드 로고 미리보기</span>
                   <button
                     type="button"
                     class="kit-edit-toggle-btn"
+                    data-testid="toggle-brand-direct-editor-btn"
                     @click="showBrandDirectEditor = !showBrandDirectEditor"
                   >
-                    {{ showBrandDirectEditor ? '직접 편집 패널 접기 ▲' : '✎ 브랜드명 · 주소 · 컬러 · SVG 직접 편집 ▼' }}
+                    {{ showBrandDirectEditor ? '직접 편집 패널 접기 ▲' : '✎ 이름 · 내 사이트 인터넷 주소 · 컬러 · 로고 직접 수정 ▼' }}
                   </button>
                 </div>
                 <div class="kit-brand-row">
@@ -717,7 +926,7 @@
                     <strong>{{ previewBrandName }}</strong>
                     <span>
                       {{ customBrandForm.pronunciation || selectedNameObj?.pronunciation || 'Brand Identity' }}
-                      · 라이브 주소:
+                      · 내 사이트 인터넷 주소 (/s/):
                       <code>/s/{{ customBrandForm.siteSlug || selectedNameObj?.siteSlug || activeSiteSlug || 'auto-slug' }}</code>
                     </span>
                     <p v-if="customBrandForm.brandStory || selectedNameObj?.brandStory" class="kit-story-line">
@@ -731,22 +940,22 @@
                   <label class="kit-swatch editable-swatch" title="메인 컬러 변경">
                     <input type="color" v-model="customBrandForm.colorPalette.primary" @input="onCustomPaletteChange" />
                     <i :style="{ background: customBrandForm.colorPalette.primary }"></i>
-                    <small>primary: {{ customBrandForm.colorPalette.primary }}</small>
+                    <small>메인색: {{ customBrandForm.colorPalette.primary }}</small>
                   </label>
                   <label class="kit-swatch editable-swatch" title="보조 컬러 변경">
                     <input type="color" v-model="customBrandForm.colorPalette.secondary" @input="onCustomPaletteChange" />
                     <i :style="{ background: customBrandForm.colorPalette.secondary }"></i>
-                    <small>secondary: {{ customBrandForm.colorPalette.secondary }}</small>
+                    <small>보조색: {{ customBrandForm.colorPalette.secondary }}</small>
                   </label>
                   <label class="kit-swatch editable-swatch" title="포인트 컬러 변경">
                     <input type="color" v-model="customBrandForm.colorPalette.accent" @input="onCustomPaletteChange" />
                     <i :style="{ background: customBrandForm.colorPalette.accent }"></i>
-                    <small>accent: {{ customBrandForm.colorPalette.accent }}</small>
+                    <small>강조색: {{ customBrandForm.colorPalette.accent }}</small>
                   </label>
-                  <label class="kit-swatch editable-swatch" title="배경 서피스 컬러 변경">
+                  <label class="kit-swatch editable-swatch" title="배경 컬러 변경">
                     <input type="color" v-model="customBrandForm.colorPalette.surface" @input="onCustomPaletteChange" />
                     <i :style="{ background: customBrandForm.colorPalette.surface }"></i>
-                    <small>surface: {{ customBrandForm.colorPalette.surface }}</small>
+                    <small>배경색: {{ customBrandForm.colorPalette.surface }}</small>
                   </label>
                 </div>
                 <span
@@ -756,7 +965,7 @@
                     borderRadius: customBrandForm.colorPalette.radius || '12px',
                   }"
                 >
-                  {{ previewBrandName }} 탐색하기 →
+                  {{ previewBrandName }} 둘러보기 →
                 </span>
               </div>
             </div>
@@ -765,7 +974,7 @@
             <div v-if="showBrandDirectEditor" class="brand-direct-editor">
               <div class="direct-editor-grid">
                 <div class="mini-field">
-                  <label>브랜드명 직접 입력 (입력 즉시 로고 텍스트 자동 동기화)</label>
+                  <label>브랜드 이름 직접 입력 (입력 즉시 로고 글자 자동 변경)</label>
                   <input
                     v-model="customBrandForm.brandName"
                     type="text"
@@ -774,7 +983,7 @@
                   />
                 </div>
                 <div class="mini-field">
-                  <label>라이브 사이트 슬러그 주소 (/s/ 뒤에 붙는 영문·숫자 주소)</label>
+                  <label>내 사이트 인터넷 주소 (/s/ 뒤에 붙는 영문·숫자 주소)</label>
                   <div class="slug-input-group">
                     <span class="slug-prefix">/s/</span>
                     <input
@@ -786,7 +995,7 @@
                   </div>
                 </div>
                 <div class="mini-field">
-                  <label>발음 표기 / 영문 서브타이틀</label>
+                  <label>발음 표기 / 영문 부제목</label>
                   <input
                     v-model="customBrandForm.pronunciation"
                     type="text"
@@ -794,18 +1003,18 @@
                   />
                 </div>
                 <div class="mini-field">
-                  <label>버튼·카드 모서리 곡률 (Radius)</label>
+                  <label>버튼·카드 모서리 모양</label>
                   <select v-model="customBrandForm.colorPalette.radius">
-                    <option value="6px">샤프 모던 (6px)</option>
-                    <option value="12px">스탠다드 라운드 (12px)</option>
-                    <option value="16px">소프트 감성 라운드 (16px)</option>
-                    <option value="24px">풀 라운드 칩 (24px)</option>
+                    <option value="6px">깔끔한 직각형 (6px)</option>
+                    <option value="12px">기본 라운드형 (12px)</option>
+                    <option value="16px">부드러운 라운드형 (16px)</option>
+                    <option value="24px">둥근 캡슐형 (24px)</option>
                   </select>
                 </div>
               </div>
 
               <div class="mini-field" style="margin-top: 8px">
-                <label>브랜드 스토리 & 슬로건 직접 편집 (3단계 기획서 및 4단계 메인 카피에 반영)</label>
+                <label>브랜드 한 줄 소개 &amp; 슬로건 직접 수정 (사이트 첫 화면 메인 문구에 반영)</label>
                 <input
                   v-model="customBrandForm.brandStory"
                   type="text"
@@ -819,10 +1028,10 @@
                   class="tiny-add-btn"
                   @click="showSvgCodeEditor = !showSvgCodeEditor"
                 >
-                  {{ showSvgCodeEditor ? 'SVG 벡터 코드 편집기 닫기 ▲' : '</> SVG 로고 벡터 코드 직접 편집 열기 ▼' }}
+                  {{ showSvgCodeEditor ? '고화질 로고 코드 편집기 닫기 ▲' : '</> 고화질 브랜드 로고(SVG) 코드 직접 편집 열기 ▼' }}
                 </button>
                 <span class="helper-caption">
-                  상단 컬러 칩을 클릭해 색상을 바꾸거나, 직접 SVG 코드를 수정·붙여넣기 할 수 있습니다.
+                  상단 색상 칩을 클릭해 색상을 바꾸거나, 직접 로고 코드를 수정할 수 있습니다.
                 </span>
               </div>
 
@@ -840,9 +1049,9 @@
 
           <div class="section-title-row">
             <h3 class="sub-heading">
-              AI 추천 브랜드 네이밍 후보 ({{ generatingNames ? '8종 생성 중...' : `${nameSuggestions.length}종` }})
+              1. 마음에 드는 브랜드 이름을 골라보세요 ({{ generatingNames ? '8가지 생성 중...' : `${nameSuggestions.length}가지` }})
             </h3>
-            <span class="helper-caption">원하는 브랜드명 카드를 클릭하면 상단 브랜드 키트, 사이트 주소, 하단 모든 SVG 로고의 텍스트가 즉시 연동됩니다.</span>
+            <span class="helper-caption">이름 카드를 클릭하면 상단 미리보기와 아래 모든 고화질 로고의 글자가 즉시 바뀝니다.</span>
           </div>
           <div v-if="generatingNames" class="name-grid skeleton-grid" aria-busy="true">
             <div v-for="n in 8" :key="'name-skel-' + n" class="name-card skeleton-card">
@@ -857,10 +1066,10 @@
             </div>
           </div>
           <div v-else-if="nameSuggestions.length === 0" class="empty-step-box">
-            <strong>아직 생성된 AI 브랜드 네이밍 후보가 없습니다.</strong>
-            <p>네이밍 생성 요청이 실패했거나 아직 실행되지 않았습니다. 아래 버튼을 눌러 AI 브랜드 네이밍 8종을 생성해 주세요.</p>
+            <strong>아직 생성된 AI 브랜드 이름 후보가 없습니다.</strong>
+            <p>아래 버튼을 눌러 AI가 추천하는 브랜드 이름 8가지를 받아보세요.</p>
             <button type="button" class="primary-btn" :disabled="busy" @click="regenerateNames">
-              {{ busy ? 'AI 네이밍 생성 중...' : 'AI 브랜드 네이밍 8종 생성하기' }}
+              {{ busy ? 'AI 이름 생성 중...' : 'AI 브랜드 이름 8가지 추천받기' }}
             </button>
           </div>
           <div v-else class="name-grid">
@@ -872,8 +1081,8 @@
               @click="selectNameCandidate(name)"
             >
               <div class="name-top">
-                <span class="score-pill">적합도 {{ name.score }}점</span>
-                <span class="slug-ok">✓ 주소 사용 가능</span>
+                <span class="score-pill">추천도 {{ name.score }}점</span>
+                <span class="slug-ok">✓ 인터넷 주소 사용 가능</span>
               </div>
               <h4>{{ name.brandName }}</h4>
               <div class="pronun">{{ name.pronunciation }} · /s/{{ name.siteSlug }}</div>
@@ -883,13 +1092,13 @@
 
           <div class="section-title-row">
             <h3 class="sub-heading">
-              AI 벡터 SVG 로고 & 브랜드 컬러 팔레트 후보 ({{
+              2. 어울리는 고화질 브랜드 로고 &amp; 색상 테마를 골라보세요 ({{
                 generatingLogos || (generatingNames && logoSuggestions.length === 0)
-                  ? '6종 생성 중...'
-                  : `${logoSuggestions.length}종`
+                  ? '6가지 생성 중...'
+                  : `${logoSuggestions.length}가지`
               }})
             </h3>
-            <span class="helper-caption">선택한 브랜드명({{ previewBrandName }})이 모든 로고 프리뷰에 실시간 반영되며, 컬러 팔레트는 4단계 사이트 테마로 자동 적용됩니다.</span>
+            <span class="helper-caption">선택한 브랜드 이름({{ previewBrandName }})이 모든 로고에 자동 적용되며, 색상 테마는 내 사이트 디자인에 바로 반영됩니다.</span>
           </div>
           <div
             v-if="generatingLogos || (generatingNames && logoSuggestions.length === 0)"
@@ -898,7 +1107,7 @@
           >
             <div v-for="n in 6" :key="'logo-skel-' + n" class="logo-card skeleton-card">
               <div class="svg-stage skel-stage">
-                <span class="skel-stage-label">벡터 SVG 로고 렌더링 중...</span>
+                <span class="skel-stage-label">고화질 브랜드 로고 그리는 중...</span>
               </div>
               <div class="logo-meta">
                 <div class="skel-bar skel-title"></div>
@@ -911,10 +1120,10 @@
             </div>
           </div>
           <div v-else-if="logoSuggestions.length === 0" class="empty-step-box">
-            <strong>아직 생성된 벡터 SVG 로고 후보가 없습니다.</strong>
-            <p>아래 버튼을 눌러 브랜드 컬러 팔레트와 벡터 SVG 로고 6종을 생성해 주세요.</p>
+            <strong>아직 생성된 고화질 브랜드 로고 후보가 없습니다.</strong>
+            <p>아래 버튼을 눌러 브랜드 색상 테마와 고화질 브랜드 로고 6가지를 만들어 보세요.</p>
             <button type="button" class="primary-btn" :disabled="busy" @click="regenerateLogos">
-              {{ busy ? 'SVG 로고 생성 중...' : '벡터 SVG 로고 6종 생성하기' }}
+              {{ busy ? '고화질 로고 생성 중...' : '고화질 브랜드 로고 6가지 만들기' }}
             </button>
           </div>
           <div v-else class="logo-grid">
@@ -946,6 +1155,30 @@
               </div>
             </div>
           </div>
+
+          <div class="step-footer-actions easy-step2-cta-bar">
+            <button
+              type="button"
+              class="primary-btn large"
+              data-testid="step2-bottom-confirm-btn"
+              :disabled="busy"
+              @click="confirmBrandAndNext"
+            >
+              {{
+                easyMode
+                  ? '이 이름과 로고로 내 사이트 화면 만들기 →'
+                  : '브랜드 확정 및 3단계(기획서) 이동 →'
+              }}
+            </button>
+            <button
+              type="button"
+              class="secondary-btn large"
+              :disabled="busy"
+              @click="showBrandDirectEditor = !showBrandDirectEditor"
+            >
+              {{ showBrandDirectEditor ? '직접 이름·색상 수정 닫기 ▲' : '✎ 이름 · 인터넷 주소 · 색상 직접 바꾸기' }}
+            </button>
+          </div>
         </div>
 
         <!-- ================================================================ -->
@@ -959,9 +1192,9 @@
         >
           <div class="panel-header">
             <div>
-              <span class="step-kicker">STEP 03 · FUNCTIONAL SPEC & SCREEN BLUEPRINT</span>
+              <span class="step-kicker">STEP 03 · 기능명세서 &amp; 화면 설계 블루프린트</span>
               <h2>서비스 기능명세서 및 화면 설계 블루프린트</h2>
-              <p>AI가 설계한 핵심 기능 항목과 화면 섹션 블루프린트를 직접 추가·수정·순서 변경하고 4단계 사이트 프로비저닝으로 이동하세요.</p>
+              <p>AI가 설계한 핵심 기능 항목과 화면 섹션 구성을 직접 추가·수정·순서 변경하고 내 사이트 화면 자동 제작(4단계)으로 이동하세요.</p>
             </div>
             <div class="header-btns">
               <button type="button" class="secondary-btn" @click="specEditMode = !specEditMode">
@@ -971,7 +1204,7 @@
                 현재 기획서·블루프린트 저장
               </button>
               <button type="button" class="primary-btn" :disabled="busy" @click="provisionAndGoStep4">
-                {{ busy ? '사이트 생성 중...' : '사이트 프로비저닝 및 4단계 프리뷰 →' }}
+                {{ busy ? '사이트 화면 제작 중...' : '내 사이트 화면 자동 제작 및 4단계 프리뷰 →' }}
               </button>
             </div>
           </div>
@@ -1191,9 +1424,21 @@
         >
           <div class="panel-header">
             <div>
-              <span class="step-kicker">STEP 04 · CONVERSATIONAL & VISUAL LIVE STUDIO</span>
-              <h2>실시간 디자인·문구·상품 편집 및 스토어 프리뷰</h2>
-              <p>AI 채팅 지시 또는 직관적인 비주얼 편집기로 배너 문구, 컬러 테마, 진열 상품과 매거진을 즉시 수정하세요.</p>
+              <span class="step-kicker">
+                {{
+                  easyMode
+                    ? 'STEP 03 · 내 사이트 꾸미기 & 바로 오픈'
+                    : 'STEP 04 · 실시간 사이트 미리보기 & 디자인·상품 편집'
+                }}
+              </span>
+              <h2>
+                {{
+                  easyMode
+                    ? '실시간으로 내 사이트 화면을 보면서 문구·사진·상품을 고치고 바로 오픈하세요'
+                    : '실시간 디자인·문구·상품 편집 및 스토어 프리뷰'
+                }}
+              </h2>
+              <p>우측 화면에서 바꾸고 싶은 곳(배너, 상품, 사진, 예약창)을 클릭하거나, 좌측에서 AI에게 말로 지시해 보세요.</p>
             </div>
             <div class="header-btns">
               <div class="viewport-btns">
@@ -1207,11 +1452,64 @@
                   모바일 (390px)
                 </button>
               </div>
-              <button type="button" class="secondary-btn" @click="goToStep(5)">
+              <button
+                type="button"
+                class="instant-open-btn"
+                data-testid="step4-instant-open-btn"
+                :disabled="busy || !siteRuntime"
+                @click="executeQuickLiveOpen"
+              >
+                🚀 {{ busy ? '오픈 반영 중...' : '내 사이트 지금 바로 오픈하기 (1초 반영)' }}
+              </button>
+              <button v-if="!easyMode" type="button" class="secondary-btn" @click="goToStep(5)">
                 5단계: 코드 편집 (선택)
               </button>
-              <button type="button" class="primary-btn" @click="goToStep(6)">
-                6단계: 바로 빌드 & 배포 →
+              <button v-if="!easyMode" type="button" class="primary-btn" @click="goToStep(6)">
+                6단계: 배포 세부 설정 →
+              </button>
+            </div>
+          </div>
+
+          <!-- 1초 즉시 오픈 완료 축하 배너 -->
+          <div
+            v-if="liveOpenCelebration && siteRuntime"
+            class="live-open-celebration-banner"
+            data-testid="live-open-celebration"
+          >
+            <div class="celebration-left">
+              <span class="celebration-badge">🎉 사이트 오픈 완료!</span>
+              <div class="celebration-text">
+                <strong>축하합니다! '{{ visualForm.siteName || siteRuntime.siteName }}' 사이트가 인터넷에 바로 오픈되었습니다.</strong>
+                <p>
+                  내 사이트 인터넷 주소 (/s/):
+                  <code data-testid="live-open-slug-code">/s/{{ siteRuntime.siteSlug }}</code>
+                  (v{{ siteRuntime.activeVersion }} · {{ formatDeployModeLabel(siteRuntime.deployMode) }})
+                </p>
+              </div>
+            </div>
+            <div class="celebration-actions">
+              <button
+                type="button"
+                class="primary-btn"
+                data-testid="open-live-site-btn"
+                @click="router.push({ name: 'LiveSiteRendererView', params: { siteSlug: siteRuntime.siteSlug } })"
+              >
+                오픈된 내 사이트 바로가기 (/s/{{ siteRuntime.siteSlug }}) ↗
+              </button>
+              <button
+                type="button"
+                class="secondary-btn"
+                data-testid="copy-live-url-btn"
+                @click="copyLiveSiteUrl"
+              >
+                🔗 사이트 주소 복사하기
+              </button>
+              <button
+                type="button"
+                class="secondary-btn"
+                @click="liveOpenCelebration = false"
+              >
+                닫기
               </button>
             </div>
           </div>
@@ -1221,7 +1519,7 @@
             <div class="chat-panel">
               <div class="status-box">
                 <div class="status-row">
-                  <span>라이브 주소</span>
+                  <span>내 사이트 인터넷 주소 (/s/)</span>
                   <code>/s/{{ siteRuntime.siteSlug }}</code>
                 </div>
                 <div class="status-row">
@@ -1666,12 +1964,41 @@
                   {{ busy ? '저장 중...' : '예약 폼·컨시어지 설정 즉시 반영' }}
                 </button>
               </div>
+
+              <!-- 좌측 하단 고정: 내 사이트 지금 바로 오픈하기 & 링크 바로가기 -->
+              <div class="step4-left-open-box">
+                <button
+                  type="button"
+                  class="instant-open-btn full"
+                  data-testid="step4-left-instant-open-btn"
+                  :disabled="busy"
+                  @click="executeQuickLiveOpen"
+                >
+                  🚀 {{ busy ? '오픈 반영 중...' : '내 사이트 지금 바로 오픈하기 (1초 반영)' }}
+                </button>
+                <div class="step4-left-sub-links">
+                  <button
+                    type="button"
+                    class="text-link-btn"
+                    @click="router.push({ name: 'LiveSiteRendererView', params: { siteSlug: siteRuntime.siteSlug } })"
+                  >
+                    오픈된 내 사이트 화면 바로가기 (/s/{{ siteRuntime.siteSlug }}) ↗
+                  </button>
+                  <button
+                    type="button"
+                    class="text-link-btn"
+                    @click="goToStep(6)"
+                  >
+                    도메인·공개범위 고급 설정 →
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- 우측 실제 스토어프론트 수준 WYSIWYG 라이브 프리뷰 (클릭 시 좌측 편집 탭 포커스) -->
             <div class="preview-stage">
               <div class="preview-click-tip">
-                💡 프리뷰의 각 영역(배너, 상품, 매거진, 예약 폼)을 클릭하면 좌측 편집기가 해당 탭으로 자동 전환됩니다.
+                프리뷰의 각 영역(배너, 상품, 매거진, 예약 폼)을 클릭하면 좌측 편집기가 해당 탭으로 자동 전환됩니다.
               </div>
               <div
                 class="preview-frame"
@@ -1956,7 +2283,7 @@
                       </div>
                     </div>
                     <div v-if="previewFeatureBlocks.locationGuide" class="mini-loc-box">
-                      <strong>📍 {{ previewFeatureBlocks.locationGuide.address }}</strong>
+                      <strong>[위치] {{ previewFeatureBlocks.locationGuide.address }}</strong>
                       <p>{{ previewFeatureBlocks.locationGuide.parking }}</p>
                       <p>{{ previewFeatureBlocks.locationGuide.publicTransit }}</p>
                     </div>
@@ -1987,10 +2314,10 @@
             </div>
           </div>
           <div v-else class="empty-step-box">
-            <strong>아직 프로비저닝된 라이브 사이트 런타임이 없습니다.</strong>
-            <p>3단계에서 사이트 프로비저닝을 먼저 실행하거나, 아래 버튼을 눌러 라이브 사이트를 생성해 주세요.</p>
+            <strong>아직 제작된 내 사이트 화면이 없습니다.</strong>
+            <p>아래 버튼을 눌러 AI가 설계한 구성으로 내 사이트 화면 자동 제작을 실행해 주세요.</p>
             <button type="button" class="primary-btn" :disabled="busy" @click="provisionAndGoStep4">
-              {{ busy ? '프로비저닝 중...' : '라이브 멀티사이트 프로비저닝 실행 →' }}
+              {{ busy ? '사이트 화면 제작 중...' : '내 사이트 화면 자동 제작 실행 →' }}
             </button>
           </div>
         </div>
@@ -2439,7 +2766,7 @@
                   :class="{ selected: deployForm.deployMode === 'DYNAMIC_SDUI' }"
                   @click="deployForm.deployMode = 'DYNAMIC_SDUI'"
                 >
-                  <strong>즉시 디자인 배포 (권장 · 무중단 스키마)</strong>
+                  <strong>1초 즉시 오픈 (권장 · 빌드 대기 없음)</strong>
                   <p>별도 빌드 대기 없이 컬러 토큰, 배너 문구, 상품·매거진·예약폼 구성을 1초 만에 라이브 사이트에 즉시 반영합니다.</p>
                 </div>
                 <div
@@ -2447,7 +2774,7 @@
                   :class="{ selected: deployForm.deployMode === 'CUSTOM_BUNDLE' }"
                   @click="deployForm.deployMode = 'CUSTOM_BUNDLE'"
                 >
-                  <strong>코드 번들 배포 (WebIDE 커스텀)</strong>
+                  <strong>개발자 코드 맞춤 배포 (WebIDE 커스텀)</strong>
                   <p>5단계 WebIDE에서 직접 수정한 Vue 컴포넌트 코드를 번들로 빌드하여 배포합니다.</p>
                 </div>
               </div>
@@ -2512,10 +2839,10 @@
             </div>
           </div>
           <div v-else class="empty-step-box">
-            <strong>배포할 사이트 런타임 정보가 아직 준비되지 않았습니다.</strong>
-            <p>먼저 사이트를 프로비저닝하면 라이브 배포 및 버전 롤백 기능을 사용할 수 있습니다.</p>
+            <strong>오픈할 내 사이트 화면 정보가 아직 준비되지 않았습니다.</strong>
+            <p>먼저 내 사이트 화면 자동 제작을 실행하면 즉시 오픈 및 버전 롤백 기능을 사용할 수 있습니다.</p>
             <button type="button" class="primary-btn" :disabled="busy" @click="provisionAndGoStep4">
-              {{ busy ? '프로비저닝 중...' : '사이트 프로비저닝 실행하기' }}
+              {{ busy ? '사이트 화면 제작 중...' : '내 사이트 화면 자동 제작 실행하기' }}
             </button>
           </div>
         </div>
@@ -2529,6 +2856,9 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   kkumzApi,
+  kkumzAuth,
+  isAuthenticated,
+  openAuthModal,
   formatSiteTypeLabel,
   formatDeployModeLabel,
 } from '@/api/kkumzApi';
@@ -2536,14 +2866,61 @@ import {
 const route = useRoute();
 const router = useRouter();
 
-const steps = [
-  { no: 1, title: '1. 아이디어 정의', desc: '사이트 유형 & 프롬프트', optional: false },
-  { no: 2, title: '2. 네이밍 & 로고', desc: '브랜드명 8종 & SVG 로고', optional: false },
-  { no: 3, title: '3. 기능명세서 & 화면설계', desc: '블루프린트 & 버전 관리', optional: false },
-  { no: 4, title: '4. 실시간 프리뷰 편집', desc: 'AI 대화·비주얼·상품 편집', optional: false },
-  { no: 5, title: '5. WebIDE 코드 편집', desc: '개발자용 코드 커스텀', optional: true },
-  { no: 6, title: '6. 빌드 & 배포', desc: '라이브 발행 & 버전 롤백', optional: false },
+const easyMode = ref(true);
+const showFeatureCatalogPanel = ref(false);
+const showAssetUploadPanel = ref(false);
+const showStep1MetaPanel = ref(false);
+const liveOpenCelebration = ref(false);
+
+const easySteps = [
+  { no: 1, displayNo: 1, title: '1. 어떤 사이트를 만들까요?', desc: '아이디어 한 줄 입력 & AI 자동 구성', optional: false },
+  { no: 2, displayNo: 2, title: '2. 이름 & 로고 고르기', desc: 'AI 추천 브랜드명 · 고화질 로고 선택', optional: false },
+  { no: 4, displayNo: 3, title: '3. 내 사이트 꾸미기 & 바로 오픈', desc: '실시간 화면 수정 & 1초 즉시 오픈', optional: false },
 ];
+
+const steps = [
+  { no: 1, displayNo: 1, title: '1. 아이디어 정의', desc: '사이트 유형 & 프롬프트', optional: false },
+  { no: 2, displayNo: 2, title: '2. 네이밍 & 로고', desc: '브랜드명 8종 & 고화질 로고', optional: false },
+  { no: 3, displayNo: 3, title: '3. 기능명세서 & 화면설계', desc: '블루프린트 & 버전 관리', optional: false },
+  { no: 4, displayNo: 4, title: '4. 실시간 프리뷰 편집', desc: 'AI 대화·비주얼·상품 편집', optional: false },
+  { no: 5, displayNo: 5, title: '5. WebIDE 코드 편집', desc: '개발자용 코드 커스텀', optional: true },
+  { no: 6, displayNo: 6, title: '6. 빌드 & 배포', desc: '라이브 발행 & 버전 롤백', optional: false },
+];
+
+const displayedSteps = computed(() => (easyMode.value ? easySteps : steps));
+
+function setStudioMode(isEasy: boolean) {
+  easyMode.value = isEasy;
+  if (!isEasy) {
+    showFeatureCatalogPanel.value = true;
+    showStep1MetaPanel.value = true;
+  } else {
+    if (activeStep.value === 3 || activeStep.value === 5 || activeStep.value === 6) {
+      activeStep.value = siteRuntime.value ? 4 : 2;
+    }
+  }
+}
+
+function isStepNavActive(stepNo: number): boolean {
+  if (!easyMode.value) return activeStep.value === stepNo;
+  if (
+    stepNo === 4 &&
+    (activeStep.value === 3 || activeStep.value === 4 || activeStep.value === 5 || activeStep.value === 6)
+  ) {
+    return true;
+  }
+  return activeStep.value === stepNo;
+}
+
+function onStep1PromptInput() {
+  if (!formStep1.value.title.trim()) {
+    const firstLine = formStep1.value.promptText
+      .split(/\r?\n/)[0]
+      .trim()
+      .slice(0, 48);
+    formStep1.value.title = firstLine;
+  }
+}
 
 const siteTypes = ref<Array<{ code: string; badge: string; title: string; desc: string }>>([]);
 const assetTypes = ref<Array<{ code: string; label: string; desc?: string }>>([]);
@@ -2563,10 +2940,10 @@ const activeEngineFilter = ref('ALL');
 const analyzingIntent = ref(false);
 
 const engineFilterOptions = [
-  { code: 'ALL', label: '전체 엔진' },
-  { code: 'SYNC_SHOP', label: 'SyncShop 커머스·예약' },
-  { code: 'SYNC_CMS', label: 'SyncCMS 콘텐츠·폼·갤러리' },
-  { code: 'AI_CORE', label: 'AI Core · 커뮤니티' },
+  { code: 'ALL', label: '전체 기능' },
+  { code: 'SYNC_SHOP', label: '쇼핑 · 예약 · 요금표' },
+  { code: 'SYNC_CMS', label: '홍보 · 갤러리 · 신청폼' },
+  { code: 'AI_CORE', label: 'AI 자동상담 · 커뮤니티' },
 ];
 
 const step1FileInputRef = ref<HTMLInputElement | null>(null);
@@ -2583,6 +2960,9 @@ const catalogUploadTarget = ref<{ kind: 'PRODUCT' | 'ARTICLE'; index: number } |
 const ideas = ref<any[]>([]);
 const selectedIdeaId = ref('');
 const currentIdea = ref<any | null>(null);
+const accessDenied = ref(false);
+const accessDeniedOwner = ref('');
+const accessDeniedBrand = ref('');
 const activeStep = ref(1);
 const busy = ref(false);
 const busyMessage = ref('');
@@ -2863,6 +3243,20 @@ const recommendedFeatureCodes = computed<string[]>(() => {
   return enabledFeatures.value;
 });
 
+const enabledFeatureSummaries = computed<Array<{ code: string; title: string }>>(() => {
+  const codes =
+    enabledFeatures.value.length > 0
+      ? enabledFeatures.value
+      : recommendedFeatureCodes.value;
+  return codes.map((code) => {
+    const found = featureCatalog.value.find((f: any) => String(f.featureCode) === String(code));
+    return {
+      code: String(code),
+      title: found?.title || String(code),
+    };
+  });
+});
+
 const aiFeatureReasons = computed<Record<string, string>>(() => {
   const raw = aiIntentAnalysis.value?.featureReasons;
   if (raw && typeof raw === 'object') {
@@ -2929,10 +3323,10 @@ function getFeatureReason(code: string): string {
 }
 
 function formatEngineBadge(engineCode: string): string {
-  if (engineCode === 'SYNC_SHOP') return 'SyncShop 커머스';
-  if (engineCode === 'SYNC_CMS') return 'SyncCMS 콘텐츠';
-  if (engineCode === 'AI_CORE') return 'AI Core 지능형';
-  return engineCode || 'SyncSeries';
+  if (engineCode === 'SYNC_SHOP') return '쇼핑·예약 기능';
+  if (engineCode === 'SYNC_CMS') return '홍보·콘텐츠 기능';
+  if (engineCode === 'AI_CORE') return 'AI 스마트 기능';
+  return engineCode || '기본 기능';
 }
 
 function formatHeroStyleLabel(code: string): string {
@@ -2958,7 +3352,7 @@ function toggleFeatureCard(code: string) {
 function selectRecommendedFeatures() {
   const recs = recommendedFeatureCodes.value;
   if (recs.length === 0) {
-    showToast('먼저 [✨ AI로 아이디어 분석 & 맞춤 기능 추천받기]를 실행해 주세요.', 'info');
+    showToast('먼저 [AI로 아이디어 분석 & 맞춤 기능 추천받기]를 실행해 주세요.', 'info');
     return;
   }
   const merged = new Set<string>([...recs]);
@@ -2993,7 +3387,7 @@ async function runIntentAnalysis(applyExpandedAndAssets = false) {
         enabledFeatures: enabledFeatures.value,
         visibility: 'PUBLIC',
       });
-      ideas.value = (await kkumzApi.listIdeas()) || [];
+      ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
       selectedIdeaId.value = created.id;
       targetId = created.id;
     }
@@ -3023,7 +3417,7 @@ async function runIntentAnalysis(applyExpandedAndAssets = false) {
       aiIntentAnalysis.value = { ...updated.aiIntentAnalysis };
     }
     syncStep3FromIdea(updated);
-    ideas.value = (await kkumzApi.listIdeas()) || [];
+    ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
     showToast(
       `AI 분석 완료! 추천 아키텍처(${formatSiteTypeLabel(formStep1.value.siteType)})와 맞춤 기능 ${enabledFeatures.value.length}종이 자동 구성되었습니다.`,
       'success',
@@ -3475,12 +3869,38 @@ async function initStudio() {
     featureCategories.value = [];
     heroStyles.value = [];
   }
+  const routeIdeaId = route.params.ideaId ? String(route.params.ideaId) : '';
+  if (!isAuthenticated.value && !routeIdeaId) {
+    ideas.value = [];
+    selectedIdeaId.value = '';
+    currentIdea.value = null;
+    openAuthModal(
+      'login',
+      () => initStudio(),
+      'AI 브랜드 스튜디오에서 나만의 사이트를 생성·편집하려면 먼저 로그인 또는 회원가입해 주세요.',
+    );
+    return;
+  }
   try {
-    ideas.value = (await kkumzApi.listIdeas()) || [];
-    const routeIdeaId = route.params.ideaId ? String(route.params.ideaId) : '';
+    ideas.value = isAuthenticated.value ? (await kkumzApi.listIdeas({ mineOnly: true })) || [] : [];
     const targetId = routeIdeaId || (ideas.value[0]?.id ?? '');
     if (targetId) {
       await onSelectIdea(targetId);
+    } else {
+      selectedIdeaId.value = '';
+      currentIdea.value = null;
+      siteRuntime.value = null;
+      accessDenied.value = false;
+      activeStep.value = 1;
+    }
+    if (String(route.query.fastTrack || '') === '1' && formStep1.value.promptText.trim()) {
+      router
+        .replace({
+          name: 'StudioView',
+          params: selectedIdeaId.value ? { ideaId: selectedIdeaId.value } : undefined,
+        })
+        .catch(() => {});
+      await runOneClickAutoComplete();
     }
   } catch (err) {
     reportError(
@@ -3493,16 +3913,43 @@ async function initStudio() {
 }
 
 async function onSelectIdea(ideaId: string, allowWhenBusy = false) {
-  if (!ideaId) return;
   if (busy.value && !allowWhenBusy) return;
+  if (!ideaId) {
+    selectedIdeaId.value = '';
+    currentIdea.value = null;
+    siteRuntime.value = null;
+    accessDenied.value = false;
+    activeStep.value = 1;
+    formStep1.value = {
+      siteType: 'COMMERCE',
+      title: '',
+      promptText: '',
+      category: 'AUTO',
+      tags: [],
+    };
+    enabledFeatures.value = [];
+    if (route.params.ideaId) {
+      router.replace({ name: 'StudioView' }).catch(() => {});
+    }
+    return;
+  }
   selectedIdeaId.value = ideaId;
   errorBanner.value = null;
+  accessDenied.value = false;
   if (String(route.params.ideaId || '') !== ideaId) {
-    router.replace({ name: 'StudioView', params: { ideaId } }).catch(() => {});
+    router.replace({ name: 'StudioView', params: { ideaId }, query: route.query }).catch(() => {});
   }
   try {
     const detail = await kkumzApi.getIdeaDetail(ideaId);
     if (selectedIdeaId.value !== ideaId) return;
+    if (!detail.canEdit) {
+      accessDenied.value = true;
+      accessDeniedOwner.value = detail.authorDisplayName || detail.authorUsername || '원작자';
+      accessDeniedBrand.value = detail.selectedBrandName || detail.title || '해당 브랜드';
+      currentIdea.value = null;
+      siteRuntime.value = null;
+      return;
+    }
     currentIdea.value = detail;
 
     formStep1.value = {
@@ -3916,8 +4363,11 @@ async function goToStep(stepNo: number) {
 async function saveCurrentIdeaAndGoStep2() {
   if (busy.value) return;
   if (!formStep1.value.promptText.trim()) {
-    showToast('아이디어 상세 설명(프롬프트)을 입력해 주세요.', 'error');
+    showToast('만들고 싶은 사이트에 대한 설명을 한 줄 이상 입력해 주세요.', 'error');
     return;
+  }
+  if (!formStep1.value.title.trim()) {
+    formStep1.value.title = formStep1.value.promptText.split(/\r?\n/)[0].trim().slice(0, 48);
   }
   if (!selectedIdeaId.value) {
     await createNewIdeaFromStep1();
@@ -3944,9 +4394,9 @@ async function saveCurrentIdeaAndGoStep2() {
   let willGenLogos = promptChanged || logoSuggestions.value.length < 6;
 
   busySteps.value = [
-    { label: '1. 아이디어 설정 확인·저장', status: 'active' },
-    { label: '2. AI 브랜드 네이밍 8종 생성', status: willGenNames ? 'pending' : 'done' },
-    { label: '3. 벡터 SVG 로고 6종 생성', status: willGenLogos ? 'pending' : 'done' },
+    { label: '1. 아이디어 설정 확인 · 맞춤 기능 자동 반영', status: 'active' },
+    { label: '2. AI 추천 브랜드 이름 8가지 생성', status: willGenNames ? 'pending' : 'done' },
+    { label: '3. 고화질 브랜드 로고 6가지 생성', status: willGenLogos ? 'pending' : 'done' },
   ];
 
   try {
@@ -3969,7 +4419,7 @@ async function saveCurrentIdeaAndGoStep2() {
         if (currentIdea.value?.aiIntentAnalysis) {
           aiIntentAnalysis.value = { ...currentIdea.value.aiIntentAnalysis };
         }
-        ideas.value = (await kkumzApi.listIdeas()) || [];
+        ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
       } else if (step1Changed) {
         currentIdea.value = await kkumzApi.updateSpec(selectedIdeaId.value, {
           title: formStep1.value.title,
@@ -3981,7 +4431,7 @@ async function saveCurrentIdeaAndGoStep2() {
           aiIntentAnalysis: aiIntentAnalysis.value,
           specMarkdown: editableSpecMarkdown.value,
         });
-        ideas.value = (await kkumzApi.listIdeas()) || [];
+        ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
       } else {
         currentIdea.value = await kkumzApi.getIdeaDetail(selectedIdeaId.value);
       }
@@ -4015,8 +4465,8 @@ async function saveCurrentIdeaAndGoStep2() {
       if (nameErr) {
         reportError(
           nameErr,
-          'AI 브랜드 네이밍 생성 중 오류가 발생했습니다',
-          '1단계 아이디어는 정상 저장되어 2단계로 이동했으나, AI 브랜드 네이밍 생성 요청이 실패했습니다. [다시 시도] 또는 상단 [네이밍 8종 재생성]을 눌러주세요.',
+          'AI 브랜드 이름 생성 중 오류가 발생했습니다',
+          '1단계 아이디어는 정상 저장되어 2단계로 이동했으나, AI 브랜드 이름 생성 요청이 실패했습니다. [다시 시도] 또는 상단 [다른 이름 8가지 추천받기]를 눌러주세요.',
           () => regenerateNames(),
         );
         return;
@@ -4024,8 +4474,8 @@ async function saveCurrentIdeaAndGoStep2() {
       if (logoErr) {
         reportError(
           logoErr,
-          'AI 벡터 SVG 로고 생성 중 오류가 발생했습니다',
-          '아이디어 저장 및 브랜드 네이밍 8종은 완료되었으나, SVG 로고 생성 요청이 실패했습니다. [다시 시도] 또는 상단 [SVG 로고 6종 재생성]을 눌러주세요.',
+          'AI 고화질 브랜드 로고 생성 중 오류가 발생했습니다',
+          '아이디어 저장 및 브랜드 이름 8가지는 완료되었으나, 로고 생성 요청이 실패했습니다. [다시 시도] 또는 상단 [다른 로고 6가지 추천받기]를 눌러주세요.',
           () => regenerateLogos(),
         );
         return;
@@ -4040,16 +4490,19 @@ async function saveCurrentIdeaAndGoStep2() {
 async function createNewIdeaFromStep1() {
   if (busy.value) return;
   if (!formStep1.value.promptText.trim()) {
-    showToast('아이디어 프롬프트를 입력해 주세요.', 'error');
+    showToast('만들고 싶은 사이트에 대한 설명을 입력해 주세요.', 'error');
     return;
+  }
+  if (!formStep1.value.title.trim()) {
+    formStep1.value.title = formStep1.value.promptText.split(/\r?\n/)[0].trim().slice(0, 48);
   }
   errorBanner.value = null;
   busy.value = true;
   busyMessage.value = '새 브랜드 프로젝트를 생성하고 있습니다...';
   busySteps.value = [
-    { label: '1. 신규 프로젝트 생성', status: 'active' },
-    { label: '2. AI 브랜드 네이밍 8종 병렬 생성', status: 'pending' },
-    { label: '3. 벡터 SVG 로고 6종 병렬 생성', status: 'pending' },
+    { label: '1. 신규 프로젝트 생성 & 맞춤 기능 분석', status: 'active' },
+    { label: '2. AI 추천 브랜드 이름 8가지 병렬 생성', status: 'pending' },
+    { label: '3. 고화질 브랜드 로고 6가지 병렬 생성', status: 'pending' },
   ];
   try {
     const created = await kkumzApi.createIdea({
@@ -4061,7 +4514,7 @@ async function createNewIdeaFromStep1() {
       enabledFeatures: enabledFeatures.value,
       visibility: 'PUBLIC',
     });
-    ideas.value = (await kkumzApi.listIdeas()) || [];
+    ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
     await onSelectIdea(created.id, true);
     if (busySteps.value[0]) busySteps.value[0].status = 'done';
 
@@ -4072,8 +4525,8 @@ async function createNewIdeaFromStep1() {
     if (nameErr) {
       reportError(
         nameErr,
-        '새 프로젝트는 생성되었으나 AI 네이밍 생성에 실패했습니다',
-        'AI 브랜드 네이밍 생성 중 서버 오류가 발생했습니다. [다시 시도]를 눌러 네이밍을 생성해 주세요.',
+        '새 프로젝트는 생성되었으나 AI 이름 생성에 실패했습니다',
+        'AI 브랜드 이름 생성 중 서버 오류가 발생했습니다. [다시 시도]를 눌러 이름을 생성해 주세요.',
         () => regenerateNames(),
       );
       return;
@@ -4081,8 +4534,8 @@ async function createNewIdeaFromStep1() {
     if (logoErr) {
       reportError(
         logoErr,
-        'AI 벡터 SVG 로고 생성 중 오류가 발생했습니다',
-        '프로젝트 및 네이밍 8종은 준비되었으나 로고 생성 중 서버 오류가 발생했습니다. [다시 시도]를 눌러 로고를 생성해 주세요.',
+        'AI 고화질 브랜드 로고 생성 중 오류가 발생했습니다',
+        '프로젝트 및 이름 8가지는 준비되었으나 로고 생성 중 서버 오류가 발생했습니다. [다시 시도]를 눌러 로고를 생성해 주세요.',
         () => regenerateLogos(),
       );
       return;
@@ -4093,6 +4546,100 @@ async function createNewIdeaFromStep1() {
       '새 브랜드 프로젝트 생성에 실패했습니다',
       '프로젝트를 생성하는 중 서버 오류가 발생했습니다.',
       () => createNewIdeaFromStep1(),
+    );
+  } finally {
+    busy.value = false;
+    busyMessage.value = '';
+  }
+}
+
+async function runOneClickAutoComplete() {
+  if (busy.value) return;
+  if (!formStep1.value.promptText.trim()) {
+    showToast('만들고 싶은 사이트에 대한 설명을 한 줄 이상 입력해 주세요.', 'error');
+    return;
+  }
+  if (!formStep1.value.title.trim()) {
+    formStep1.value.title = formStep1.value.promptText.split(/\r?\n/)[0].trim().slice(0, 48);
+  }
+  errorBanner.value = null;
+  busy.value = true;
+  busyMessage.value = 'AI가 아이디어를 분석해 이름·로고·기능을 자동 구성하고 완성된 사이트 화면을 만들고 있습니다...';
+  busySteps.value = [
+    { label: '1. 아이디어 분석 & 필수 기능 자동 구성', status: 'active' },
+    { label: '2. AI 대표 브랜드 이름 & 고화질 로고 자동 생성', status: 'pending' },
+    { label: '3. 내 사이트 화면 자동 제작 및 미리보기 오픈', status: 'pending' },
+  ];
+  try {
+    let targetId = selectedIdeaId.value;
+    const prevPrompt = currentIdea.value?.promptText || '';
+    const promptChanged = !targetId || prevPrompt.trim() !== formStep1.value.promptText.trim();
+
+    if (!targetId) {
+      const created = await kkumzApi.createIdea({
+        title: formStep1.value.title,
+        promptText: formStep1.value.promptText,
+        siteType: formStep1.value.siteType,
+        category: formStep1.value.category,
+        tags: formStep1.value.tags,
+        enabledFeatures: enabledFeatures.value,
+        visibility: 'PUBLIC',
+      });
+      ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
+      await onSelectIdea(created.id, true);
+      targetId = created.id;
+    }
+
+    const analyzed = await kkumzApi.analyzeIdeaIntent(targetId, {
+      title: formStep1.value.title,
+      promptText: formStep1.value.promptText,
+      category: formStep1.value.category,
+      tags: formStep1.value.tags,
+      applyExpandedPrompt: false,
+      applyRecommendedFeatures: enabledFeatures.value.length === 0,
+    });
+    currentIdea.value = analyzed;
+    if (Array.isArray(analyzed?.enabledFeatures)) {
+      enabledFeatures.value = [...analyzed.enabledFeatures];
+    }
+    if (analyzed?.siteType) {
+      formStep1.value.siteType = analyzed.siteType;
+    }
+    if (analyzed?.aiIntentAnalysis) {
+      aiIntentAnalysis.value = { ...analyzed.aiIntentAnalysis };
+    }
+    if (busySteps.value[0]) busySteps.value[0].status = 'done';
+
+    const needNames = promptChanged || nameSuggestions.value.length === 0;
+    const needLogos = promptChanged || logoSuggestions.value.length === 0;
+    if (needNames || needLogos) {
+      await runStep2GenerationsParallel(needNames, needLogos, promptChanged, 1, 1);
+    } else if (busySteps.value[1]) {
+      busySteps.value[1].status = 'done';
+    }
+    if (busySteps.value[1]) busySteps.value[1].status = 'done';
+    if (busySteps.value[2]) busySteps.value[2].status = 'active';
+    busyMessage.value = '선택된 브랜드 이름과 고화질 로고로 내 사이트 화면을 자동 제작하고 있습니다...';
+
+    const rt = await executeScaffoldWithRecovery(targetId);
+    if (busySteps.value[2]) busySteps.value[2].status = 'done';
+
+    siteRuntime.value = rt;
+    syncVisualFormFromRuntime(siteRuntime.value);
+    currentIdea.value = await kkumzApi.getIdeaDetail(targetId);
+    syncStep3FromIdea(currentIdea.value);
+    ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
+    activeStep.value = 4;
+    showToast(
+      `⚡ 1분 자동 완성! '${visualForm.value.siteName || previewBrandName.value}' 사이트 화면이 준비되었습니다. 바로 오픈하거나 자유롭게 꾸며보세요!`,
+      'success',
+    );
+  } catch (err) {
+    reportError(
+      err,
+      '1분 자동 완성 처리 중 오류가 발생했습니다',
+      '사이트를 자동 구성하는 중 오류가 발생했습니다. [다시 시도]를 눌러주세요.',
+      () => runOneClickAutoComplete(),
     );
   } finally {
     busy.value = false;
@@ -4171,24 +4718,33 @@ function selectLogoCandidate(logo: any) {
 
 async function confirmBrandAndNext() {
   if (!selectedIdeaId.value || busy.value) return;
+  const targetIdeaId = selectedIdeaId.value;
   const finalBrandName = customBrandForm.value.brandName.trim() || selectedNameObj.value?.brandName || '';
   if (!finalBrandName) {
-    showToast('브랜드명을 선택하거나 직접 입력해 주세요.', 'error');
+    showToast('브랜드 이름을 선택하거나 직접 입력해 주세요.', 'error');
     return;
   }
   errorBanner.value = null;
   busy.value = true;
-  busyMessage.value = '선택 및 커스텀한 브랜드 아이덴티티를 확정하고 3단계 기획서를 준비하고 있습니다...';
-  busySteps.value = [
-    { label: '1. 브랜드 아이덴티티 확정', status: 'active' },
-    { label: '2. 3단계 AI 기능명세서 · 화면설계 생성', status: 'pending' },
-  ];
+  busyMessage.value = easyMode.value
+    ? `'${finalBrandName}' 이름과 로고로 내 사이트 화면을 자동 제작하고 있습니다...`
+    : '선택 및 커스텀한 브랜드 아이덴티티를 확정하고 3단계 기획서를 준비하고 있습니다...';
+  busySteps.value = easyMode.value
+    ? [
+        { label: '1. 브랜드 이름 & 고화질 로고 확정', status: 'active' },
+        { label: '2. AI 맞춤 화면 구성 자동 설계', status: 'pending' },
+        { label: '3. 내 사이트 화면 자동 제작 및 미리보기 오픈', status: 'pending' },
+      ]
+    : [
+        { label: '1. 브랜드 아이덴티티 확정', status: 'active' },
+        { label: '2. 3단계 AI 기능명세서 · 화면설계 생성', status: 'pending' },
+      ];
   try {
     const finalSvg = renderLogoWithBrand(
       customBrandForm.value.svgCode || selectedLogoObj.value?.svgCode || '',
       finalBrandName,
     );
-    currentIdea.value = await kkumzApi.selectBrand(selectedIdeaId.value, {
+    currentIdea.value = await kkumzApi.selectBrand(targetIdeaId, {
       nameSuggestionId: selectedNameId.value,
       logoSuggestionId: selectedLogoId.value,
       brandName: finalBrandName,
@@ -4200,17 +4756,34 @@ async function confirmBrandAndNext() {
     });
     if (busySteps.value[0]) busySteps.value[0].status = 'done';
     if (busySteps.value[1]) busySteps.value[1].status = 'active';
-    activeStep.value = 3;
-    busyMessage.value = `'${finalBrandName}' 브랜드에 맞춰 3단계 AI 기능명세서 및 화면 설계를 동기화하고 있습니다...`;
-    currentIdea.value = await kkumzApi.generateSpec(selectedIdeaId.value, false);
+    busyMessage.value = `'${finalBrandName}' 브랜드에 맞춰 화면 구성을 자동 설계하고 있습니다...`;
+    currentIdea.value = await kkumzApi.generateSpec(targetIdeaId, false);
     if (busySteps.value[1]) busySteps.value[1].status = 'done';
-    ideas.value = (await kkumzApi.listIdeas()) || [];
     syncStep3FromIdea(currentIdea.value);
+
+    if (easyMode.value) {
+      if (busySteps.value[2]) busySteps.value[2].status = 'active';
+      busyMessage.value = `'${finalBrandName}' 사이트의 상품·배너·예약창 화면을 자동 제작하고 있습니다...`;
+      const rt = await executeScaffoldWithRecovery(targetIdeaId);
+      if (busySteps.value[2]) busySteps.value[2].status = 'done';
+      siteRuntime.value = rt;
+      syncVisualFormFromRuntime(siteRuntime.value);
+      currentIdea.value = await kkumzApi.getIdeaDetail(targetIdeaId);
+      ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
+      activeStep.value = 4;
+      showToast(
+        `'${finalBrandName}' 사이트 화면이 완성되었습니다! 바로 오픈하거나 문구·사진을 자유롭게 고쳐보세요.`,
+        'success',
+      );
+    } else {
+      activeStep.value = 3;
+      ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
+    }
   } catch (err) {
     reportError(
       err,
-      '브랜드 확정 처리에 실패했습니다',
-      '선택한 브랜드 네이밍·로고를 저장하는 중 오류가 발생했습니다.',
+      '브랜드 확정 및 사이트 화면 제작에 실패했습니다',
+      '선택한 브랜드 이름·로고를 반영하는 중 오류가 발생했습니다.',
       () => confirmBrandAndNext(),
     );
   } finally {
@@ -4331,7 +4904,7 @@ async function provisionAndGoStep4() {
     siteRuntime.value = rt;
     syncVisualFormFromRuntime(siteRuntime.value);
     currentIdea.value = await kkumzApi.getIdeaDetail(targetIdeaId);
-    ideas.value = (await kkumzApi.listIdeas()) || [];
+    ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
     activeStep.value = 4;
   } catch (err) {
     if (selectedIdeaId.value !== targetIdeaId) return;
@@ -4418,7 +4991,7 @@ async function ensureIdeaForUpload(): Promise<string> {
     tags: formStep1.value.tags,
     visibility: 'PUBLIC',
   });
-  ideas.value = (await kkumzApi.listIdeas()) || [];
+  ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
   selectedIdeaId.value = created.id;
   currentIdea.value = created;
   return created.id;
@@ -5088,7 +5661,7 @@ async function executeDeploy() {
   if (!siteRuntime.value) return;
   errorBanner.value = null;
   busy.value = true;
-  busyMessage.value = '새 릴리즈 버전을 빌드하고 라이브 사이트에 배포하고 있습니다...';
+  busyMessage.value = '새 릴리즈 버전을 빌드하고 라이브 사이트에 오픈 반영하고 있습니다...';
   try {
     siteRuntime.value = await kkumzApi.deploySite(siteRuntime.value.siteSlug, {
       deployMode: deployForm.value.deployMode,
@@ -5098,7 +5671,7 @@ async function executeDeploy() {
     });
     syncVisualFormFromRuntime(siteRuntime.value);
     deployForm.value.releaseNote = '';
-    showToast(`v${siteRuntime.value.activeVersion} 라이브 릴리즈 배포가 완료되었습니다!`, 'success');
+    showToast(`v${siteRuntime.value.activeVersion} 라이브 사이트 오픈 반영이 완료되었습니다!`, 'success');
   } catch (err) {
     reportError(
       err,
@@ -5110,6 +5683,25 @@ async function executeDeploy() {
     busy.value = false;
     busyMessage.value = '';
   }
+}
+
+async function executeQuickLiveOpen() {
+  if (!siteRuntime.value || busy.value) return;
+  deployForm.value.deployMode = 'DYNAMIC_SDUI';
+  if (!deployForm.value.releaseNote.trim()) {
+    deployForm.value.releaseNote = '1초 즉시 오픈 (최신 문구·사진·상품 반영)';
+  }
+  await executeDeploy();
+  if (!errorBanner.value) {
+    liveOpenCelebration.value = true;
+  }
+}
+
+async function copyLiveSiteUrl() {
+  if (!siteRuntime.value?.siteSlug) return;
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const fullUrl = `${origin}/s/${siteRuntime.value.siteSlug}`;
+  await copyTextToClipboard(fullUrl, '내 사이트 인터넷 주소');
 }
 
 async function rollbackRelease(versionNo: number) {
@@ -5134,12 +5726,65 @@ async function rollbackRelease(versionNo: number) {
   }
 }
 
+watch(
+  () => kkumzAuth.user?.username,
+  () => {
+    initStudio();
+  },
+);
+
 onMounted(() => {
   initStudio();
 });
 </script>
 
 <style scoped>
+.studio-access-denied {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+.access-denied-card {
+  max-width: 600px;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #fecdd3;
+  border-radius: 24px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+}
+.denied-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #fff1f2;
+  color: #e11d48;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin-bottom: 14px;
+}
+.access-denied-card h2 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.access-denied-card p {
+  margin: 0 0 26px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #475569;
+}
+.denied-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
 .studio-shell {
   min-height: 100vh;
   display: flex;
@@ -8771,5 +9416,445 @@ onMounted(() => {
   .mini-faq-loc-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ================================================================
+   Easy Mode vs Pro Mode Switch & Progressive Disclosure Styles
+   ================================================================ */
+.studio-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid #334155;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 4px;
+}
+
+.mode-switch-btn {
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.mode-switch-btn:hover {
+  color: #ffffff;
+}
+
+.mode-switch-btn.active {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+}
+
+.sidebar-top-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-mode-badge-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.sidebar-mode-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.sidebar-mode-pill.easy {
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
+.sidebar-mode-pill.pro {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.sidebar-mode-toggle-btn {
+  border: none;
+  background: transparent;
+  color: #4f46e5;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 4px;
+  text-decoration: underline;
+}
+
+.fasttrack-btn {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  color: #3730a3;
+  border: 1px solid #818cf8;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.fasttrack-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  border-color: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.fasttrack-btn.large {
+  padding: 13px 20px;
+  font-size: 14px;
+  border-radius: 12px;
+}
+
+.fasttrack-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.easy-prompt-hero-group {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #c7d2fe;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 8px 24px -12px rgba(79, 70, 229, 0.15);
+}
+
+.easy-hero-label {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: #1e1b4b !important;
+}
+
+.easy-hero-textarea {
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  padding: 14px 16px !important;
+  background: #ffffff !important;
+}
+
+.easy-hero-textarea:focus {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14) !important;
+}
+
+.easy-step1-cta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: 14px;
+}
+
+.easy-cta-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.easy-cta-left strong {
+  font-size: 13px;
+  color: #1e1b4b;
+}
+
+.easy-cta-left span {
+  font-size: 12px;
+  color: #475569;
+}
+
+.easy-cta-btns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.easy-primary-cta {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.28);
+}
+
+.easy-feature-summary-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.easy-feat-summary-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.easy-feat-summary-top strong {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.easy-feat-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4f46e5;
+  margin-left: 4px;
+}
+
+.easy-link-btn {
+  border: none;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.easy-feat-pill-row,
+.easy-feature-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.easy-feat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+
+.easy-feat-more-pill,
+.easy-feat-more-btn {
+  border: 1px dashed #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+
+.easy-feat-empty-hint,
+.easy-feature-empty-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.progressive-disclosure-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.disclosure-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.disclosure-toggle-btn small {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.disclosure-toggle-btn:hover {
+  border-color: #6366f1;
+  color: #4338ca;
+  background: #f8fafc;
+}
+
+.disclosure-toggle-btn.active,
+.disclosure-toggle-btn.open {
+  background: #eef2ff;
+  border-color: #6366f1;
+  color: #3730a3;
+}
+
+.step1-collapsible-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.easy-step2-cta-bar {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.instant-open-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  transition: all 0.18s ease;
+}
+
+.instant-open-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+  transform: translateY(-1px);
+}
+
+.instant-open-btn.full {
+  width: 100%;
+  padding: 12px 16px;
+}
+
+.instant-open-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.live-open-celebration-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+  border: 2px solid #34d399;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px -10px rgba(16, 185, 129, 0.25);
+}
+
+.celebration-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.celebration-badge {
+  background: #059669;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+
+.celebration-text strong {
+  display: block;
+  font-size: 14px;
+  color: #064e3b;
+}
+
+.celebration-text p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #065f46;
+}
+
+.celebration-text code {
+  background: #ffffff;
+  border: 1px solid #6ee7b7;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 800;
+  color: #047857;
+}
+
+.celebration-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.step4-left-open-box {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step4-left-sub-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.text-link-btn {
+  border: none;
+  background: transparent;
+  color: #4f46e5;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 0;
+  text-decoration: underline;
 }
 </style>

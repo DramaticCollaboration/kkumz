@@ -29,6 +29,20 @@ public class KkumzSystemDTO {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class RegisterRequest {
+        private String username;
+        private String password;
+        private String realname;
+        private String email;
+        private String phone;
+        private String roleCode;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SaveUserRequest {
         private String id;
         private String username;

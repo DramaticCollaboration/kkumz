@@ -30,7 +30,7 @@
             class="prompt-textarea"
             rows="2"
             placeholder="어떤 브랜드나 서비스를 만들고 싶으신가요? (예: 제주 서귀포 첫물 유기농 말차와 수제 백자 다완을 판매하는 프리미엄 다도 스토어)"
-            @keydown.enter.exact.prevent="startStudioWithPrompt"
+            @keydown.enter.exact.prevent="startStudioWithPrompt(false)"
           ></textarea>
 
           <div class="prompt-bottom-bar">
@@ -48,17 +48,30 @@
               </button>
             </div>
 
-            <!-- 메인 CTA 버튼 -->
-            <button
-              class="create-cta-btn"
-              type="button"
-              :disabled="creating"
-              @click="startStudioWithPrompt"
-            >
-              <span v-if="creating" class="btn-spinner"></span>
-              <span>{{ creating ? '스튜디오 준비 중...' : 'AI 스튜디오에서 만들기' }}</span>
-              <span class="arrow">→</span>
-            </button>
+            <!-- 메인 CTA 버튼 그룹 (이지 스튜디오 이동 + 1분 자동 완성 패스트트랙) -->
+            <div class="prompt-cta-group">
+              <button
+                class="fasttrack-cta-btn"
+                type="button"
+                data-testid="feed-fasttrack-btn"
+                :disabled="creating"
+                @click="startStudioWithPrompt(true)"
+              >
+                <span class="fast-icon">⚡</span>
+                <span>{{ creating ? '자동 완성 준비 중...' : '1분 자동 완성으로 바로 보기' }}</span>
+              </button>
+              <button
+                class="create-cta-btn"
+                type="button"
+                data-testid="feed-studio-btn"
+                :disabled="creating"
+                @click="startStudioWithPrompt(false)"
+              >
+                <span v-if="creating" class="btn-spinner"></span>
+                <span>{{ creating ? '스튜디오 준비 중...' : 'AI 스튜디오에서 만들기' }}</span>
+                <span class="arrow">→</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -179,6 +192,9 @@
               <span class="type-pill" :class="item.siteType?.toLowerCase()">
                 {{ formatSiteTypeLabel(item.siteType) }}
               </span>
+              <span v-if="item.canEdit" class="my-site-pill">
+                {{ item.isOwner ? '내 사이트' : '팀 프로젝트' }}
+              </span>
               <span v-if="item.isFeatured" class="featured-pill">★ 추천 쇼케이스</span>
             </div>
             <span class="deploy-pill">
@@ -226,8 +242,8 @@
           </div>
 
           <div class="card-actions">
-            <button type="button" class="btn-outline" @click="openStudio(item)">
-              스튜디오
+            <button v-if="item.canEdit" type="button" class="btn-outline" @click="openStudio(item)">
+              스튜디오 편집
             </button>
             <button type="button" class="btn-solid" @click="openLiveSite(item)">
               라이브 사이트 →
@@ -280,10 +296,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   kkumzApi,
+  kkumzAuth,
+  isAuthenticated,
+  openAuthModal,
   formatSiteTypeLabel,
   formatDeployModeLabel,
   formatPositionRoleLabel,
@@ -292,16 +311,16 @@ import {
 const router = useRouter();
 
 const siteTypeOptions = [
-  { value: 'COMMERCE', label: '쇼핑몰 스토어' },
-  { value: 'CMS_SITE', label: '브랜드·커뮤니티 웹' },
-  { value: 'HYBRID', label: '매거진+스토어 복합' },
+  { value: 'COMMERCE', label: '온라인 쇼핑몰·예약 사이트' },
+  { value: 'CMS_SITE', label: '브랜드·홍보 홈페이지' },
+  { value: 'HYBRID', label: '홍보 + 쇼핑 복합 사이트' },
 ];
 
 const filterTabs = [
   { value: 'ALL', label: '전체 쇼케이스' },
-  { value: 'COMMERCE', label: '쇼핑몰 스토어' },
-  { value: 'CMS_SITE', label: '브랜드·커뮤니티 웹' },
-  { value: 'HYBRID', label: '매거진+스토어 복합' },
+  { value: 'COMMERCE', label: '온라인 쇼핑몰·예약 사이트' },
+  { value: 'CMS_SITE', label: '브랜드·홍보 홈페이지' },
+  { value: 'HYBRID', label: '홍보 + 쇼핑 복합 사이트' },
 ];
 
 const feedItems = ref<any[]>([]);
@@ -366,43 +385,79 @@ function applySample(siteType: string, prompt: string) {
   quickPrompt.value = prompt;
 }
 
-async function startStudioWithPrompt() {
+async function startStudioWithPrompt(fastTrack = false) {
+  if (!isAuthenticated.value) {
+    openAuthModal(
+      'login',
+      () => startStudioWithPrompt(fastTrack),
+      quickPrompt.value.trim()
+        ? '입력하신 아이디어로 나만의 사이트를 생성하려면 로그인 또는 회원가입이 필요합니다.'
+        : '새 브랜드 아이디어를 시작하려면 로그인 또는 회원가입이 필요합니다.',
+    );
+    return;
+  }
   if (!quickPrompt.value.trim()) {
-    router.push({ name: 'StudioView' });
+    router.push({
+      name: 'StudioView',
+      query: fastTrack ? { fastTrack: '1' } : undefined,
+    });
     return;
   }
   creating.value = true;
   try {
+    const trimmedPrompt = quickPrompt.value.trim();
     const created = await kkumzApi.createIdea({
-      promptText: quickPrompt.value.trim(),
+      title: trimmedPrompt.slice(0, 40),
+      promptText: trimmedPrompt,
       siteType: quickSiteType.value,
       visibility: 'PUBLIC',
     });
-    router.push({ name: 'StudioView', params: { ideaId: created.id } });
+    router.push({
+      name: 'StudioView',
+      params: { ideaId: created.id },
+      query: fastTrack ? { fastTrack: '1' } : undefined,
+    });
   } finally {
     creating.value = false;
   }
 }
 
 async function handleLike(item: any) {
-  const res = await kkumzApi.toggleSiteLike(item.id, item.ownerUsername || item.siteSlug);
+  if (!isAuthenticated.value) {
+    openAuthModal(
+      'login',
+      () => handleLike(item),
+      '브랜드 쇼케이스에 응원 좋아요를 남기려면 먼저 로그인해 주세요.',
+    );
+    return;
+  }
+  const res = await kkumzApi.toggleSiteLike(item.id, kkumzAuth.user?.username);
   item.likeCount = res.likeCount;
 }
 
 async function openCommentModal(item: any) {
   activeSiteForComments.value = item;
+  if (kkumzAuth.user?.realname || kkumzAuth.user?.username) {
+    newCommentAuthor.value = kkumzAuth.user.realname || kkumzAuth.user.username;
+  }
   comments.value = (await kkumzApi.listSiteComments(item.id)) || [];
 }
 
 async function submitComment() {
   if (!activeSiteForComments.value || !newCommentText.value.trim()) return;
-  if (!newCommentAuthor.value.trim()) {
-    alert('작성자 닉네임을 입력해 주세요.');
+  if (!isAuthenticated.value) {
+    openAuthModal(
+      'login',
+      () => submitComment(),
+      '커뮤니티 응원 댓글을 작성하려면 먼저 로그인해 주세요.',
+    );
     return;
   }
+  const displayAuthor =
+    newCommentAuthor.value.trim() || kkumzAuth.user?.realname || kkumzAuth.user?.username || '메이커';
   comments.value = await kkumzApi.addSiteComment(activeSiteForComments.value.id, {
-    username: newCommentAuthor.value.trim(),
-    displayName: newCommentAuthor.value.trim(),
+    username: kkumzAuth.user?.username || displayAuthor,
+    displayName: displayAuthor,
     authorRoleBadge: '메이커 멤버',
     content: newCommentText.value.trim(),
   });
@@ -411,6 +466,9 @@ async function submitComment() {
 }
 
 function openStudio(item: any) {
+  if (!item.canEdit) {
+    return;
+  }
   router.push({ name: 'StudioView', params: { ideaId: item.ideaId } });
 }
 
@@ -422,6 +480,13 @@ function openLiveSite(item: any) {
   const url = router.resolve({ name: 'LiveSiteRendererView', params: { siteSlug: item.siteSlug } }).href;
   window.open(url, '_blank', 'noopener,noreferrer');
 }
+
+watch(
+  () => kkumzAuth.user?.username,
+  () => {
+    loadFeed();
+  },
+);
 
 onMounted(() => {
   loadStudioPresets();
@@ -595,6 +660,37 @@ onMounted(() => {
   background: #0f172a;
   border-color: #0f172a;
   color: #ffffff;
+}
+
+.prompt-cta-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fasttrack-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1.5px solid #c7d2fe;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.fasttrack-cta-btn:hover:not(:disabled) {
+  background: #e0e7ff;
+  border-color: #6366f1;
+  transform: translateY(-1px);
+}
+.fasttrack-cta-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .create-cta-btn {
@@ -930,6 +1026,14 @@ onMounted(() => {
   font-size: 11px;
   font-weight: 700;
 }
+.my-site-pill {
+  background: #4f46e5;
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 800;
+}
 .deploy-pill {
   font-size: 11px;
   font-weight: 600;
@@ -1234,6 +1338,11 @@ onMounted(() => {
     flex-direction: column;
     align-items: stretch;
   }
+  .prompt-cta-group {
+    width: 100%;
+    flex-direction: column;
+  }
+  .fasttrack-cta-btn,
   .create-cta-btn {
     width: 100%;
     justify-content: center;
