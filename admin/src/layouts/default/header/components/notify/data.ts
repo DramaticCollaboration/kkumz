@@ -188,7 +188,7 @@ export const tabListData: TabItem[] = [
   //       description: '2017년 1월 9일 이전에 업데이트 및 릴리스를 완료하도록 담당자를 임명했습니다.',
   //       datetime: '',
   //       extra: '8일 걸렸어요',
-  //       color: 'gold',
+  //       color: 'default',
   //       type: '3',
   //     },
   //     {

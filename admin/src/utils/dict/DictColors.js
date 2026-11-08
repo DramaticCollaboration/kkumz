@@ -1,38 +1,33 @@
 const whiteColor = '#ffffff'
-const blackColor = '#666666'
+const slateTextColor = '#334155'
 
 export const Colors = [
-  // 배경색, 글자색
-  ['#2196F3', whiteColor],
-  ['#08C9C9', whiteColor],
-  ['#00C345', whiteColor],
-  ['#FAD714', whiteColor],
-  ['#FF9300', whiteColor],
-  ['#F52222', whiteColor],
-  ['#EB2F96', whiteColor],
-  ['#7500EA', whiteColor],
-  ['#2D46C4', whiteColor],
-  ['#484848', whiteColor],
-  // --------------------
-  ['#C9E6FC', blackColor],
-  ['#C3F2F2', blackColor],
-  ['#C2F1D2', blackColor],
-  ['#FEF6C6', blackColor],
-  ['#FFE5C2', blackColor],
-  ['#FDCACA', blackColor],
-  ['#FACDE6', blackColor],
-  ['#DEC2FA', blackColor],
-  ['#CCD2F1', blackColor],
-  ['#D3D3D3', blackColor],
+  // Enterprise Semantic & Neutral Solid Palette
+  ['#475569', whiteColor],
+  ['#0284C7', whiteColor],
+  ['#0D9488', whiteColor],
+  ['#10B981', whiteColor],
+  ['#F59E0B', whiteColor],
+  ['#EF4444', whiteColor],
+  ['#334155', whiteColor],
+  ['#1E293B', whiteColor],
+  ['#64748B', whiteColor],
+  ['#0F172A', whiteColor],
+  // Enterprise Low-Saturation Surface Palette
+  ['#F1F5F9', slateTextColor],
+  ['#E0F2FE', '#0369A1'],
+  ['#CCFBF1', '#0F766E'],
+  ['#D1FAE5', '#047857'],
+  ['#FEF3C7', '#B45309'],
+  ['#FFE4E6', '#BE123C'],
+  ['#E2E8F0', slateTextColor],
+  ['#F8FAFC', slateTextColor],
+  ['#CBD5E1', '#1E293B'],
+  ['#E5E7EB', '#374151'],
 ]
 
-export const NONE_COLOR = ['#e9e9e9', blackColor]
+export const NONE_COLOR = ['#f1f5f9', slateTextColor]
 
-/**
- * 색상 반복자를 반환합니다. 각 호출은 색상을 모두 사용하면 처음부터 시작합니다.
- * @param {number} initIndex 초기 색상 인덱스
- * @returns {{getIndex: function, next: function}}
- */
 export function getColorIterator(initIndex = 0) {
   let index = initIndex;
   if (index < 0 || index >= Colors.length) {
@@ -48,9 +43,6 @@ export function getColorIterator(initIndex = 0) {
   }
 }
 
-/**
- * 색상을 기반으로 현재 좌표와 색상을 가져옵니다.
- */
 export function getItemColor(color) {
   if(!color){
     return NONE_COLOR[1];

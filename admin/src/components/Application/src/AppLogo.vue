@@ -38,8 +38,8 @@
         class="ml-2 px-1.5 py-0.5 text-[10px] leading-none font-semibold rounded uppercase tracking-wider whitespace-nowrap shrink-0 hidden sm:inline-block"
         :class="
           theme === 'light'
-            ? 'bg-indigo-50 text-indigo-700 border border-indigo-300'
-            : 'bg-indigo-950/70 text-indigo-300 border border-indigo-500/40'
+            ? 'bg-slate-50 text-slate-700 border border-slate-300'
+            : 'bg-slate-950/70 text-slate-300 border border-slate-500/40'
         "
       >
         ADMIN

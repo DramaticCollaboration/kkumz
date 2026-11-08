@@ -15,7 +15,7 @@
           <a-tag v-if="targetJob" color="blue" class="font-medium text-xs m-0">
             {{ targetJob.description || targetJob.jobClassName }}
           </a-tag>
-          <a-tag v-else color="purple" class="font-medium text-xs m-0">
+          <a-tag v-else color="default" class="font-medium text-xs m-0">
             전체 스케줄러 작업
           </a-tag>
           <span class="text-xs text-gray-400 font-mono ml-1">총 {{ pagination.total }}건</span>
@@ -70,7 +70,7 @@
           </template>
 
           <template v-else-if="column.key === 'executionType'">
-            <a-tag v-if="record.executionType === 'SCHEDULED'" color="cyan" class="text-[11px]">정기 스케줄</a-tag>
+            <a-tag v-if="record.executionType === 'SCHEDULED'" color="default" class="text-[11px]">정기 스케줄</a-tag>
             <a-tag v-else color="orange" class="text-[11px]">수동 실행</a-tag>
           </template>
 

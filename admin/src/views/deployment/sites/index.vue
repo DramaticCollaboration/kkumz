@@ -6,15 +6,15 @@
           <div class="w-24 h-9 rounded bg-slate-50 border border-slate-200 flex items-center justify-center p-1 overflow-hidden mx-auto" v-html="record.logoSvg"></div>
         </template>
         <template v-else-if="column.key === 'siteSlug'">
-          <span class="font-mono text-xs font-bold text-indigo-600">/s/{{ record.siteSlug }}</span>
+          <span class="font-mono text-xs font-bold text-slate-700">/s/{{ record.siteSlug }}</span>
         </template>
         <template v-else-if="column.key === 'siteType'">
-          <Tag :color="record.siteType === 'COMMERCE' ? 'blue' : record.siteType === 'HYBRID' ? 'purple' : 'green'">
+          <Tag :color="record.siteType === 'COMMERCE' ? 'blue' : record.siteType === 'HYBRID' ? 'default' : 'green'">
             {{ record.siteType === 'COMMERCE' ? '쇼핑몰 스토어' : record.siteType === 'HYBRID' ? '매거진+스토어 복합' : '브랜드·커뮤니티 웹' }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'deployMode'">
-          <Tag :color="record.deployMode === 'CUSTOM_BUNDLE' ? 'purple' : 'cyan'">
+          <Tag :color="record.deployMode === 'CUSTOM_BUNDLE' ? 'default' : 'default'">
             {{ record.deployMode === 'CUSTOM_BUNDLE' ? '코드 번들 배포' : '즉시 디자인 배포' }} (v{{ record.activeVersionNo }})
           </Tag>
         </template>

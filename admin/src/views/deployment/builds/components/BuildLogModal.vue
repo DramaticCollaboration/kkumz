@@ -21,7 +21,7 @@
         오류 요약: {{ record.errorSummary }}
       </div>
 
-      <div v-if="record.aiFixSuggestion" class="p-3 rounded-lg bg-indigo-50 border border-indigo-200 text-xs text-indigo-800">
+      <div v-if="record.aiFixSuggestion" class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700">
         <strong>AI 자동 패치 내역:</strong> {{ record.aiFixSuggestion }}
       </div>
 

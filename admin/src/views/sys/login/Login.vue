@@ -23,7 +23,7 @@
         <div class="hidden min-h-full pl-4 mr-4 xl:flex xl:flex-col xl:w-6/12 justify-center">
           <AppLogo class="-enter-x mb-6" />
           <div class="pr-8">
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/15 border border-indigo-400/30 text-indigo-300 text-xs font-medium mb-5 -enter-x">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-500/15 border border-slate-400/30 text-slate-300 text-xs font-medium mb-5 -enter-x">
               꿈즈 Kkumz AI 브랜드·멀티사이트 빌더 관제 백오피스
             </div>
             <h1 class="text-3xl font-bold text-white tracking-tight leading-snug -enter-x">

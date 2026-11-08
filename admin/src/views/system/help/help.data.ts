@@ -49,7 +49,7 @@ export const columns: BasicColumn[] = [
     dataIndex: 'appCode',
     width: 110,
     align: 'center',
-    customRender: ({ text }) => h(Tag, { color: 'purple' }, () => text || '-'),
+    customRender: ({ text }) => h(Tag, { color: 'default' }, () => text || '-'),
   },
   {
     title: '상태',

@@ -12,13 +12,13 @@ export const APP_PRESET_COLOR_LIST: string[] = [
   '#0960bd',
   '#009688',
   '#536dfe',
-  '#ff5c93',
+  '#334155',
   '#13c2c2',
-  '#52c41a',
-  '#ee4f12',
+  '#0d9488',
+  '#475569',
   '#0096c7',
-  '#9c27b0',
-  '#ff9800',
+  '#1e293b',
+  '#64748b',
 ];
 
 // header preset color
@@ -30,8 +30,8 @@ export const HEADER_PRESET_BG_COLOR_LIST: string[] = [
   '#5172DC',
   '#018ffb',
   '#13c2c2',
-  '#e74c3c',
-  '#52c41a',
+  '#334155',
+  '#0d9488',
   '#394664',
   '#faad14',
   '#383f45',
@@ -50,7 +50,7 @@ export const SIDE_BAR_BG_COLOR_LIST: string[] = [
   '#304156',
   '#001628',
   '#28333E',
-  '#e74c3c',
+  '#334155',
   '#383f45',
 ];
 
@@ -68,6 +68,6 @@ export const SIDER_LOGO_BG_COLOR_LIST: string[] = [
   'linear-gradient(180deg, #000000, #001f39)',
   'linear-gradient(180deg, #000000, #2b3743)',
   // 'linear-gradient(180deg, #344058, #374560)',
-  'linear-gradient(180deg, #e83723, #e52611)',
+  'linear-gradient(180deg, #1e293b, #0f172a)',
   'linear-gradient(180deg, #383f45, #3b434b)',
 ];

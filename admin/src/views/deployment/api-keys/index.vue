@@ -7,7 +7,7 @@
       </template>
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'direction'">
-          <Tag :color="record.direction === 'OUTBOUND' ? 'indigo' : 'cyan'">
+          <Tag :color="record.direction === 'OUTBOUND' ? 'indigo' : 'default'">
             {{ record.direction === 'OUTBOUND' ? 'OUTBOUND (백엔드 호출)' : 'INBOUND (외부 유입)' }}
           </Tag>
         </template>
@@ -195,9 +195,9 @@
   });
 
   function serviceColor(code: string) {
-    if (code === 'SYNC_CMS') return 'purple';
+    if (code === 'SYNC_CMS') return 'default';
     if (code === 'SYNC_SHOP') return 'blue';
-    if (code === 'SYNC_VERSE') return 'geekblue';
+    if (code === 'SYNC_VERSE') return 'default';
     return 'orange';
   }
 

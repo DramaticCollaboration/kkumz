@@ -11,6 +11,33 @@
   import { propTypes } from '/@/utils/propTypes';
 
   const SVG_END_WITH_FLAG = '|svg';
+  const ICON_ALIAS_MAP: Record<string, string> = {
+    'ant-design:shield-outlined': 'ant-design:safety-outlined',
+    'ant-design:shield-filled': 'ant-design:safety-certificate-filled',
+    'ant-design:gold-outline': 'ant-design:gold-outlined',
+    'ant-design:interation-outlined': 'ant-design:interaction-outlined',
+  };
+
+  function normalizeIconName(rawIcon: string): string {
+    if (!rawIcon) return '';
+    const trimmed = rawIcon.trim();
+    if (ICON_ALIAS_MAP[trimmed]) {
+      return ICON_ALIAS_MAP[trimmed];
+    }
+    if (trimmed.startsWith('ant-design:')) {
+      const suffix = trimmed.slice('ant-design:'.length);
+      if (suffix !== suffix.toLowerCase()) {
+        const kebab = suffix
+          .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+          .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+          .toLowerCase();
+        const normalized = `ant-design:${kebab}`;
+        return ICON_ALIAS_MAP[normalized] || normalized;
+      }
+    }
+    return trimmed;
+  }
+
   export default defineComponent({
     name: 'Icon',
     components: { SvgIcon },
@@ -32,7 +59,7 @@
 
       const isSvgIcon = computed(() => props.icon?.endsWith(SVG_END_WITH_FLAG));
       const getSvgIcon = computed(() => props.icon.replace(SVG_END_WITH_FLAG, ''));
-      const getIconRef = computed(() => `${props.prefix ? props.prefix + ':' : ''}${props.icon}`);
+      const getIconRef = computed(() => normalizeIconName(`${props.prefix ? props.prefix + ':' : ''}${props.icon}`));
 
       const update = async () => {
         if (unref(isSvgIcon)) return;
@@ -44,7 +71,13 @@
         const icon = unref(getIconRef);
         if (!icon) return;
 
-        const svg = Iconify.renderSVG(icon, {});
+        let svg = Iconify.renderSVG(icon, {});
+        if (!svg && icon.startsWith('ant-design:') && !/-(outlined|filled|twotone)$/.test(icon)) {
+          svg = Iconify.renderSVG(`${icon}-outlined`, {});
+        }
+        if (!svg && icon.startsWith('ant-design:')) {
+          svg = Iconify.renderSVG('ant-design:appstore-outlined', {});
+        }
         if (svg) {
           el.textContent = '';
           el.appendChild(svg);

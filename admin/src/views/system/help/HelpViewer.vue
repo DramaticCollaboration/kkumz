@@ -43,7 +43,7 @@
             <div class="content-hero">
               <div class="hero-left">
                 <div class="hero-badges">
-                  <a-tag color="purple">{{ selectedGuide.appCode || defaultAppCode }}</a-tag>
+                  <a-tag color="default">{{ selectedGuide.appCode || defaultAppCode }}</a-tag>
                   <a-tag color="blue">{{ selectedGuide.category || '일반' }}</a-tag>
                   <code class="px-2 py-0.5 bg-gray-100 rounded text-xs font-mono text-blue-600">
                     {{ selectedGuide.pageKey }}
@@ -99,7 +99,7 @@
                     <div v-for="(feat, idx) in parsed.features" :key="idx" class="feature-card">
                       <div class="flex justify-between items-center mb-1">
                         <span class="feature-card-title">{{ idx + 1 }}. {{ feat.name }}</span>
-                        <a-tag v-if="feat.badge" color="cyan" class="m-0">{{ feat.badge }}</a-tag>
+                        <a-tag v-if="feat.badge" color="default" class="m-0">{{ feat.badge }}</a-tag>
                       </div>
                       <div class="feature-card-desc">{{ feat.description }}</div>
                     </div>
@@ -148,7 +148,7 @@
                 </a-col>
                 <a-col :xs="24" :md="12">
                   <div class="lineage-card">
-                    <div class="lineage-card-header text-indigo-700">후속 반영 및 연계 대상</div>
+                    <div class="lineage-card-header text-slate-700">후속 반영 및 연계 대상</div>
                     <div
                       v-for="(dst, idx) in parsed.lineage.destinations"
                       :key="idx"
@@ -174,7 +174,7 @@
               <div class="space-y-2">
                 <div v-for="(fm, idx) in parsed.formulas" :key="idx" class="feature-card">
                   <div class="feature-card-title">{{ fm.name }}</div>
-                  <code class="block my-1 px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono text-purple-700">
+                  <code class="block my-1 px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono text-slate-700">
                     {{ fm.formula }}
                   </code>
                   <div class="feature-card-desc">{{ fm.description }}</div>

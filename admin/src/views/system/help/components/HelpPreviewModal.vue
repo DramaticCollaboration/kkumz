@@ -10,7 +10,7 @@
     <div v-if="record" class="help-preview-container">
       <div class="preview-header">
         <div class="mb-2 flex items-center gap-2 flex-wrap">
-          <a-tag color="purple">{{ record.appCode }}</a-tag>
+          <a-tag color="default">{{ record.appCode }}</a-tag>
           <a-tag color="blue">{{ record.category || '일반' }}</a-tag>
           <code class="px-2 py-0.5 bg-gray-100 rounded text-xs font-mono text-blue-600">{{ record.pageKey }}</code>
           <a-tag :color="record.status === 'ACTIVE' ? 'success' : 'default'">
@@ -43,7 +43,7 @@
               <div v-for="(feat, idx) in parsed.features" :key="idx" class="item-card">
                 <div class="flex justify-between items-center mb-1">
                   <span class="font-bold text-xs text-gray-900">{{ idx + 1 }}. {{ feat.name }}</span>
-                  <a-tag v-if="feat.badge" color="cyan" class="m-0">{{ feat.badge }}</a-tag>
+                  <a-tag v-if="feat.badge" color="default" class="m-0">{{ feat.badge }}</a-tag>
                 </div>
                 <div class="text-xs text-gray-600">{{ feat.description }}</div>
               </div>
@@ -85,7 +85,7 @@
           </a-col>
           <a-col :xs="24" :md="12">
             <div class="p-3 bg-gray-50 border border-gray-200 rounded">
-              <div class="text-xs font-bold text-indigo-700 mb-2">후속 반영 및 연계 대상</div>
+              <div class="text-xs font-bold text-slate-700 mb-2">후속 반영 및 연계 대상</div>
               <div v-for="(dst, idx) in parsed.lineage.destinations" :key="idx" class="mb-2 last:mb-0">
                 <div class="text-xs font-semibold text-gray-900">
                   {{ dst.target }}
@@ -104,7 +104,7 @@
         <div class="space-y-2">
           <div v-for="(fm, idx) in parsed.formulas" :key="idx" class="item-card">
             <div class="font-bold text-xs text-gray-900">{{ fm.name }}</div>
-            <code class="block my-1 px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono text-purple-700">
+            <code class="block my-1 px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono text-slate-700">
               {{ fm.formula }}
             </code>
             <div class="text-xs text-gray-600">{{ fm.description }}</div>

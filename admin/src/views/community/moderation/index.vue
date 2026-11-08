@@ -3,7 +3,7 @@
     <BasicTable @register="registerTable">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'reasonCategory'">
-          <Tag color="purple">{{ record.reasonCategory }}</Tag>
+          <Tag color="default">{{ record.reasonCategory }}</Tag>
         </template>
         <template v-else-if="column.key === 'status'">
           <Tag :color="record.status === 'PENDING' ? 'warning' : record.status === 'RESOLVED' ? 'success' : 'default'">

@@ -8,12 +8,12 @@ function getTypeColor(text: string): string {
   return text === ErrorTypeEnum.VUE
     ? 'green'
     : text === ErrorTypeEnum.RESOURCE
-    ? 'cyan'
+    ? 'default'
     : text === ErrorTypeEnum.PROMISE
     ? 'blue'
     : text === ErrorTypeEnum.AJAX
     ? 'red'
-    : 'purple';
+    : 'default';
 }
 
 function formatStackText(stack?: string): string {

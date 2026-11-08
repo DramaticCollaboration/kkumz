@@ -11,11 +11,11 @@
         >
           <div class="flex items-start justify-between">
             <div class="text-xs text-slate-500 font-semibold">누적 아이디어 프로젝트</div>
-            <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
               <Icon icon="ant-design:bulb-outlined" :size="16" />
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-indigo-600 mt-1.5 font-mono tabular-nums">
+          <div class="text-2xl font-extrabold text-slate-900 mt-1.5 font-mono tabular-nums">
             {{ summary.totalIdeas || 0 }}건
           </div>
           <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
@@ -32,11 +32,11 @@
         >
           <div class="flex items-start justify-between">
             <div class="text-xs text-slate-500 font-semibold">가동 중 멀티사이트</div>
-            <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
               <Icon icon="ant-design:global-outlined" :size="16" />
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-emerald-600 mt-1.5 font-mono tabular-nums">
+          <div class="text-2xl font-extrabold text-slate-900 mt-1.5 font-mono tabular-nums">
             {{ summary.activeSites || 0 }} / {{ summary.totalSites || 0 }}개
           </div>
           <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
@@ -53,11 +53,11 @@
         >
           <div class="flex items-start justify-between">
             <div class="text-xs text-slate-500 font-semibold">샌드박스 빌드 성공률</div>
-            <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
               <Icon icon="ant-design:code-outlined" :size="16" />
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-blue-600 mt-1.5 font-mono tabular-nums">
+          <div class="text-2xl font-extrabold text-slate-900 mt-1.5 font-mono tabular-nums">
             {{ summary.buildSuccessRate ?? 100 }}%
           </div>
           <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
@@ -74,11 +74,11 @@
         >
           <div class="flex items-start justify-between">
             <div class="text-xs text-slate-500 font-semibold">오픈 팀빌딩 포지션</div>
-            <div class="w-7 h-7 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
+            <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
               <Icon icon="ant-design:team-outlined" :size="16" />
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-violet-600 mt-1.5 font-mono tabular-nums">
+          <div class="text-2xl font-extrabold text-slate-900 mt-1.5 font-mono tabular-nums">
             {{ summary.openRecruits || 0 }}개
           </div>
           <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
@@ -95,11 +95,11 @@
         >
           <div class="flex items-start justify-between">
             <div class="text-xs text-slate-500 font-semibold">스튜디오 생성 산출물</div>
-            <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
               <Icon icon="ant-design:thunderbolt-outlined" :size="16" />
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-amber-600 mt-1.5 font-mono tabular-nums">
+          <div class="text-2xl font-extrabold text-slate-900 mt-1.5 font-mono tabular-nums">
             {{ (summary.totalAiPromptCalls || 0).toLocaleString() }}건
           </div>
           <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
@@ -152,7 +152,7 @@
                   <span class="text-[11px] text-slate-400 font-mono">
                     조회 {{ (item.totalViews || 0).toLocaleString() }}
                   </span>
-                  <span class="text-indigo-600 font-bold font-mono tabular-nums">
+                  <span class="text-slate-700 font-bold font-mono tabular-nums">
                     {{ item.count }}개 ({{ calcPercent(item.count, Number(summary.totalSites || 1)) }}%)
                   </span>
                 </div>
@@ -209,8 +209,8 @@
                     {{ formatBuildStatus(job.status) }}
                   </Tag>
                   <span class="text-xs font-bold text-slate-800 truncate">{{ job.brandName || job.siteName || job.siteSlug }}</span>
-                  <span class="text-[11px] font-mono text-indigo-600 font-semibold">v{{ job.versionNo || 1 }}</span>
-                  <Tag v-if="job.aiPatchApplied" color="purple" class="!m-0 !text-[10px]">자동 패치</Tag>
+                  <span class="text-[11px] font-mono text-slate-700 font-semibold">v{{ job.versionNo || 1 }}</span>
+                  <Tag v-if="job.aiPatchApplied" color="default" class="!m-0 !text-[10px]">자동 패치</Tag>
                 </div>
                 <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5 truncate">
                   <span>{{ formatJobType(job.jobType || job.triggerType) }}</span>
@@ -250,7 +250,7 @@
                     {{ formatReportStatus(rep.status) }}
                   </Tag>
                   <span class="text-xs font-bold text-slate-800 truncate">{{ rep.brandName || rep.siteName || rep.targetId }}</span>
-                  <Tag color="purple" class="!m-0">{{ formatReasonCategory(rep.reasonCategory) }}</Tag>
+                  <Tag color="default" class="!m-0">{{ formatReasonCategory(rep.reasonCategory) }}</Tag>
                 </div>
                 <div class="text-[11px] text-slate-500 mt-1 truncate">
                   {{ rep.reasonDetail }}
@@ -301,17 +301,17 @@
                       ></div>
                       <div class="min-w-0">
                         <div class="font-bold text-slate-800 truncate">{{ site.siteName || site.brandName }}</div>
-                        <div class="text-[11px] font-mono text-indigo-600 truncate">/s/{{ site.siteSlug }}</div>
+                        <div class="text-[11px] font-mono text-slate-700 truncate">/s/{{ site.siteSlug }}</div>
                       </div>
                     </div>
                   </td>
                   <td class="py-2.5 px-2 text-center">
-                    <Tag :color="site.siteType === 'COMMERCE' ? 'blue' : site.siteType === 'HYBRID' ? 'purple' : 'green'" class="!m-0">
+                    <Tag :color="site.siteType === 'COMMERCE' ? 'blue' : site.siteType === 'HYBRID' ? 'default' : 'green'" class="!m-0">
                       {{ formatSiteTypeShort(site.siteType) }}
                     </Tag>
                   </td>
                   <td class="py-2.5 px-2 text-center">
-                    <Tag :color="site.deployMode === 'CUSTOM_BUNDLE' ? 'purple' : 'cyan'" class="!m-0">
+                    <Tag :color="site.deployMode === 'CUSTOM_BUNDLE' ? 'default' : 'default'" class="!m-0">
                       {{ formatDeployMode(site.deployMode) }} v{{ site.activeVersion || 1 }}
                     </Tag>
                   </td>
@@ -474,11 +474,11 @@
   function getSiteTypeColor(type: string) {
     switch (type) {
       case 'COMMERCE':
-        return '#4f46e5';
+        return '#0284c7';
       case 'CMS_SITE':
-        return '#10b981';
+        return '#0d9488';
       case 'HYBRID':
-        return '#8b5cf6';
+        return '#475569';
       default:
         return '#64748b';
     }

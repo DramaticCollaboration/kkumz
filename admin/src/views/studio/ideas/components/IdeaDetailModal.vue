@@ -39,7 +39,7 @@
         <div class="text-xs font-bold text-slate-700 mb-2">설계된 화면 목록 ({{ detail.screens.length }}개)</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div v-for="sc in detail.screens" :key="sc.id || sc.screenCode" class="p-2.5 rounded-lg border border-slate-200 bg-white text-xs">
-            <div class="font-bold text-slate-800">{{ sc.screenName }} <span class="font-mono text-indigo-600">({{ sc.routePath }})</span></div>
+            <div class="font-bold text-slate-800">{{ sc.screenName }} <span class="font-mono text-slate-700">({{ sc.routePath }})</span></div>
             <div class="text-slate-500 mt-0.5">{{ sc.description }}</div>
           </div>
         </div>

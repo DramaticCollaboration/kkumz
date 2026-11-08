@@ -77,7 +77,7 @@
             <template v-if="selectedGuide">
               <div class="content-header">
                 <div class="content-header-tags">
-                  <a-tag color="purple">{{ selectedGuide.appCode || defaultAppCode }}</a-tag>
+                  <a-tag color="default">{{ selectedGuide.appCode || defaultAppCode }}</a-tag>
                   <a-tag color="blue">{{ selectedGuide.category || '일반' }}</a-tag>
                   <code class="px-2 py-0.5 bg-gray-100 rounded text-xs font-mono text-blue-600">
                     {{ selectedGuide.pageKey }}
@@ -116,7 +116,7 @@
                       <div v-for="(feat, idx) in parsed.features" :key="idx" class="info-card">
                         <div class="flex justify-between items-center mb-1">
                           <span class="info-card-title">{{ idx + 1 }}. {{ feat.name }}</span>
-                          <a-tag v-if="feat.badge" color="cyan" class="m-0">{{ feat.badge }}</a-tag>
+                          <a-tag v-if="feat.badge" color="default" class="m-0">{{ feat.badge }}</a-tag>
                         </div>
                         <div class="info-card-desc">{{ feat.description }}</div>
                       </div>
@@ -176,7 +176,7 @@
                 <div class="card-stack">
                   <div v-for="(fm, idx) in parsed.formulas" :key="idx" class="info-card">
                     <div class="info-card-title">{{ fm.name }}</div>
-                    <code class="block my-1 px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono text-purple-700">
+                    <code class="block my-1 px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono text-slate-700">
                       {{ fm.formula }}
                     </code>
                     <div class="info-card-desc">{{ fm.description }}</div>

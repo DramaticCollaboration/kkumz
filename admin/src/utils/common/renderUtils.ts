@@ -9,6 +9,24 @@ import { isEmpty } from '/@/utils/is';
 import { useMessage } from '/@/hooks/web/useMessage';
 const { createMessage } = useMessage();
 
+const SEMANTIC_TAG_COLOR_MAP: Record<string, string> = {
+  success: 'success',
+  green: 'green',
+  processing: 'processing',
+  blue: 'blue',
+  warning: 'warning',
+  orange: 'orange',
+  error: 'error',
+  red: 'red',
+  default: 'default',
+};
+
+function normalizeSemanticTagColor(rawColor?: string): string {
+  if (!rawColor) return 'default';
+  const key = String(rawColor).toLowerCase();
+  return SEMANTIC_TAG_COLOR_MAP[key] || 'default';
+}
+
 const render = {
   /**
    * 렌더링 목록 아바타
@@ -128,6 +146,7 @@ const render = {
     if (obj.length > 0) {
       text = obj[0].label;
       color = obj[0].color;
+      color = normalizeSemanticTagColor(color);
     }
     return isEmpty(text) || !renderTag ? h('span', text) : h(Tag, { color }, () => text);
   },
