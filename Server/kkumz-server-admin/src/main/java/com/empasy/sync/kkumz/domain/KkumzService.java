@@ -191,8 +191,32 @@ public class KkumzService {
                     CREATE INDEX IF NOT EXISTS idx_kkumz_git_repo_site
                     ON kkumz_site_git_repo (site_id)
                     """);
+            ensureSitePublishColumns();
         } catch (Exception e) {
             log.warn("kkumz_idea_asset / kkumz_site_git_repo 스키마 확인 경고: {}", e.getMessage());
+        }
+    }
+
+    private void ensureSitePublishColumns() {
+        try {
+            jdbcTemplate.execute("ALTER TABLE kkumz_idea ALTER COLUMN visibility SET DEFAULT 'PRIVATE'");
+            jdbcTemplate.execute("ALTER TABLE kkumz_idea ALTER COLUMN status SET DEFAULT 'DRAFT'");
+            jdbcTemplate.execute("ALTER TABLE kkumz_site ALTER COLUMN visibility SET DEFAULT 'PRIVATE'");
+            jdbcTemplate.execute("ALTER TABLE kkumz_site ALTER COLUMN status SET DEFAULT 'DRAFT'");
+            jdbcTemplate.execute("ALTER TABLE kkumz_site ADD COLUMN IF NOT EXISTS published_version INTEGER DEFAULT NULL");
+            jdbcTemplate.execute("ALTER TABLE kkumz_site ADD COLUMN IF NOT EXISTS published_at TIMESTAMP WITH TIME ZONE DEFAULT NULL");
+            jdbcTemplate.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_kkumz_site_public_feed
+                    ON kkumz_site (status, visibility, published_version, is_featured DESC, like_count DESC)
+                    """);
+            jdbcTemplate.execute("""
+                    UPDATE kkumz_site
+                    SET published_version = active_version,
+                        published_at = COALESCE(published_at, updated_at, created_at)
+                    WHERE status = 'ACTIVE' AND visibility = 'PUBLIC' AND published_version IS NULL
+                    """);
+        } catch (Exception e) {
+            log.warn("kkumz_site published_version 컬럼 보강 경고: {}", e.getMessage());
         }
     }
 
@@ -496,6 +520,160 @@ public class KkumzService {
         }
     }
 
+    public boolean canViewIdea(Map<String, Object> ideaRow, String currentUsername) {
+        if (currentUsername == null || currentUsername.isBlank() || ideaRow == null) {
+            return false;
+        }
+        if (canEditIdea(ideaRow, currentUsername)) {
+            return true;
+        }
+        String user = currentUsername.trim();
+        String ideaId = ideaRow.get("id") != null ? String.valueOf(ideaRow.get("id")).trim() : "";
+        if (!ideaId.isEmpty()) {
+            try {
+                Integer teamCnt = jdbcTemplate.queryForObject("""
+                        SELECT COUNT(*)
+                        FROM kkumz_team_member tm
+                        JOIN kkumz_site s ON s.id = tm.site_id
+                        WHERE s.idea_id = ?
+                          AND LOWER(tm.username) = LOWER(?)
+                          AND tm.status = 'ACTIVE'
+                        """, Integer.class, ideaId, user);
+                return teamCnt != null && teamCnt > 0;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public void assertIdeaReadable(Map<String, Object> ideaRow) {
+        if (!isHttpRequestActive()) {
+            return;
+        }
+        String currentUser = resolveCurrentUsernameFromRequest();
+        if (currentUser == null || currentUser.isBlank()) {
+            throw new SecurityException("[401] 로그인이 필요합니다. 본인이 생성한 아이디어만 열람할 수 있습니다.");
+        }
+        if (!canViewIdea(ideaRow, currentUser)) {
+            throw new SecurityException("[403] 본인이 생성한 아이디어만 열람할 수 있습니다.");
+        }
+    }
+
+    public void assertIdeaReadable(String ideaId) {
+        if (!isHttpRequestActive()) {
+            return;
+        }
+        String currentUser = resolveCurrentUsernameFromRequest();
+        if (currentUser == null || currentUser.isBlank()) {
+            throw new SecurityException("[401] 로그인이 필요합니다. 본인이 생성한 아이디어만 열람할 수 있습니다.");
+        }
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT id, author_username AS \"authorUsername\" FROM kkumz_idea WHERE id = ?",
+                ideaId
+        );
+        if (rows.isEmpty()) {
+            throw new IllegalArgumentException("존재하지 않는 아이디어 ID입니다: " + ideaId);
+        }
+        if (!canViewIdea(rows.get(0), currentUser)) {
+            throw new SecurityException("[403] 본인이 생성한 아이디어만 열람할 수 있습니다.");
+        }
+    }
+
+    public Integer resolvePublishedVersion(Map<String, Object> siteRow) {
+        if (siteRow == null) {
+            return null;
+        }
+        Object rawPub = siteRow.get("publishedVersion");
+        if (rawPub instanceof Number n) {
+            int val = n.intValue();
+            return val > 0 ? val : null;
+        }
+        if (rawPub != null) {
+            String str = String.valueOf(rawPub).trim();
+            if (!str.isEmpty() && !"null".equalsIgnoreCase(str)) {
+                try {
+                    int parsed = Integer.parseInt(str);
+                    return parsed > 0 ? parsed : null;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        if (!siteRow.containsKey("publishedVersion")) {
+            String status = siteRow.get("status") != null ? String.valueOf(siteRow.get("status")).trim().toUpperCase(Locale.ROOT) : "ACTIVE";
+            String visibility = siteRow.get("visibility") != null ? String.valueOf(siteRow.get("visibility")).trim().toUpperCase(Locale.ROOT) : "PUBLIC";
+            if (("ACTIVE".equals(status) || "PUBLISHED".equals(status)) && "PUBLIC".equals(visibility)) {
+                Object activeObj = siteRow.get("activeVersion");
+                if (activeObj instanceof Number an) {
+                    return an.intValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean isSitePubliclyPublished(Map<String, Object> siteRow) {
+        if (siteRow == null) {
+            return false;
+        }
+        if (!siteRow.containsKey("status") && !siteRow.containsKey("visibility") && !siteRow.containsKey("publishedVersion")) {
+            return true;
+        }
+        String status = siteRow.get("status") != null ? String.valueOf(siteRow.get("status")).trim().toUpperCase(Locale.ROOT) : "DRAFT";
+        String visibility = siteRow.get("visibility") != null ? String.valueOf(siteRow.get("visibility")).trim().toUpperCase(Locale.ROOT) : "PRIVATE";
+        Integer publishedVer = resolvePublishedVersion(siteRow);
+        return ("ACTIVE".equals(status) || "PUBLISHED".equals(status))
+                && "PUBLIC".equals(visibility)
+                && publishedVer != null
+                && publishedVer > 0;
+    }
+
+    public boolean canViewSite(Map<String, Object> siteRow, String currentUsername) {
+        if (siteRow == null) {
+            return false;
+        }
+        if (currentUsername != null && !currentUsername.isBlank()) {
+            if (canEditSite(siteRow, currentUsername)) {
+                return true;
+            }
+            String siteId = siteRow.get("id") != null ? String.valueOf(siteRow.get("id")).trim() : "";
+            if (!siteId.isEmpty()) {
+                try {
+                    Integer teamCnt = jdbcTemplate.queryForObject("""
+                            SELECT COUNT(*)
+                            FROM kkumz_team_member
+                            WHERE site_id = ?
+                              AND LOWER(username) = LOWER(?)
+                              AND status = 'ACTIVE'
+                            """, Integer.class, siteId, currentUsername.trim());
+                    if (teamCnt != null && teamCnt > 0) {
+                        return true;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return isSitePubliclyPublished(siteRow);
+    }
+
+    public void assertSiteReadable(Map<String, Object> siteRow) {
+        if (!isHttpRequestActive()) {
+            return;
+        }
+        String currentUser = resolveCurrentUsernameFromRequest();
+        if (!canViewSite(siteRow, currentUser)) {
+            throw new SecurityException("[403] 아직 배포되지 않았거나 비공개 상태인 사이트입니다.");
+        }
+    }
+
+    public void assertSiteReadable(String siteIdOrSlug) {
+        if (!isHttpRequestActive()) {
+            return;
+        }
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        assertSiteReadable(site);
+    }
+
     // =========================================================================
     // 1. 아이디어 & 버전 히스토리 & 화면설계 (Step 1 & Step 3)
     // =========================================================================
@@ -505,59 +683,94 @@ public class KkumzService {
     }
 
     public List<Map<String, Object>> listIdeas(String authorUsername, String siteType, Boolean mineOnly) {
-        String targetUser = (authorUsername != null && !authorUsername.isBlank())
-                ? authorUsername.trim()
-                : (Boolean.TRUE.equals(mineOnly) ? resolveCurrentUsernameFromRequest() : null);
-        if (Boolean.TRUE.equals(mineOnly) && (targetUser == null || targetUser.isBlank())) {
+        String currentUser = resolveCurrentUsernameFromRequest();
+        if (isHttpRequestActive() && (currentUser == null || currentUser.isBlank())) {
             return List.of();
+        }
+        boolean isAdmin = currentUser != null && !currentUser.isBlank() && isAdminUser(currentUser);
+        String targetUser;
+        if (isHttpRequestActive()) {
+            if (isAdmin && !Boolean.TRUE.equals(mineOnly)) {
+                targetUser = (authorUsername != null && !authorUsername.isBlank()) ? authorUsername.trim() : null;
+            } else {
+                targetUser = currentUser.trim();
+            }
+        } else {
+            targetUser = (authorUsername != null && !authorUsername.isBlank())
+                    ? authorUsername.trim()
+                    : (Boolean.TRUE.equals(mineOnly) ? currentUser : null);
+            if (Boolean.TRUE.equals(mineOnly) && (targetUser == null || targetUser.isBlank())) {
+                return List.of();
+            }
         }
 
         StringBuilder sql = new StringBuilder("""
-                SELECT id,
-                       author_username AS "authorUsername",
-                       author_display_name AS "authorDisplayName",
-                       title,
-                       prompt_text AS "promptText",
-                       site_type AS "siteType",
-                       category,
-                       tags_json::text AS "tagsJson",
-                       enabled_features_json::text AS "enabledFeaturesJson",
-                       ai_intent_analysis_json::text AS "aiIntentAnalysisJson",
-                       visibility,
-                       current_step AS "currentStep",
-                       selected_brand_name AS "selectedBrandName",
-                       selected_site_slug AS "selectedSiteSlug",
-                       selected_logo_svg AS "selectedLogoSvg",
-                       design_tokens_json::text AS "designTokensJson",
-                       spec_markdown AS "specMarkdown",
-                       screens_json::text AS "screensJson",
-                       status,
-                       created_at AS "createdAt",
-                       updated_at AS "updatedAt"
-                FROM kkumz_idea
+                SELECT i.id,
+                       i.author_username AS "authorUsername",
+                       i.author_display_name AS "authorDisplayName",
+                       i.title,
+                       i.prompt_text AS "promptText",
+                       i.site_type AS "siteType",
+                       i.category,
+                       i.tags_json::text AS "tagsJson",
+                       i.enabled_features_json::text AS "enabledFeaturesJson",
+                       i.ai_intent_analysis_json::text AS "aiIntentAnalysisJson",
+                       i.visibility,
+                       i.current_step AS "currentStep",
+                       i.selected_brand_name AS "selectedBrandName",
+                       i.selected_site_slug AS "selectedSiteSlug",
+                       i.selected_logo_svg AS "selectedLogoSvg",
+                       i.design_tokens_json::text AS "designTokensJson",
+                       i.spec_markdown AS "specMarkdown",
+                       i.screens_json::text AS "screensJson",
+                       i.status,
+                       i.created_at AS "createdAt",
+                       i.updated_at AS "updatedAt",
+                       st.id AS "siteId",
+                       st.site_slug AS "siteSlug",
+                       st.site_name AS "siteName",
+                       st.site_type AS "siteSiteType",
+                       st.deploy_mode AS "siteDeployMode",
+                       st.active_version AS "siteActiveVersion",
+                       st.published_version AS "sitePublishedVersion",
+                       st.published_at AS "sitePublishedAt",
+                       st.visibility AS "siteVisibility",
+                       st.status AS "siteStatus",
+                       st.deployed_url AS "siteDeployedUrl",
+                       st.custom_domain AS "siteCustomDomain",
+                       st.like_count AS "siteLikeCount",
+                       st.comment_count AS "siteCommentCount",
+                       st.view_count AS "siteViewCount"
+                FROM kkumz_idea i
+                LEFT JOIN LATERAL (
+                    SELECT s.*
+                    FROM kkumz_site s
+                    WHERE s.idea_id = i.id
+                    ORDER BY s.updated_at DESC
+                    LIMIT 1
+                ) st ON TRUE
                 WHERE 1=1
                 """);
         List<Object> params = new ArrayList<>();
         if (targetUser != null && !targetUser.isBlank()) {
             sql.append("""
-                     AND (LOWER(author_username) = LOWER(?)
-                          OR id IN (
+                     AND (LOWER(i.author_username) = LOWER(?)
+                          OR i.id IN (
                               SELECT s.idea_id FROM kkumz_site s
                               JOIN kkumz_team_member tm ON tm.site_id = s.id
                               WHERE s.idea_id IS NOT NULL
                                 AND LOWER(tm.username) = LOWER(?)
                                 AND tm.status = 'ACTIVE'
-                                AND tm.member_role IN ('OWNER', 'DEVELOPER', 'EDITOR')
                           ))
                     """);
             params.add(targetUser);
             params.add(targetUser);
         }
         if (siteType != null && !siteType.isBlank() && !"ALL".equalsIgnoreCase(siteType)) {
-            sql.append(" AND site_type = ?");
+            sql.append(" AND i.site_type = ?");
             params.add(siteType.trim().toUpperCase(Locale.ROOT));
         }
-        sql.append(" ORDER BY updated_at DESC");
+        sql.append(" ORDER BY i.updated_at DESC");
 
         List<Map<String, Object>> list = jdbcTemplate.queryForList(sql.toString(), params.toArray());
         list.forEach(this::enrichIdeaRow);
@@ -589,9 +802,7 @@ public class KkumzService {
         Map<String, String> author = resolveUserIdentity(requestedUser, req.getAuthorDisplayName());
         String authorUsername = author.get("username");
         String authorDisplay = author.get("realname");
-        String visibility = (req.getVisibility() != null && !req.getVisibility().isBlank())
-                ? req.getVisibility().trim().toUpperCase(Locale.ROOT)
-                : "PUBLIC";
+        String visibility = "PRIVATE";
 
         List<String> tags = (req.getTags() != null && !req.getTags().isEmpty())
                 ? req.getTags()
@@ -657,6 +868,8 @@ public class KkumzService {
             throw new IllegalArgumentException("존재하지 않는 아이디어 ID입니다: " + ideaId);
         }
 
+        assertIdeaReadable(rows.get(0));
+
         Map<String, Object> idea = new LinkedHashMap<>(rows.get(0));
         enrichIdeaRow(idea);
 
@@ -712,8 +925,8 @@ public class KkumzService {
             l.put("tags", parseJsonList(String.valueOf(l.remove("tagsJson"))));
         });
         idea.put("logoSuggestions", logos);
-        idea.put("screenSpecs", listIdeaScreens(ideaId));
-        idea.put("assets", listIdeaAssets(ideaId));
+        idea.put("screenSpecs", listIdeaScreensInternal(ideaId));
+        idea.put("assets", listIdeaAssetsInternal(ideaId));
 
         List<Map<String, Object>> sites = jdbcTemplate.queryForList("""
                 SELECT id,
@@ -722,9 +935,16 @@ public class KkumzService {
                        site_type AS "siteType",
                        deploy_mode AS "deployMode",
                        active_version AS "activeVersion",
+                       published_version AS "publishedVersion",
+                       published_at AS "publishedAt",
+                       visibility,
                        deployed_url AS "deployedUrl",
+                       custom_domain AS "customDomain",
                        shop_site_id AS "shopSiteId",
                        cms_site_id AS "cmsSiteId",
+                       like_count AS "likeCount",
+                       comment_count AS "commentCount",
+                       view_count AS "viewCount",
                        status
                 FROM kkumz_site
                 WHERE idea_id = ?
@@ -741,9 +961,16 @@ public class KkumzService {
                            site_type AS "siteType",
                            deploy_mode AS "deployMode",
                            active_version AS "activeVersion",
+                           published_version AS "publishedVersion",
+                           published_at AS "publishedAt",
+                           visibility,
                            deployed_url AS "deployedUrl",
+                           custom_domain AS "customDomain",
                            shop_site_id AS "shopSiteId",
                            cms_site_id AS "cmsSiteId",
+                           like_count AS "likeCount",
+                           comment_count AS "commentCount",
+                           view_count AS "viewCount",
                            status
                     FROM kkumz_site
                     WHERE site_slug = ?
@@ -753,8 +980,15 @@ public class KkumzService {
         idea.put("deployedSites", sites);
         if (!sites.isEmpty()) {
             for (Map<String, Object> s : sites) {
+                boolean isPub = isSitePubliclyPublished(s);
+                int activeVer = s.get("activeVersion") instanceof Number n ? n.intValue() : 1;
+                Integer pubVer = resolvePublishedVersion(s);
+                boolean hasUnpublished = !isPub || (pubVer != null && activeVer > pubVer);
                 s.put("isOwner", idea.get("isOwner"));
                 s.put("canEdit", idea.get("canEdit"));
+                s.put("isPublished", isPub);
+                s.put("publishedVersion", pubVer);
+                s.put("hasUnpublishedChanges", hasUnpublished);
             }
             idea.put("site", sites.get(0));
         }
@@ -866,7 +1100,7 @@ public class KkumzService {
                 ? req.getCategory().trim()
                 : String.valueOf(idea.getOrDefault("category", "AUTO")).trim();
 
-        List<Map<String, Object>> assets = listIdeaAssets(ideaId);
+        List<Map<String, Object>> assets = listIdeaAssetsInternal(ideaId);
         List<Map<String, Object>> catalog = listFeatureCatalog();
 
         StringBuilder assetsSummary = new StringBuilder();
@@ -1124,7 +1358,7 @@ public class KkumzService {
             screens = buildScreensFromEnabledFeatures(ideaId, title, siteType, enabledFeatures, catalog);
             syncScreenSpecs(ideaId, screens);
         } else {
-            screens = listIdeaScreens(ideaId);
+            screens = listIdeaScreensInternal(ideaId);
         }
 
         jdbcTemplate.update("""
@@ -1160,6 +1394,11 @@ public class KkumzService {
     }
 
     public List<Map<String, Object>> listIdeaScreens(String ideaId) {
+        assertIdeaReadable(ideaId);
+        return listIdeaScreensInternal(ideaId);
+    }
+
+    private List<Map<String, Object>> listIdeaScreensInternal(String ideaId) {
         List<Map<String, Object>> screens = jdbcTemplate.queryForList("""
                 SELECT id,
                        idea_id AS "ideaId",
@@ -1193,7 +1432,7 @@ public class KkumzService {
         String layoutType = (req.getLayoutType() != null && !req.getLayoutType().isBlank())
                 ? req.getLayoutType().trim()
                 : "STANDARD_GRID";
-        int sortNo = req.getSortNo() != null ? req.getSortNo() : (listIdeaScreens(ideaId).size() + 1);
+        int sortNo = req.getSortNo() != null ? req.getSortNo() : (listIdeaScreensInternal(ideaId).size() + 1);
         List<String> components = req.getComponents() != null ? req.getComponents() : List.of("BrandStoryBanner", "FeaturedProductGrid");
 
         if (req.getId() != null && !req.getId().isBlank()) {
@@ -1214,7 +1453,7 @@ public class KkumzService {
                     ideaId
             );
             if (updated > 0) {
-                return listIdeaScreens(ideaId);
+                return listIdeaScreensInternal(ideaId);
             }
         }
 
@@ -1234,14 +1473,14 @@ public class KkumzService {
                 sortNo
         );
 
-        return listIdeaScreens(ideaId);
+        return listIdeaScreensInternal(ideaId);
     }
 
     @Transactional
     public List<Map<String, Object>> deleteIdeaScreen(String ideaId, String screenId) {
         assertIdeaEditable(ideaId);
         jdbcTemplate.update("DELETE FROM kkumz_screen_spec WHERE id = ? AND idea_id = ?", screenId, ideaId);
-        List<Map<String, Object>> remaining = listIdeaScreens(ideaId);
+        List<Map<String, Object>> remaining = listIdeaScreensInternal(ideaId);
         jdbcTemplate.update("UPDATE kkumz_idea SET screens_json = ?::jsonb, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 toJson(remaining), ideaId);
         return remaining;
@@ -1290,6 +1529,11 @@ public class KkumzService {
     // =========================================================================
 
     public List<Map<String, Object>> listIdeaAssets(String ideaId) {
+        assertIdeaReadable(ideaId);
+        return listIdeaAssetsInternal(ideaId);
+    }
+
+    private List<Map<String, Object>> listIdeaAssetsInternal(String ideaId) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
                 SELECT id,
                        idea_id AS "ideaId",
@@ -2217,7 +2461,7 @@ public class KkumzService {
                     String.valueOf(idea.getOrDefault("title", "")),
                     String.valueOf(idea.getOrDefault("promptText", "")),
                     String.valueOf(idea.getOrDefault("category", "AUTO")),
-                    listIdeaAssets(ideaId),
+                    listIdeaAssetsInternal(ideaId),
                     catalog
             );
             if (diag.get("recommendedFeatures") instanceof List<?> rf) {
@@ -2302,7 +2546,7 @@ public class KkumzService {
                     SET idea_id = ?, site_slug = ?, site_name = ?, site_type = ?, category = ?, brand_slogan = ?, logo_svg = ?,
                         deployed_url = ?, custom_domain = ?,
                         shop_site_id = COALESCE(?, shop_site_id), cms_site_id = COALESCE(?, cms_site_id),
-                        deploy_mode = ?, active_version = ?, status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP
+                        deploy_mode = ?, active_version = ?, updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                     """,
                     ideaId, siteSlug, brandName, siteType, category, brandSlogan, logoSvg,
@@ -2315,10 +2559,11 @@ public class KkumzService {
             jdbcTemplate.update("""
                     INSERT INTO kkumz_site (
                         id, idea_id, site_slug, site_name, site_type, category, brand_slogan, logo_svg,
-                        shop_site_id, cms_site_id, deploy_mode, active_version, deployed_url, custom_domain,
+                        shop_site_id, cms_site_id, deploy_mode, active_version, published_version, published_at,
+                        deployed_url, custom_domain,
                         is_featured, visibility, like_count, comment_count, view_count,
                         owner_username, owner_display_name, status, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, FALSE, 'PUBLIC', 0, 0, 0, ?, ?, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, NULL, ?, ?, FALSE, 'PRIVATE', 0, 0, 0, ?, ?, 'DRAFT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                     """,
                     siteId, ideaId, siteSlug, brandName, siteType, category, brandSlogan, logoSvg,
                     shopSiteId, cmsSiteId, deployMode,
@@ -2327,7 +2572,7 @@ public class KkumzService {
             );
         }
 
-        List<Map<String, Object>> screenSpecs = listIdeaScreens(ideaId);
+        List<Map<String, Object>> screenSpecs = listIdeaScreensInternal(ideaId);
         List<Map<String, Object>> webideFiles = buildWebIdeFilesFromScreens(brandName, tokens, layoutSchema, screenSpecs);
         String releaseId = "rel-" + siteId + "-v" + nextVer;
         String nowTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
@@ -2342,7 +2587,7 @@ public class KkumzService {
                 ) VALUES (?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?, 'SUCCESS', ?, ?, CURRENT_TIMESTAMP)
                 """,
                 releaseId, siteId, nextVer,
-                "멀티사이트 프로비저닝 및 배포 (v" + nextVer + ")",
+                "멀티사이트 프로비저닝 초안 (v" + nextVer + ")",
                 deployMode, toJson(tokens), toJson(layoutSchema), toJson(webideFiles),
                 bundlePath, buildLog, idea.get("authorUsername")
         );
@@ -2359,7 +2604,9 @@ public class KkumzService {
 
         jdbcTemplate.update("""
                 UPDATE kkumz_idea
-                SET current_step = 6, status = 'PUBLISHED', site_type = ?, category = ?,
+                SET current_step = 6,
+                    status = CASE WHEN status = 'PUBLISHED' THEN 'PUBLISHED' ELSE 'DRAFT' END,
+                    site_type = ?, category = ?,
                     enabled_features_json = ?::jsonb, ai_intent_analysis_json = ?::jsonb,
                     selected_site_slug = ?, selected_brand_name = ?,
                     selected_logo_svg = ?, design_tokens_json = ?::jsonb,
@@ -2727,6 +2974,7 @@ public class KkumzService {
         long startNs = System.nanoTime();
         Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
         String siteId = String.valueOf(site.get("id"));
+        String ideaId = site.get("ideaId") != null ? String.valueOf(site.get("ideaId")) : null;
         String siteSlug = String.valueOf(site.get("siteSlug"));
         int currentVer = ((Number) site.get("activeVersion")).intValue();
 
@@ -2735,7 +2983,7 @@ public class KkumzService {
                 : String.valueOf(site.get("deployMode"));
         String visibility = (req != null && req.getVisibility() != null && !req.getVisibility().isBlank())
                 ? req.getVisibility().trim().toUpperCase(Locale.ROOT)
-                : String.valueOf(site.get("visibility"));
+                : "PUBLIC";
         String customDomain = (req != null && req.getCustomDomain() != null && !req.getCustomDomain().isBlank())
                 ? req.getCustomDomain().trim()
                 : String.valueOf(site.getOrDefault("customDomain", siteSlug + ".kkumz.io"));
@@ -2780,20 +3028,88 @@ public class KkumzService {
             );
         }
 
-        jdbcTemplate.update("""
-                UPDATE kkumz_site
-                SET deploy_mode = ?, visibility = ?, custom_domain = ?, active_version = ?, status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-                """,
-                deployMode, visibility, customDomain, finalVer, siteId
-        );
+        if ("PRIVATE".equalsIgnoreCase(visibility)) {
+            jdbcTemplate.update("""
+                    UPDATE kkumz_site
+                    SET deploy_mode = ?, visibility = 'PRIVATE', custom_domain = ?, active_version = ?,
+                        published_version = NULL, status = 'DRAFT', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """,
+                    deployMode, customDomain, finalVer, siteId
+            );
+            if (ideaId != null && !ideaId.isBlank() && !"null".equalsIgnoreCase(ideaId)) {
+                jdbcTemplate.update("""
+                        UPDATE kkumz_idea
+                        SET status = 'DRAFT', visibility = 'PRIVATE', updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                        """,
+                        ideaId
+                );
+            }
+        } else {
+            jdbcTemplate.update("""
+                    UPDATE kkumz_site
+                    SET deploy_mode = ?, visibility = 'PUBLIC', custom_domain = ?, active_version = ?,
+                        published_version = ?, published_at = CURRENT_TIMESTAMP, status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """,
+                    deployMode, customDomain, finalVer, finalVer, siteId
+            );
+            if (ideaId != null && !ideaId.isBlank() && !"null".equalsIgnoreCase(ideaId)) {
+                jdbcTemplate.update("""
+                        UPDATE kkumz_idea
+                        SET status = 'PUBLISHED', visibility = 'PUBLIC', current_step = 6, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                        """,
+                        ideaId
+                );
+            }
+        }
 
         createNotification(
                 String.valueOf(site.get("ownerUsername")),
                 "BUILD_DONE",
-                site.get("siteName") + " v" + finalVer + " 라이브 배포 완료",
-                "멀티사이트 런타임(/s/" + siteSlug + ")에 최신 릴리즈가 반영되었습니다.",
+                site.get("siteName") + " v" + finalVer + ("PRIVATE".equalsIgnoreCase(visibility) ? " 비공개 전환 완료" : " 라이브 배포 완료"),
+                "PRIVATE".equalsIgnoreCase(visibility)
+                        ? "사이트가 비공개 초안 모드로 전환되어 외부 노출이 중지되었습니다."
+                        : "멀티사이트 런타임(/s/" + siteSlug + ")에 최신 릴리즈가 반영되었습니다.",
                 "/s/" + siteSlug
+        );
+
+        return getSiteRuntime(siteSlug);
+    }
+
+    @Transactional
+    public Map<String, Object> unpublishSite(String siteIdOrSlug) {
+        assertSiteEditable(siteIdOrSlug);
+        Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        String siteId = String.valueOf(site.get("id"));
+        String ideaId = site.get("ideaId") != null ? String.valueOf(site.get("ideaId")) : null;
+        String siteSlug = String.valueOf(site.get("siteSlug"));
+
+        jdbcTemplate.update("""
+                UPDATE kkumz_site
+                SET status = 'DRAFT', visibility = 'PRIVATE', published_version = NULL, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                siteId
+        );
+        if (ideaId != null && !ideaId.isBlank() && !"null".equalsIgnoreCase(ideaId)) {
+            jdbcTemplate.update("""
+                    UPDATE kkumz_idea
+                    SET status = 'DRAFT', visibility = 'PRIVATE', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """,
+                    ideaId
+            );
+        }
+
+        createNotification(
+                String.valueOf(site.get("ownerUsername")),
+                "BUILD_DONE",
+                site.get("siteName") + " 비공개 전환 완료",
+                "사이트가 비공개 초안 상태(나만 보기)로 전환되어 쇼케이스 피드와 외부 접속이 차단되었습니다.",
+                "/studio"
         );
 
         return getSiteRuntime(siteSlug);
@@ -3297,11 +3613,31 @@ public class KkumzService {
         String siteId = String.valueOf(site.get("id"));
         String ideaId = String.valueOf(site.get("ideaId"));
         String siteType = String.valueOf(site.get("siteType"));
-        int activeVer = ((Number) site.get("activeVersion")).intValue();
+        int activeVer = site.get("activeVersion") instanceof Number n ? n.intValue() : 1;
 
-        jdbcTemplate.update("UPDATE kkumz_site SET view_count = view_count + 1 WHERE id = ?", siteId);
+        String currentUser = resolveCurrentUsernameFromRequest();
+        String ownerUser = site.get("ownerUsername") != null ? String.valueOf(site.get("ownerUsername")).trim() : "";
+        boolean isOwner = currentUser != null && !currentUser.isBlank() && currentUser.equalsIgnoreCase(ownerUser);
+        boolean canEdit = isOwner || (currentUser != null && !currentUser.isBlank() && canEditSite(site, currentUser));
+        boolean isPublished = isSitePubliclyPublished(site);
+        boolean canViewAsMember = canEdit || (currentUser != null && !currentUser.isBlank() && canViewSite(site, currentUser) && !isPublished);
 
-        Map<String, Object> activeRel = getLatestRelease(siteId, activeVer);
+        if (isHttpRequestActive() && !isPublished && !canViewAsMember) {
+            throw new SecurityException("[403] 아직 배포되지 않았거나 비공개 상태인 사이트입니다.");
+        }
+
+        Integer publishedVer = resolvePublishedVersion(site);
+        boolean hasUnpublishedChanges = !isPublished || (publishedVer != null && activeVer > publishedVer);
+        int targetVer = (!canViewAsMember && isPublished && publishedVer != null && publishedVer > 0)
+                ? publishedVer
+                : activeVer;
+        boolean isPreviewMode = !isPublished || (publishedVer != null && targetVer != publishedVer);
+
+        if (!canViewAsMember) {
+            jdbcTemplate.update("UPDATE kkumz_site SET view_count = view_count + 1 WHERE id = ?", siteId);
+        }
+
+        Map<String, Object> activeRel = getLatestRelease(siteId, targetVer);
         List<Map<String, Object>> allReleases = jdbcTemplate.queryForList("""
                 SELECT id, version_no AS "versionNo", release_note AS "releaseNote", deploy_mode AS "deployMode",
                        build_status AS "buildStatus", created_by AS "createdBy", created_at AS "createdAt"
@@ -3311,7 +3647,7 @@ public class KkumzService {
                 """, siteId);
 
         Map<String, Object> layoutSchema = new LinkedHashMap<>(parseJsonObject(String.valueOf(activeRel.get("layoutSchemaJson"))));
-        List<Map<String, Object>> ideaAssets = listIdeaAssets(ideaId);
+        List<Map<String, Object>> ideaAssets = listIdeaAssetsInternal(ideaId);
         List<Map<String, Object>> catalog = listFeatureCatalog();
 
         List<String> enabledFeatures = new ArrayList<>();
@@ -3356,15 +3692,22 @@ public class KkumzService {
         layoutSchema.put("featureBlocks", featureBlocks);
 
         Map<String, Object> runtime = new LinkedHashMap<>();
-        String currentUser = resolveCurrentUsernameFromRequest();
-        String ownerUser = site.get("ownerUsername") != null ? String.valueOf(site.get("ownerUsername")).trim() : "";
-        boolean isOwner = currentUser != null && !currentUser.isBlank() && currentUser.equalsIgnoreCase(ownerUser);
-        boolean canEdit = isOwner || (currentUser != null && !currentUser.isBlank() && canEditSite(site, currentUser));
         site.put("isOwner", isOwner);
         site.put("canEdit", canEdit);
+        site.put("isPublished", isPublished);
+        site.put("publishedVersion", publishedVer);
+        site.put("hasUnpublishedChanges", hasUnpublishedChanges);
+        site.put("renderedVersion", targetVer);
+        site.put("isPreviewMode", isPreviewMode);
         runtime.putAll(site);
         runtime.put("isOwner", isOwner);
         runtime.put("canEdit", canEdit);
+        runtime.put("isPublished", isPublished);
+        runtime.put("publishedVersion", publishedVer);
+        runtime.put("publishedAt", site.get("publishedAt"));
+        runtime.put("hasUnpublishedChanges", hasUnpublishedChanges);
+        runtime.put("renderedVersion", targetVer);
+        runtime.put("isPreviewMode", isPreviewMode);
         runtime.put("brandName", site.get("siteName"));
         runtime.put("tagline", site.get("brandSlogan"));
         runtime.put("site", site);
@@ -3379,7 +3722,7 @@ public class KkumzService {
         runtime.put("featureBlocks", featureBlocks);
         runtime.put("webideFiles", parseJsonList(String.valueOf(activeRel.get("webideFilesJson"))));
         runtime.put("releases", allReleases);
-        runtime.put("screenSpecs", listIdeaScreens(ideaId));
+        runtime.put("screenSpecs", listIdeaScreensInternal(ideaId));
         runtime.put("assets", ideaAssets);
         runtime.put("products", List.of());
         runtime.put("categories", List.of());
@@ -3453,9 +3796,9 @@ public class KkumzService {
         runtime.put("galleryImages", resolveGalleryAssets(layoutSchema, ideaAssets));
         runtime.put("downloadableDocs", resolveDocumentAssets(layoutSchema, ideaAssets));
 
-        runtime.put("recruits", listSiteRecruits(siteId));
-        runtime.put("teamMembers", listSiteTeamMembers(siteId));
-        runtime.put("comments", listSiteComments(siteId));
+        runtime.put("recruits", listSiteRecruitsInternal(siteId));
+        runtime.put("teamMembers", listSiteTeamMembersInternal(siteId));
+        runtime.put("comments", listSiteCommentsInternal(siteId));
 
         return runtime;
     }
@@ -3475,6 +3818,7 @@ public class KkumzService {
             throw new IllegalArgumentException("배송지 주소(receiverAddress)는 필수입니다.");
         }
         Map<String, Object> site = findSiteByIdOrSlug(siteSlug);
+        assertSiteReadable(site);
         Long shopSiteId = site.get("shopSiteId") != null ? ((Number) site.get("shopSiteId")).longValue() : null;
         if (shopSiteId == null) {
             throw new IllegalStateException("해당 사이트에 매핑된 SyncShop 스토어 ID(shopSiteId)가 없습니다: " + siteSlug);
@@ -3633,6 +3977,7 @@ public class KkumzService {
             throw new IllegalArgumentException("신청자 연락처(phone)는 필수입니다.");
         }
         Map<String, Object> site = findSiteByIdOrSlug(siteSlug);
+        assertSiteReadable(site);
         Long cmsSiteId = site.get("cmsSiteId") != null ? ((Number) site.get("cmsSiteId")).longValue() : null;
         if (cmsSiteId == null) {
             throw new IllegalStateException("해당 사이트에 매핑된 SyncCMS 사이트 ID(cmsSiteId)가 없습니다: " + siteSlug);
@@ -3777,6 +4122,9 @@ public class KkumzService {
                        s.logo_svg AS "logoSvg",
                        s.deploy_mode AS "deployMode",
                        s.active_version AS "activeVersion",
+                       s.published_version AS "publishedVersion",
+                       s.published_at AS "publishedAt",
+                       s.visibility,
                        s.deployed_url AS "deployedUrl",
                        s.custom_domain AS "customDomain",
                        s.is_featured AS "isFeatured",
@@ -3792,7 +4140,7 @@ public class KkumzService {
                        i.design_tokens_json::text AS "designTokensJson"
                 FROM kkumz_site s
                 JOIN kkumz_idea i ON i.id = s.idea_id
-                WHERE s.status = 'ACTIVE' AND s.visibility = 'PUBLIC'
+                WHERE s.status = 'ACTIVE' AND s.visibility = 'PUBLIC' AND s.published_version IS NOT NULL
                 """);
         List<Object> params = new ArrayList<>();
 
@@ -3820,20 +4168,30 @@ public class KkumzService {
             sql.append(" ORDER BY s.is_featured DESC, s.like_count DESC, s.view_count DESC");
         }
 
-        List<Map<String, Object>> sites = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        List<Map<String, Object>> rawSites = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        List<Map<String, Object>> sites = new ArrayList<>();
         String currentUser = resolveCurrentUsernameFromRequest();
-        for (Map<String, Object> item : sites) {
+        for (Map<String, Object> item : rawSites) {
+            if (!isSitePubliclyPublished(item)) {
+                continue;
+            }
             String sId = String.valueOf(item.get("id"));
             String ownerUser = item.get("ownerUsername") != null ? String.valueOf(item.get("ownerUsername")).trim() : "";
             boolean isOwner = currentUser != null && !currentUser.isBlank() && currentUser.equalsIgnoreCase(ownerUser);
             boolean canEdit = isOwner || (currentUser != null && !currentUser.isBlank() && canEditSite(item, currentUser));
+            int activeVer = item.get("activeVersion") instanceof Number n ? n.intValue() : 1;
+            Integer pubVer = resolvePublishedVersion(item);
             item.put("isOwner", isOwner);
             item.put("canEdit", canEdit);
+            item.put("isPublished", true);
+            item.put("publishedVersion", pubVer != null ? pubVer : activeVer);
+            item.put("hasUnpublishedChanges", pubVer != null && activeVer > pubVer);
             item.put("tags", parseJsonList(String.valueOf(item.remove("tagsJson"))));
             item.put("designTokens", parseJsonObject(String.valueOf(item.remove("designTokensJson"))));
-            item.put("openRecruits", listSiteRecruits(sId));
-            item.put("teamMembers", listSiteTeamMembers(sId));
-            item.put("recentComments", listSiteComments(sId));
+            item.put("openRecruits", listSiteRecruitsInternal(sId));
+            item.put("teamMembers", listSiteTeamMembersInternal(sId));
+            item.put("recentComments", listSiteCommentsInternal(sId));
+            sites.add(item);
         }
         return sites;
     }
@@ -3849,6 +4207,7 @@ public class KkumzService {
             throw new IllegalArgumentException("좋아요 처리를 위한 사용자 계정(username)은 필수입니다.");
         }
         Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        assertSiteReadable(site);
         String siteId = String.valueOf(site.get("id"));
         String user = resolvedUser.trim();
 
@@ -3877,7 +4236,12 @@ public class KkumzService {
 
     public List<Map<String, Object>> listSiteComments(String siteIdOrSlug) {
         Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        assertSiteReadable(site);
         String siteId = String.valueOf(site.get("id"));
+        return listSiteCommentsInternal(siteId);
+    }
+
+    private List<Map<String, Object>> listSiteCommentsInternal(String siteId) {
         return jdbcTemplate.queryForList("""
                 SELECT id,
                        site_id AS "siteId",
@@ -3899,6 +4263,7 @@ public class KkumzService {
         }
         String authUser = isHttpRequestActive() ? requireAuthenticatedUsername() : resolveCurrentUsernameFromRequest();
         Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        assertSiteReadable(site);
         String siteId = String.valueOf(site.get("id"));
         Map<String, String> author = resolveUserIdentity(
                 authUser != null ? authUser : req.getUsername(),
@@ -3920,12 +4285,17 @@ public class KkumzService {
         );
 
         jdbcTemplate.update("UPDATE kkumz_site SET comment_count = comment_count + 1 WHERE id = ?", siteId);
-        return listSiteComments(siteId);
+        return listSiteCommentsInternal(siteId);
     }
 
     public List<Map<String, Object>> listSiteRecruits(String siteIdOrSlug) {
         Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        assertSiteReadable(site);
         String siteId = String.valueOf(site.get("id"));
+        return listSiteRecruitsInternal(siteId);
+    }
+
+    private List<Map<String, Object>> listSiteRecruitsInternal(String siteId) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
                 SELECT id,
                        site_id AS "siteId",
@@ -3972,12 +4342,17 @@ public class KkumzService {
                 toJson(skills), headcount
         );
 
-        return listSiteRecruits(siteId);
+        return listSiteRecruitsInternal(siteId);
     }
 
     public List<Map<String, Object>> listSiteTeamMembers(String siteIdOrSlug) {
         Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        assertSiteReadable(site);
         String siteId = String.valueOf(site.get("id"));
+        return listSiteTeamMembersInternal(siteId);
+    }
+
+    private List<Map<String, Object>> listSiteTeamMembersInternal(String siteId) {
         return jdbcTemplate.queryForList("""
                 SELECT id,
                        site_id AS "siteId",
@@ -4003,6 +4378,7 @@ public class KkumzService {
         }
         String authUser = isHttpRequestActive() ? requireAuthenticatedUsername() : resolveCurrentUsernameFromRequest();
         Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        assertSiteReadable(site);
         String siteId = String.valueOf(site.get("id"));
         Map<String, String> applicant = resolveUserIdentity(
                 authUser != null ? authUser : req.getUsername(),
@@ -4034,7 +4410,7 @@ public class KkumzService {
                 "/lounge/" + site.get("siteSlug")
         );
 
-        return listSiteTeamMembers(siteId);
+        return listSiteTeamMembersInternal(siteId);
     }
 
     @Transactional
@@ -4074,7 +4450,7 @@ public class KkumzService {
                 "/lounge/" + site.get("siteSlug")
         );
 
-        return listSiteTeamMembers(siteId);
+        return listSiteTeamMembersInternal(siteId);
     }
 
     @Transactional
@@ -4116,7 +4492,7 @@ public class KkumzService {
                 "/lounge"
         );
 
-        return listSiteTeamMembers(siteId);
+        return listSiteTeamMembersInternal(siteId);
     }
 
     // =========================================================================
@@ -4204,7 +4580,7 @@ public class KkumzService {
 
         List<Map<String, Object>> recentBuilds = listAdminBuilds(null, null);
         List<Map<String, Object>> recentReports = listModerationReports(null);
-        List<Map<String, Object>> recentIdeas = listIdeas(null, null);
+        List<Map<String, Object>> recentIdeas = listAdminIdeas(null, null, null);
         List<Map<String, Object>> topSites = listAdminSites(null, null, null);
 
         int totalB = totalBuilds != null ? totalBuilds : 0;
@@ -4410,6 +4786,8 @@ public class KkumzService {
                        s.cms_site_id AS "cmsSiteId",
                        s.deploy_mode AS "deployMode",
                        s.active_version AS "activeVersion",
+                       s.published_version AS "publishedVersion",
+                       s.published_at AS "publishedAt",
                        s.deployed_url AS "deployedUrl",
                        s.custom_domain AS "customDomain",
                        s.is_featured AS "isFeatured",
@@ -4442,21 +4820,50 @@ public class KkumzService {
             params.add(kw);
         }
         sql.append(" ORDER BY s.created_at DESC");
-        return jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        List<Map<String, Object>> list = new ArrayList<>(rows.size());
+        for (Map<String, Object> raw : rows) {
+            Map<String, Object> item = new LinkedHashMap<>(raw);
+            boolean isPub = isSitePubliclyPublished(item);
+            int activeVer = item.get("activeVersion") instanceof Number n ? n.intValue() : 1;
+            Integer pubVer = resolvePublishedVersion(item);
+            item.put("isPublished", isPub);
+            item.put("publishedVersion", pubVer);
+            item.put("hasUnpublishedChanges", !isPub || (pubVer != null && activeVer > pubVer));
+            list.add(item);
+        }
+        return list;
     }
 
     @Transactional
     public Map<String, Object> updateAdminSiteStatus(String siteId, UpdateSiteStatusRequest req) {
         Map<String, Object> site = findSiteByIdOrSlug(siteId);
         String resolvedId = String.valueOf(site.get("id"));
+        String nextStatus = (req.getStatus() != null && !req.getStatus().isBlank())
+                ? req.getStatus().trim().toUpperCase(Locale.ROOT)
+                : String.valueOf(site.getOrDefault("status", "DRAFT")).toUpperCase(Locale.ROOT);
+        String nextVis = (req.getVisibility() != null && !req.getVisibility().isBlank())
+                ? req.getVisibility().trim().toUpperCase(Locale.ROOT)
+                : String.valueOf(site.getOrDefault("visibility", "PRIVATE")).toUpperCase(Locale.ROOT);
 
         if (req.getStatus() != null && !req.getStatus().isBlank()) {
             jdbcTemplate.update("UPDATE kkumz_site SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                    req.getStatus().trim().toUpperCase(Locale.ROOT), resolvedId);
+                    nextStatus, resolvedId);
         }
         if (req.getVisibility() != null && !req.getVisibility().isBlank()) {
             jdbcTemplate.update("UPDATE kkumz_site SET visibility = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                    req.getVisibility().trim().toUpperCase(Locale.ROOT), resolvedId);
+                    nextVis, resolvedId);
+        }
+        if ("PRIVATE".equals(nextVis) || "DRAFT".equals(nextStatus)) {
+            jdbcTemplate.update("UPDATE kkumz_site SET published_version = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?", resolvedId);
+        } else if ("ACTIVE".equals(nextStatus) && "PUBLIC".equals(nextVis)) {
+            jdbcTemplate.update("""
+                    UPDATE kkumz_site
+                    SET published_version = COALESCE(published_version, active_version),
+                        published_at = COALESCE(published_at, CURRENT_TIMESTAMP),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """, resolvedId);
         }
         if (req.getIsFeatured() != null) {
             jdbcTemplate.update("UPDATE kkumz_site SET is_featured = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
@@ -4556,6 +4963,7 @@ public class KkumzService {
             throw new IllegalArgumentException("신고자 계정(reporterUsername)은 필수입니다.");
         }
         Map<String, Object> site = findSiteByIdOrSlug(siteIdOrSlug);
+        assertSiteReadable(site);
         String siteId = String.valueOf(site.get("id"));
         String targetType = (req.getTargetType() != null && !req.getTargetType().isBlank())
                 ? req.getTargetType().trim().toUpperCase(Locale.ROOT)
@@ -5599,6 +6007,8 @@ public class KkumzService {
                        cms_site_id AS "cmsSiteId",
                        deploy_mode AS "deployMode",
                        active_version AS "activeVersion",
+                       published_version AS "publishedVersion",
+                       published_at AS "publishedAt",
                        deployed_url AS "deployedUrl",
                        custom_domain AS "customDomain",
                        is_featured AS "isFeatured",
@@ -5697,6 +6107,51 @@ public class KkumzService {
         boolean canEdit = isOwner || (currentUser != null && !currentUser.isBlank() && canEditIdea(row, currentUser));
         row.put("isOwner", isOwner);
         row.put("canEdit", canEdit);
+
+        Object siteIdObj = row.remove("siteId");
+        Object siteSlugObj = row.remove("siteSlug");
+        Object siteNameObj = row.remove("siteName");
+        Object siteSiteTypeObj = row.remove("siteSiteType");
+        Object siteDeployModeObj = row.remove("siteDeployMode");
+        Object siteActiveVersionObj = row.remove("siteActiveVersion");
+        Object sitePublishedVersionObj = row.remove("sitePublishedVersion");
+        Object sitePublishedAtObj = row.remove("sitePublishedAt");
+        Object siteVisibilityObj = row.remove("siteVisibility");
+        Object siteStatusObj = row.remove("siteStatus");
+        Object siteDeployedUrlObj = row.remove("siteDeployedUrl");
+        Object siteCustomDomainObj = row.remove("siteCustomDomain");
+        Object siteLikeCountObj = row.remove("siteLikeCount");
+        Object siteCommentCountObj = row.remove("siteCommentCount");
+        Object siteViewCountObj = row.remove("siteViewCount");
+
+        if (siteIdObj != null && siteSlugObj != null) {
+            Map<String, Object> siteMap = new LinkedHashMap<>();
+            siteMap.put("id", siteIdObj);
+            siteMap.put("siteSlug", siteSlugObj);
+            siteMap.put("siteName", siteNameObj != null ? siteNameObj : row.getOrDefault("selectedBrandName", row.get("title")));
+            siteMap.put("siteType", siteSiteTypeObj != null ? siteSiteTypeObj : row.get("siteType"));
+            siteMap.put("deployMode", siteDeployModeObj != null ? siteDeployModeObj : "DYNAMIC_SDUI");
+            int activeVer = siteActiveVersionObj instanceof Number n ? n.intValue() : 1;
+            siteMap.put("activeVersion", activeVer);
+            siteMap.put("publishedVersion", sitePublishedVersionObj);
+            siteMap.put("publishedAt", sitePublishedAtObj);
+            siteMap.put("visibility", siteVisibilityObj != null ? siteVisibilityObj : "PRIVATE");
+            siteMap.put("status", siteStatusObj != null ? siteStatusObj : "DRAFT");
+            siteMap.put("deployedUrl", siteDeployedUrlObj != null ? siteDeployedUrlObj : ("/s/" + siteSlugObj));
+            siteMap.put("customDomain", siteCustomDomainObj);
+            siteMap.put("likeCount", siteLikeCountObj != null ? siteLikeCountObj : 0);
+            siteMap.put("commentCount", siteCommentCountObj != null ? siteCommentCountObj : 0);
+            siteMap.put("viewCount", siteViewCountObj != null ? siteViewCountObj : 0);
+            boolean isPub = isSitePubliclyPublished(siteMap);
+            Integer pubVer = resolvePublishedVersion(siteMap);
+            siteMap.put("isPublished", isPub);
+            siteMap.put("publishedVersion", pubVer);
+            siteMap.put("hasUnpublishedChanges", !isPub || (pubVer != null && activeVer > pubVer));
+            siteMap.put("isOwner", isOwner);
+            siteMap.put("canEdit", canEdit);
+            row.put("site", siteMap);
+            row.put("deployedSites", List.of(siteMap));
+        }
     }
 
     private List<String> parseJsonStringList(String raw) {
@@ -6124,7 +6579,7 @@ public class KkumzService {
                 : String.valueOf(idea.getOrDefault("selectedSiteSlug", normalizeSlug(brandName)));
         String siteType = String.valueOf(idea.getOrDefault("siteType", "HYBRID"));
         String promptText = String.valueOf(idea.getOrDefault("promptText", ""));
-        List<Map<String, Object>> assets = listIdeaAssets(ideaId);
+        List<Map<String, Object>> assets = listIdeaAssetsInternal(ideaId);
 
         // 1. 기존 배포 릴리즈에 이미 생성된 featureBlocks / customProducts / customCmsForm이 있다면 기본값으로 보존
         try {
@@ -7262,7 +7717,7 @@ public class KkumzService {
             Long shopSiteId,
             Long cmsSiteId
     ) {
-        List<Map<String, Object>> assets = listIdeaAssets(ideaId);
+        List<Map<String, Object>> assets = listIdeaAssetsInternal(ideaId);
         if (assets.isEmpty()) {
             return;
         }
@@ -7602,7 +8057,7 @@ public class KkumzService {
 
     private String buildConciergeQuestionWithContext(String question, String ideaId, Map<String, Object> runtime) {
         StringBuilder ctx = new StringBuilder();
-        List<Map<String, Object>> assets = listIdeaAssets(ideaId);
+        List<Map<String, Object>> assets = listIdeaAssetsInternal(ideaId);
         for (Map<String, Object> a : assets) {
             if (a.get("extractedText") != null && !String.valueOf(a.get("extractedText")).isBlank()) {
                 ctx.append("[참고문서 ").append(a.get("originalName")).append("] ")

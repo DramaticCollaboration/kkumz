@@ -46,7 +46,7 @@
         </div>
         <div class="kpi-card">
           <span class="kpi-label">내 라이브 배포 사이트</span>
-          <strong class="kpi-value">{{ publishedSitesCount }}개</strong>
+          <strong class="kpi-value">{{ publishedSitesCount }}개 <small class="kpi-sub">(초안 {{ draftSitesCount }}개)</small></strong>
         </div>
         <div class="kpi-card">
           <span class="kpi-label">내 사이트 누적 응원</span>
@@ -77,6 +77,20 @@
               <div class="idea-badges">
                 <span class="type-tag">{{ formatSiteTypeLabel(idea.siteType) }}</span>
                 <span class="owner-tag">{{ idea.isOwner ? '소유자' : '협업 팀원' }}</span>
+                <span
+                  v-if="isIdeaPublished(idea)"
+                  class="publish-badge published"
+                  data-testid="ws-badge-published"
+                >
+                  배포 완료 · 전체 공개
+                </span>
+                <span
+                  v-else
+                  class="publish-badge draft"
+                  data-testid="ws-badge-draft"
+                >
+                  작성 중 · 비공개
+                </span>
               </div>
               <span class="step-tag">진행 단계: {{ idea.currentStep }} / 6단계</span>
             </div>
@@ -98,12 +112,13 @@
                 AI 스튜디오 편집
               </button>
               <button
-                v-if="idea.selectedSiteSlug"
+                v-if="resolveIdeaSiteSlug(idea)"
                 type="button"
                 class="btn-live"
-                @click="openLiveSiteInNewTab(idea.selectedSiteSlug)"
+                :data-testid="isIdeaPublished(idea) ? 'ws-btn-live-site' : 'ws-btn-preview-site'"
+                @click="openLiveSiteInNewTab(resolveIdeaSiteSlug(idea))"
               >
-                라이브 사이트 ↗
+                {{ isIdeaPublished(idea) ? '라이브 사이트 ↗' : '미리보기 ↗' }}
               </button>
             </div>
           </article>
@@ -170,7 +185,46 @@ function openLiveSiteInNewTab(slug: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-const publishedSitesCount = computed(() => mySites.value.length);
+function resolveIdeaSite(idea: any): any | null {
+  if (!idea) return null;
+  if (idea.site && idea.site.siteSlug) return idea.site;
+  if (Array.isArray(idea.deployedSites) && idea.deployedSites.length > 0) {
+    return idea.deployedSites[0];
+  }
+  return null;
+}
+
+function resolveIdeaSiteSlug(idea: any): string {
+  const site = resolveIdeaSite(idea);
+  return site?.siteSlug || idea?.selectedSiteSlug || '';
+}
+
+function isIdeaPublished(idea: any): boolean {
+  const site = resolveIdeaSite(idea);
+  if (site) {
+    if (typeof site.isPublished === 'boolean') {
+      return site.isPublished;
+    }
+    return (
+      String(site.status || '').toUpperCase() === 'ACTIVE' &&
+      String(site.visibility || '').toUpperCase() === 'PUBLIC' &&
+      site.publishedVersion !== null &&
+      site.publishedVersion !== undefined &&
+      Number(site.publishedVersion) > 0
+    );
+  }
+  return (
+    String(idea?.status || '').toUpperCase() === 'PUBLISHED' &&
+    String(idea?.visibility || '').toUpperCase() === 'PUBLIC'
+  );
+}
+
+const publishedSitesCount = computed(
+  () => mySites.value.filter((s: any) => Boolean(s.isPublished)).length,
+);
+const draftSitesCount = computed(
+  () => mySites.value.filter((s: any) => !s.isPublished).length,
+);
 const totalLikesCount = computed(() => mySites.value.reduce((acc, s) => acc + (s.likeCount || 0), 0));
 
 async function loadWorkspace() {
@@ -180,9 +234,31 @@ async function loadWorkspace() {
     pendingApplicants.value = [];
     return;
   }
-  ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
-  const allFeed = (await kkumzApi.getCommunityFeed()) || [];
-  mySites.value = allFeed.filter((s: any) => s.canEdit === true);
+  const fetchedIdeas = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
+  ideas.value = fetchedIdeas;
+
+  const siteMap = new Map<string, any>();
+  for (const idea of fetchedIdeas) {
+    const sitesFromIdea = Array.isArray(idea.deployedSites) && idea.deployedSites.length > 0
+      ? idea.deployedSites
+      : idea.site
+        ? [idea.site]
+        : [];
+    for (const s of sitesFromIdea) {
+      if (s && s.siteSlug && !siteMap.has(s.siteSlug)) {
+        const isPub =
+          typeof s.isPublished === 'boolean'
+            ? s.isPublished
+            : String(s.status || '').toUpperCase() === 'ACTIVE' &&
+              String(s.visibility || '').toUpperCase() === 'PUBLIC' &&
+              s.publishedVersion !== null &&
+              s.publishedVersion !== undefined &&
+              Number(s.publishedVersion) > 0;
+        siteMap.set(s.siteSlug, { ...s, isPublished: isPub });
+      }
+    }
+  }
+  mySites.value = Array.from(siteMap.values());
 
   const applicants: any[] = [];
   for (const site of mySites.value) {
@@ -427,6 +503,25 @@ onMounted(() => {
   padding: 4px 10px;
   border-radius: 999px;
   font-weight: 700;
+}
+.publish-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 11px;
+}
+.publish-badge.draft {
+  background: #fef3c7;
+  color: #92400e;
+}
+.publish-badge.published {
+  background: #dcfce7;
+  color: #166534;
+}
+.kpi-sub {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
 }
 .empty-ws-box {
   text-align: center;

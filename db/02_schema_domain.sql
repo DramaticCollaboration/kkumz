@@ -32,7 +32,7 @@ CREATE TABLE kkumz_idea (
     site_type VARCHAR(32) NOT NULL DEFAULT 'COMMERCE',
     category VARCHAR(64) NOT NULL DEFAULT 'AUTO',
     tags_json JSONB NOT NULL DEFAULT '[]'::jsonb,
-    visibility VARCHAR(32) NOT NULL DEFAULT 'PUBLIC',
+    visibility VARCHAR(32) NOT NULL DEFAULT 'PRIVATE',
     current_step INTEGER NOT NULL DEFAULT 1,
     selected_brand_name VARCHAR(128),
     selected_site_slug VARCHAR(64),
@@ -42,7 +42,7 @@ CREATE TABLE kkumz_idea (
     screens_json JSONB NOT NULL DEFAULT '[]'::jsonb,
     enabled_features_json JSONB NOT NULL DEFAULT '[]'::jsonb,
     ai_intent_analysis_json JSONB NOT NULL DEFAULT '{}'::jsonb,
-    status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    status VARCHAR(32) NOT NULL DEFAULT 'DRAFT',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -116,16 +116,18 @@ CREATE TABLE kkumz_site (
     cms_site_id BIGINT,
     deploy_mode VARCHAR(32) NOT NULL DEFAULT 'DYNAMIC_SDUI',
     active_version INTEGER NOT NULL DEFAULT 1,
+    published_version INTEGER DEFAULT NULL,
+    published_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     deployed_url VARCHAR(255) NOT NULL,
     custom_domain VARCHAR(255),
     is_featured BOOLEAN NOT NULL DEFAULT FALSE,
-    visibility VARCHAR(32) NOT NULL DEFAULT 'PUBLIC',
+    visibility VARCHAR(32) NOT NULL DEFAULT 'PRIVATE',
     like_count INTEGER NOT NULL DEFAULT 0,
     comment_count INTEGER NOT NULL DEFAULT 0,
     view_count INTEGER NOT NULL DEFAULT 0,
     owner_username VARCHAR(64) NOT NULL,
     owner_display_name VARCHAR(100) NOT NULL,
-    status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    status VARCHAR(32) NOT NULL DEFAULT 'DRAFT',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uk_kkumz_site_slug UNIQUE (site_slug)
@@ -279,6 +281,7 @@ CREATE TABLE kkumz_idea_asset (
 );
 
 CREATE INDEX idx_kkumz_site_type_status ON kkumz_site (site_type, status, like_count DESC);
+CREATE INDEX idx_kkumz_site_public_feed ON kkumz_site (status, visibility, published_version, is_featured DESC, like_count DESC);
 CREATE INDEX idx_kkumz_recruit_site_status ON kkumz_team_recruit (site_id, status);
 CREATE INDEX idx_kkumz_comment_site_time ON kkumz_feed_comment (site_id, created_at DESC);
 CREATE INDEX idx_kkumz_report_status ON kkumz_moderation_report (status, created_at DESC);

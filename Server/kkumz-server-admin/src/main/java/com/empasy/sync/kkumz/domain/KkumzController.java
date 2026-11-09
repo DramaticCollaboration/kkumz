@@ -278,6 +278,11 @@ public class KkumzController {
         return Result.OK(kkumzService.deploySite(siteSlug, request));
     }
 
+    @PostMapping("/sites/{siteSlug}/unpublish")
+    public Result<Map<String, Object>> unpublishSite(@PathVariable String siteSlug) {
+        return Result.OK(kkumzService.unpublishSite(siteSlug));
+    }
+
     @PostMapping("/sites/{siteSlug}/ai-fix-build")
     public Result<Map<String, Object>> aiFixBuildError(
             @PathVariable String siteSlug,

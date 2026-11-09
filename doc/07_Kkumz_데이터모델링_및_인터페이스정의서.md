@@ -108,10 +108,13 @@ erDiagram
 | `deploy_mode` | `VARCHAR(32)` | `NOT NULL DEFAULT 'DYNAMIC_SDUI'` | `DYNAMIC_SDUI` (노코드 즉시배포) / `CUSTOM_BUNDLE` (WebIDE 커스텀 번들) |
 | `shop_site_id` | `VARCHAR(64)` | `NULL` | `sync_shop.pms_product` / `oms_order` 멀티테넌트 키 |
 | `cms_site_id` | `BIGINT` | `NULL` | `sync_cms.cms_site` / `cms_content` 멀티테넌트 키 |
-| `active_version` | `INT` | `NOT NULL DEFAULT 1` | 현재 라이브 서빙 중인 릴리즈 버전 번호 |
+| `active_version` | `INT` | `NOT NULL DEFAULT 1` | 스튜디오에서 편집 중인 최신 작업 릴리즈 버전 번호 |
+| `published_version` | `INT` | `DEFAULT NULL` | 외부에 공개 배포(`deploySite`)된 라이브 릴리즈 버전 번호 (미배포 초안 시 `NULL`) |
+| `published_at` | `TIMESTAMPTZ` | `DEFAULT NULL` | 최근 라이브 공개 배포 시각 |
+| `visibility` | `VARCHAR(32)` | `NOT NULL DEFAULT 'PRIVATE'` | 공개 범위 (`PRIVATE`: 소유자 전용 초안, `PUBLIC`: 쇼케이스 전체 공개, `UNLISTED`: 링크 공개) |
 | `deployed_url` | `VARCHAR(255)` | `NOT NULL` | 플랫폼 내부 라이브 경로 (`/s/{site_slug}`) |
 | `custom_domain` | `VARCHAR(255)` | `NULL` | 와일드카드 서브도메인 (`{site_slug}.kkumz.io`) 또는 외부 도메인 |
-| `status` | `VARCHAR(32)` | `NOT NULL DEFAULT 'PUBLISHED'` | `PUBLISHED` (정상), `SUSPENDED` (모더레이션 정지), `MAINTENANCE` |
+| `status` | `VARCHAR(32)` | `NOT NULL DEFAULT 'DRAFT'` | `DRAFT` (초안/미배포), `ACTIVE` (라이브 배포 완료), `SUSPENDED` (모더레이션 정지) |
 | `visits_count` / `likes_count` | `INT` | `NOT NULL DEFAULT 0` | 누적 방문수 및 쇼케이스 피드 좋아요 수 |
 | `owner_id` / `owner_name` | `VARCHAR` | `NOT NULL` | 소유 창업가 ID 및 이름 |
 | `created_at` / `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | 최초 배포 및 수정 시각 |
@@ -163,10 +166,11 @@ erDiagram
 | **Step 4 버전** | `GET /api/v1/kkumz/ideas/{id}/versions` | 기능명세서 버전 히스토리 목록 조회 | `@PathVariable id` |
 | **Step 4 롤백** | `POST /api/v1/kkumz/ideas/{id}/rollback` | 특정 버전(`versionNo`)으로 기능명세서·화면·토큰 롤백 | `RollbackRequest` (`versionNo`) |
 | **Step 5 화면** | `POST /api/v1/kkumz/ideas/{id}/generate-screens` | 사이트 유형별 화면 블루프린트 자동 설계 | `@PathVariable id` |
-| **Step 6 배포** | `POST /api/v1/kkumz/ideas/{id}/deploy` | 2-Track(`DYNAMIC_SDUI` / `CUSTOM_BUNDLE`) 멀티사이트 배포 | `DeployRequest` (`deployMode`, `releaseNote`, `customDomain`) |
+| **Step 6 배포** | `POST /api/v1/kkumz/sites/{siteSlug}/deploy` | 2-Track(`DYNAMIC_SDUI` / `CUSTOM_BUNDLE`) 멀티사이트 라이브 공개 배포 (`published_version = active_version`) | `DeploySiteRequest` (`deployMode`, `releaseNote`, `visibility`, `customDomain`) |
+| **Step 6 비공개 전환** | `POST /api/v1/kkumz/sites/{siteSlug}/unpublish` | 배포된 사이트를 비공개 초안(`DRAFT` / `PRIVATE` / `published_version = NULL`)으로 즉시 전환 | `@PathVariable siteSlug` |
 | **멀티사이트** | `GET /api/v1/kkumz/sites` | 배포된 멀티사이트 전체 목록 조회 | - |
-| **멀티사이트** | `PUT /api/v1/kkumz/sites/{id}/status` | 멀티사이트 운영 상태 변경 (`PUBLISHED` / `SUSPENDED`) | `{ "status": "SUSPENDED" }` |
-| **라이브 런타임** | `GET /api/v1/kkumz/sites/{siteSlug}/live` | 멀티사이트 라이브 렌더링 데이터(SyncShop 상품 + SyncCMS 아티클 포함) 조회 | `@PathVariable siteSlug` |
+| **멀티사이트** | `PUT /api/v1/kkumz/sites/{id}/status` | 멀티사이트 운영 상태 변경 (`ACTIVE` / `DRAFT` / `SUSPENDED`) | `{ "status": "SUSPENDED" }` |
+| **라이브 런타임** | `GET /api/v1/kkumz/sites/{siteSlug}/runtime` | 멀티사이트 런타임 조회 (소유자/팀원은 `active_version` 프리뷰, 타 사용자/방문자는 배포 완료 시에만 `published_version` 반환, 미배포 시 `403` 차단) | `@PathVariable siteSlug` |
 | **실주문 연동** | `POST /api/v1/kkumz/sites/{siteSlug}/orders` | 라이브 사이트에서 `sync_shop.oms_order` 실제 주문 생성 | `LiveSiteOrderRequest` (`productId`, `quantity`, `receiverName`, `receiverPhone`, `receiverAddress`) |
 | **리드 폼 연동** | `POST /api/v1/kkumz/sites/{siteSlug}/forms` | 라이브 사이트에서 `sync_cms.cms_form_data` 폼 데이터 접수 | `LiveSiteFormSubmitRequest` (`formCode`, `applicantName`, `contact`, `message`) |
 | **AI 컨시어지** | `POST /api/v1/kkumz/sites/{siteSlug}/concierge` | 라이브 사이트 방문자 질문에 대한 AI 브랜드 컨시어지 응답 | `SiteConciergeRequest` (`question`) |

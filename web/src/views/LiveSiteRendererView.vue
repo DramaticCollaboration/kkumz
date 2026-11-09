@@ -14,8 +14,72 @@
       <p class="text-sm font-bold text-slate-500">공식 브랜드 스토어를 불러오는 중입니다...</p>
     </div>
 
+    <!-- 미배포 또는 비공개 사이트 접근 차단 안내 (타 사용자 / 비로그인 방문자 HTTP 403) -->
+    <div
+      v-else-if="accessBlocked"
+      class="min-h-screen flex items-center justify-center p-6 bg-slate-950 text-white"
+      data-testid="live-site-access-blocked"
+    >
+      <div class="max-w-lg w-full rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-10 text-center space-y-5 shadow-2xl">
+        <span class="inline-block px-3.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 text-xs font-extrabold tracking-wide">
+          PRIVATE DRAFT ISOLATION · HTTP 403
+        </span>
+        <h1 class="text-2xl font-extrabold text-white">
+          아직 배포되지 않았거나 비공개 상태인 사이트입니다
+        </h1>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          요청하신 <code class="px-2 py-0.5 rounded bg-slate-800 text-amber-200 font-mono">/s/{{ currentSlug }}</code> 사이트는
+          현재 소유자가 제작 중인 초안이거나 비공개 상태로 전환되어 있습니다.<br />
+          소유자가 스튜디오에서 사이트 배포를 완료한 이후에만 외부 방문자가 열람할 수 있습니다.
+        </p>
+        <div class="pt-2 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold transition"
+            data-testid="blocked-go-feed-btn"
+            @click="router.push('/feed')"
+          >
+            쇼케이스 피드로 이동
+          </button>
+          <button
+            type="button"
+            class="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 text-xs font-extrabold transition"
+            data-testid="blocked-login-owner-btn"
+            @click="openAuthModal('login', () => loadRuntime(), '이 사이트의 소유자 또는 협업 팀원 계정으로 로그인해 주세요.')"
+          >
+            소유자 계정으로 로그인
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 실제 렌더링되는 독립 브랜드 사이트 (Full-Bleed 100% Viewport) -->
     <template v-else-if="runtime">
+      <!-- 소유자/팀원 전용 미배포 초안 또는 미배포 수정본 프리뷰 안내 바 -->
+      <div
+        v-if="!runtime.isPublished || runtime.hasUnpublishedChanges"
+        class="w-full py-2.5 px-4 bg-amber-950 text-amber-100 border-b border-amber-700/60 text-xs"
+        data-testid="owner-preview-banner"
+      >
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-extrabold text-[11px]">
+              {{ !runtime.isPublished ? '비공개 초안 (나만 보기)' : `미배포 수정본 프리뷰 (작업 v${runtime.activeVersion})` }}
+            </span>
+            <span class="font-semibold">
+              현재 나만 볼 수 있는 미리보기 상태입니다. 다른 사용자에게 공개하려면 스튜디오에서 배포를 완료해 주세요.
+            </span>
+          </div>
+          <button
+            type="button"
+            class="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs transition shrink-0"
+            data-testid="owner-preview-deploy-btn"
+            @click="goStudioDeploy"
+          >
+            스튜디오에서 배포하기
+          </button>
+        </div>
+      </div>
       <!-- 상단 프로모션 어나운스먼트 바 (배지/쿠폰 있을 때) -->
       <div
         v-if="customBadge || primaryCoupon"
@@ -1122,14 +1186,16 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { kkumzApi } from '@/api/kkumzApi';
+import { useRoute, useRouter } from 'vue-router';
+import { kkumzApi, kkumzAuth, openAuthModal } from '@/api/kkumzApi';
 
 const route = useRoute();
+const router = useRouter();
 
 const currentSlug = computed(() => (route.params.siteSlug as string) || '');
 const loading = ref(false);
 const runtime = ref<any>(null);
+const accessBlocked = ref(false);
 const selectedCategoryId = ref<number | null>(null);
 
 // 정규화된 브랜드/디자인/콘텐츠 Computed 속성
@@ -1402,6 +1468,7 @@ function normalizeRuntimePayload(raw: any) {
 async function loadRuntime() {
   if (!currentSlug.value) return;
   loading.value = true;
+  accessBlocked.value = false;
   orderResult.value = null;
   formSubmitResult.value = null;
   conciergeAnswer.value = '';
@@ -1412,8 +1479,24 @@ async function loadRuntime() {
     if (runtime.value) {
       document.title = `${brandName.value} — Official Brand Site`;
     }
+  } catch (err: any) {
+    runtime.value = null;
+    const status = err?.response?.status;
+    if (status === 403 || status === 401) {
+      accessBlocked.value = true;
+    } else {
+      accessBlocked.value = true;
+    }
   } finally {
     loading.value = false;
+  }
+}
+
+function goStudioDeploy() {
+  if (runtime.value?.ideaId) {
+    router.push({ name: 'StudioView', params: { ideaId: runtime.value.ideaId } });
+  } else {
+    router.push('/studio');
   }
 }
 
@@ -1486,6 +1569,13 @@ async function handleAskConcierge() {
 
 watch(
   () => route.params.siteSlug,
+  () => {
+    loadRuntime();
+  },
+);
+
+watch(
+  () => kkumzAuth.user?.username,
   () => {
     loadRuntime();
   },

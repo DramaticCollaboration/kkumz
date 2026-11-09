@@ -42,27 +42,49 @@
         </div>
 
         <span v-if="activeSiteSlug" class="slug-pill">내 사이트 주소: /s/{{ activeSiteSlug }}</span>
+        <span
+          v-if="siteRuntime && !siteRuntime.isPublished"
+          class="publish-status-pill draft"
+          data-testid="studio-status-draft-badge"
+        >
+          비공개 초안 (나만 보기)
+        </span>
+        <span
+          v-else-if="siteRuntime && siteRuntime.isPublished"
+          class="publish-status-pill published"
+          data-testid="studio-status-published-badge"
+        >
+          배포 완료 (v{{ siteRuntime.publishedVersion || siteRuntime.activeVersion }})
+        </span>
+        <span
+          v-if="siteRuntime && siteRuntime.isPublished && siteRuntime.hasUnpublishedChanges"
+          class="publish-status-pill unpublished-diff"
+          data-testid="studio-status-unpublished-diff-badge"
+        >
+          미배포 수정본 있음 (작업 v{{ siteRuntime.activeVersion }})
+        </span>
         <button
           v-if="activeSiteSlug"
           type="button"
           class="live-btn"
+          data-testid="studio-open-site-btn"
           :disabled="busy"
           @click="router.push({ name: 'LiveSiteRendererView', params: { siteSlug: activeSiteSlug } })"
         >
-          라이브 사이트 열기 ↗
+          {{ siteRuntime && siteRuntime.isPublished ? '라이브 사이트 열기 ↗' : '내 사이트 미리보기 ↗' }}
         </button>
       </div>
     </header>
 
-    <!-- 소유권 보호(타인 프로젝트 수정 차단) 안내 화면 -->
-    <section v-if="accessDenied" class="studio-access-denied">
+    <!-- 소유권 보호(타인 프로젝트 열람·수정 차단) 안내 화면 -->
+    <section v-if="accessDenied" class="studio-access-denied" data-testid="studio-access-denied">
       <div class="access-denied-card">
         <span class="denied-badge">OWNERSHIP PROTECTION · HTTP 403</span>
-        <h2>이 프로젝트의 수정 권한이 없습니다</h2>
+        <h2>이 프로젝트의 열람 및 수정 권한이 없습니다</h2>
         <p>
           <strong>{{ accessDeniedBrand }}</strong> 프로젝트는
-          <strong>{{ accessDeniedOwner }}</strong>님이 만든 사이트입니다.<br />
-          꿈즈(Kkumz)에서는 본인이 만든 사이트, 승인된 협업 팀원, 또는 플랫폼 관리자만 AI 스튜디오에서 편집·배포할 수 있습니다.
+          <strong>{{ accessDeniedOwner }}</strong>님이 만든 프로젝트입니다.<br />
+          꿈즈(Kkumz)에서는 본인이 만든 아이디어·사이트, 승인된 협업 팀원, 또는 플랫폼 관리자만 AI 스튜디오에서 열람·편집·배포할 수 있습니다.
         </p>
         <div class="denied-actions">
           <button type="button" class="primary-btn" @click="router.push('/workspace')">
@@ -1514,6 +1536,48 @@
             </div>
           </div>
 
+          <!-- 미배포 초안 / 미배포 수정본 안내 배너 -->
+          <div
+            v-if="siteRuntime && !siteRuntime.isPublished && !liveOpenCelebration"
+            class="studio-draft-notice-bar"
+            data-testid="step4-draft-notice"
+          >
+            <div class="draft-notice-left">
+              <span class="draft-notice-chip">비공개 초안 (나만 보기)</span>
+              <p>
+                나만 볼 수 있는 사이트 초안이 생성되었습니다. 배포 단계에서 [라이브 오픈]을 실행하면 다른 사용자에게 공개됩니다.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="primary-btn"
+              :disabled="busy"
+              @click="executeQuickLiveOpen"
+            >
+              라이브 오픈 실행
+            </button>
+          </div>
+          <div
+            v-else-if="siteRuntime && siteRuntime.isPublished && siteRuntime.hasUnpublishedChanges && !liveOpenCelebration"
+            class="studio-draft-notice-bar diff"
+            data-testid="step4-unpublished-diff-notice"
+          >
+            <div class="draft-notice-left">
+              <span class="draft-notice-chip diff">미배포 수정본 있음 (작업 v{{ siteRuntime.activeVersion }})</span>
+              <p>
+                현재 방문자에게는 배포 버전(v{{ siteRuntime.publishedVersion }})이 보이며, 편집 중인 작업본(v{{ siteRuntime.activeVersion }})은 나만 미리보기로 볼 수 있습니다.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="primary-btn"
+              :disabled="busy"
+              @click="executeQuickLiveOpen"
+            >
+              수정본 라이브 재배포
+            </button>
+          </div>
+
           <div class="preview-split" v-if="siteRuntime">
             <!-- 좌측 멀티 모드 컨트롤러 (AI 대화 / 배너·컬러 직접 편집 / 상품·매거진 관리) -->
             <div class="chat-panel">
@@ -1527,7 +1591,14 @@
                   <strong>{{ formatSiteTypeLabel(siteRuntime.siteType) }}</strong>
                 </div>
                 <div class="status-row">
-                  <span>현재 버전</span>
+                  <span>외부 공개 상태</span>
+                  <strong v-if="siteRuntime.isPublished">
+                    배포 완료 (v{{ siteRuntime.publishedVersion || siteRuntime.activeVersion }})
+                  </strong>
+                  <strong v-else>비공개 초안 (나만 보기)</strong>
+                </div>
+                <div class="status-row">
+                  <span>현재 작업 버전</span>
                   <strong>v{{ siteRuntime.activeVersion }} ({{ formatDeployModeLabel(siteRuntime.deployMode) }})</strong>
                 </div>
               </div>
@@ -2730,7 +2801,11 @@
                 class="primary-btn"
                 @click="router.push({ name: 'LiveSiteRendererView', params: { siteSlug: siteRuntime.siteSlug } })"
               >
-                라이브 사이트 바로가기 (/s/{{ siteRuntime.siteSlug }}) ↗
+                {{
+                  siteRuntime.isPublished
+                    ? `라이브 사이트 바로가기 (/s/${siteRuntime.siteSlug}) ↗`
+                    : `내 사이트 미리보기 (/s/${siteRuntime.siteSlug}) ↗`
+                }}
               </button>
             </div>
           </div>
@@ -2740,7 +2815,20 @@
             <div class="preflight-left">
               <div v-if="siteRuntime.logoSvg" class="preflight-logo" v-html="renderLogoWithBrand(siteRuntime.logoSvg, siteRuntime.siteName)"></div>
               <div class="preflight-meta">
-                <strong>{{ siteRuntime.siteName }} <code>/s/{{ siteRuntime.siteSlug }}</code></strong>
+                <strong>
+                  {{ siteRuntime.siteName }} <code>/s/{{ siteRuntime.siteSlug }}</code>
+                  <span
+                    class="step6-status-pill"
+                    :class="siteRuntime.isPublished ? 'published' : 'draft'"
+                    data-testid="step6-publish-status-badge"
+                  >
+                    {{
+                      siteRuntime.isPublished
+                        ? `전체 공개 배포됨 (v${siteRuntime.publishedVersion || siteRuntime.activeVersion})`
+                        : '초안 비공개 (나만 보기)'
+                    }}
+                  </span>
+                </strong>
                 <span>
                   {{ formatSiteTypeLabel(siteRuntime.siteType) }}
                   · 상품 {{ previewProducts.length }}종
@@ -2760,6 +2848,38 @@
           <div class="deploy-grid" v-if="siteRuntime">
             <div class="deploy-box">
               <h3>배포 방식 및 운영 설정</h3>
+
+              <div class="step6-lifecycle-card" :class="siteRuntime.isPublished ? 'published' : 'draft'">
+                <div class="lifecycle-card-main">
+                  <strong>
+                    {{
+                      siteRuntime.isPublished
+                        ? `현재 상태: 전체 공개 배포됨 (배포 버전 v${siteRuntime.publishedVersion || siteRuntime.activeVersion})`
+                        : `현재 상태: 초안 비공개 (작업 버전 v${siteRuntime.activeVersion} · 나만 보기)`
+                    }}
+                  </strong>
+                  <p v-if="!siteRuntime.isPublished">
+                    나만 볼 수 있는 사이트 초안이 생성되었습니다. 아래 [새 릴리즈 버전 빌드 및 라이브 배포 실행]을 실행하면 쇼케이스 피드와 다른 사용자에게 공개됩니다.
+                  </p>
+                  <p v-else-if="siteRuntime.hasUnpublishedChanges">
+                    현재 타 사용자에게는 배포 버전(v{{ siteRuntime.publishedVersion }})이 노출되며, 작업 버전(v{{ siteRuntime.activeVersion }})에 미배포 수정본이 있습니다. 재배포를 실행하면 최신 작업본이 공개 반영됩니다.
+                  </p>
+                  <p v-else>
+                    최신 작업 버전(v{{ siteRuntime.activeVersion }})이 쇼케이스 피드 및 라이브 주소(/s/{{ siteRuntime.siteSlug }})에 정상 공개되어 있습니다.
+                  </p>
+                </div>
+                <button
+                  v-if="siteRuntime.isPublished || siteRuntime.visibility === 'PUBLIC'"
+                  type="button"
+                  class="secondary-btn"
+                  data-testid="unpublish-site-btn"
+                  :disabled="busy"
+                  @click="executeUnpublish"
+                >
+                  비공개로 전환 (나만 보기)
+                </button>
+              </div>
+
               <div class="track-cards">
                 <div
                   class="track-card"
@@ -2785,7 +2905,7 @@
                   <select v-model="deployForm.visibility" class="step1-select">
                     <option value="PUBLIC">전체 공개 (PUBLIC · 쇼케이스 피드 노출)</option>
                     <option value="UNLISTED">일부 공개 (UNLISTED · 링크 보유자만 접속)</option>
-                    <option value="PRIVATE">비공개 (PRIVATE · 관리자 전용 점검 모드)</option>
+                    <option value="PRIVATE">비공개 (PRIVATE · 소유자 전용 초안/점검 모드)</option>
                   </select>
                 </div>
                 <div class="field-group">
@@ -2807,8 +2927,20 @@
                 />
               </div>
 
-              <button type="button" class="primary-btn full" :disabled="busy" @click="executeDeploy">
-                {{ busy ? '배포 실행 중...' : '새 릴리즈 버전 빌드 및 라이브 배포 실행' }}
+              <button
+                type="button"
+                class="primary-btn full"
+                data-testid="step6-deploy-submit-btn"
+                :disabled="busy"
+                @click="executeDeploy"
+              >
+                {{
+                  busy
+                    ? '배포 실행 중...'
+                    : siteRuntime.isPublished && siteRuntime.hasUnpublishedChanges
+                      ? `미배포 수정본(v${siteRuntime.activeVersion}) 라이브 재배포 실행`
+                      : '새 릴리즈 버전 빌드 및 라이브 배포 실행'
+                }}
               </button>
             </div>
 
@@ -2818,20 +2950,28 @@
                 <div v-for="rel in siteRuntime.releases || []" :key="rel.id" class="rel-item">
                   <div class="rel-top">
                     <strong>v{{ rel.versionNo }} · {{ formatDeployModeLabel(rel.deployMode) }}</strong>
-                    <span
-                      v-if="rel.versionNo === siteRuntime.activeVersion"
-                      class="active-rel-badge"
-                    >
-                      현재 라이브
-                    </span>
-                    <button
-                      v-else
-                      type="button"
-                      class="rollback-btn"
-                      @click="rollbackRelease(rel.versionNo)"
-                    >
-                      이 버전으로 롤백
-                    </button>
+                    <div class="rel-badges">
+                      <span
+                        v-if="siteRuntime.isPublished && rel.versionNo === siteRuntime.publishedVersion"
+                        class="active-rel-badge"
+                      >
+                        배포 공개본
+                      </span>
+                      <span
+                        v-if="rel.versionNo === siteRuntime.activeVersion"
+                        class="active-rel-badge working"
+                      >
+                        현재 작업본
+                      </span>
+                      <button
+                        v-if="rel.versionNo !== siteRuntime.activeVersion"
+                        type="button"
+                        class="rollback-btn"
+                        @click="rollbackRelease(rel.versionNo)"
+                      >
+                        이 버전으로 롤백
+                      </button>
+                    </div>
                   </div>
                   <p>{{ rel.releaseNote }}</p>
                 </div>
@@ -3385,7 +3525,7 @@ async function runIntentAnalysis(applyExpandedAndAssets = false) {
         category: formStep1.value.category,
         tags: formStep1.value.tags,
         enabledFeatures: enabledFeatures.value,
-        visibility: 'PUBLIC',
+        visibility: 'PRIVATE',
       });
       ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
       selectedIdeaId.value = created.id;
@@ -3842,7 +3982,7 @@ function syncVisualFormFromRuntime(rt: any) {
   };
 
   deployForm.value.deployMode = normalized.deployMode || 'DYNAMIC_SDUI';
-  deployForm.value.visibility = currentIdea.value?.visibility || 'PUBLIC';
+  deployForm.value.visibility = (normalized.isPublished ? normalized.visibility : 'PUBLIC') || 'PUBLIC';
   deployForm.value.customDomain = normalized.customDomain || '';
 }
 
@@ -3989,8 +4129,17 @@ async function onSelectIdea(ideaId: string, allowWhenBusy = false) {
     if (activeStep.value === 2 && !allowWhenBusy) {
       await ensureStep2Candidates();
     }
-  } catch (err) {
+  } catch (err: any) {
     if (selectedIdeaId.value !== ideaId) return;
+    const status = err?.response?.status;
+    if (status === 403 || status === 401) {
+      accessDenied.value = true;
+      accessDeniedOwner.value = '소유자';
+      accessDeniedBrand.value = '비공개 프로젝트';
+      currentIdea.value = null;
+      siteRuntime.value = null;
+      return;
+    }
     reportError(
       err,
       '프로젝트 상세 정보를 불러오지 못했습니다',
@@ -4512,7 +4661,7 @@ async function createNewIdeaFromStep1() {
       category: formStep1.value.category,
       tags: formStep1.value.tags,
       enabledFeatures: enabledFeatures.value,
-      visibility: 'PUBLIC',
+      visibility: 'PRIVATE',
     });
     ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
     await onSelectIdea(created.id, true);
@@ -4583,7 +4732,7 @@ async function runOneClickAutoComplete() {
         category: formStep1.value.category,
         tags: formStep1.value.tags,
         enabledFeatures: enabledFeatures.value,
-        visibility: 'PUBLIC',
+        visibility: 'PRIVATE',
       });
       ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
       await onSelectIdea(created.id, true);
@@ -4631,7 +4780,7 @@ async function runOneClickAutoComplete() {
     ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
     activeStep.value = 4;
     showToast(
-      `⚡ 1분 자동 완성! '${visualForm.value.siteName || previewBrandName.value}' 사이트 화면이 준비되었습니다. 바로 오픈하거나 자유롭게 꾸며보세요!`,
+      '나만 볼 수 있는 사이트 초안이 생성되었습니다. 배포 단계에서 [라이브 오픈]을 실행하면 다른 사용자에게 공개됩니다.',
       'success',
     );
   } catch (err) {
@@ -4772,7 +4921,7 @@ async function confirmBrandAndNext() {
       ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
       activeStep.value = 4;
       showToast(
-        `'${finalBrandName}' 사이트 화면이 완성되었습니다! 바로 오픈하거나 문구·사진을 자유롭게 고쳐보세요.`,
+        '나만 볼 수 있는 사이트 초안이 생성되었습니다. 배포 단계에서 [라이브 오픈]을 실행하면 다른 사용자에게 공개됩니다.',
         'success',
       );
     } else {
@@ -4906,6 +5055,10 @@ async function provisionAndGoStep4() {
     currentIdea.value = await kkumzApi.getIdeaDetail(targetIdeaId);
     ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
     activeStep.value = 4;
+    showToast(
+      '나만 볼 수 있는 사이트 초안이 생성되었습니다. 배포 단계에서 [라이브 오픈]을 실행하면 다른 사용자에게 공개됩니다.',
+      'success',
+    );
   } catch (err) {
     if (selectedIdeaId.value !== targetIdeaId) return;
     reportError(
@@ -4989,7 +5142,7 @@ async function ensureIdeaForUpload(): Promise<string> {
     siteType: formStep1.value.siteType,
     category: formStep1.value.category,
     tags: formStep1.value.tags,
-    visibility: 'PUBLIC',
+    visibility: 'PRIVATE',
   });
   ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
   selectedIdeaId.value = created.id;
@@ -5670,14 +5823,50 @@ async function executeDeploy() {
       customDomain: deployForm.value.customDomain.trim() || undefined,
     });
     syncVisualFormFromRuntime(siteRuntime.value);
+    if (selectedIdeaId.value) {
+      currentIdea.value = await kkumzApi.getIdeaDetail(selectedIdeaId.value);
+      ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
+    }
     deployForm.value.releaseNote = '';
-    showToast(`v${siteRuntime.value.activeVersion} 라이브 사이트 오픈 반영이 완료되었습니다!`, 'success');
+    showToast(
+      siteRuntime.value.isPublished
+        ? `v${siteRuntime.value.publishedVersion || siteRuntime.value.activeVersion} 라이브 사이트 배포가 완료되어 전체 공개되었습니다!`
+        : `v${siteRuntime.value.activeVersion} 버전이 저장되었으며 비공개 상태로 설정되었습니다.`,
+      'success',
+    );
   } catch (err) {
     reportError(
       err,
       '라이브 배포 실행에 실패했습니다',
       '새 릴리즈 버전을 배포하는 중 오류가 발생했습니다.',
       () => executeDeploy(),
+    );
+  } finally {
+    busy.value = false;
+    busyMessage.value = '';
+  }
+}
+
+async function executeUnpublish() {
+  if (!siteRuntime.value || busy.value) return;
+  errorBanner.value = null;
+  busy.value = true;
+  busyMessage.value = '사이트를 비공개 초안(나만 보기) 상태로 전환하고 있습니다...';
+  try {
+    siteRuntime.value = await kkumzApi.unpublishSite(siteRuntime.value.siteSlug);
+    syncVisualFormFromRuntime(siteRuntime.value);
+    liveOpenCelebration.value = false;
+    if (selectedIdeaId.value) {
+      currentIdea.value = await kkumzApi.getIdeaDetail(selectedIdeaId.value);
+      ideas.value = (await kkumzApi.listIdeas({ mineOnly: true })) || [];
+    }
+    showToast('사이트가 비공개 초안(나만 보기) 상태로 전환되어 외부 노출이 즉시 중단되었습니다.', 'info');
+  } catch (err) {
+    reportError(
+      err,
+      '비공개 전환에 실패했습니다',
+      '사이트 공개 상태를 변경하는 중 오류가 발생했습니다.',
+      () => executeUnpublish(),
     );
   } finally {
     busy.value = false;
@@ -5847,6 +6036,121 @@ onMounted(() => {
   color: #c7d2fe;
   padding: 5px 12px;
   border-radius: 999px;
+}
+.publish-status-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 999px;
+  letter-spacing: -0.01em;
+}
+.publish-status-pill.draft {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+}
+.publish-status-pill.published {
+  background: rgba(16, 185, 129, 0.22);
+  color: #a7f3d0;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+}
+.publish-status-pill.unpublished-diff {
+  background: rgba(59, 130, 246, 0.22);
+  color: #bfdbfe;
+  border: 1px solid rgba(59, 130, 246, 0.45);
+}
+.studio-draft-notice-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #78350f;
+}
+.studio-draft-notice-bar.diff {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e3a8a;
+}
+.draft-notice-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.draft-notice-left p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.draft-notice-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f59e0b;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+}
+.draft-notice-chip.diff {
+  background: #2563eb;
+}
+.step6-status-pill {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.step6-status-pill.draft {
+  background: #fef3c7;
+  color: #92400e;
+}
+.step6-status-pill.published {
+  background: #dcfce7;
+  color: #166534;
+}
+.step6-lifecycle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+.step6-lifecycle-card.published {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.lifecycle-card-main strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+.lifecycle-card-main p {
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.5;
+}
+.rel-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.active-rel-badge.working {
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 .live-btn {
   padding: 8px 16px;

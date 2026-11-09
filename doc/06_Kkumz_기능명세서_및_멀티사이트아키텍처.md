@@ -65,9 +65,16 @@ flowchart TB
     AI_FIX --> LIVE
 ```
 
-#### 1) Track 1: `DYNAMIC_SDUI` (Server-Driven UI 즉시 배포)
-- 비개발자 창업가가 코드 편집 없이 즉시 사이트를 오픈할 때 사용합니다.
-- `kkumz_site_release`에 `layout_schema_json`(히어로 배너, 가치 제안 그리드, 상품 카탈로그 섹션, 매거진 섹션, 팀빌딩 배너 구성)과 `design_tokens_json`을 저장하고 즉시 `PUBLISHED` 상태로 오픈합니다.
+#### 3) 소유자 전용 초안 격리 및 작업본(`active_version`) / 배포본(`published_version`) 이원화 생명주기
+- **Step 4 스캐폴딩 (`scaffoldSite`) — 비공개 초안 생성**:
+  - 최초 프로비저닝 시 `kkumz_site`를 `status = 'DRAFT'`, `visibility = 'PRIVATE'`, `active_version = 1`, `published_version = NULL`, `published_at = NULL`로 생성합니다.
+  - 미배포 상태에서는 쇼케이스 피드(`getCommunityFeed`)에 노출되지 않으며, 오직 소유자(`owner_username`), 승인된 협업 팀원(`ACTIVE`), 플랫폼 관리자(`role_admin`)만 `/s/{siteSlug}` 미리보기 런타임을 열람할 수 있습니다 (타 사용자 및 비로그인 방문자는 `HTTP 403` 차단).
+- **스튜디오 편집 (`chatRefineSite`, `updateWebIdeFiles`, `aiFixBuildError`) — 작업 버전(`active_version`) 갱신**:
+  - 스튜디오에서 문구·컬러·상품·코드를 수정할 때마다 신규 `kkumz_site_release` 스냅샷(`vN+1`)이 생성되고 `kkumz_site.active_version`만 갱신됩니다.
+  - 이미 배포된 사이트라도 재배포 전까지는 `published_version`이 유지되므로, 외부 방문자에게는 검증된 기존 배포본(`published_version`)이 안정적으로 서빙되고 소유자/팀원에게만 최신 작업본(`active_version`)과 `hasUnpublishedChanges = true` 배지가 표시됩니다.
+- **Step 6 명시적 라이브 배포 (`deploySite`) 및 비공개 전환 (`unpublishSite`)**:
+  - 소유자가 `POST /api/v1/kkumz/sites/{siteSlug}/deploy`를 실행하면 `status = 'ACTIVE'`, `visibility = 'PUBLIC'`(또는 요청값), `published_version = active_version`, `published_at = CURRENT_TIMESTAMP`로 동기화되어 즉시 쇼케이스 피드와 외부 방문자에게 오픈됩니다.
+  - 소유자가 `POST /api/v1/kkumz/sites/{siteSlug}/unpublish`를 호출하면 `status = 'DRAFT'`, `visibility = 'PRIVATE'`, `published_version = NULL`로 전환되어 외부 노출이 즉시 중단됩니다.
 
 #### 2) Track 2: `CUSTOM_BUNDLE` (WebIDE 커스텀 코드 번들 & AI 빌드 힐러)
 - 스튜디오 내장 WebIDE에서 `webide_files_json`에 저장된 3개 핵심 파일(`HeroSection.vue`, `CustomStyles.css`, `site.config.json`)을 직접 편집하고 `POST /api/v1/kkumz/sites/{siteSlug}/webide-save`를 호출합니다.

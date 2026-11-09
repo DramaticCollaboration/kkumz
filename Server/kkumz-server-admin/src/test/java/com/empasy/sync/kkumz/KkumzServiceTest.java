@@ -59,10 +59,11 @@ class KkumzServiceTest {
     }
 
     @Test
-    @DisplayName("1. [아이디어 목록 조회] GET /api/v1/kkumz/ideas 정상 반환")
+    @DisplayName("1. [아이디어 목록 조회] GET /api/v1/kkumz/ideas 본인 소유 격리 및 비로그인 빈 목록 반환 검증")
     void testListIdeas() throws Exception {
         Map<String, Object> row = new LinkedHashMap<>();
         row.put("id", "idea-kkumz-001");
+        row.put("authorUsername", "soyeon.jeju");
         row.put("title", "제주 유기농 말차 & 다기 브랜드 스토어");
         row.put("siteType", "COMMERCE");
         row.put("tagsJson", "[\"제주말차\",\"다기\"]");
@@ -71,7 +72,15 @@ class KkumzServiceTest {
 
         when(jdbcTemplate.queryForList(anyString(), any(Object[].class))).thenReturn(List.of(row));
 
+        // 1) 비로그인 시 빈 목록 반환 (타인 아이디어 노출 원천 차단)
         mockMvc.perform(get("/api/v1/kkumz/ideas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result").isEmpty());
+
+        // 2) 로그인한 소유자(soyeon.jeju) 요청 시 본인 아이디어 정상 반환
+        mockMvc.perform(get("/api/v1/kkumz/ideas")
+                        .header("X-Access-Token", "kkumz-jwt-token-soyeon.jeju-1700000001"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.result[0].id").value("idea-kkumz-001"))
@@ -685,6 +694,287 @@ class KkumzServiceTest {
                         .header("X-Access-Token", "kkumz-jwt-token-minjun.maker-1700000011")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"instruction\":\"헤더 색상을 빨간색으로 변경\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+    }
+
+    @Test
+    @DisplayName("16. [시나리오 A] 아이디어 생성 및 scaffoldSite 실행 시 DRAFT/PRIVATE/published_version=NULL 격리 및 피드 미노출 검증")
+    void testScenarioA_DraftIsolationOnCreateAndScaffold() throws Exception {
+        Map<String, Object> draftIdea = new LinkedHashMap<>();
+        draftIdea.put("id", "idea-draft-a");
+        draftIdea.put("authorUsername", "soyeon.jeju");
+        draftIdea.put("authorDisplayName", "한소연 대표");
+        draftIdea.put("title", "성수 수제 캔들 공방");
+        draftIdea.put("promptText", "성수동 아로마 소이캔들 원데이 클래스 및 온라인 스토어");
+        draftIdea.put("siteType", "COMMERCE");
+        draftIdea.put("category", "라이프스타일 · 공방");
+        draftIdea.put("visibility", "PRIVATE");
+        draftIdea.put("status", "DRAFT");
+        draftIdea.put("selectedBrandName", "성수 아로마 아뜰리에");
+        draftIdea.put("selectedSiteSlug", "seongsu-aroma-draft");
+        draftIdea.put("selectedLogoSvg", "<svg viewBox='0 0 100 30'><text>성수 아로마</text></svg>");
+        draftIdea.put("designTokensJson", "{\"primary\":\"#14532d\"}");
+        draftIdea.put("enabledFeaturesJson", "[\"SHOP_PRODUCT_CATALOG\"]");
+
+        Map<String, Object> draftSite = new LinkedHashMap<>();
+        draftSite.put("id", "site-draft-a");
+        draftSite.put("ideaId", "idea-draft-a");
+        draftSite.put("siteSlug", "seongsu-aroma-draft");
+        draftSite.put("siteName", "성수 아로마 아뜰리에");
+        draftSite.put("siteType", "COMMERCE");
+        draftSite.put("deployMode", "DYNAMIC_SDUI");
+        draftSite.put("activeVersion", 1);
+        draftSite.put("publishedVersion", null);
+        draftSite.put("publishedAt", null);
+        draftSite.put("visibility", "PRIVATE");
+        draftSite.put("status", "DRAFT");
+        draftSite.put("ownerUsername", "soyeon.jeju");
+        draftSite.put("shopSiteId", 12L);
+
+        Map<String, Object> releaseV1 = new LinkedHashMap<>();
+        releaseV1.put("id", "rel-draft-a-v1");
+        releaseV1.put("versionNo", 1);
+        releaseV1.put("deployMode", "DYNAMIC_SDUI");
+        releaseV1.put("releaseNote", "Initial Live Multisite Provisioning");
+        releaseV1.put("designTokensJson", "{\"primary\":\"#14532d\"}");
+        releaseV1.put("layoutSchemaJson", "{\"heroTitle\":\"성수 아로마 아뜰리에\"}");
+        releaseV1.put("webideFilesJson", "[]");
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_idea"), eq("idea-draft-a")))
+                .thenReturn(List.of(draftIdea));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE idea_id = ?"), eq("idea-draft-a")))
+                .thenReturn(List.of());
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), anyString(), anyString()))
+                .thenReturn(List.of(draftSite));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site_release"), eq("site-draft-a"), eq(1)))
+                .thenReturn(List.of(releaseV1));
+
+        // 소유자(soyeon.jeju)가 스캐폴딩 실행 시 DRAFT & PRIVATE & published_version=NULL로 저장됨을 검증
+        mockMvc.perform(post("/api/v1/kkumz/ideas/idea-draft-a/scaffold-site")
+                        .header("X-Access-Token", "kkumz-jwt-token-soyeon.jeju-1700000101"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.siteSlug").value("seongsu-aroma-draft"))
+                .andExpect(jsonPath("$.result.status").value("DRAFT"))
+                .andExpect(jsonPath("$.result.visibility").value("PRIVATE"))
+                .andExpect(jsonPath("$.result.isPublished").value(false))
+                .andExpect(jsonPath("$.result.activeVersion").value(1));
+
+        verify(jdbcTemplate, times(1)).update(
+                argThat(sql -> sql != null
+                        && sql.contains("INSERT INTO kkumz_site")
+                        && sql.contains("1, NULL, NULL")
+                        && sql.contains("FALSE, 'PRIVATE'")
+                        && sql.contains("'DRAFT'")),
+                any(), eq("idea-draft-a"), anyString(), anyString(), anyString(), anyString(),
+                anyString(), any(), any(), any(), anyString(), anyString(), anyString(), any(), any()
+        );
+
+        // getCommunityFeed 조회 시 미배포(DRAFT/PRIVATE) 사이트는 필터링되어 절대 노출되지 않음
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site s"), any(Object[].class)))
+                .thenReturn(List.of(draftSite));
+        List<Map<String, Object>> feed = kkumzService.getCommunityFeed(null, null, "POPULAR", null);
+        assertTrue(feed.isEmpty(), "미배포 초안 사이트는 쇼케이스 피드에 노출되어서는 안 됩니다.");
+    }
+
+    @Test
+    @DisplayName("17. [시나리오 B] 미배포 상태에서 소유자 A는 아이디어·사이트 열람 허용(200), 타 사용자 B 및 비로그인은 차단(403/401) 검증")
+    void testScenarioB_ReadIsolationRbacForDraftIdeaAndSite() throws Exception {
+        Map<String, Object> draftIdea = new LinkedHashMap<>();
+        draftIdea.put("id", "idea-draft-b");
+        draftIdea.put("authorUsername", "soyeon.jeju");
+        draftIdea.put("authorDisplayName", "한소연 대표");
+        draftIdea.put("title", "제주 비공개 프라이빗 티룸");
+        draftIdea.put("promptText", "회원 전용 다도 예약제 티룸");
+        draftIdea.put("siteType", "CMS_SITE");
+        draftIdea.put("visibility", "PRIVATE");
+        draftIdea.put("status", "DRAFT");
+        draftIdea.put("selectedBrandName", "제주시크릿티");
+        draftIdea.put("selectedSiteSlug", "jeju-secret-tea");
+
+        Map<String, Object> draftSite = new LinkedHashMap<>();
+        draftSite.put("id", "site-draft-b");
+        draftSite.put("ideaId", "idea-draft-b");
+        draftSite.put("siteSlug", "jeju-secret-tea");
+        draftSite.put("siteName", "제주시크릿티");
+        draftSite.put("siteType", "CMS_SITE");
+        draftSite.put("deployMode", "DYNAMIC_SDUI");
+        draftSite.put("activeVersion", 1);
+        draftSite.put("publishedVersion", null);
+        draftSite.put("visibility", "PRIVATE");
+        draftSite.put("status", "DRAFT");
+        draftSite.put("ownerUsername", "soyeon.jeju");
+
+        Map<String, Object> releaseV1 = new LinkedHashMap<>();
+        releaseV1.put("id", "rel-draft-b-v1");
+        releaseV1.put("versionNo", 1);
+        releaseV1.put("deployMode", "DYNAMIC_SDUI");
+        releaseV1.put("releaseNote", "초안 생성");
+        releaseV1.put("designTokensJson", "{\"primary\":\"#0f172a\"}");
+        releaseV1.put("layoutSchemaJson", "{\"heroTitle\":\"제주시크릿티 초안\"}");
+        releaseV1.put("webideFilesJson", "[]");
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_idea"), eq("idea-draft-b")))
+                .thenReturn(List.of(draftIdea));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), eq("jeju-secret-tea"), eq("jeju-secret-tea")))
+                .thenReturn(List.of(draftSite));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site_release"), eq("site-draft-b"), eq(1)))
+                .thenReturn(List.of(releaseV1));
+        when(jdbcTemplate.queryForObject(contains("FROM sys_role r"), eq(Integer.class), anyString()))
+                .thenReturn(0);
+        when(jdbcTemplate.queryForObject(contains("FROM kkumz_team_member"), eq(Integer.class), anyString(), anyString()))
+                .thenReturn(0);
+
+        // 1) 비로그인 사용자가 아이디어 상세 조회 시도 -> 401 차단
+        mockMvc.perform(get("/api/v1/kkumz/ideas/idea-draft-b"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(401));
+
+        // 2) 타 사용자(minjun.maker)가 타인의 아이디어 상세 조회 시도 -> 403 차단
+        mockMvc.perform(get("/api/v1/kkumz/ideas/idea-draft-b")
+                        .header("X-Access-Token", "kkumz-jwt-token-minjun.maker-1700000102"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+
+        // 3) 소유자(soyeon.jeju)가 본인 아이디어 상세 조회 -> 200 성공
+        mockMvc.perform(get("/api/v1/kkumz/ideas/idea-draft-b")
+                        .header("X-Access-Token", "kkumz-jwt-token-soyeon.jeju-1700000103"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.id").value("idea-draft-b"))
+                .andExpect(jsonPath("$.result.isOwner").value(true));
+
+        // 4) 비로그인 방문자가 미배포 사이트 런타임(/sites/jeju-secret-tea/runtime) 조회 시도 -> 403 차단
+        mockMvc.perform(get("/api/v1/kkumz/sites/jeju-secret-tea/runtime"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+
+        // 5) 타 사용자(minjun.maker)가 미배포 사이트 런타임 조회 시도 -> 403 차단
+        mockMvc.perform(get("/api/v1/kkumz/sites/jeju-secret-tea/runtime")
+                        .header("X-Access-Token", "kkumz-jwt-token-minjun.maker-1700000102"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+
+        // 6) 소유자(soyeon.jeju)가 미배포 사이트 런타임 조회 -> 200 성공 및 미리보기 메타데이터 포함
+        mockMvc.perform(get("/api/v1/kkumz/sites/jeju-secret-tea/runtime")
+                        .header("X-Access-Token", "kkumz-jwt-token-soyeon.jeju-1700000103"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.siteSlug").value("jeju-secret-tea"))
+                .andExpect(jsonPath("$.result.isPublished").value(false))
+                .andExpect(jsonPath("$.result.isPreviewMode").value(true))
+                .andExpect(jsonPath("$.result.renderedVersion").value(1));
+    }
+
+    @Test
+    @DisplayName("18. [시나리오 C & D] deploySite 실행 시 공개 전환, 배포 후 추가 편집 시 작업본(active_version)과 배포본(published_version) 분리 및 비공개 전환(unpublishSite) 검증")
+    void testScenarioCAndD_DeployAndWorkingVsPublishedVersionIsolation() throws Exception {
+        Map<String, Object> siteState = new LinkedHashMap<>();
+        siteState.put("id", "site-lifecycle-cd");
+        siteState.put("ideaId", "idea-lifecycle-cd");
+        siteState.put("siteSlug", "gongju-stay");
+        siteState.put("siteName", "공주 맑은물 스테이");
+        siteState.put("siteType", "HYBRID");
+        siteState.put("deployMode", "DYNAMIC_SDUI");
+        siteState.put("activeVersion", 1);
+        siteState.put("publishedVersion", null);
+        siteState.put("visibility", "PRIVATE");
+        siteState.put("status", "DRAFT");
+        siteState.put("ownerUsername", "soyeon.jeju");
+
+        Map<String, Object> releaseV1 = new LinkedHashMap<>();
+        releaseV1.put("id", "rel-cd-v1");
+        releaseV1.put("versionNo", 1);
+        releaseV1.put("deployMode", "DYNAMIC_SDUI");
+        releaseV1.put("releaseNote", "v1 공식 오픈 배포본");
+        releaseV1.put("designTokensJson", "{\"primary\":\"#14532d\"}");
+        releaseV1.put("layoutSchemaJson", "{\"heroTitle\":\"v1 정식 배포 헤드라인\"}");
+        releaseV1.put("webideFilesJson", "[]");
+
+        Map<String, Object> releaseV2 = new LinkedHashMap<>();
+        releaseV2.put("id", "rel-cd-v2");
+        releaseV2.put("versionNo", 2);
+        releaseV2.put("deployMode", "DYNAMIC_SDUI");
+        releaseV2.put("releaseNote", "v2 스튜디오 작업 중 미배포 수정본");
+        releaseV2.put("designTokensJson", "{\"primary\":\"#1e3a8a\"}");
+        releaseV2.put("layoutSchemaJson", "{\"heroTitle\":\"v2 미배포 작업 중 헤드라인\"}");
+        releaseV2.put("webideFilesJson", "[]");
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), anyString(), anyString()))
+                .thenAnswer(inv -> List.of(new LinkedHashMap<>(siteState)));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site_release"), eq("site-lifecycle-cd"), eq(1)))
+                .thenReturn(List.of(releaseV1));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site_release"), eq("site-lifecycle-cd"), eq(2)))
+                .thenReturn(List.of(releaseV2));
+        when(jdbcTemplate.queryForObject(contains("FROM sys_role r"), eq(Integer.class), anyString()))
+                .thenReturn(0);
+        when(jdbcTemplate.queryForObject(contains("FROM kkumz_team_member"), eq(Integer.class), anyString(), anyString()))
+                .thenReturn(0);
+
+        // [시나리오 C] 소유자(soyeon.jeju)가 deploySite 실행 -> status='ACTIVE', visibility='PUBLIC', published_version=1로 전환
+        doAnswer(inv -> {
+            siteState.put("status", "ACTIVE");
+            siteState.put("visibility", "PUBLIC");
+            siteState.put("activeVersion", 1);
+            siteState.put("publishedVersion", 1);
+            return 1;
+        }).when(jdbcTemplate).update(contains("SET deploy_mode = ?, visibility = 'PUBLIC'"),
+                any(), any(), any(), any(), any());
+
+        mockMvc.perform(post("/api/v1/kkumz/sites/gongju-stay/deploy")
+                        .header("X-Access-Token", "kkumz-jwt-token-soyeon.jeju-1700000201")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"deployMode\":\"DYNAMIC_SDUI\",\"visibility\":\"PUBLIC\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.isPublished").value(true))
+                .andExpect(jsonPath("$.result.publishedVersion").value(1))
+                .andExpect(jsonPath("$.result.activeVersion").value(1))
+                .andExpect(jsonPath("$.result.hasUnpublishedChanges").value(false));
+
+        // 배포 완료 후 타 사용자(minjun.maker)의 런타임 조회가 200 성공하며 v1 배포본이 반환됨
+        mockMvc.perform(get("/api/v1/kkumz/sites/gongju-stay/runtime")
+                        .header("X-Access-Token", "kkumz-jwt-token-minjun.maker-1700000202"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.isPublished").value(true))
+                .andExpect(jsonPath("$.result.renderedVersion").value(1))
+                .andExpect(jsonPath("$.result.layoutSchema.heroTitle").value("v1 정식 배포 헤드라인"));
+
+        // [시나리오 D] 배포 완료 후 소유자(soyeon.jeju)가 스튜디오에서 추가 편집하여 active_version=2가 되었으나 아직 재배포하지 않은 상태
+        siteState.put("activeVersion", 2);
+        siteState.put("publishedVersion", 1);
+
+        // 소유자(soyeon.jeju)가 조회할 때는 최신 작업 버전(v2)과 hasUnpublishedChanges=true가 반환됨
+        mockMvc.perform(get("/api/v1/kkumz/sites/gongju-stay/runtime")
+                        .header("X-Access-Token", "kkumz-jwt-token-soyeon.jeju-1700000201"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.activeVersion").value(2))
+                .andExpect(jsonPath("$.result.publishedVersion").value(1))
+                .andExpect(jsonPath("$.result.renderedVersion").value(2))
+                .andExpect(jsonPath("$.result.hasUnpublishedChanges").value(true))
+                .andExpect(jsonPath("$.result.layoutSchema.heroTitle").value("v2 미배포 작업 중 헤드라인"));
+
+        // 반면 타 사용자(minjun.maker) 및 비로그인 방문자가 조회할 때는 미배포 작업본(v2)이 아닌 공개 배포본(v1)만 반환됨!
+        mockMvc.perform(get("/api/v1/kkumz/sites/gongju-stay/runtime")
+                        .header("X-Access-Token", "kkumz-jwt-token-minjun.maker-1700000202"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.renderedVersion").value(1))
+                .andExpect(jsonPath("$.result.layoutSchema.heroTitle").value("v1 정식 배포 헤드라인"));
+
+        // 소유자가 unpublish 실행 시 다시 DRAFT/PRIVATE로 전환되어 타 사용자 접근이 즉시 403 차단됨
+        doAnswer(inv -> {
+            siteState.put("status", "DRAFT");
+            siteState.put("visibility", "PRIVATE");
+            siteState.put("publishedVersion", null);
+            return 1;
+        }).when(jdbcTemplate).update(contains("SET status = 'DRAFT', visibility = 'PRIVATE', published_version = NULL"), anyString());
+
+        mockMvc.perform(post("/api/v1/kkumz/sites/gongju-stay/unpublish")
+                        .header("X-Access-Token", "kkumz-jwt-token-soyeon.jeju-1700000201"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.isPublished").value(false))
+                .andExpect(jsonPath("$.result.visibility").value("PRIVATE"));
+
+        mockMvc.perform(get("/api/v1/kkumz/sites/gongju-stay/runtime")
+                        .header("X-Access-Token", "kkumz-jwt-token-minjun.maker-1700000202"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
     }

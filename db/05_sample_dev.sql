@@ -565,7 +565,8 @@ INSERT INTO kkumz_screen_spec (
 -- Deployed Kkumz Multi-Sites (kkumz_site)
 INSERT INTO kkumz_site (
     id, idea_id, site_slug, site_name, site_type, category, brand_slogan, logo_svg,
-    shop_site_id, cms_site_id, deploy_mode, active_version, deployed_url, custom_domain, is_featured, visibility,
+    shop_site_id, cms_site_id, deploy_mode, active_version, published_version, published_at,
+    deployed_url, custom_domain, is_featured, visibility,
     like_count, comment_count, view_count, owner_username, owner_display_name, status, created_at, updated_at
 ) VALUES
 (
@@ -581,6 +582,8 @@ INSERT INTO kkumz_site (
     NULL,
     'CUSTOM_BUNDLE',
     2,
+    2,
+    CURRENT_TIMESTAMP - INTERVAL '1 hour',
     '/s/matcha-atelier',
     'matcha-atelier.kkumz.io',
     TRUE,
@@ -607,6 +610,8 @@ INSERT INTO kkumz_site (
     NULL,
     'DYNAMIC_SDUI',
     2,
+    2,
+    CURRENT_TIMESTAMP - INTERVAL '2 hours',
     '/s/desk-orbit',
     'desk-orbit.kkumz.io',
     TRUE,
@@ -633,6 +638,8 @@ INSERT INTO kkumz_site (
     101,
     'DYNAMIC_SDUI',
     1,
+    1,
+    CURRENT_TIMESTAMP - INTERVAL '3 hours',
     '/s/seoul-run-club',
     'seoul-run-club.kkumz.io',
     FALSE,
@@ -659,6 +666,8 @@ INSERT INTO kkumz_site (
     102,
     'CUSTOM_BUNDLE',
     1,
+    1,
+    CURRENT_TIMESTAMP - INTERVAL '30 minutes',
     '/s/bean-chronicle',
     'bean-chronicle.kkumz.io',
     TRUE,

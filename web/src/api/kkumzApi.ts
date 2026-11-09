@@ -581,6 +581,10 @@ export const kkumzApi = {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/deploy`, payload || {});
     return unwrap<any>(res);
   },
+  async unpublishSite(siteSlug: string) {
+    const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/unpublish`, {});
+    return unwrap<any>(res);
+  },
   async rollbackSiteRelease(siteSlug: string, versionNo: number) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/rollback/${versionNo}`);
     return unwrap<any>(res);

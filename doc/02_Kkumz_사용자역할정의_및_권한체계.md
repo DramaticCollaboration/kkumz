@@ -51,13 +51,14 @@ flowchart LR
 
 | 기능 영역 | 세부 액션 | `OWNER` (창업 리더) | `DEVELOPER` (개발자) | `EDITOR` (콘텐츠/디자이너) | `MD` (커머스 매니저) | 일반 방문자 |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **아이디어 & 기획** | Step 1~4 아이디어·네이밍·로고·기능명세서 편집 및 버전 롤백 | O | 열람 | O | 열람 | 공개본 열람 |
+| **아이디어 & 기획** | Step 1~4 아이디어·네이밍·로고·기능명세서 열람·편집 및 버전 롤백 | O | 열람 | O | 열람 | 차단 (`403`/`401`) |
 | **화면 & 테마** | Step 5 화면 블루프린트 및 브랜드 컬러 토큰(`design_tokens_json`) 수정 | O | O | O | X | X |
 | **WebIDE & 빌드** | Step 6 WebIDE SFC 파일(`HeroSection.vue` 등) 편집 및 AI 에러 자동 패치 | O | O | X | X | X |
-| **배포 & 도메인** | 멀티사이트 라이브 배포(`DYNAMIC_SDUI`/`CUSTOM_BUNDLE`) 및 도메인 설정 | O | O | X | X | X |
-| **커머스 (`SyncShop`)** | 라이브 사이트 상품 구성 및 실주문(`oms_order`) 내역 확인 | O | X | X | O | 상품 구매 |
-| **콘텐츠 (`SyncCMS`)** | 매거진 아티클(`cms_content`) 편집 및 고객 리드 폼(`cms_form_data`) 확인 | O | X | O | O | 아티클 열람·폼 제출 |
-| **팀빌딩 관리** | 팀원 모집 공고 등록/마감 및 지원자 승인(`ACTIVE`)/반려 | O | X | X | X | 합류 지원(`PENDING`) |
+| **배포 & 도메인** | 멀티사이트 라이브 배포(`deploySite`), 비공개 전환(`unpublishSite`) 및 도메인 설정 | O | O | X | X | X |
+| **사이트 런타임 열람** | `/s/{siteSlug}` 멀티사이트 런타임 열람 | 최신 작업본(`active_version`) 미리보기 | 최신 작업본(`active_version`) 미리보기 | 최신 작업본(`active_version`) 미리보기 | 최신 작업본(`active_version`) 미리보기 | 배포 완료(`published_version`) 시에만 열람 허용 (미배포 시 `403` 차단) |
+| **커머스 (`SyncShop`)** | 라이브 사이트 상품 구성 및 실주문(`oms_order`) 내역 확인 | O | X | X | O | 배포 사이트만 상품 구매 허용 |
+| **콘텐츠 (`SyncCMS`)** | 매거진 아티클(`cms_content`) 편집 및 고객 리드 폼(`cms_form_data`) 확인 | O | X | O | O | 배포 사이트만 아티클 열람·폼 제출 허용 |
+| **팀빌딩 관리** | 팀원 모집 공고 등록/마감 및 지원자 승인(`ACTIVE`)/반려 | O | X | X | X | 배포 사이트만 합류 지원(`PENDING`) 허용 |
 
 ---
 
@@ -124,6 +125,10 @@ flowchart LR
   3. **플랫폼 총괄관리자**: `sys_user_role`에 `role_admin` 보유
 - **타인 사이트 수정 원천 차단**:
   - 위 조건을 충족하지 않는 사용자가 타인의 아이디어/사이트에 대해 변경 API(기능 선택, 기획서 수정, AI 네이밍/로고 생성, 파일 업로드/삭제, 스캐폴딩, 채팅 리파인, WebIDE 저장, 빌드 패치, 사이트 배포/롤백, Git 프로비저닝/푸시/키회전, 팀원 모집 공고 등록, 지원자 승인/거절)를 호출할 경우 `GlobalExceptionHandler`를 통해 즉시 **`HTTP 403 Forbidden`** (비로그인 시 `HTTP 401 Unauthorized`)을 반환합니다.
+- **소유자 전용 초안 격리 및 Zero-Trust 읽기 인가 가드 (`assertIdeaReadable` / `assertSiteReadable`)**:
+  - **아이디어 열람 격리**: 사용자가 생성한 아이디어(`kkumz_idea`) 및 하위 기획서·화면설계·로고·업로드 자산은 배포 여부와 무관하게 **소유자 본인(`author_username`), 승인된 협업 팀원(`kkumz_team_member.status = 'ACTIVE'`), 플랫폼 총괄관리자(`role_admin`)만 열람 가능**합니다. 타 사용자나 비로그인 방문자가 `getIdeaDetail`, `listIdeaScreens`, `listIdeaAssets`를 호출하면 `403`/`401`로 차단됩니다.
+  - **미배포 초안 사이트 격리**: `scaffoldSite` 실행 시 사이트(`kkumz_site`)는 `status = 'DRAFT'`, `visibility = 'PRIVATE'`, `published_version = NULL`로 생성됩니다. 소유자가 명시적으로 `deploySite`를 실행하기 전까지는 쇼케이스 피드(`getCommunityFeed`)에 노출되지 않으며, 타 사용자나 비로그인 방문자가 `/s/{siteSlug}`(`getSiteRuntime` 및 주문·폼·댓글·좋아요·팀지원 등 하위 API)를 호출하면 즉시 `HTTP 403 Forbidden`으로 차단됩니다.
+  - **작업본(`active_version`)과 공개 배포본(`published_version`) 분리**: 배포 완료 이후 소유자가 스튜디오에서 추가 편집(`chatRefineSite`, `updateWebIdeFiles`, `aiFixBuildError`)을 수행하면 `active_version`만 증가합니다. 재배포 전까지 소유자/팀원은 최신 작업본(`active_version`)을 미리보기로 확인하고, 외부 방문자는 마지막으로 배포된 스냅샷(`published_version`)만 열람합니다.
 - **프론트엔드 UI 격리 (`services/kkumz/web`)**:
-  - 백엔드 조회 응답(`getCommunityFeed`, `getIdeaDetail`, `getSiteRuntime`, `listIdeas`)에 포함된 `canEdit`(boolean) 및 `isOwner`(boolean) 플래그를 기반으로, 본인이 수정 가능한 사이트에만 `내 사이트` 배지와 `[스튜디오 편집]` 버튼을 노출합니다.
-  - 타인의 아이디어 URL(`/studio/:ideaId`)로 직접 접근 시 스튜디오 캔버스를 잠그고 소유권 보호 안내 화면을 표시합니다.
+  - 백엔드 조회 응답(`getCommunityFeed`, `getIdeaDetail`, `getSiteRuntime`, `listIdeas`)에 포함된 `canEdit`, `isOwner`, `isPublished`, `publishedVersion`, `activeVersion`, `hasUnpublishedChanges` 메타데이터를 기반으로, 스튜디오 상단·Step 4·Step 6·라이브 렌더러·내 워크스페이스에서 `"비공개 초안 (나만 보기)"`와 `"배포 완료"` 상태를 명확히 분기하여 안내합니다.
+  - 타인의 아이디어 URL(`/studio/:ideaId`)이나 미배포 사이트 URL(`/s/:siteSlug`)로 직접 접근 시 `HTTP 403` 안내 카드와 로그인 전환 버튼을 표시합니다.
