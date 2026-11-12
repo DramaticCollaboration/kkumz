@@ -50,7 +50,7 @@ public class KkumzAiGatewayService {
     @Value("${kkumz.ai.llm.api-key:}")
     private String llmApiKey;
 
-    @Value("${kkumz.ai.llm.model:qwen-flash}")
+    @Value("${kkumz.ai.llm.model:morph-glm53flash}")
     private String defaultModelName;
 
     @PostConstruct
@@ -58,12 +58,12 @@ public class KkumzAiGatewayService {
         try {
             jdbcTemplate.update("""
                     UPDATE kkumz_ai_prompt_template
-                    SET model_name = 'qwen-flash', updated_at = CURRENT_TIMESTAMP
-                    WHERE model_name = 'qwen-plus' AND status = 'ACTIVE'
+                    SET model_name = 'morph-glm53flash', updated_at = CURRENT_TIMESTAMP
+                    WHERE model_name IN ('qwen-plus', 'qwen-flash') AND status = 'ACTIVE'
                     """);
             jdbcTemplate.update("""
                     UPDATE kkumz_ai_prompt_template
-                    SET model_name = 'qwen-flash',
+                    SET model_name = 'morph-glm53flash',
                         system_prompt = '당신은 브랜드 웹사이트 콘텐츠 디렉터이자 커머스 MD입니다. 브랜드명, 상세 프롬프트, 업종 카테고리, 활성화된 기능 코드 목록, 업로드된 사진 캡션 목록을 바탕으로 해당 업종에 부합하는 실제 사이트 초기 데이터(대표 상품/객실/메뉴 3종, 성수기·비수기 요금표 3행, 맞춤 예약 폼 필드 4종, 매거진 아티클 2건, FAQ 3건, 오시는 길 및 주변 코스, 방문객 리뷰 2건)를 간결하고 완성도 높은 순수 JSON 객체로 생성하십시오. 인사말이나 코드펜스 없이 첫 글자가 반드시 "{" 로 시작하고 "}" 로 끝나야 하며, 프롬프트 원문("~만들고 싶어")을 제목/서브타이틀에 그대로 복붙하지 마십시오.',
                         user_prompt_template = '브랜드명: {{brandName}}\n업종 카테고리: {{category}}\n사이트 유형: {{siteType}}\n아이디어 프롬프트: {{promptText}}\n선택된 활성 기능 목록: {{enabledFeatures}}\n업로드 자산 목록: {{assetsSummary}}\n\n[필수 JSON 출력 스키마 — 첫 글자 "{" 부터 마지막 "}" 까지 순수 JSON만 간결하게 출력]\n{\n  "brandSlogan": "감성 브랜드 슬로건 1줄",\n  "customBadge": "상단 공식 배지 문구",\n  "heroTitle": "메인 히어로 헤드라인",\n  "heroSubtitle": "히어로 서브 카피 (원문 복붙 금지)",\n  "ctaText": "히어로 메인 버튼 문구",\n  "heroStyle": "FULL_SCENIC|SPLIT_VISUAL|EDITORIAL_STORY|PROMO_COMMERCE",\n  "conciergeGreeting": "AI 컨시어지 첫 인사말",\n  "products": [\n    {"name": "상품/객실/메뉴명", "subTitle": "핵심 구성 및 매력 1줄 설명", "price": 120000, "promotionPrice": 99000, "unit": "박/세트/건", "stock": 15, "productCategoryName": "분류명", "badge": "BEST"}\n  ],\n  "articles": [\n    {"title": "매거진 제목", "categoryName": "카테고리", "summary": "핵심 요약 1~2문장"}\n  ],\n  "cmsForm": {\n    "title": "맞춤 예약·신청 폼 제목",\n    "description": "예약 안내 설명",\n    "submitText": "예약·신청 접수하기",\n    "fields": [\n      {"name": "applicantName", "label": "예약자 성함", "type": "text", "required": true},\n      {"name": "phone", "label": "연락처", "type": "tel", "required": true},\n      {"name": "visitDate", "label": "희망 방문/이용 일자", "type": "date", "required": true},\n      {"name": "optionValue", "label": "희망 객실·프로그램 선택", "type": "select", "required": true, "options": ["옵션1", "옵션2", "옵션3"]}\n    ]\n  },\n  "featureBlocks": {\n    "pricingMatrix": [\n      {"tier": "구분명", "capacity": "기준 인원", "offPeakWeekday": "100,000원", "offPeakWeekend": "130,000원", "peakSeason": "160,000원", "note": "포함 혜택"}\n    ],\n    "faqItems": [{"q": "자주 묻는 질문", "a": "친절한 답변"}],\n    "locationGuide": {"address": "주소 안내", "parking": "주차 안내", "publicTransit": "대중교통 안내", "nearbyCourses": [{"name": "주변 명소", "distance": "소요시간", "desc": "설명"}]},\n    "reviews": [{"author": "김*연 고객님", "rating": 5, "tag": "재방문 추천", "date": "2026.10", "comment": "실제 방문 후기 1~2문장"}]\n  }\n}',
                         updated_at = CURRENT_TIMESTAMP

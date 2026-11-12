@@ -239,7 +239,7 @@ CREATE TABLE kkumz_ai_prompt_template (
     template_code VARCHAR(64) NOT NULL UNIQUE,
     template_name VARCHAR(128) NOT NULL,
     stage_type VARCHAR(32) NOT NULL,
-    model_name VARCHAR(64) NOT NULL DEFAULT 'qwen-plus',
+    model_name VARCHAR(64) NOT NULL DEFAULT 'morph-glm53flash',
     temperature NUMERIC(3,2) NOT NULL DEFAULT 0.70,
     system_prompt TEXT NOT NULL,
     user_prompt_template TEXT NOT NULL DEFAULT '',
