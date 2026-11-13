@@ -69,10 +69,10 @@
   function getTableAction(record) {
     return [
       {
-        label: '검색',
+        label: '복원',
         icon: 'ant-design:redo-outlined',
         popConfirm: {
-          title: '검색 확인',
+          title: '선택한 항목을 복원하시겠습니까?',
           confirm: handleRevert.bind(null, record),
         },
       },

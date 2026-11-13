@@ -34,6 +34,8 @@
           {
             okText: t('common.okText'),
             cancelText: t('common.cancelText'),
+            placement: 'topRight',
+            getPopupContainer: () => document.body,
           },
           { ...props, ...unref(attrs) }
         );

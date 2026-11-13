@@ -102,7 +102,8 @@
               popConfirm.overlayClassName = `${overlayClassName ? overlayClassName : ''} ${prefixCls}-popconfirm`;
             }
             return {
-              getPopupContainer: () => unref((table as any)?.wrapRef.value) ?? document.body,
+              getPopupContainer: () => document.body,
+              placement: popConfirm?.placement || 'topRight',
               type: 'link',
               size: 'small',
               ...action,
@@ -124,8 +125,8 @@
           if (popConfirm) {
             const overlayClassName = popConfirm.overlayClassName;
             popConfirm.overlayClassName = `${overlayClassName ? overlayClassName : ''} ${prefixCls}-popconfirm`;
-          }
-          if (popConfirm) {
+            popConfirm.placement = popConfirm.placement || 'left';
+            popConfirm.getPopupContainer = popConfirm.getPopupContainer || (() => document.body);
             popConfirm.confirm = handelConfirm(popConfirm?.confirm);
           }
           return {
@@ -246,11 +247,28 @@
       }
     }
     &-popconfirm {
+      width: max-content;
+      max-width: 280px;
+
+      .ant-popover-inner {
+        width: max-content;
+        max-width: 280px;
+      }
+
+      .ant-popconfirm-message-title,
+      .ant-popconfirm-title,
+      .ant-popover-message-title {
+        white-space: pre-line;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+        line-height: 1.5;
+      }
+
       .ant-popconfirm-buttons {
         min-width: 120px;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-end;
       }
     }
     &-dropdown {

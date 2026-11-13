@@ -34,9 +34,7 @@
   import { getQuitList, putCancelQuit, deleteRecycleBin } from './user.api';
   import { useMessage } from '/@/hooks/web/useMessage';
   import { useListPage } from '/@/hooks/system/useListPage';
-  import { Modal } from 'ant-design-vue';
-  import { defHttp } from '/@/utils/http/axios';
-
+  
   const { createConfirm } = useMessage();
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
@@ -72,9 +70,9 @@
    * 퇴사 이벤트 일괄 취소
    */
   function batchHandleRevert() {
-    Modal.confirm({
-      title: '사직 취소',
-      content: '사직인계를 취소하면 사직서도 삭제됩니다.',
+    createConfirm({
+      title: '퇴사 취소',
+      content: '선택한 사용자의 퇴사 처리를 취소하고 정상 계정으로 복원하시겠습니까?',
       okText: '확인',
       cancelText: '취소',
       onOk: () => {
@@ -92,19 +90,13 @@
   function getTableAction(record) {
     return [
       {
-        label: '사직 취소',
+        label: '퇴사 취소',
         icon: 'ant-design:redo-outlined',
         popConfirm: {
-          title: '사직을 취소할지 여부, 사직을 취소할 사람도 삭제됩니다.',
+          title: '선택한 사용자의 퇴사 처리를 취소하고\n정상 계정으로 복원하시겠습니까?',
           confirm: handleCancelQuit.bind(null, record),
         },
       },
     ];
   }
 </script>
-
-<style scoped lang="less">
-:deep(.ant-popover-inner-content){
-  width: 185px !important;
-}
-</style>

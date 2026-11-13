@@ -108,8 +108,8 @@
   function batchHandleDelete() {
     createConfirm({
       iconType: 'warning',
-      title: '삭제',
-      content: '영구적으로 삭제하시겠습니까?한번 삭제하면 복구할 수 없습니다!',
+      title: '영구 삭제',
+      content: '선택한 사용자를 영구 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.',
       onOk: () => handleDelete({ id: toRaw(unref(checkedKeys)).join(',') }),
       onCancel() {},
     });
@@ -118,10 +118,10 @@
   function getTableAction(record) {
     return [
       {
-        label: '검색',
+        label: '복원',
         icon: 'ant-design:redo-outlined',
         popConfirm: {
-          title: '복원 확인',
+          title: '선택한 사용자를 복원하시겠습니까?',
           confirm: handleRevert.bind(null, record),
         },
       },
@@ -129,7 +129,7 @@
         label: '영구 삭제',
         icon: 'ant-design:scissor-outlined',
         popConfirm: {
-          title: '삭제 하시겠습니까?',
+          title: '선택한 사용자를 영구 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.',
           confirm: handleDelete.bind(null, record),
         },
       },

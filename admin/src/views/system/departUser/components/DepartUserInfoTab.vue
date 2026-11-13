@@ -130,7 +130,6 @@
         // 초기화 담당부서
         nextDepartOptions: { value: props.data?.key, label: props.data?.title },
         record: {
-          activitiSync: 1,
           userIdentity: 1,
           selecteddeparts: departId.value,
         },
@@ -181,7 +180,7 @@
       await unlinkDepartUser(selectedRowKeys, true);
       // 일괄 삭제 성공 후 선택 지우기
       clearSelection();
-    } catch (e) { console.debug("작업 처리 중 예외 발생:", e); }
+    } catch (e) {}
   }
 
   // 사용자를 성공적으로 선택했습니다
@@ -222,7 +221,7 @@
         label: '연결 해제',
         color: 'error',
         popConfirm: {
-          title: '정말로 협회를 취소하시겠습니까?',
+          title: '선택한 사용자의 부서 연결을 해제하시겠습니까?',
           confirm: unlinkDepartUser.bind(null, [record.id], false),
         },
       },
