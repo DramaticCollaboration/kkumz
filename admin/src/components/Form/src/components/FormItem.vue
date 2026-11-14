@@ -14,6 +14,7 @@
   import { createPlaceholderMessage, setComponentRuleType } from '../helper';
   import { upperFirst, cloneDeep } from 'lodash-es';
   import { useItemLabelWidth } from '../hooks/useLabelWidth';
+  import { normalizeSearchColProps } from '../hooks/useAdvanced';
   import { useI18n } from '/@/hooks/web/useI18n';
   import { useAppInject } from '/@/hooks/web/useAppInject';
   import { usePermission } from '/@/hooks/web/usePermission';
@@ -452,14 +453,14 @@
           return null;
         }
 
-        const { baseColProps = {} } = props.formProps;
+        const { baseColProps = {}, showAdvancedButton } = props.formProps;
         const { getIsMobile } = useAppInject();
-        let realColProps: Recordable = { span: 24, ...baseColProps, ...colProps };
-        if (unref(getIsMobile)) {
-          realColProps = { ...realColProps, span: 24, xs: 24, sm: 24, md: 24 };
-        } else if (colProps['span']) {
-          ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].forEach((name) => delete realColProps[name]);
-        }
+        const realColProps = normalizeSearchColProps(
+          baseColProps,
+          colProps,
+          Boolean(showAdvancedButton),
+          Boolean(unref(getIsMobile))
+        );
         const { isIfShow, isShow } = getShow();
         const values = unref(getValues);
 

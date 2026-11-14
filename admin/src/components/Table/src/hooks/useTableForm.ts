@@ -12,10 +12,21 @@ export function useTableForm(
 ) {
   const getFormProps = computed((): Partial<FormProps> => {
     const { formConfig } = unref(propsRef);
-    const { submitButtonOptions, autoSubmitOnEnter} = formConfig || {};
+    const { submitButtonOptions, autoSubmitOnEnter } = formConfig || {};
     return {
-      showAdvancedButton: true,
+      baseColProps: {
+        xs: 24,
+        sm: 12,
+        md: 8,
+        lg: 6,
+        xl: 6,
+        xxl: 6,
+      },
+      rowProps: { gutter: 8 },
+      autoAdvancedCol: 3,
+      alwaysShowLines: 1,
       ...formConfig,
+      showAdvancedButton: true,
       submitButtonOptions: { loading: unref(getLoading), ...submitButtonOptions },
       compact: true,
       autoSubmitOnEnter: autoSubmitOnEnter,

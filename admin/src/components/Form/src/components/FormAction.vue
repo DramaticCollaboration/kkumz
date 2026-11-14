@@ -1,30 +1,31 @@
 <template>
   <a-col v-bind="actionColOpt" v-if="showActionButtonGroup">
     <div style="width: 100%" :style="{ textAlign: actionColOpt.style.textAlign }">
-      <FormItem>
-        <slot name="resetBefore"></slot>
-        <Button type="default" class="mr-2" v-bind="getResetBtnOptions" @click="resetAction" v-if="showResetButton">
-          {{ getResetBtnOptions.text }}
-        </Button>
+      <FormItem :wrapper-col="{ span: 24 }">
+        <div class="inline-flex items-center justify-end flex-nowrap whitespace-nowrap">
+          <slot name="submitBefore"></slot>
+          <Button type="primary" class="mr-2" v-bind="getSubmitBtnOptions" @click="submitAction" v-if="showSubmitButton">
+            {{ getSubmitBtnOptions.text }}
+          </Button>
 
-        <slot name="submitBefore"></slot>
-        <Button type="primary" class="mr-2" v-bind="getSubmitBtnOptions" @click="submitAction" v-if="showSubmitButton">
-          {{ getSubmitBtnOptions.text }}
-        </Button>
+          <slot name="resetBefore"></slot>
+          <Button type="default" class="mr-2" v-bind="getResetBtnOptions" @click="resetAction" v-if="showResetButton">
+            {{ getResetBtnOptions.text }}
+          </Button>
 
-        <slot name="advanceBefore"></slot>
-        <Button type="link" size="small" @click="toggleAdvanced" v-if="showAdvancedButton && !hideAdvanceBtn">
-          {{ isAdvanced ? $t('component.form.putAway', '닫기') : $t('component.form.unfold', '열기') }}
-          <BasicArrow class="ml-1" :expand="!isAdvanced" up />
-        </Button>
-        <slot name="advanceAfter"></slot>
+          <slot name="advanceBefore"></slot>
+          <Button type="link" size="small" class="!px-1" @click="toggleAdvanced" v-if="showAdvancedButton && !hideAdvanceBtn">
+            {{ toggleButtonText }}
+            <BasicArrow class="ml-1" :expand="!isAdvanced" up />
+          </Button>
+          <slot name="advanceAfter"></slot>
+        </div>
       </FormItem>
     </div>
   </a-col>
 </template>
 <script lang="ts">
   import type { ColEx } from '../types/index';
-  //import type { ButtonProps } from 'ant-design-vue/es/button/buttonTypes';
   import { defineComponent, computed, unref, PropType } from 'vue';
   import { Form, Col } from 'ant-design-vue';
   import { Button, ButtonProps } from '/@/components/Button';
@@ -32,7 +33,6 @@
   import { useFormContext } from '../hooks/useFormContext';
   import { useI18n } from '/@/hooks/web/useI18n';
   import { useAppInject } from '/@/hooks/web/useAppInject';
-  import { $t } from '/@/locales';
   import { propTypes } from '/@/utils/propTypes';
 
   type ButtonOptions = Partial<ButtonProps> & { text: string };
@@ -63,6 +63,7 @@
         default: () => ({}),
       },
       actionSpan: propTypes.number.def(6),
+      hiddenFilterCount: propTypes.number.def(0),
       isAdvanced: propTypes.bool,
       hideAdvanceBtn: propTypes.bool,
       layout: propTypes.oneOf(['horizontal', 'vertical', 'inline']).def('horizontal'),
@@ -72,15 +73,41 @@
       const { t } = useI18n();
       const { getIsMobile } = useAppInject();
 
+      function resolveText(key: string, fallback: string): string {
+        const translated = t(key);
+        if (!translated || translated === key || translated.includes('.')) {
+          return fallback;
+        }
+        return translated;
+      }
+
       const actionColOpt = computed(() => {
         const { showAdvancedButton, actionSpan: span, actionColOptions } = props;
         const actionSpan = 24 - span;
-        const advancedSpanObj = showAdvancedButton ? { span: actionSpan < 6 ? 24 : actionSpan } : {};
-        const defaultSpan = props.layout == 'inline' ? {} : { span: showAdvancedButton ? 6 : 4 };
+        const resolvedSpan = actionSpan < 6 ? 24 : actionSpan;
+        if (showAdvancedButton) {
+          const {
+            xs: _xs,
+            sm: _sm,
+            md: _md,
+            lg: _lg,
+            xl: _xl,
+            xxl: _xxl,
+            span: _ignoredSpan,
+            style: customStyle,
+            ...restActionCol
+          } = (actionColOptions || {}) as Recordable;
+          return {
+            ...restActionCol,
+            ...(props.layout === 'inline' ? {} : { span: resolvedSpan }),
+            style: { ...(customStyle || {}), textAlign: 'right' },
+            ...(unref(getIsMobile) ? { span: 24, xs: 24, sm: 24, md: 24 } : {}),
+          } as Partial<ColEx>;
+        }
+        const defaultSpan = props.layout == 'inline' ? {} : { span: 4 };
         const actionColOpt: Partial<ColEx> = {
           style: { textAlign: 'right' },
           ...defaultSpan,
-          ...advancedSpanObj,
           ...actionColOptions,
           ...(unref(getIsMobile) ? { span: 24, xs: 24, sm: 24, md: 24 } : {}),
         };
@@ -91,7 +118,7 @@
       const getResetBtnOptions = computed((): ButtonOptions => {
         return Object.assign(
           {
-            text: $t('common.resetText', '초기화'),
+            text: resolveText('common.resetText', '초기화'),
             preIcon: 'ic:baseline-restart-alt',
           },
           props.resetButtonOptions
@@ -102,11 +129,20 @@
         return Object.assign(
           {},
           {
-            text: $t('common.queryText', '검색'),
+            text: resolveText('common.queryText', '검색'),
             preIcon: 'ant-design:search-outlined',
           },
           props.submitButtonOptions
         );
+      });
+
+      const toggleButtonText = computed(() => {
+        if (props.isAdvanced) {
+          return resolveText('component.form.putAway', '접기');
+        }
+        const baseText = resolveText('component.form.unfold', '펼치기');
+        const count = Number(props.hiddenFilterCount || 0);
+        return count > 0 ? `${baseText} (${count})` : baseText;
       });
 
       function toggleAdvanced() {
@@ -115,10 +151,10 @@
 
       return {
         t,
-        $t,
         actionColOpt,
         getResetBtnOptions,
         getSubmitBtnOptions,
+        toggleButtonText,
         toggleAdvanced,
         ...useFormContext(),
       };

@@ -14,14 +14,14 @@ INSERT INTO sys_permission (
 
 -- 2. 사이트·배포
 ('perm-kkumz-dom-010', NULL, '사이트·배포', '/deployment', 'layouts/default/index', TRUE, 'KkumzDeploymentLayout', '/deployment/sites', 0, NULL, '1', 20.0, TRUE, 'ant-design:rocket-outlined', FALSE, FALSE, FALSE, FALSE, '멀티사이트 도메인 운영 상태 및 WebIDE 샌드박스 빌드 파이프라인 관제'),
-('perm-kkumz-dom-011', 'perm-kkumz-dom-010', '생성 사이트 목록', '/deployment/sites', 'deployment/sites/index', TRUE, 'KkumzDeploymentSitesView', NULL, 1, 'kkumz:deployment:sites', '1', 20.1, FALSE, 'ant-design:global-outlined', TRUE, TRUE, FALSE, FALSE, '생성된 멀티사이트 도메인, 배포 버전, 커머스/CMS 연동 및 운영 상태 제어'),
-('perm-kkumz-dom-012', 'perm-kkumz-dom-010', '빌드·배포 로그', '/deployment/builds', 'deployment/builds/index', TRUE, 'KkumzDeploymentBuildsView', NULL, 1, 'kkumz:deployment:builds', '1', 20.2, FALSE, 'ant-design:code-outlined', TRUE, TRUE, FALSE, FALSE, '샌드박스 빌드 실행 이력, 빌드 소요시간, 에러 로그 및 AI 패치 내역 조회'),
-('perm-kkumz-dom-013', 'perm-kkumz-dom-010', 'API 연동·액세스키', '/deployment/api-keys', 'deployment/api-keys/index', TRUE, 'KkumzDeploymentApiKeysView', NULL, 1, 'kkumz:deployment:apikeys', '1', 20.3, FALSE, 'ant-design:key-outlined', TRUE, TRUE, FALSE, FALSE, 'SyncCMS·SyncShop 백엔드 연동 Access Key 설정 및 인바운드 API 키 발급·회전·진단 관리'),
+('perm-kkumz-dom-011', 'perm-kkumz-dom-010', '사이트 목록', '/deployment/sites', 'deployment/sites/index', TRUE, 'KkumzDeploymentSitesView', NULL, 1, 'kkumz:deployment:sites', '1', 20.1, FALSE, 'ant-design:global-outlined', TRUE, TRUE, FALSE, FALSE, '생성된 멀티사이트 도메인, 배포 버전, 커머스/CMS 연동 및 운영 상태 제어'),
+('perm-kkumz-dom-012', 'perm-kkumz-dom-010', '빌드 로그', '/deployment/builds', 'deployment/builds/index', TRUE, 'KkumzDeploymentBuildsView', NULL, 1, 'kkumz:deployment:builds', '1', 20.2, FALSE, 'ant-design:code-outlined', TRUE, TRUE, FALSE, FALSE, '샌드박스 빌드 실행 이력, 빌드 소요시간, 에러 로그 및 AI 패치 내역 조회'),
+('perm-kkumz-dom-013', 'perm-kkumz-dom-010', 'API 키', '/deployment/api-keys', 'deployment/api-keys/index', TRUE, 'KkumzDeploymentApiKeysView', NULL, 1, 'kkumz:deployment:apikeys', '1', 20.3, FALSE, 'ant-design:key-outlined', TRUE, TRUE, FALSE, FALSE, 'SyncCMS·SyncShop 백엔드 연동 Access Key 설정 및 인바운드 API 키 발급·회전·진단 관리'),
 
 -- 3. 커뮤니티
 ('perm-kkumz-dom-020', NULL, '커뮤니티', '/community', 'layouts/default/index', TRUE, 'KkumzCommunityLayout', '/community/projects', 0, NULL, '1', 30.0, TRUE, 'ant-design:usergroup-add-outlined', FALSE, FALSE, FALSE, FALSE, '창업 쇼케이스 큐레이션, 팀원 모집 공고 및 커뮤니티 신고 모더레이션'),
 ('perm-kkumz-dom-021', 'perm-kkumz-dom-020', '쇼케이스·팀빌딩', '/community/projects', 'community/projects/index', TRUE, 'KkumzCommunityProjectsView', NULL, 1, 'kkumz:community:projects', '1', 30.1, FALSE, 'ant-design:star-outlined', TRUE, TRUE, FALSE, FALSE, '추천 프로젝트 큐레이션 지정, 팀원 모집 공고 및 팀 합류 매칭 현황 관리'),
-('perm-kkumz-dom-022', 'perm-kkumz-dom-020', '신고·제재 관리', '/community/moderation', 'community/moderation/index', TRUE, 'KkumzCommunityModerationView', NULL, 1, 'kkumz:community:moderation', '1', 30.2, FALSE, 'ant-design:safety-certificate-outlined', TRUE, TRUE, FALSE, FALSE, '게시물·댓글·사이트 신고 접수 심사, 블라인드 처분 및 계정 제재 관리');
+('perm-kkumz-dom-022', 'perm-kkumz-dom-020', '신고 관리', '/community/moderation', 'community/moderation/index', TRUE, 'KkumzCommunityModerationView', NULL, 1, 'kkumz:community:moderation', '1', 30.2, FALSE, 'ant-design:safety-certificate-outlined', TRUE, TRUE, FALSE, FALSE, '게시물·댓글·사이트 신고 접수 심사, 블라인드 처분 및 계정 제재 관리');
 
 INSERT INTO sys_role_permission (id, role_id, permission_id) VALUES
 ('srp_kkumz_dom_001', 'role_admin', 'perm-kkumz-dom-001'),

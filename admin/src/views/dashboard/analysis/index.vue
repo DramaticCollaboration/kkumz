@@ -271,112 +271,6 @@
           </div>
         </Card>
       </div>
-
-      <!-- 3. 라이브 멀티사이트 운영 현황 & 최근 스튜디오 아이디어 현황 -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <Card title="라이브 멀티사이트 운영 및 트래픽 현황" size="small" :loading="loading" class="lg:col-span-7 !rounded-xl shadow-xs">
-          <template #extra>
-            <a-button type="link" size="small" class="!px-0" @click="go('/deployment/sites')">멀티사이트 관제</a-button>
-          </template>
-          <div v-if="topSiteItems.length" class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="border-b border-slate-200 text-[11px] text-slate-500 font-semibold">
-                  <th class="py-2 px-2">브랜드</th>
-                  <th class="py-2 px-2 text-center">유형</th>
-                  <th class="py-2 px-2 text-center">배포 방식</th>
-                  <th class="py-2 px-2 text-right">조회수</th>
-                  <th class="py-2 px-2 text-right">좋아요</th>
-                  <th class="py-2 px-2 text-right">피드백</th>
-                  <th class="py-2 px-2 text-center">상태</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 text-xs">
-                <tr v-for="site in topSiteItems" :key="site.id" class="hover:bg-slate-50/80 transition-colors">
-                  <td class="py-2.5 px-2">
-                    <div class="flex items-center gap-2.5">
-                      <div
-                        class="w-20 h-7 rounded bg-slate-50 border border-slate-200 flex items-center justify-center p-0.5 overflow-hidden shrink-0"
-                        v-html="site.logoSvg"
-                      ></div>
-                      <div class="min-w-0">
-                        <div class="font-bold text-slate-800 truncate">{{ site.siteName || site.brandName }}</div>
-                        <div class="text-[11px] font-mono text-slate-700 truncate">/s/{{ site.siteSlug }}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="py-2.5 px-2 text-center">
-                    <Tag :color="site.siteType === 'COMMERCE' ? 'blue' : site.siteType === 'HYBRID' ? 'default' : 'green'" class="!m-0">
-                      {{ formatSiteTypeShort(site.siteType) }}
-                    </Tag>
-                  </td>
-                  <td class="py-2.5 px-2 text-center">
-                    <Tag :color="site.deployMode === 'CUSTOM_BUNDLE' ? 'default' : 'default'" class="!m-0">
-                      {{ formatDeployMode(site.deployMode) }} v{{ site.activeVersion || 1 }}
-                    </Tag>
-                  </td>
-                  <td class="py-2.5 px-2 text-right font-mono tabular-nums font-semibold text-slate-700">
-                    {{ (site.viewCount || 0).toLocaleString() }}
-                  </td>
-                  <td class="py-2.5 px-2 text-right font-mono tabular-nums text-rose-600 font-semibold">
-                    {{ (site.likeCount || 0).toLocaleString() }}
-                  </td>
-                  <td class="py-2.5 px-2 text-right font-mono tabular-nums text-slate-600">
-                    {{ (site.commentCount || 0).toLocaleString() }}
-                  </td>
-                  <td class="py-2.5 px-2 text-center">
-                    <Tag :color="site.status === 'ACTIVE' ? 'success' : 'error'" class="!m-0">
-                      {{ site.status === 'ACTIVE' ? '정상 가동' : '일시 정지' }}
-                    </Tag>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="py-8 text-center text-xs text-slate-400">
-            운영 중인 멀티사이트가 없습니다.
-          </div>
-        </Card>
-
-        <Card title="최근 창업 아이디어 & 명세서 현황" size="small" :loading="loading" class="lg:col-span-5 !rounded-xl shadow-xs">
-          <template #extra>
-            <a-button type="link" size="small" class="!px-0" @click="go('/studio/ideas')">아이디어 관리</a-button>
-          </template>
-          <div v-if="recentIdeaItems.length" class="divide-y divide-slate-100">
-            <div
-              v-for="idea in recentIdeaItems"
-              :key="idea.id"
-              class="py-2.5 flex items-center justify-between gap-2.5 hover:bg-slate-50/70 px-1 rounded transition-colors"
-            >
-              <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                <div
-                  class="w-16 h-7 rounded bg-slate-50 border border-slate-200 flex items-center justify-center p-0.5 overflow-hidden shrink-0"
-                  v-html="idea.logoSvg"
-                ></div>
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-bold text-slate-800 truncate">
-                      {{ idea.selectedBrandName || idea.title }}
-                    </span>
-                    <Tag color="blue" class="!m-0 !text-[10px]">{{ idea.currentStep || 6 }}단계</Tag>
-                    <span class="text-[11px] font-mono text-slate-400">v{{ idea.currentVersionNo || 1 }}</span>
-                  </div>
-                  <div class="text-[11px] text-slate-500 truncate mt-0.5">{{ idea.title }}</div>
-                </div>
-              </div>
-              <div class="text-right shrink-0">
-                <div class="text-[11px] text-slate-600 font-medium">{{ idea.authorDisplayName }}</div>
-                <div class="text-[10px] text-slate-400 font-mono">
-                  네이밍 {{ idea.nameCandidateCount || 0 }} · 로고 {{ idea.logoCandidateCount || 0 }}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-else class="py-8 text-center text-xs text-slate-400">
-            등록된 창업 아이디어가 없습니다.
-          </div>
-        </Card>
-      </div>
     </div>
   </PageWrapper>
 </template>
@@ -435,16 +329,6 @@
     return Array.isArray(list) ? list : [];
   });
 
-  const topSiteItems = computed(() => {
-    const list = summary.value?.topSites;
-    return Array.isArray(list) ? list : [];
-  });
-
-  const recentIdeaItems = computed(() => {
-    const list = summary.value?.recentIdeas;
-    return Array.isArray(list) ? list : [];
-  });
-
   function formatSiteType(type: string) {
     switch (type) {
       case 'COMMERCE':
@@ -453,19 +337,6 @@
         return '브랜드·커뮤니티 웹';
       case 'HYBRID':
         return '매거진·스토어 복합';
-      default:
-        return type;
-    }
-  }
-
-  function formatSiteTypeShort(type: string) {
-    switch (type) {
-      case 'COMMERCE':
-        return '쇼핑몰';
-      case 'CMS_SITE':
-        return '브랜드웹';
-      case 'HYBRID':
-        return '복합몰';
       default:
         return type;
     }

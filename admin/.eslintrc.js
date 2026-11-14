@@ -74,5 +74,38 @@ module.exports = defineConfig({
         math: 'always',
       },
     ],
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector:
+          "VariableDeclarator[id.name=/^(actorOptions|supplierOptions|agentOptions|userOptions|defaultRepos|myApprovalQueue|mockData|sampleData|dummyData|projectList|starterPresets|samplePrompts|samplePresets)$/][init.type='ArrayExpression'][init.elements.0.type='ObjectExpression']",
+        message:
+          '[Zero-Mock AST Gate] 인라인 Mock/옵션 객체 배열 하드코딩이 금지되어 있습니다. 백엔드 API(defHttp) 또는 DB 공통 사전을 조회하십시오.',
+      },
+      {
+        selector:
+          "VariableDeclarator[id.name=/^(actorOptions|supplierOptions|agentOptions|userOptions|defaultRepos|myApprovalQueue|mockData|sampleData|dummyData|projectList|starterPresets|samplePrompts|samplePresets)$/][init.type='CallExpression'][init.callee.name='ref'][init.arguments.0.type='ArrayExpression'][init.arguments.0.elements.0.type='ObjectExpression']",
+        message:
+          '[Zero-Mock AST Gate] ref([{...}]) 형태의 인라인 Mock/옵션 객체 배열 하드코딩이 금지되어 있습니다. 백엔드 API(defHttp)를 통해 동적 바인딩하십시오.',
+      },
+      {
+        selector:
+          "CatchClause AssignmentExpression[right.type='ArrayExpression'][right.elements.0.type='ObjectExpression']",
+        message:
+          '[Zero-Mock AST Gate] catch 블록 내에서 실패를 은폐하고 가짜 객체 배열을 대입하는 행위가 금지되어 있습니다. 에러 피드백을 투명하게 표시하십시오.',
+      },
+      {
+        selector:
+          "Literal[value=/^https?:\\/\\/(localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0)(:\\d+)?(\\/|$)/i]",
+        message:
+          '[Zero-Mock AST Gate] 소스 코드 내 localhost/127.0.0.1 엔드포인트 하드코딩이 금지되어 있습니다. 환경변수(.env) 설정을 사용하십시오.',
+      },
+      {
+        selector:
+          "Literal[value=/^(test123|test_user|dummy_\\w+|temp_token|sample_key|mock_token|todo_replace)$/i]",
+        message:
+          '[Zero-Mock AST Gate] 임시 테스트용 플레이스홀더 리터럴(test123, dummy_* 등) 사용이 금지되어 있습니다.',
+      },
+    ],
   },
 });

@@ -68,6 +68,7 @@ export const searchFormSchema: FormSchema[] = [
     field: 'title',
     label: '화면/가이드명',
     component: 'Input',
+    alwaysShow: true,
     componentProps: {
       placeholder: '화면명 검색',
       allowClear: true,
@@ -78,6 +79,7 @@ export const searchFormSchema: FormSchema[] = [
     field: 'pageKey',
     label: '라우트 경로',
     component: 'Input',
+    alwaysShow: true,
     componentProps: {
       placeholder: '예: /llm/models',
       allowClear: true,
@@ -98,6 +100,7 @@ export const searchFormSchema: FormSchema[] = [
     field: 'status',
     label: '상태',
     component: 'Select',
+    alwaysShow: true,
     componentProps: {
       placeholder: '전체 상태',
       allowClear: true,

@@ -8,6 +8,8 @@ import { useBreakpoint } from '/@/hooks/event/useBreakpoint';
 import { useDebounceFn } from '@vueuse/core';
 
 const BASIC_COL_LEN = 24;
+const ACTION_MIN_SPAN = 6;
+const MAX_SEARCH_COL_SPAN = 6;
 
 interface UseAdvancedContext {
   advanceState: AdvanceState;
@@ -18,6 +20,90 @@ interface UseAdvancedContext {
   defaultValueRef: Ref<Recordable>;
 }
 
+/**
+ * 검색 폼(showAdvancedButton) 열 너비를 정규화하여 1줄 인라인(최대 3개 필드 + 우측 액션 영역) 배치를 보장한다.
+ */
+export function normalizeSearchColProps(
+  baseColProps: Partial<ColEx> = {},
+  colProps: Partial<ColEx> = {},
+  showAdvancedButton = false,
+  isMobile = false
+): Partial<ColEx> {
+  const realColProps: Recordable = { span: BASIC_COL_LEN, ...baseColProps, ...colProps };
+  if (isMobile) {
+    return { ...realColProps, span: BASIC_COL_LEN, xs: BASIC_COL_LEN, sm: BASIC_COL_LEN, md: BASIC_COL_LEN };
+  }
+  if (colProps.span !== undefined) {
+    ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'].forEach((name) => delete realColProps[name]);
+  }
+  if (showAdvancedButton) {
+    ['span', 'lg', 'xl', 'xxl'].forEach((key) => {
+      const val = Number(realColProps[key]);
+      if (!Number.isNaN(val) && val > MAX_SEARCH_COL_SPAN && val < BASIC_COL_LEN) {
+        realColProps[key] = MAX_SEARCH_COL_SPAN;
+      }
+    });
+  }
+  return realColProps;
+}
+
+/**
+ * 접힘 상태에서 숨겨진 상세 검색 필드에 유효한 필터 값이 입력되어 있는지 판별한다.
+ */
+export function isFilterValueActive(val: any, defaultVal?: any): boolean {
+  if (val === undefined || val === null || val === '') {
+    return false;
+  }
+  if (Array.isArray(val)) {
+    if (val.length === 0 || val.every((item) => item === undefined || item === null || item === '')) {
+      return false;
+    }
+  }
+  if (defaultVal !== undefined && defaultVal !== null && defaultVal !== '') {
+    try {
+      if (JSON.stringify(val) === JSON.stringify(defaultVal)) {
+        return false;
+      }
+    } catch {
+      if (val === defaultVal) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+/**
+ * 접힘/펼침 시 필드 노출 여부를 결정한다.
+ * - 닫힘: alwaysShowLines(기본 1줄) 안쪽 필드는 항상 노출
+ * - 닫힘: autoAdvancedCol을 넘는 필드는 숨김
+ * - 열림: 전체 노출
+ */
+export function resolveFieldAdvancedVisibility(params: {
+  itemColSumAfter: number;
+  index: number;
+  isAdvanced: boolean;
+  alwaysShowLines?: number;
+  autoAdvancedCol?: number;
+  alwaysShow?: boolean;
+  maxCollapsedSpan?: number;
+}): boolean {
+  if (params.isAdvanced) {
+    return true;
+  }
+  const alwaysShowLines = params.alwaysShowLines ?? 1;
+  const autoAdvancedCol = params.autoAdvancedCol ?? 3;
+  const maxSpan = params.maxCollapsedSpan ?? BASIC_COL_LEN * alwaysShowLines;
+
+  if (params.itemColSumAfter > maxSpan) {
+    return params.index === 0;
+  }
+  if (params.index + 1 > autoAdvancedCol && !params.alwaysShow) {
+    return false;
+  }
+  return true;
+}
+
 export default function ({ advanceState, emit, getProps, getSchema, formModel, defaultValueRef }: UseAdvancedContext) {
   const { realWidthRef, screenEnum, screenRef } = useBreakpoint();
 
@@ -25,7 +111,6 @@ export default function ({ advanceState, emit, getProps, getSchema, formModel, d
     if (!advanceState.isAdvanced) {
       return 0;
     }
-    // For some special cases, you need to manually specify additional blank lines
     const emptySpan = unref(getProps).emptySpan || 0;
 
     if (isNumber(emptySpan)) {
@@ -44,77 +129,73 @@ export default function ({ advanceState, emit, getProps, getSchema, formModel, d
   const debounceUpdateAdvanced = useDebounceFn(updateAdvanced, 30);
 
   watch(
-    [() => unref(getSchema), () => advanceState.isAdvanced, () => unref(realWidthRef)],
+    [() => unref(getSchema), () => advanceState.isAdvanced, () => unref(realWidthRef), () => formModel],
     () => {
       const { showAdvancedButton } = unref(getProps);
       if (showAdvancedButton) {
         debounceUpdateAdvanced();
       }
     },
-    { immediate: true }
+    { immediate: true, deep: true }
   );
 
-  function getAdvanced(itemCol: Partial<ColEx>, itemColSum = 0, isLastAction = false, index = 0) {
+  function getColSpan(itemCol: Partial<ColEx>): number {
     const width = unref(realWidthRef);
 
     const mdWidth =
-      parseInt(itemCol.md as string) || parseInt(itemCol.xs as string) || parseInt(itemCol.sm as string) || (itemCol.span as number) || BASIC_COL_LEN;
+      parseInt(itemCol.md as string) ||
+      parseInt(itemCol.xs as string) ||
+      parseInt(itemCol.sm as string) ||
+      (itemCol.span as number) ||
+      BASIC_COL_LEN;
 
-    const lgWidth = parseInt(itemCol.lg as string) || mdWidth;
-    const xlWidth = parseInt(itemCol.xl as string) || lgWidth;
-    const xxlWidth = parseInt(itemCol.xxl as string) || xlWidth;
+    const lgWidth = parseInt(itemCol.lg as string) || (itemCol.span as number) || mdWidth;
+    const xlWidth = parseInt(itemCol.xl as string) || (itemCol.span as number) || lgWidth;
+    const xxlWidth = parseInt(itemCol.xxl as string) || (itemCol.span as number) || xlWidth;
+
+    if (!width) {
+      return xxlWidth;
+    }
     if (width <= screenEnum.LG) {
-      itemColSum += mdWidth;
+      return mdWidth;
     } else if (width < screenEnum.XL) {
-      itemColSum += lgWidth;
+      return lgWidth;
     } else if (width < screenEnum.XXL) {
-      itemColSum += xlWidth;
+      return xlWidth;
     } else {
-      itemColSum += xxlWidth;
-    }
-
-    let autoAdvancedCol = unref(getProps).autoAdvancedCol ?? 3;
-
-    if (isLastAction) {
-      advanceState.hideAdvanceBtn = unref(getSchema).length <= autoAdvancedCol;
-      /* if (itemColSum <= BASIC_COL_LEN * 2) {
-        // 2줄 이하인 경우 축소 및 확장 버튼이 표시되지 않습니다.
-        advanceState.hideAdvanceBtn = true;
-        advanceState.isAdvanced = true;
-      } else */
-      if (itemColSum > BASIC_COL_LEN * 2 && itemColSum <= BASIC_COL_LEN * (unref(getProps).autoAdvancedLine || 3)) {
-        advanceState.hideAdvanceBtn = false;
-
-        // 기본적으로 3줄을 초과하면 접힙니다.
-      } else if (!advanceState.isLoad) {
-        advanceState.isLoad = true;
-        advanceState.isAdvanced = !advanceState.isAdvanced;
-        if (unref(getSchema).length > autoAdvancedCol) {
-          advanceState.hideAdvanceBtn = false;
-          advanceState.isAdvanced = false;
-        }
-      }
-      return { isAdvanced: advanceState.isAdvanced, itemColSum };
-    }
-    if (itemColSum > BASIC_COL_LEN * (unref(getProps).alwaysShowLines || 1)) {
-      return { isAdvanced: advanceState.isAdvanced, itemColSum };
-    } else if (!advanceState.isAdvanced && index + 1 > autoAdvancedCol) {
-      // 현재 접힌 상태이고 현재 열 아래 첨자가 있는 경우 > autoAdvancedCol, 그냥 숨기기
-      return { isAdvanced: false, itemColSum };
-    } else {
-      // The first line is always displayed
-      return { isAdvanced: true, itemColSum };
+      return xxlWidth;
     }
   }
 
   function updateAdvanced() {
     let itemColSum = 0;
     let realItemColSum = 0;
-    const { baseColProps = {} } = unref(getProps);
+    const {
+      baseColProps = {},
+      showAdvancedButton = false,
+      alwaysShowLines = 1,
+      autoAdvancedCol: rawAutoAdvancedCol = 3,
+    } = unref(getProps);
+
+    if (!advanceState.isLoad) {
+      advanceState.isLoad = true;
+      advanceState.isAdvanced = false;
+    }
+
+    const autoAdvancedCol = Math.min(rawAutoAdvancedCol, 3);
+    const width = unref(realWidthRef);
+    const isDesktop = !width || width > screenEnum.LG;
+    const maxCollapsedSpan = isDesktop
+      ? Math.max(BASIC_COL_LEN * alwaysShowLines - ACTION_MIN_SPAN, ACTION_MIN_SPAN)
+      : BASIC_COL_LEN * alwaysShowLines;
 
     const schemas = unref(getSchema);
-    for (let i = 0; i < schemas.length; i++) {
-      const schema = schemas[i];
+    const defaultValues = unref(defaultValueRef) || {};
+    let visibleSchemaIndex = 0;
+    let hiddenFieldTotal = 0;
+    let hiddenActiveCount = 0;
+
+    for (const schema of schemas) {
       const { show, colProps } = schema;
       let isShow = true;
 
@@ -128,26 +209,50 @@ export default function ({ advanceState, emit, getProps, getSchema, formModel, d
           model: formModel,
           field: schema.field,
           values: {
-            ...unref(defaultValueRef),
+            ...defaultValues,
             ...formModel,
           },
         });
       }
 
       if (isShow && (colProps || baseColProps)) {
-        const { itemColSum: sum, isAdvanced } = getAdvanced({ ...baseColProps, ...colProps }, itemColSum, false, i);
+        const normalizedCol = normalizeSearchColProps(baseColProps, colProps, showAdvancedButton, false);
+        const colSpan = getColSpan(normalizedCol);
+        itemColSum += colSpan;
 
-        itemColSum = sum || 0;
-        if (isAdvanced) {
-          realItemColSum = itemColSum;
+        const visibleWhenCollapsed = resolveFieldAdvancedVisibility({
+          itemColSumAfter: itemColSum,
+          index: visibleSchemaIndex,
+          isAdvanced: false,
+          alwaysShowLines,
+          autoAdvancedCol,
+          alwaysShow: schema.alwaysShow === true || Boolean(schema.required),
+          maxCollapsedSpan,
+        });
+
+        if (!visibleWhenCollapsed) {
+          hiddenFieldTotal += 1;
+          const currentVal = formModel ? formModel[schema.field] : undefined;
+          const defVal = defaultValues[schema.field] ?? schema.defaultValue;
+          if (isFilterValueActive(currentVal, defVal)) {
+            hiddenActiveCount += 1;
+          }
         }
-        schema.isAdvanced = isAdvanced;
+
+        const isFieldVisible = advanceState.isAdvanced ? true : visibleWhenCollapsed;
+        if (isFieldVisible) {
+          realItemColSum += colSpan;
+        }
+        if (schema.isAdvanced !== isFieldVisible) {
+          schema.isAdvanced = isFieldVisible;
+        }
+        visibleSchemaIndex += 1;
       }
     }
 
     advanceState.actionSpan = (realItemColSum % BASIC_COL_LEN) + unref(getEmptySpan);
-
-    getAdvanced(unref(getProps).actionColOptions || { span: BASIC_COL_LEN }, itemColSum, true);
+    advanceState.hideAdvanceBtn = showAdvancedButton ? hiddenFieldTotal === 0 : true;
+    advanceState.hiddenFilterCount = showAdvancedButton && !advanceState.isAdvanced ? hiddenActiveCount : 0;
 
     emit('advanced-change');
   }

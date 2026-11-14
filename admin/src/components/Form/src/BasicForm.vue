@@ -75,6 +75,7 @@
         hideAdvanceBtn: true,
         isLoad: false,
         actionSpan: 6,
+        hiddenFilterCount: 0,
       });
 
       const defaultValueRef = ref<Recordable>({});
@@ -159,7 +160,13 @@
           }
         }
         if (unref(getProps).showAdvancedButton) {
-          return schemas.filter((schema) => schema.component !== 'Divider') as FormSchema[];
+          const filtered = schemas.filter((schema) => schema.component !== 'Divider') as FormSchema[];
+          const prioritySchemas = filtered.filter((schema) => schema.alwaysShow === true || Boolean(schema.required));
+          if (prioritySchemas.length > 0) {
+            const normalSchemas = filtered.filter((schema) => !(schema.alwaysShow === true || Boolean(schema.required)));
+            return [...prioritySchemas, ...normalSchemas];
+          }
+          return filtered;
         } else {
           return schemas as FormSchema[];
         }

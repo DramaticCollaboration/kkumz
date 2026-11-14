@@ -30,8 +30,7 @@ INSERT INTO sys_permission (
     id, parent_id, name, url, component, is_route, component_name, redirect,
     menu_type, perms, perms_type, sort_no, always_show, icon, is_leaf, keep_alive, hidden, hide_tab, description
 ) VALUES
-('perm-kkumz-sys-001', NULL, '대시보드', '/dashboard', 'layouts/default/index', TRUE, 'DashboardLayout', '/dashboard/analysis', 0, NULL, '1', 1.0, TRUE, 'ant-design:dashboard-outlined', FALSE, FALSE, FALSE, FALSE, '꿈즈 운영 종합 대시보드'),
-('perm-kkumz-sys-002', 'perm-kkumz-sys-001', '대시보드', '/dashboard/analysis', 'dashboard/analysis/index', TRUE, 'KkumzDashboardAnalysis', NULL, 1, 'dashboard:analysis:view', '1', 1.1, FALSE, 'ant-design:bar-chart-outlined', TRUE, TRUE, FALSE, FALSE, '아이디어 생성, AI 응답성, 사이트 배포 및 커뮤니티 핵심 지표'),
+('perm-kkumz-sys-001', NULL, '대시보드', '/dashboard/analysis', 'dashboard/analysis/index', TRUE, 'KkumzDashboardAnalysis', NULL, 1, 'dashboard:analysis:view', '1', 1.0, FALSE, 'ant-design:dashboard-outlined', TRUE, TRUE, FALSE, FALSE, '아이디어 생성, AI 응답성, 사이트 배포 및 커뮤니티 핵심 지표'),
 ('perm-kkumz-sys-010', NULL, '시스템 설정', '/system', 'layouts/default/index', TRUE, 'SystemLayout', '/system/user', 0, NULL, '1', 50.0, TRUE, 'ant-design:setting-outlined', FALSE, FALSE, FALSE, FALSE, '사용자, 역할, 메뉴 권한 및 공통 사전 관리'),
 ('perm-kkumz-sys-011', 'perm-kkumz-sys-010', '계정 관리', '/system/user', 'system/user/index', TRUE, 'KkumzSystemUserView', NULL, 1, 'system:user:view', '1', 50.1, FALSE, 'ant-design:user-outlined', TRUE, TRUE, FALSE, FALSE, '창업가·모더레이터·관리자 계정 관리'),
 ('perm-kkumz-sys-012', 'perm-kkumz-sys-010', '권한 관리', '/system/role', 'system/role/index', TRUE, 'KkumzSystemRoleView', NULL, 1, 'system:role:view', '1', 50.2, FALSE, 'ant-design:team-outlined', TRUE, TRUE, FALSE, FALSE, 'RBAC 역할 및 권한 매핑 관리'),
@@ -41,15 +40,13 @@ INSERT INTO sys_permission (
 
 INSERT INTO sys_role_permission (id, role_id, permission_id) VALUES
 ('srp_kkumz_sys_001', 'role_admin', 'perm-kkumz-sys-001'),
-('srp_kkumz_sys_002', 'role_admin', 'perm-kkumz-sys-002'),
 ('srp_kkumz_sys_010', 'role_admin', 'perm-kkumz-sys-010'),
 ('srp_kkumz_sys_011', 'role_admin', 'perm-kkumz-sys-011'),
 ('srp_kkumz_sys_012', 'role_admin', 'perm-kkumz-sys-012'),
 ('srp_kkumz_sys_013', 'role_admin', 'perm-kkumz-sys-013'),
 ('srp_kkumz_sys_014', 'role_admin', 'perm-kkumz-sys-014'),
 ('srp_kkumz_sys_015', 'role_admin', 'perm-kkumz-sys-015'),
-('srp_kkumz_mod_001', 'role_moderator', 'perm-kkumz-sys-001'),
-('srp_kkumz_mod_002', 'role_moderator', 'perm-kkumz-sys-002');
+('srp_kkumz_mod_001', 'role_moderator', 'perm-kkumz-sys-001');
 
 -- 공통 코드 사전
 INSERT INTO sys_dict (id, dict_name, dict_code, description, create_by) VALUES

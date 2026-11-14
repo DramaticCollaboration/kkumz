@@ -167,6 +167,8 @@ export interface FormSchema {
   // 기본값
   defaultValue?: any;
   isAdvanced?: boolean;
+  // 검색 폼 기본 접힘(1줄) 상태에서 우선 노출할 핵심 검색 필드 여부
+  alwaysShow?: boolean;
 
   // Matching details components
   span?: number;

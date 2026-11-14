@@ -33,8 +33,8 @@ export default {
     fileName: 'File name',
   },
   form: {
-    putAway: '닫기',
-    unfold: '열기',
+    putAway: '접기',
+    unfold: '펼치기',
     maxTip: 'The number of characters should be less than {0}',
     apiSelectNotFound: 'Wait for data loading to complete...',
   },

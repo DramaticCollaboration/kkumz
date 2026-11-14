@@ -188,9 +188,9 @@ export function useListTable(tableProps: TableProps): [
   const adaptiveColProps: Partial<ColEx> = {
     xs: 24, // <576px
     sm: 12, // ≥576px
-    md: 12, // ≥768px
-    lg: 8, // ≥992px
-    xl: 8, // ≥1200px
+    md: 8, // ≥768px
+    lg: 6, // ≥992px
+    xl: 6, // ≥1200px
     xxl: 6, // ≥1600px
   };
   const defaultTableProps: TableProps = {
@@ -226,8 +226,7 @@ export function useListTable(tableProps: TableProps): [
       autoAdvancedCol: 3,
       // 액션 버튼 구성
       actionColOptions: {
-        ...adaptiveColProps,
-        style: { textAlign: 'left' },
+        style: { textAlign: 'right' },
       },
     },
     // 얼룩말 인쇄

@@ -86,7 +86,7 @@
         labelWidth:60,
         owProps: { gutter: 24 },
         schemas: searchFormSchema,
-        autoAdvancedCol: 4,
+        autoAdvancedCol: 3,
         baseColProps: { xs: 24, sm: 12, md: 6, lg: 6, xl: 6, xxl: 6 },
         actionColOptions: { xs: 24, sm: 12, md: 6, lg: 6, xl: 6, xxl: 6 },
       },

@@ -89,12 +89,14 @@ export const searchFormSchema: FormSchema[] = [
     label: '계정',
     field: 'username',
     component: 'JInput',
+    alwaysShow: true,
     //colProps: { span: 6 },
   },
   {
     label: '이름',
     field: 'realname',
     component: 'JInput',
+    alwaysShow: true,
    //colProps: { span: 6 },
   },
   {
@@ -118,6 +120,7 @@ export const searchFormSchema: FormSchema[] = [
     label: '사용자 상태',
     field: 'status',
     component: 'JDictSelectTag',
+    alwaysShow: true,
     componentProps: {
       dictCode: 'user_status',
       placeholder: '상태를 선택해주세요',

@@ -3,4 +3,5 @@ export interface AdvanceState {
   hideAdvanceBtn: boolean;
   isLoad: boolean;
   actionSpan: number;
+  hiddenFilterCount?: number;
 }
