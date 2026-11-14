@@ -25,6 +25,7 @@
     </modules>
 
     <properties>
+        <zero-mock.skip>true</zero-mock.skip>
         <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -71,4 +72,30 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>zero-mock-compile-gate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip></skip>
+                            <executable>python</executable>
+                            <arguments>
+                                <argument>-c</argument>
+                                <argument>import pathlib,runpy,sys; p=next((d/'scripts/hook-zero-mock-gate.py' for d in [pathlib.Path.cwd(),*pathlib.Path.cwd().parents] if (d/'scripts/hook-zero-mock-gate.py').exists()),None); sys.argv=['gate','--maven-module',str(pathlib.Path.cwd())]; runpy.run_path(str(p),run_name='__main__') if p else None</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
