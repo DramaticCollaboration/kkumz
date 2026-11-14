@@ -51,6 +51,7 @@ export interface PageStepItem {
 export interface RelatedScreenItem {
   type: string;
   title: string;
+  path?: string;
   description?: string;
 }
 

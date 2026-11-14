@@ -130,3 +130,84 @@ CREATE TABLE sys_log (
 
 CREATE INDEX idx_kkumz_sys_perm_parent ON sys_permission(parent_id, sort_no);
 CREATE INDEX idx_kkumz_sys_dict_item_dict ON sys_dict_item(dict_id, sort_order);
+
+-- ==============================================================================
+-- 전사 공통 화면 사용자 가이드 및 데이터 Lineage 마스터 (sys_page_help)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS sys_page_help (
+    id                    VARCHAR(64) PRIMARY KEY,
+    app_code              VARCHAR(32) NOT NULL,
+    page_key              VARCHAR(128) NOT NULL UNIQUE,
+    route_name            VARCHAR(64) DEFAULT NULL,
+    title                 VARCHAR(100) NOT NULL,
+    category              VARCHAR(50) NOT NULL,
+    icon                  VARCHAR(50) DEFAULT NULL,
+    summary               VARCHAR(500) NOT NULL,
+    overview              TEXT NOT NULL,
+    features_json         JSONB DEFAULT '[]'::jsonb,
+    lineage_json          JSONB DEFAULT '{}'::jsonb,
+    formulas_json         JSONB DEFAULT '[]'::jsonb,
+    steps_json            JSONB DEFAULT '[]'::jsonb,
+    related_screens_json  JSONB DEFAULT '[]'::jsonb,
+    tips_json             JSONB DEFAULT '[]'::jsonb,
+    warnings_json         JSONB DEFAULT '[]'::jsonb,
+    faq_json              JSONB DEFAULT '[]'::jsonb,
+    ai_prompt_hint        TEXT DEFAULT NULL,
+    status                VARCHAR(20) DEFAULT 'ACTIVE',
+    sort_order            INTEGER DEFAULT 0,
+    del_flag              INTEGER DEFAULT 0,
+    create_by             VARCHAR(32) DEFAULT 'SYSTEM',
+    create_time           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_by             VARCHAR(32) DEFAULT NULL,
+    update_time           TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_sys_page_help_app_key ON sys_page_help (app_code, page_key);
+CREATE INDEX IF NOT EXISTS idx_sys_page_help_cat ON sys_page_help (category);
+
+-- ==============================================================================
+-- 전사 AI 프롬프트 템플릿 및 변경 이력 테이블 (sys_prompt_template, sys_prompt_history)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS sys_prompt_template (
+    id                  VARCHAR(64) PRIMARY KEY,
+    app_code            VARCHAR(32) NOT NULL DEFAULT 'COMMON',
+    prompt_code         VARCHAR(100) NOT NULL UNIQUE,
+    prompt_name         VARCHAR(150) NOT NULL,
+    category            VARCHAR(50) NOT NULL DEFAULT 'AGENT',
+    caller_class        VARCHAR(200),
+    system_prompt       TEXT NOT NULL,
+    user_prompt_template TEXT NOT NULL,
+    variables_schema    JSONB NOT NULL DEFAULT '[]'::jsonb,
+    output_schema       TEXT,
+    model_override      VARCHAR(100),
+    temperature         NUMERIC(3,2) DEFAULT 0.20,
+    version             INT NOT NULL DEFAULT 1,
+    status              VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    description         VARCHAR(500),
+    del_flag            INT NOT NULL DEFAULT 0,
+    create_by           VARCHAR(50) NOT NULL DEFAULT 'admin',
+    create_time         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_by           VARCHAR(50),
+    update_time         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sys_prompt_history (
+    id                  VARCHAR(64) PRIMARY KEY,
+    prompt_id           VARCHAR(64) NOT NULL,
+    app_code            VARCHAR(32) NOT NULL DEFAULT 'COMMON',
+    prompt_code         VARCHAR(100) NOT NULL,
+    version             INT NOT NULL DEFAULT 1,
+    system_prompt       TEXT NOT NULL,
+    user_prompt_template TEXT NOT NULL,
+    variables_schema    JSONB DEFAULT '[]'::jsonb,
+    output_schema       TEXT,
+    model_override      VARCHAR(100),
+    temperature         NUMERIC(3,2) DEFAULT 0.20,
+    change_reason       VARCHAR(300),
+    created_by          VARCHAR(50) NOT NULL DEFAULT 'admin',
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_sys_prompt_template_app_cat ON sys_prompt_template(app_code, category, del_flag);
+CREATE INDEX IF NOT EXISTS idx_sys_prompt_history_prompt_ver ON sys_prompt_history(prompt_id, version DESC);
+

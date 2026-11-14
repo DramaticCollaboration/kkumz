@@ -1,6 +1,6 @@
 # Kkumz (꿈즈) AI Coding Agent Guidelines
 
-> **문서 목적**: 본 문서는 `services/kkumz` 하위 프로젝트에서 코드를 작성·수정하거나 문서를 갱신하는 AI 코딩 에이전트(Antigravity 등) 및 개발자가 반드시 준수해야 할 도메인 특화 아키텍처, 기술 스택, 코딩 컨벤션을 정의합니다.
+> **문서 목적**: 본 문서는 `services/kkumz` 하위 프로젝트에서 코드를 작성·수정하거나 문서를 갱신하는 AI 코딩 에이전트(Antigravity 등) 및 개발자가 반드시 준수해야 할 도메인 특화 아키텍처, 기술 스택, 코딩 컨벤션을 정의합니다. 전사 공통 규칙은 루트 [AGENTS.md](../../.agents/AGENTS.md)를 상위 표준으로 준수합니다.
 
 ---
 
@@ -81,7 +81,7 @@
 ## 6. Java 백엔드 개발 규칙
 
 1. **Lombok 및 생성자 주입 필수**:
-   - 모든 DTO/VO/Entity에 `@Data`, `@Getter`, `@Setter`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`를 적용하고 수동 보일러플레이트 작성을 금지합니다.
+   - 모든 DTO/VO/Entity에 `@Getter`, `@Setter`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`를 목적에 맞게 적용하고 수동 보일러플레이트 작성을 금지합니다.
    - 로깅은 `@Slf4j`, 의존성 주입은 `private final` 필드 + `@RequiredArgsConstructor`를 사용합니다.
 2. **표준 응답 래퍼**:
    - 모든 REST API는 `{ code: 200, success: true, message: "OK", result: ... }` 규격(`KkumzController.ok(...)` / `KkumzSystemController` 표준 포맷)으로 응답하여 Vben Admin 및 Web 클라이언트 인터셉터와 정합성을 유지합니다.

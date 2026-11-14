@@ -32,7 +32,7 @@ kkumz:
   ai:
     llm:
       base-url: ${SYNC_LLM_GATEWAY_URL:http://localhost:8080/v1}
-      api-key: ${SYNC_LLM_API_KEY:sk-kkumz-local-key}
+      api-key: ${SYNC_LLM_API_KEY:sk-kkumz-local-key-1010}
       model: ${SYNC_LLM_MODEL:morph-glm53flash}
   storage:
     upload-dir: ${KKUMZ_STORAGE_UPLOAD_DIR:uploads/kkumz}
@@ -47,7 +47,7 @@ agentscope:
   llm:
     provider: ${LLM_PROVIDER:syncllm}
     gateway-url: ${SYNC_LLM_GATEWAY_URL:http://localhost:8080/v1}
-    api-key: ${SYNC_LLM_API_KEY:sk-kkumz-local-key}
+    api-key: ${SYNC_LLM_API_KEY:sk-kkumz-local-key-1010}
     model-name: ${SYNC_LLM_MODEL:morph-glm53flash}
     timeout-seconds: 90
     max-retries: 3

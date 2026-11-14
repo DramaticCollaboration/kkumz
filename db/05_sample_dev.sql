@@ -1102,3 +1102,96 @@ INSERT INTO kkumz_idea_asset (
 ('ast-81c33d7e', 'idea-01137479', 'PRODUCT', 'download12.jpg', 'idea-01137479-ast-81c33d7e.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-81c33d7e.jpg', 'image/jpeg', 51921, '독채 객실 앞 전용 정자와 야외 바비큐 테이블 전경', NULL, 10, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
 ('ast-a1a893a3', 'idea-01137479', 'GALLERY', 'download13.jpg', 'idea-01137479-ast-a1a893a3.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-a1a893a3.jpg', 'image/jpeg', 24791, '겨울 눈이 소복이 쌓인 냇가 정자와 고요한 설경', NULL, 11, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
 ('ast-368380cb', 'idea-01137479', 'GALLERY', 'download14.jpg', 'idea-01137479-ast-368380cb.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-368380cb.jpg', 'image/jpeg', 27664, '얼어붙은 겨울 시골 냇가와 산자락이 어우러진 풍경', NULL, 12, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day');
+
+-- Managed Git Repositories for Provisioned Sites (kkumz_site_git_repo)
+INSERT INTO kkumz_site_git_repo (
+    id, site_id, provider, repo_owner, repo_name, default_branch, visibility,
+    repo_html_url, clone_ssh_url, clone_https_url,
+    ssh_key_title, ssh_key_fingerprint, ssh_public_key, ssh_private_key_pem,
+    site_api_key_id, site_access_key, site_secret_key,
+    last_commit_sha, last_commit_message, sync_mode, github_remote_synced,
+    commit_history_json, key_rotated_at, last_synced_at, created_by, created_at, updated_at
+) VALUES
+(
+    'git-kkumz-001',
+    'site-kkumz-001',
+    'GITHUB',
+    'kkumz-sites',
+    'matcha-atelier-storefront',
+    'main',
+    'PRIVATE',
+    'https://github.com/kkumz-sites/matcha-atelier-storefront',
+    'git@github.com:kkumz-sites/matcha-atelier-storefront.git',
+    'https://github.com/kkumz-sites/matcha-atelier-storefront.git',
+    'kkumz-deploy-key-matcha-atelier',
+    'SHA256:9xK2mP7vL4qR8wN1tY5bC3dF6gH0jK9lM2nP4qR6sT8',
+    'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKkumzMatchaAtelierDeployKeyPublic001 deploy@matcha-atelier.kkumz.io',
+    '-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\nQyNTUxOQAAACCpKkumzMatchaAtelierDeployKeyPrivate001==\n-----END OPENSSH PRIVATE KEY-----',
+    'ak-kkumz-out-shop',
+    'KKUMZ_SITE_AK_MATCHA_ATELIER_001',
+    'sk_site_matcha_atelier_live_98a7b6c5d4e3f2g1h0',
+    'a4f82c91e7b03d56f1298c45e67a89b012c34d56',
+    'feat(storefront): initialize ceremonial matcha catalog and AI tea sommelier widget',
+    'MANAGED_GIT',
+    TRUE,
+    '[{"sha":"a4f82c91e7b03d56f1298c45e67a89b012c34d56","author":"kkumz-bot","message":"feat(storefront): initialize ceremonial matcha catalog and AI tea sommelier widget","timestamp":"2026-11-12T10:15:00Z"}]'::jsonb,
+    CURRENT_TIMESTAMP - INTERVAL '5 days',
+    CURRENT_TIMESTAMP - INTERVAL '1 hour',
+    'soyeon.jeju',
+    CURRENT_TIMESTAMP - INTERVAL '5 days',
+    CURRENT_TIMESTAMP - INTERVAL '1 hour'
+),
+(
+    'git-kkumz-002',
+    'site-kkumz-002',
+    'GITHUB',
+    'kkumz-sites',
+    'desk-orbit-storefront',
+    'main',
+    'PRIVATE',
+    'https://github.com/kkumz-sites/desk-orbit-storefront',
+    'git@github.com:kkumz-sites/desk-orbit-storefront.git',
+    'https://github.com/kkumz-sites/desk-orbit-storefront.git',
+    'kkumz-deploy-key-desk-orbit',
+    'SHA256:3bN8vQ1zX5cR9mP2wL7kJ4hG6fD0sA8eW1yU3iO5pL7',
+    'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKkumzDeskOrbitDeployKeyPublic002 deploy@desk-orbit.kkumz.io',
+    '-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\nQyNTUxOQAAACCpKkumzDeskOrbitDeployKeyPrivate002==\n-----END OPENSSH PRIVATE KEY-----',
+    'ak-kkumz-out-shop',
+    'KKUMZ_SITE_AK_DESK_ORBIT_002',
+    'sk_site_desk_orbit_live_12f3e4d5c6b7a8n9m0',
+    'c91d4e72b8a35f60d2341e89a76b54c321d09e87',
+    'feat(workspace): configure Qi2 charging station 3D showcase and bundle configurator',
+    'MANAGED_GIT',
+    TRUE,
+    '[{"sha":"c91d4e72b8a35f60d2341e89a76b54c321d09e87","author":"kkumz-bot","message":"feat(workspace): configure Qi2 charging station 3D showcase and bundle configurator","timestamp":"2026-11-12T14:30:00Z"}]'::jsonb,
+    CURRENT_TIMESTAMP - INTERVAL '4 days',
+    CURRENT_TIMESTAMP - INTERVAL '2 hours',
+    'minjun.maker',
+    CURRENT_TIMESTAMP - INTERVAL '4 days',
+    CURRENT_TIMESTAMP - INTERVAL '2 hours'
+);
+
+-- Initial System Prompt History Snapshot (sys_prompt_history)
+INSERT INTO sys_prompt_history (
+    id, prompt_id, app_code, prompt_code, version,
+    system_prompt, user_prompt_template, variables_schema, output_schema,
+    model_override, temperature, change_reason, created_by, created_at
+)
+SELECT
+    REPLACE(id, 'prm-', 'prmh-') || '-v1',
+    id,
+    app_code,
+    prompt_code,
+    version,
+    system_prompt,
+    user_prompt_template,
+    variables_schema,
+    output_schema,
+    model_override,
+    temperature,
+    '초기 표준 프롬프트 템플릿 시드 등록 (v1)',
+    create_by,
+    create_time
+FROM sys_prompt_template
+WHERE app_code = 'KKUMZ';
+

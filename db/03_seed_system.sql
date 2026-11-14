@@ -36,7 +36,8 @@ INSERT INTO sys_permission (
 ('perm-kkumz-sys-011', 'perm-kkumz-sys-010', '계정 관리', '/system/user', 'system/user/index', TRUE, 'KkumzSystemUserView', NULL, 1, 'system:user:view', '1', 50.1, FALSE, 'ant-design:user-outlined', TRUE, TRUE, FALSE, FALSE, '창업가·모더레이터·관리자 계정 관리'),
 ('perm-kkumz-sys-012', 'perm-kkumz-sys-010', '권한 관리', '/system/role', 'system/role/index', TRUE, 'KkumzSystemRoleView', NULL, 1, 'system:role:view', '1', 50.2, FALSE, 'ant-design:team-outlined', TRUE, TRUE, FALSE, FALSE, 'RBAC 역할 및 권한 매핑 관리'),
 ('perm-kkumz-sys-013', 'perm-kkumz-sys-010', '메뉴 관리', '/system/menu', 'system/menu/index', TRUE, 'KkumzSystemMenuView', NULL, 1, 'system:menu:view', '1', 50.3, FALSE, 'ant-design:menu-outlined', TRUE, TRUE, FALSE, FALSE, 'DB 단일 원천 동적 메뉴 트리 관리'),
-('perm-kkumz-sys-014', 'perm-kkumz-sys-010', '공통 코드', '/system/dict', 'system/dict/index', TRUE, 'KkumzSystemDictView', NULL, 1, 'system:dict:view', '1', 50.4, FALSE, 'ant-design:book-outlined', TRUE, TRUE, FALSE, FALSE, '사이트 유형, 직군, 신고 사유 등 공통 코드 관리');
+('perm-kkumz-sys-014', 'perm-kkumz-sys-010', '공통 코드', '/system/dict', 'system/dict/index', TRUE, 'KkumzSystemDictView', NULL, 1, 'system:dict:view', '1', 50.4, FALSE, 'ant-design:book-outlined', TRUE, TRUE, FALSE, FALSE, '사이트 유형, 직군, 신고 사유 등 공통 코드 관리'),
+('perm-kkumz-sys-015', 'perm-kkumz-sys-010', '프롬프트', '/system/prompt', 'system/prompt/index', TRUE, 'SysPromptView', NULL, 1, 'system:prompt:view', '1', 50.5, FALSE, 'ant-design:code-outlined', TRUE, TRUE, FALSE, FALSE, '전사 AI 시스템 및 유저 프롬프트 템플릿 관리');
 
 INSERT INTO sys_role_permission (id, role_id, permission_id) VALUES
 ('srp_kkumz_sys_001', 'role_admin', 'perm-kkumz-sys-001'),
@@ -46,6 +47,7 @@ INSERT INTO sys_role_permission (id, role_id, permission_id) VALUES
 ('srp_kkumz_sys_012', 'role_admin', 'perm-kkumz-sys-012'),
 ('srp_kkumz_sys_013', 'role_admin', 'perm-kkumz-sys-013'),
 ('srp_kkumz_sys_014', 'role_admin', 'perm-kkumz-sys-014'),
+('srp_kkumz_sys_015', 'role_admin', 'perm-kkumz-sys-015'),
 ('srp_kkumz_mod_001', 'role_moderator', 'perm-kkumz-sys-001'),
 ('srp_kkumz_mod_002', 'role_moderator', 'perm-kkumz-sys-002');
 

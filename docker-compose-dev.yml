@@ -83,6 +83,8 @@ services:
       - SPRING_DATA_REDIS_HOST=${REDIS_HOST:-kkumz-redis}
       - SPRING_DATA_REDIS_PORT=${REDIS_PORT:-6379}
       - SPRING_DATA_REDIS_PASSWORD=
+      - SYNC_LLM_GATEWAY_URL=${SYNC_LLM_GATEWAY_URL:-http://sync-llm-gateway:8080/v1}
+      - SYNC_LLM_API_KEY=${SYNC_LLM_API_KEY:-sk-kkumz-local-key-1010}
     depends_on:
       kkumz-postgres:
         condition: service_healthy
