@@ -131,11 +131,7 @@ public class KkumzSystemService {
         }
         Map<String, Object> user = new LinkedHashMap<>(users.get(0));
         String storedHash = user.remove("password") != null ? String.valueOf(users.get(0).get("password")) : "";
-        if (storedHash.startsWith("$2")) {
-            if (!BCrypt.checkpw(req.getPassword(), storedHash)) {
-                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-            }
-        } else if (!storedHash.isBlank() && !storedHash.equals(req.getPassword())) {
+        if (!storedHash.startsWith("$2") || !BCrypt.checkpw(req.getPassword(), storedHash)) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
