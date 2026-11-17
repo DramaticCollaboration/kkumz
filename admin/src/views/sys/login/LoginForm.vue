@@ -12,7 +12,7 @@
           class="fix-auto-fill !rounded-lg"
         >
           <template #prefix>
-            <span class="i-ant-design:user-outlined text-slate-400 mr-1"></span>
+            <UserOutlined class="text-slate-400 mr-1" />
           </template>
         </Input>
       </FormItem>
@@ -26,7 +26,7 @@
           class="!rounded-lg"
         >
           <template #prefix>
-            <span class="i-ant-design:lock-outlined text-slate-400 mr-1"></span>
+            <LockOutlined class="text-slate-400 mr-1" />
           </template>
         </InputPassword>
       </FormItem>
@@ -93,6 +93,7 @@
   import { reactive, ref, toRaw, unref, computed, onMounted, nextTick } from 'vue';
 
   import { Checkbox, Form, Input, Row, Col, Button, Modal } from 'ant-design-vue';
+  import { UserOutlined, LockOutlined } from '@ant-design/icons-vue';
   import LoginFormTitle from './LoginFormTitle.vue';
   import { useI18n } from '/@/hooks/web/useI18n';
   import { useMessage } from '/@/hooks/web/useMessage';
@@ -155,11 +156,21 @@
       );
       if (userInfo) {
         failedCount.value = 0;
+        notification.success({
+          message: t('sys.login.loginSuccessTitle'),
+          description: `${t('sys.login.loginSuccessDesc')}: ${userInfo.realname || userInfo.username}`,
+          duration: 3,
+        });
       }
     } catch (error: any) {
+      const apiMsg =
+        error?.response?.data?.message ||
+        error?.response?.data?.msg ||
+        error?.message ||
+        t('sys.api.networkExceptionMsg');
       notification.error({
         message: t('sys.api.errorTip'),
-        description: error.message || t('sys.api.networkExceptionMsg'),
+        description: apiMsg,
         duration: 3,
       });
       loading.value = false;

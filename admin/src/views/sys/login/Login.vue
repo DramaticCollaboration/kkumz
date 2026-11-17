@@ -261,22 +261,6 @@
     input:not([type='checkbox']) {
       width: 100%;
       min-width: 0;
-
-      @media (min-width: @screen-sm) {
-        min-width: 220px;
-      }
-
-      @media (min-width: @screen-md) {
-        min-width: 240px;
-      }
-
-      @media (min-width: @screen-lg) {
-        min-width: 260px;
-      }
-
-      @media (min-width: @screen-xl) {
-        min-width: 320px;
-      }
     }
 
     .@{countdown-prefix-cls} input {

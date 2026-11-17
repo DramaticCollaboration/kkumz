@@ -93,9 +93,10 @@ export default {
     policyPlaceholder: '약관 동의 후 가입 가능합니다',
     diffPwd: '비밀번호가 일치하지 않습니다',
 
-    userName: '아이디 또는 이메일',
+    userName: '아이디',
     password: '비밀번호',
-    inputCode: '보안 인증코드',
+    inputCode: '인증코드',
+    inputCodePlaceholder: '인증코드를 입력하세요',
     confirmPassword: '비밀번호 확인',
     email: '이메일 주소',
     smsCode: 'SMS 인증번호',

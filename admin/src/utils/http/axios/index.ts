@@ -80,17 +80,23 @@ const transform: AxiosTransform = {
     }
 
     let timeoutMsg = '';
-    switch (code) {
-      case ResultEnum.TIMEOUT:
-        timeoutMsg = t('sys.api.timeoutMessage');
-        const userStore = useUserStoreWithOut();
-        userStore.setToken(undefined);
-        userStore.logout(true);
-        break;
-      default:
-        if (message) {
-          timeoutMsg = message;
-        }
+    const requestUrl = (res.config?.url || '').split('?')[0];
+    const loginPaths = ['/login', '/mLogin', '/phoneLogin', '/validateLogin', '/thirdLogin'];
+    const isLoginApi = loginPaths.some((p) => requestUrl.includes(p));
+
+    const isExpiredLoginMsg = (msg: string) =>
+      msg.includes('토큰') || (msg.includes('로그인') && ['만료', '시간 초과'].some((k) => msg.includes(k)));
+    const isAuthFailure =
+      !isLoginApi &&
+      ([ResultEnum.TIMEOUT, 401].includes(code) || (typeof message === 'string' && isExpiredLoginMsg(message)));
+
+    if (isAuthFailure) {
+      timeoutMsg = message || t('sys.api.timeoutMessage');
+      const userStore = useUserStoreWithOut();
+      userStore.setToken(undefined);
+      userStore.logout(true);
+    } else {
+      timeoutMsg = message || '';
     }
 
     if (options.isPolling) {
@@ -226,7 +232,15 @@ const transform: AxiosTransform = {
       throw new Error(error);
     }
 
-    checkStatus(error?.response?.status, msg, errorMessageMode);
+    const requestUrl = (config?.url || '').split('?')[0];
+    const loginPaths = ['/login', '/mLogin', '/phoneLogin', '/validateLogin', '/thirdLogin'];
+    const isLoginApi = loginPaths.some((p) => requestUrl.includes(p));
+
+    if (msg) {
+      error.message = msg;
+    }
+
+    checkStatus(error?.response?.status, msg, errorMessageMode, isLoginApi);
     return Promise.reject(error);
   },
 };
