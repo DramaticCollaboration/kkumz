@@ -41,7 +41,7 @@ export const tabListData: TabItem[] = [
       {
         id: '000000001',
         avatar: '/logo.png',
-        title: '14개의 새로운 주간 뉴스레터를 받았습니다.',
+        title: '새 주간 소식지 14건이 도착했습니다.',
         description: '',
         datetime: '2017-08-09',
         type: '1',
@@ -49,7 +49,7 @@ export const tabListData: TabItem[] = [
       {
         id: '000000002',
         avatar: '/logo.png',
-        title: '추천하신 후보자가 3차 면접에 합격했습니다.',
+        title: '요청하신 결재 건이 최종 승인되었습니다.',
         description: '',
         datetime: '2017-08-08',
         type: '1',
@@ -57,7 +57,7 @@ export const tabListData: TabItem[] = [
       {
         id: '000000003',
         avatar: '/logo.png',
-        title: '이 템플릿은 여러 알림 유형을 구별할 수 있습니다.',
+        title: '알림 유형별로 구분하여 표시합니다.',
         description: '',
         datetime: '2017-08-07',
         // read: true,
@@ -66,7 +66,7 @@ export const tabListData: TabItem[] = [
       {
         id: '000000004',
         avatar: '/logo.png',
-        title: '왼쪽의 아이콘은 다양한 유형을 구별하는 데 사용됩니다.',
+        title: '아이콘으로 알림 종류를 한눈에 확인할 수 있습니다.',
         description: '',
         datetime: '2017-08-07',
         type: '1',
@@ -82,7 +82,7 @@ export const tabListData: TabItem[] = [
       {
         id: '000000006',
         avatar: '/logo.png',
-        title: '왼쪽의 아이콘은 다양한 유형을 구별하는 데 사용됩니다.',
+        title: '아이콘으로 알림 종류를 한눈에 확인할 수 있습니다.',
         description: '',
         datetime: '2017-08-07',
         type: '1',
@@ -90,7 +90,7 @@ export const tabListData: TabItem[] = [
       {
         id: '000000007',
         avatar: '/logo.png',
-        title: '왼쪽의 아이콘은 다양한 유형을 구별하는 데 사용됩니다.',
+        title: '아이콘으로 알림 종류를 한눈에 확인할 수 있습니다.',
         description: '',
         datetime: '2017-08-07',
         type: '1',
@@ -98,7 +98,7 @@ export const tabListData: TabItem[] = [
       {
         id: '000000008',
         avatar: '/logo.png',
-        title: '왼쪽의 아이콘은 다양한 유형을 구별하는 데 사용됩니다.',
+        title: '아이콘으로 알림 종류를 한눈에 확인할 수 있습니다.',
         description: '',
         datetime: '2017-08-07',
         type: '1',
@@ -106,7 +106,7 @@ export const tabListData: TabItem[] = [
       {
         id: '000000009',
         avatar: '/logo.png',
-        title: '왼쪽의 아이콘은 다양한 유형을 구별하는 데 사용됩니다.',
+        title: '아이콘으로 알림 종류를 한눈에 확인할 수 있습니다.',
         description: '',
         datetime: '2017-08-07',
         type: '1',
@@ -114,7 +114,7 @@ export const tabListData: TabItem[] = [
       {
         id: '000000010',
         avatar: '/logo.png',
-        title: '왼쪽의 아이콘은 다양한 유형을 구별하는 데 사용됩니다.',
+        title: '아이콘으로 알림 종류를 한눈에 확인할 수 있습니다.',
         description: '',
         datetime: '2017-08-07',
         type: '1',
@@ -174,7 +174,7 @@ export const tabListData: TabItem[] = [
   //     {
   //       id: '000000010',
   //       avatar: '',
-  //       title: '써드파티 긴급 코드 변경',
+  //       title: '외부 연동 설정 긴급 점검',
   //       description: '담당자는 2017년 1월 7일 이전에 코드 변경 작업을 완료해야 합니다.',
   //       datetime: '',
   //       extra: '곧 만료됨',

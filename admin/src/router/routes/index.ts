@@ -36,7 +36,7 @@ export const TokenLoginRoute: AppRouteRecordRaw = {
   name: 'TokenLoginRoute',
   component: () => import('/@/views/sys/login/TokenLoginPage.vue'),
   meta: {
-    title: '토큰이 포함된 로그인 페이지',
+    title: '자동 로그인',
     ignoreAuth: true,
   },
 };

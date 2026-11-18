@@ -81,7 +81,7 @@ function handlerConvertToValidator(event) {
 const fooPatterns = [
   { title: '비어 있지 않음', value: '*', pattern: /^.+$/ },
   { title: '6~16자리', value: 'n6-16', pattern: /^\d{6,16}$/ },
-  { title: '6~16자 사이의 모든 문자', value: '*6-16', pattern: /^.{6,16}$/ },
+  { title: '6~16자로 입력해 주세요.', value: '*6-16', pattern: /^.{6,16}$/ },
   { title: '6~18자', value: 's6-18', pattern: /^[a-z|A-Z]{6,18}$/ },
   {
     title: 'URL',

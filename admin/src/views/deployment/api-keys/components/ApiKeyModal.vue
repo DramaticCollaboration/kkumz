@@ -42,8 +42,8 @@
         defaultValue: 'OUTBOUND',
         componentProps: {
           options: [
-            { label: 'OUTBOUND (Kkumz ➔ 외부 백엔드 호출)', value: 'OUTBOUND' },
-            { label: 'INBOUND (외부 에이전트 ➔ Kkumz 호출)', value: 'INBOUND' },
+            { label: '발신용 (Kkumz ➔ 외부 서비스 호출)', value: 'OUTBOUND' },
+            { label: '수신용 (외부 서비스 ➔ Kkumz 호출)', value: 'INBOUND' },
           ],
         },
         colProps: { span: 8 },
@@ -58,7 +58,7 @@
           options: [
             { label: 'SyncCMS (콘텐츠·배너·폼 백엔드)', value: 'SYNC_CMS' },
             { label: 'SyncShop (상품·재고·주문 백엔드)', value: 'SYNC_SHOP' },
-            { label: 'SyncVerse (전사 A2A 오케스트레이터)', value: 'SYNC_VERSE' },
+            { label: 'SyncVerse (전사 총괄 에이전트)', value: 'SYNC_VERSE' },
             { label: 'EXTERNAL_PARTNER (외부 파트너 앱)', value: 'EXTERNAL_PARTNER' },
           ],
         },

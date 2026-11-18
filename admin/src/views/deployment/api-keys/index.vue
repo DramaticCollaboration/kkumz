@@ -117,7 +117,7 @@
   const visibleSecrets = reactive<Record<string, boolean>>({});
 
   const [registerTable, { reload }] = useTable({
-    title: '서비스 간 API 연동 · 액세스 키(Access Key / Secret Key) 관제',
+    title: '서비스 연동 API 인증키 관리',
     api: getAdminApiKeyList,
     rowKey: 'id',
     useSearchForm: true,
@@ -133,8 +133,8 @@
           componentProps: {
             options: [
               { label: '전체', value: '' },
-              { label: 'OUTBOUND (SyncCMS / SyncShop 호출)', value: 'OUTBOUND' },
-              { label: 'INBOUND (외부 에이전트 유입)', value: 'INBOUND' },
+              { label: '외부 서비스 호출 (SyncCMS / SyncShop)', value: 'OUTBOUND' },
+              { label: '외부 연동 수신 (인바운드)', value: 'INBOUND' },
             ],
           },
           colProps: { span: 6 },

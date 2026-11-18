@@ -2430,7 +2430,7 @@ async function goToStep(stepNo: number) {
   } else if (stepNo === 4 || stepNo === 6) {
     if (!siteRuntime.value) {
       busy.value = true;
-      busyMessage.value = '라이브 멀티사이트를 프로비저닝하고 있습니다...';
+      busyMessage.value = '라이브 멀티사이트 환경을 구성하고 있습니다...';
       try {
         const rt = await executeScaffoldWithRecovery(targetIdeaId);
         if (selectedIdeaId.value !== targetIdeaId) return;
@@ -2440,7 +2440,7 @@ async function goToStep(stepNo: number) {
         if (selectedIdeaId.value !== targetIdeaId) return;
         reportError(
           err,
-          '사이트 프로비저닝에 실패했습니다',
+          '사이트 환경 구성에 실패했습니다',
           `${stepNo}단계 사이트 런타임을 구성하는 중 오류가 발생했습니다.`,
           () => goToStep(stepNo),
         );
@@ -2455,7 +2455,7 @@ async function goToStep(stepNo: number) {
     busy.value = true;
     try {
       if (!siteRuntime.value) {
-        busyMessage.value = '라이브 멀티사이트를 프로비저닝하고 있습니다...';
+        busyMessage.value = '라이브 멀티사이트 환경을 구성하고 있습니다...';
         const rt = await executeScaffoldWithRecovery(targetIdeaId);
         if (selectedIdeaId.value !== targetIdeaId) return;
         siteRuntime.value = rt;
@@ -2994,10 +2994,10 @@ async function provisionAndGoStep4() {
   if (!targetIdeaId || busy.value) return;
   errorBanner.value = null;
   busy.value = true;
-  busyMessage.value = '기획서·화면설계를 반영하여 라이브 멀티사이트를 프로비저닝하고 있습니다...';
+  busyMessage.value = '기획서·화면설계를 반영하여 라이브 멀티사이트 환경을 구성하고 있습니다...';
   busySteps.value = [
     { label: '1. 브랜드 아이덴티티 · 기획서 블루프린트 저장', status: 'active' },
-    { label: '2. SyncShop · SyncCMS 멀티사이트 프로비저닝 및 초기 콘텐츠 구성', status: 'pending' },
+    { label: '2. 쇼핑몰·홈페이지 자동 생성 및 기본 콘텐츠 채우기', status: 'pending' },
   ];
   try {
     if (editableScreens.value.length > 0 || editableSpecMarkdown.value) {
@@ -3032,7 +3032,7 @@ async function provisionAndGoStep4() {
     if (selectedIdeaId.value !== targetIdeaId) return;
     reportError(
       err,
-      '라이브 멀티사이트 프로비저닝에 실패했습니다',
+      '라이브 멀티사이트 환경 구성에 실패했습니다',
       '사이트를 생성하고 초기 데이터를 구성하는 중 오류가 발생했습니다.',
       () => provisionAndGoStep4(),
     );
@@ -3555,7 +3555,7 @@ async function provisionGitRepository() {
   } catch (err) {
     reportError(
       err,
-      'Git 리포지토리 및 전용 키 프로비저닝에 실패했습니다',
+      'Git 저장소 및 전용 키 구성에 실패했습니다',
       '저장소 설정을 확인한 뒤 다시 시도해 주세요.',
       () => provisionGitRepository(),
     );

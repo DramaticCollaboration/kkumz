@@ -384,7 +384,7 @@
       case 'CHAT_HOT_RELOAD':
         return '대화형 즉시 반영';
       case 'INITIAL_PROVISION':
-        return '초기 프로비저닝';
+        return '초기 환경 구성';
       default:
         return jobType || '배포 빌드';
     }

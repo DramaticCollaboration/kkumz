@@ -185,7 +185,7 @@
             :disabled="busy"
             @click="emit('provision-git-repo')"
           >
-            변경된 리포지토리 설정으로 재프로비저닝 실행
+            변경된 저장소 설정으로 환경 재구성 실행
           </button>
         </div>
       </div>
@@ -373,7 +373,7 @@
     </div>
     <div v-else class="empty-step-box">
       <strong>WebIDE 프로젝트 소스 파일을 아직 불러오지 못했습니다.</strong>
-      <p>사이트 프로비저닝 및 WebIDE 파일 로드를 다시 시도하거나, 바로 6단계 배포로 이동할 수 있습니다.</p>
+      <p>사이트 환경 구성 및 WebIDE 파일 로드를 다시 시도하거나, 바로 6단계 배포로 이동할 수 있습니다.</p>
       <button type="button" class="primary-btn" :disabled="busy" @click="emit('go-step', 5)">
         {{ busy ? '불러오는 중...' : 'WebIDE 파일 다시 불러오기' }}
       </button>

@@ -153,7 +153,7 @@
       function errorTip(tipMessage, fileUrl) {
         let href = glob.uploadUrl + fileUrl;
         createWarningModal({
-          title: '가져오기에 성공했지만 잘못된 데이터가 있습니다!',
+          title: '일부 데이터에 오류가 있어 제외하고 가져왔습니다.',
           centered: false,
           content: `<div>
                         <span>${tipMessage}</span><br/>

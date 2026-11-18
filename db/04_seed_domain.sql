@@ -9,8 +9,8 @@ INSERT INTO sys_permission (
 ) VALUES
 -- 1. AI 스튜디오
 ('perm-kkumz-dom-001', NULL, 'AI 스튜디오', '/studio', 'layouts/default/index', TRUE, 'KkumzStudioLayout', '/studio/ideas', 0, NULL, '1', 10.0, TRUE, 'ant-design:bulb-outlined', FALSE, FALSE, FALSE, FALSE, '아이디어·기능명세서 생성 현황 및 AI 프롬프트 템플릿 관제'),
-('perm-kkumz-dom-002', 'perm-kkumz-dom-001', '아이디어·기획서', '/studio/ideas', 'studio/ideas/index', TRUE, 'KkumzStudioIdeasView', NULL, 1, 'kkumz:studio:ideas', '1', 10.1, FALSE, 'ant-design:file-markdown-outlined', TRUE, TRUE, FALSE, FALSE, '창업 아이디어, 브랜드 후보, 마크다운 기능명세서 및 버전 이력 관리'),
-('perm-kkumz-dom-003', 'perm-kkumz-dom-001', '프롬프트·금지어', '/studio/prompts', 'studio/prompts/index', TRUE, 'KkumzStudioPromptsView', NULL, 1, 'kkumz:studio:prompts', '1', 10.2, FALSE, 'ant-design:control-outlined', TRUE, TRUE, FALSE, FALSE, '네이밍·로고·명세서·코드수리 단계별 AI 프롬프트 템플릿 및 금지어 관리'),
+('perm-kkumz-dom-002', 'perm-kkumz-dom-001', '창업 기획서', '/studio/ideas', 'studio/ideas/index', TRUE, 'KkumzStudioIdeasView', NULL, 1, 'kkumz:studio:ideas', '1', 10.1, FALSE, 'ant-design:file-markdown-outlined', TRUE, TRUE, FALSE, FALSE, '창업 아이디어, 브랜드 후보, 마크다운 기능명세서 및 버전 이력 관리'),
+('perm-kkumz-dom-003', 'perm-kkumz-dom-001', 'AI 생성 규칙', '/studio/prompts', 'studio/prompts/index', TRUE, 'KkumzStudioPromptsView', NULL, 1, 'kkumz:studio:prompts', '1', 10.2, FALSE, 'ant-design:control-outlined', TRUE, TRUE, FALSE, FALSE, '네이밍·로고·명세서·코드수리 단계별 AI 프롬프트 템플릿 및 금지어 관리'),
 
 -- 2. 사이트·배포
 ('perm-kkumz-dom-010', NULL, '사이트·배포', '/deployment', 'layouts/default/index', TRUE, 'KkumzDeploymentLayout', '/deployment/sites', 0, NULL, '1', 20.0, TRUE, 'ant-design:rocket-outlined', FALSE, FALSE, FALSE, FALSE, '멀티사이트 도메인 운영 상태 및 WebIDE 샌드박스 빌드 파이프라인 관제'),
@@ -20,7 +20,7 @@ INSERT INTO sys_permission (
 
 -- 3. 커뮤니티
 ('perm-kkumz-dom-020', NULL, '커뮤니티', '/community', 'layouts/default/index', TRUE, 'KkumzCommunityLayout', '/community/projects', 0, NULL, '1', 30.0, TRUE, 'ant-design:usergroup-add-outlined', FALSE, FALSE, FALSE, FALSE, '창업 쇼케이스 큐레이션, 팀원 모집 공고 및 커뮤니티 신고 모더레이션'),
-('perm-kkumz-dom-021', 'perm-kkumz-dom-020', '쇼케이스·팀빌딩', '/community/projects', 'community/projects/index', TRUE, 'KkumzCommunityProjectsView', NULL, 1, 'kkumz:community:projects', '1', 30.1, FALSE, 'ant-design:star-outlined', TRUE, TRUE, FALSE, FALSE, '추천 프로젝트 큐레이션 지정, 팀원 모집 공고 및 팀 합류 매칭 현황 관리'),
+('perm-kkumz-dom-021', 'perm-kkumz-dom-020', '프로젝트·팀원', '/community/projects', 'community/projects/index', TRUE, 'KkumzCommunityProjectsView', NULL, 1, 'kkumz:community:projects', '1', 30.1, FALSE, 'ant-design:star-outlined', TRUE, TRUE, FALSE, FALSE, '추천 프로젝트 큐레이션 지정, 팀원 모집 공고 및 팀 합류 매칭 현황 관리'),
 ('perm-kkumz-dom-022', 'perm-kkumz-dom-020', '신고 관리', '/community/moderation', 'community/moderation/index', TRUE, 'KkumzCommunityModerationView', NULL, 1, 'kkumz:community:moderation', '1', 30.2, FALSE, 'ant-design:safety-certificate-outlined', TRUE, TRUE, FALSE, FALSE, '게시물·댓글·사이트 신고 접수 심사, 블라인드 처분 및 계정 제재 관리');
 
 INSERT INTO sys_role_permission (id, role_id, permission_id) VALUES
