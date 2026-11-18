@@ -1,5 +1,6 @@
 package com.empasy.sync.kkumz.domain;
 
+import com.empasy.sync.core.common.config.SystemConfigHolder;
 import com.empasy.sync.kkumz.domain.KkumzDTO.*;
 import com.empasy.sync.kkumz.system.KkumzSystemService;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
@@ -97,14 +98,26 @@ public class KkumzService {
     @Value("${kkumz.storage.public-prefix:/api/v1/kkumz/assets/files}")
     private String storagePublicPrefix;
 
-    @Value("${kkumz.integration.cms-base-url:http://localhost:18085}")
+    @Value("${kkumz.integration.cms-base-url:}")
     private String defaultCmsBaseUrl;
 
-    @Value("${kkumz.integration.shop-base-url:http://localhost:8501}")
+    @Value("${kkumz.integration.shop-base-url:}")
     private String defaultShopBaseUrl;
 
-    @Value("${kkumz.server.public-base-url:http://localhost:9580}")
+    @Value("${kkumz.server.public-base-url:}")
     private String kkumzPublicBaseUrl;
+
+    private String resolveCmsBaseUrl() {
+        return SystemConfigHolder.getValue("kkumz.integration.cms.base-url", defaultCmsBaseUrl != null ? defaultCmsBaseUrl : "");
+    }
+
+    private String resolveShopBaseUrl() {
+        return SystemConfigHolder.getValue("kkumz.integration.shop.base-url", defaultShopBaseUrl != null ? defaultShopBaseUrl : "");
+    }
+
+    private String resolveKkumzPublicBaseUrl() {
+        return SystemConfigHolder.getValue("kkumz.server.public-base-url", kkumzPublicBaseUrl != null ? kkumzPublicBaseUrl : "");
+    }
 
     private JdbcTemplate shopJdbcTemplate;
     private JdbcTemplate cmsJdbcTemplate;
@@ -5005,7 +5018,7 @@ public class KkumzService {
                 : "ACTIVE";
         int rateLimit = (req.getRateLimitPerMin() != null && req.getRateLimitPerMin() > 0)
                 ? req.getRateLimitPerMin()
-                : 600;
+                : SystemConfigHolder.getInt("kkumz.policy.default-rate-limit-rpm", 600);
         List<String> scopes = (req.getScopes() != null && !req.getScopes().isEmpty())
                 ? req.getScopes()
                 : ("OUTBOUND".equals(direction)
@@ -5017,8 +5030,8 @@ public class KkumzService {
         String baseUrl = req.getBaseUrl() != null ? req.getBaseUrl().trim() : "";
         if (baseUrl.isEmpty() && "OUTBOUND".equals(direction)) {
             baseUrl = "SYNC_CMS".equals(serviceCode)
-                    ? (defaultCmsBaseUrl != null ? defaultCmsBaseUrl : "")
-                    : (defaultShopBaseUrl != null ? defaultShopBaseUrl : "");
+                    ? resolveCmsBaseUrl()
+                    : resolveShopBaseUrl();
         }
         String description = req.getDescription() != null ? req.getDescription().trim() : "";
         String createdBy = (req.getCreatedBy() != null && !req.getCreatedBy().isBlank()) ? req.getCreatedBy().trim() : "admin";
@@ -8249,7 +8262,7 @@ public class KkumzService {
                         },
                       };
                     });
-                    """.formatted(kkumzPublicBaseUrl != null ? kkumzPublicBaseUrl : "", siteAccessKey);
+                    """.formatted(resolveKkumzPublicBaseUrl(), siteAccessKey);
             byPath.put("vite.config.ts", new LinkedHashMap<>(Map.of(
                     "path", "vite.config.ts",
                     "language", "typescript",

@@ -57,13 +57,10 @@
         {
           field: 'status',
           label: '빌드 상태',
-          component: 'Select',
+          component: 'JDictSelectTag',
           componentProps: {
-            options: [
-              { label: '전체', value: '' },
-              { label: '성공', value: 'SUCCESS' },
-              { label: '실패', value: 'FAILED' },
-            ],
+            dictCode: 'kkumz_build_status',
+            placeholder: '전체',
           },
           colProps: { span: 8 },
         },

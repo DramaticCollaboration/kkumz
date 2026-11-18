@@ -68,17 +68,10 @@
         {
           field: 'stageType',
           label: '스튜디오 단계',
-          component: 'Select',
+          component: 'JDictSelectTag',
           componentProps: {
-            options: [
-              { label: '전체', value: '' },
-              { label: '브랜드 네이밍', value: 'NAMING' },
-              { label: '벡터 SVG 로고', value: 'LOGO_SVG' },
-              { label: '기능명세서', value: 'SPEC_FRS' },
-              { label: '프리뷰 수정', value: 'CHAT_REFINE' },
-              { label: '사이트 컨시어지 상담', value: 'CONCIERGE' },
-              { label: '빌드 오류 패치', value: 'BUILD_FIX' },
-            ],
+            dictCode: 'kkumz_stage_type',
+            placeholder: '전체',
           },
           colProps: { span: 8 },
         },

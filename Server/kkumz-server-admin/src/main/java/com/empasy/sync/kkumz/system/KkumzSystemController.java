@@ -149,49 +149,4 @@ public class KkumzSystemController {
         systemService.deletePermission(id);
         return Result.OK("삭제되었습니다.", null);
     }
-
-    @GetMapping("/dict/list")
-    public Result<Map<String, Object>> listDicts(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "1") int pageNo,
-            @RequestParam(defaultValue = "20") int pageSize
-    ) {
-        return Result.OK(systemService.listDicts(keyword, pageNo, pageSize));
-    }
-
-    @GetMapping("/dict/items")
-    public Result<List<Map<String, Object>>> listDictItems(
-            @RequestParam(required = false) String dictId,
-            @RequestParam(required = false) String dictCode
-    ) {
-        return Result.OK(systemService.listDictItems(dictId, dictCode));
-    }
-
-    @PostMapping("/dict")
-    public Result<Map<String, Object>> createDict(@RequestBody SaveDictRequest request) {
-        return Result.OK("등록되었습니다.", systemService.saveDict(request));
-    }
-
-    @PutMapping("/dict")
-    public Result<Map<String, Object>> updateDict(@RequestBody SaveDictRequest request) {
-        return Result.OK("수정되었습니다.", systemService.saveDict(request));
-    }
-
-    @PostMapping("/dict/item")
-    public Result<Map<String, Object>> saveDictItem(@RequestBody SaveDictItemRequest request) {
-        boolean isUpdate = request != null && request.getId() != null && !request.getId().isBlank();
-        return Result.OK(isUpdate ? "수정되었습니다." : "등록되었습니다.", systemService.saveDictItem(request));
-    }
-
-    @DeleteMapping("/dict/item/{id}")
-    public Result<String> deleteDictItem(@PathVariable String id) {
-        systemService.deleteDictItem(id);
-        return Result.OK("삭제되었습니다.", null);
-    }
-
-    @DeleteMapping("/dict/{id}")
-    public Result<String> deleteDict(@PathVariable String id) {
-        systemService.deleteDict(id);
-        return Result.OK("삭제되었습니다.", null);
-    }
 }

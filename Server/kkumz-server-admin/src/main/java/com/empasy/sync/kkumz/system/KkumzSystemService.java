@@ -570,6 +570,36 @@ public class KkumzSystemService {
         return List.of();
     }
 
+    public List<Map<String, Object>> getDictItemsByCode(String dictCode) {
+        if (dictCode == null || dictCode.isBlank()) {
+            return List.of();
+        }
+        List<Map<String, Object>> raw = listDictItems(null, dictCode.trim());
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (Map<String, Object> row : raw) {
+            int status = row.get("status") instanceof Number num ? num.intValue() : 1;
+            if (status != 1) {
+                continue;
+            }
+            String text = row.get("itemText") != null ? String.valueOf(row.get("itemText")) : "";
+            String val = row.get("itemValue") != null ? String.valueOf(row.get("itemValue")) : "";
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", row.get("id"));
+            item.put("dictId", row.get("dictId"));
+            item.put("value", val);
+            item.put("text", text);
+            item.put("title", text);
+            item.put("label", text);
+            item.put("itemValue", val);
+            item.put("itemText", text);
+            item.put("description", row.get("description"));
+            item.put("sortOrder", row.get("sortOrder"));
+            item.put("status", status);
+            items.add(item);
+        }
+        return items;
+    }
+
     @Transactional
     public Map<String, Object> saveDict(SaveDictRequest req) {
         if (req.getDictCode() == null || req.getDictCode().isBlank()) {

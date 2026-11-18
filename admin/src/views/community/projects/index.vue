@@ -48,14 +48,10 @@
         {
           field: 'siteType',
           label: '사이트 유형',
-          component: 'Select',
+          component: 'JDictSelectTag',
           componentProps: {
-            options: [
-              { label: '전체', value: '' },
-              { label: '쇼핑몰 스토어', value: 'COMMERCE' },
-              { label: '브랜드·커뮤니티 웹', value: 'CMS_SITE' },
-              { label: '매거진+스토어 복합', value: 'HYBRID' },
-            ],
+            dictCode: 'kkumz_site_type',
+            placeholder: '전체',
           },
           colProps: { span: 8 },
         },

@@ -40,7 +40,8 @@ INSERT INTO sys_permission (
 ('perm-kkumz-sys-016', 'perm-kkumz-sys-010', '부서', '/system/depart', 'system/depart/index', TRUE, 'KkumzSystemDepartView', NULL, 1, 'system:depart:view', '1', 50.6, FALSE, 'ant-design:apartment-outlined', TRUE, TRUE, FALSE, FALSE, '조직 및 크리에이터 운영 부서 트리 관리'),
 ('perm-kkumz-sys-017', 'perm-kkumz-sys-010', '알림 발송', '/system/message', 'system/message/index', TRUE, 'KkumzSystemMessageView', NULL, 1, 'system:message:view', '1', 50.7, FALSE, 'ant-design:bell-outlined', TRUE, TRUE, FALSE, FALSE, '시스템 알림 메시지 및 발송 템플릿 관리'),
 ('perm-kkumz-sys-018', 'perm-kkumz-sys-010', '작업 로그', '/monitor/log', 'monitor/log/index', TRUE, 'KkumzMonitorLogView', NULL, 1, 'monitor:log:view', '1', 50.8, FALSE, 'ant-design:file-search-outlined', TRUE, TRUE, FALSE, FALSE, '관리자 및 시스템 작업 감사 로그 조회'),
-('perm-kkumz-sys-019', 'perm-kkumz-sys-010', '도움말 설정', '/system/help-guide', 'system/help/index', TRUE, 'KkumzHelpGuideMaster', NULL, 1, 'system:help:view', '1', 50.9, FALSE, 'ant-design:question-circle-outlined', TRUE, TRUE, FALSE, FALSE, '화면별 인앱 운영 가이드 및 매뉴얼 관리');
+('perm-kkumz-sys-019', 'perm-kkumz-sys-010', '도움말 설정', '/system/help-guide', 'system/help/index', TRUE, 'KkumzHelpGuideMaster', NULL, 1, 'system:help:view', '1', 50.9, FALSE, 'ant-design:question-circle-outlined', TRUE, TRUE, FALSE, FALSE, '화면별 인앱 운영 가이드 및 매뉴얼 관리'),
+('perm-kkumz-sys-config', 'perm-kkumz-sys-010', '시스템 환경설정', '/system/config', 'system/config/index', TRUE, 'KkumzSystemConfigView', NULL, 1, 'system:config:view', '1', 50.55, FALSE, 'ant-design:control-outlined', TRUE, TRUE, FALSE, FALSE, 'AI 엔진, 외부 서비스 연동, 보안, 스토리지 및 비즈니스 정책 동적 설정');
 
 INSERT INTO sys_role_permission (id, role_id, permission_id) VALUES
 ('srp_kkumz_sys_001', 'role_admin', 'perm-kkumz-sys-001'),
@@ -54,6 +55,7 @@ INSERT INTO sys_role_permission (id, role_id, permission_id) VALUES
 ('srp_kkumz_sys_017', 'role_admin', 'perm-kkumz-sys-017'),
 ('srp_kkumz_sys_018', 'role_admin', 'perm-kkumz-sys-018'),
 ('srp_kkumz_sys_019', 'role_admin', 'perm-kkumz-sys-019'),
+('srp_kkumz_sys_config', 'role_admin', 'perm-kkumz-sys-config'),
 ('srp_kkumz_mod_001', 'role_moderator', 'perm-kkumz-sys-001');
 
 -- 공통 코드 사전
@@ -169,3 +171,86 @@ INSERT INTO sys_dict_item (id, dict_id, item_text, item_value, description, sort
 ('ditem-kkumz-952', 'dict-kkumz-010', '좌우 스플릿 비주얼 배너', 'SPLIT_VISUAL', '좌측 브랜드 카피·CTA와 우측 대표 사진 프레임이 분할 배치되는 레이아웃', 2, 1),
 ('ditem-kkumz-953', 'dict-kkumz-010', '에디토리얼 매거진 커버', 'EDITORIAL_STORY', '매거진 표지 감성의 타이포그래피와 호스트 철학 인용구가 강조되는 레이아웃', 3, 1),
 ('ditem-kkumz-954', 'dict-kkumz-010', '프로모션 커머스 쇼케이스', 'PROMO_COMMERCE', '핵심 혜택 배지·웰컴 쿠폰·대표 상품 하이라이트가 결합된 스토어형 레이아웃', 4, 1);
+
+-- ============================================================================
+-- 시스템 환경설정 카테고리 및 도메인 운영 공통 사전 확장 시드
+-- ============================================================================
+INSERT INTO sys_dict (id, dict_name, dict_code, description, create_by) VALUES
+('dict-kkumz-011', '환경설정 카테고리', 'sys_config_category', '시스템 동적 환경설정 탭 분류 코드', 'admin'),
+('dict-kkumz-012', '캠페인 운영 상태', 'kkumz_campaign_status', '브랜드 캠페인 및 프로모션 운영 상태', 'admin'),
+('dict-kkumz-013', '콘텐츠 도메인 분류', 'kkumz_content_category', '아이디어 및 브랜드 사이트 콘텐츠 도메인 분류', 'admin'),
+('dict-kkumz-014', '리워드 혜택 유형', 'kkumz_reward_type', '크리에이터 및 방문객 리워드 혜택 유형', 'admin'),
+('dict-kkumz-015', '신고 심사 처리 상태', 'kkumz_moderation_status', '커뮤니티 신고 접수 및 심사 처분 상태', 'admin'),
+('dict-kkumz-016', 'API 연동 방향', 'kkumz_api_direction', '서비스 간 API 인증키 발신/수신 방향', 'admin'),
+('dict-kkumz-017', '연동 대상 서비스 코드', 'kkumz_api_service_code', '외부 및 내부 연동 대상 서비스 식별 코드', 'admin'),
+('dict-kkumz-018', 'API 인증키 상태', 'kkumz_api_key_status', '서비스 연동 API 키 활성/폐기 상태', 'admin'),
+('dict-kkumz-019', '샌드박스 빌드 상태', 'kkumz_build_status', 'WebIDE 및 멀티사이트 빌드 실행 상태', 'admin'),
+('dict-kkumz-020', '사이트 운영 상태', 'kkumz_site_status', '멀티사이트 라이브 가동 및 정지 상태', 'admin'),
+('dict-kkumz-021', 'AI 스튜디오 생성 단계', 'kkumz_stage_type', 'AI 스튜디오 파이프라인 단계 코드', 'admin'),
+('dict-kkumz-022', '공통 활성 상태', 'kkumz_active_status', '템플릿 및 정책 활성/비활성 상태', 'admin');
+
+INSERT INTO sys_dict_item (id, dict_id, item_text, item_value, description, sort_order, status) VALUES
+('ditem-kkumz-1101', 'dict-kkumz-011', 'AI & LLM 엔진', 'AI_LLM', 'AI 모델 및 추론 타임아웃 설정', 1, 1),
+('ditem-kkumz-1102', 'dict-kkumz-011', '외부 서비스 연동', 'INTEGRATION', 'SyncCMS, SyncShop, SyncVerse 연동 설정', 2, 1),
+('ditem-kkumz-1103', 'dict-kkumz-011', '보안 & 인증', 'SECURITY', 'JWT 토큰 만료 및 인증 보안 정책', 3, 1),
+('ditem-kkumz-1104', 'dict-kkumz-011', '스토리지 & 파일', 'STORAGE', '업로드 경로 및 정적 자산 서빙 설정', 4, 1),
+('ditem-kkumz-1105', 'dict-kkumz-011', '비즈니스 정책', 'BIZ_POLICY', '멀티사이트 프로비저닝 및 운영 정책', 5, 1),
+('ditem-kkumz-1201', 'dict-kkumz-012', '기획 준비중', 'DRAFT', '캠페인 오픈 전 준비 상태', 1, 1),
+('ditem-kkumz-1202', 'dict-kkumz-012', '진행중', 'ACTIVE', '라이브 캠페인 진행 상태', 2, 1),
+('ditem-kkumz-1203', 'dict-kkumz-012', '일시 중지', 'PAUSED', '캠페인 일시 중지 상태', 3, 1),
+('ditem-kkumz-1204', 'dict-kkumz-012', '종료됨', 'COMPLETED', '캠페인 기간 만료 및 종료 상태', 4, 1),
+('ditem-kkumz-1301', 'dict-kkumz-013', '라이프스타일 & 스테이', 'LIFESTYLE_HYBRID', '숙박·스테이·공간 및 라이프스타일 복합', 1, 1),
+('ditem-kkumz-1302', 'dict-kkumz-013', 'F&B & 로스터리', 'FOOD_BEVERAGE', '스페셜티 커피, 다도, 베이커리 및 식음료', 2, 1),
+('ditem-kkumz-1303', 'dict-kkumz-013', '테크 & 데스크기어', 'TECH_HARDWARE', '커스텀 하드웨어, 데스크 셋업 및 디지털 기어', 3, 1),
+('ditem-kkumz-1304', 'dict-kkumz-013', '커뮤니티 & 크루', 'COMMUNITY_MEDIA', '러닝 크루, 매거진, 북클럽 및 로컬 커뮤니티', 4, 1),
+('ditem-kkumz-1401', 'dict-kkumz-014', '웰컴 할인 쿠폰', 'WELCOME_COUPON', '첫 방문 및 직예약 즉시 할인 쿠폰', 1, 1),
+('ditem-kkumz-1402', 'dict-kkumz-014', '크리에이터 포인트', 'CREATOR_POINT', '창업 쇼케이스 활동 및 피드백 적립 포인트', 2, 1),
+('ditem-kkumz-1403', 'dict-kkumz-014', '기프트 바우처', 'GIFT_VOUCHER', '시즌 패스 및 선불 기프트 이용권', 3, 1),
+('ditem-kkumz-1501', 'dict-kkumz-015', '심사 대기', 'PENDING', '모더레이터 심사 대기 상태', 1, 1),
+('ditem-kkumz-1502', 'dict-kkumz-015', '조치 완료', 'RESOLVED', '신고 승인 및 제재 조치 완료', 2, 1),
+('ditem-kkumz-1503', 'dict-kkumz-015', '반려 / 이상 없음', 'DISMISSED', '신고 사유 불충분 반려 처분', 3, 1),
+('ditem-kkumz-1601', 'dict-kkumz-016', '외부 서비스 호출 (OUTBOUND)', 'OUTBOUND', 'Kkumz에서 SyncCMS/SyncShop 등 외부 서비스 호출', 1, 1),
+('ditem-kkumz-1602', 'dict-kkumz-016', '외부 연동 수신 (INBOUND)', 'INBOUND', '외부 서비스에서 Kkumz 런타임 API 호출', 2, 1),
+('ditem-kkumz-1701', 'dict-kkumz-017', 'SyncCMS (콘텐츠·배너·폼)', 'SYNC_CMS', 'SyncCMS 멀티사이트 콘텐츠 백엔드', 1, 1),
+('ditem-kkumz-1702', 'dict-kkumz-017', 'SyncShop (상품·재고·주문)', 'SYNC_SHOP', 'SyncShop 멀티사이트 커머스 백엔드', 2, 1),
+('ditem-kkumz-1703', 'dict-kkumz-017', 'SyncVerse (전사 총괄 에이전트)', 'SYNC_VERSE', 'SyncVerse 중앙 오케스트레이터', 3, 1),
+('ditem-kkumz-1704', 'dict-kkumz-017', 'EXTERNAL_PARTNER (외부 파트너)', 'EXTERNAL_PARTNER', '외부 파트너 및 커스텀 번들 SDK', 4, 1),
+('ditem-kkumz-1801', 'dict-kkumz-018', '정상 활성 (ACTIVE)', 'ACTIVE', '정상 호출 가능 상태', 1, 1),
+('ditem-kkumz-1802', 'dict-kkumz-018', '폐기/중지 (REVOKED)', 'REVOKED', '호출 차단 및 폐기 상태', 2, 1),
+('ditem-kkumz-1901', 'dict-kkumz-019', '성공', 'SUCCESS', '샌드박스 번들 빌드 및 검증 성공', 1, 1),
+('ditem-kkumz-1902', 'dict-kkumz-019', '실패', 'FAILED', '빌드 컴파일 또는 패키징 오류', 2, 1),
+('ditem-kkumz-2001', 'dict-kkumz-020', '정상 가동', 'ACTIVE', '멀티사이트 공개 가동 상태', 1, 1),
+('ditem-kkumz-2002', 'dict-kkumz-020', '일시 정지', 'SUSPENDED', '운영 정책에 따른 일시 정지 상태', 2, 1),
+('ditem-kkumz-2101', 'dict-kkumz-021', '브랜드 네이밍', 'NAMING', 'AI 브랜드 네이밍 8종 및 슬러그 생성', 1, 1),
+('ditem-kkumz-2102', 'dict-kkumz-021', '벡터 SVG 로고', 'LOGO_SVG', 'AI 벡터 SVG 로고 6종 및 컬러 팔레트 생성', 2, 1),
+('ditem-kkumz-2103', 'dict-kkumz-021', '마크다운 기능명세서', 'SPEC_FRS', '상세 기능명세서(FRS) 및 화면 설계 생성', 3, 1),
+('ditem-kkumz-2104', 'dict-kkumz-021', '대화형 프리뷰 수정', 'CHAT_REFINE', '스튜디오 대화형 테마·레이아웃 리파인', 4, 1),
+('ditem-kkumz-2105', 'dict-kkumz-021', '사이트 컨시어지 상담', 'CONCIERGE', '멀티사이트 방문객 AI 컨시어지 응대', 5, 1),
+('ditem-kkumz-2106', 'dict-kkumz-021', 'WebIDE 빌드 패치', 'BUILD_FIX', '샌드박스 빌드 오류 자동 코드 패치', 6, 1),
+('ditem-kkumz-2107', 'dict-kkumz-021', '아키텍처·기능 진단', 'INTENT_ADVISOR', '프롬프트 기반 아키텍처 및 52종 기능 추천', 7, 1),
+('ditem-kkumz-2108', 'dict-kkumz-021', '초기 사이트 콘텐츠 생성', 'SITE_CONTENT_PROVISION', '업종 맞춤 초기 상품·요금표·예약폼 생성', 8, 1),
+('ditem-kkumz-2201', 'dict-kkumz-022', '활성', 'ACTIVE', '활성 상태', 1, 1),
+('ditem-kkumz-2202', 'dict-kkumz-022', '비활성', 'INACTIVE', '비활성 상태', 2, 1);
+
+-- ============================================================================
+-- 시스템 통합 동적 환경설정 초기 시드 (sys_config)
+-- ============================================================================
+INSERT INTO sys_config (
+    id, config_category, config_key, config_name, config_value, default_value,
+    value_type, is_secret, is_dynamic, status, sort_order, description, create_by
+) VALUES
+('cfg-kkumz-001', 'INTEGRATION', 'kkumz.integration.cms.base-url', 'SyncCMS 멀티사이트 연동 Base URL', 'http://localhost:18085', 'http://localhost:18085', 'STRING', FALSE, TRUE, 1, 10, 'SyncCMS 멀티사이트 콘텐츠·배너·폼 API 호출 기본 엔드포인트', 'admin'),
+('cfg-kkumz-002', 'INTEGRATION', 'kkumz.integration.cms.access-key', 'SyncCMS 연동 Access Key', 'ak_cms_kkumz_live_01', 'ak_cms_kkumz_live_01', 'STRING', FALSE, TRUE, 1, 20, 'SyncCMS 멀티사이트 API 호출용 기본 Access Key', 'admin'),
+('cfg-kkumz-003', 'INTEGRATION', 'kkumz.integration.cms.secret-key', 'SyncCMS 연동 Secret Key', 'sk_cms_kkumz_secret_2026_prod_99', 'sk_cms_kkumz_secret_2026_prod_99', 'SECRET', TRUE, TRUE, 1, 30, 'SyncCMS 멀티사이트 API 호출용 기본 Secret Key (AES-256-GCM 암호화 저장)', 'admin'),
+('cfg-kkumz-004', 'INTEGRATION', 'kkumz.integration.shop.base-url', 'SyncShop 멀티사이트 연동 Base URL', 'http://localhost:8501', 'http://localhost:8501', 'STRING', FALSE, TRUE, 1, 40, 'SyncShop 멀티사이트 상품·주문 API 호출 기본 엔드포인트', 'admin'),
+('cfg-kkumz-005', 'INTEGRATION', 'kkumz.integration.shop.access-key', 'SyncShop 연동 Access Key', 'ak_shop_kkumz_live_01', 'ak_shop_kkumz_live_01', 'STRING', FALSE, TRUE, 1, 50, 'SyncShop 멀티사이트 API 호출용 기본 Access Key', 'admin'),
+('cfg-kkumz-006', 'INTEGRATION', 'kkumz.integration.shop.secret-key', 'SyncShop 연동 Secret Key', 'sk_shop_kkumz_secret_2026_prod_88', 'sk_shop_kkumz_secret_2026_prod_88', 'SECRET', TRUE, TRUE, 1, 60, 'SyncShop 멀티사이트 API 호출용 기본 Secret Key (AES-256-GCM 암호화 저장)', 'admin'),
+('cfg-kkumz-007', 'INTEGRATION', 'kkumz.integration.verse.base-url', 'SyncVerse 오케스트레이터 Base URL', 'http://localhost:18081', 'http://localhost:18081', 'STRING', FALSE, TRUE, 1, 70, 'SyncVerse 중앙 오케스트레이터 연동 기본 엔드포인트', 'admin'),
+('cfg-kkumz-008', 'INTEGRATION', 'kkumz.server.public-base-url', 'Kkumz 공개 API Base URL', 'http://localhost:9580', 'http://localhost:9580', 'STRING', FALSE, TRUE, 1, 80, 'WebIDE 번들 및 외부 사이트에서 Kkumz 런타임 API 호출 시 사용하는 공개 URL', 'admin'),
+('cfg-kkumz-009', 'INTEGRATION', 'kkumz.integration.circuit-cooldown-ms', '외부 연동 서킷브레이커 쿨다운 (ms)', '60000', '60000', 'NUMBER', FALSE, TRUE, 1, 90, '원격 서비스 장애 감지 시 로컬 DB 어댑터 폴백 유지 시간(밀리초)', 'admin'),
+('cfg-kkumz-010', 'AI_LLM', 'kkumz.ai.default-model', 'AI 스튜디오 기본 LLM 모델명', 'morph-glm53flash', 'morph-glm53flash', 'STRING', FALSE, TRUE, 1, 10, '단계별 프롬프트에 모델이 지정되지 않았을 때 사용할 기본 LLM 모델 식별자', 'admin'),
+('cfg-kkumz-011', 'AI_LLM', 'kkumz.ai.timeout-seconds', 'AI 추론 요청 타임아웃 (초)', '60', '60', 'NUMBER', FALSE, TRUE, 1, 20, 'AI 게이트웨이 단일 추론 호출 최대 대기 시간(초)', 'admin'),
+('cfg-kkumz-012', 'SECURITY', 'kkumz.security.jwt-expire-ms', 'JWT 인증 세션 유효기간 (ms)', '86400000', '86400000', 'NUMBER', FALSE, TRUE, 1, 10, '로그인 액세스 토큰 기본 만료 시간(밀리초)', 'admin'),
+('cfg-kkumz-013', 'STORAGE', 'kkumz.storage.upload-dir', '미디어·문서 업로드 로컬 루트 경로', 'uploads/kkumz', 'uploads/kkumz', 'STRING', FALSE, TRUE, 1, 10, '스튜디오 업로드 자산 및 Git 번들 저장 디렉터리 경로', 'admin'),
+('cfg-kkumz-014', 'STORAGE', 'kkumz.storage.public-prefix', '정적 자산 공개 URL Prefix', '/api/v1/kkumz/assets/files', '/api/v1/kkumz/assets/files', 'STRING', FALSE, TRUE, 1, 20, '업로드된 미디어 파일 서빙을 위한 공개 URL 접두사', 'admin'),
+('cfg-kkumz-015', 'BIZ_POLICY', 'kkumz.policy.default-rate-limit-rpm', 'API 키 기본 분당 호출 한도 (RPM)', '600', '600', 'NUMBER', FALSE, TRUE, 1, 10, '신규 API 액세스 키 발급 시 기본 분당 호출 허용 횟수', 'admin');

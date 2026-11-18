@@ -1,5 +1,6 @@
 package com.empasy.sync.kkumz.domain;
 
+import com.empasy.sync.core.common.config.SystemConfigHolder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Builder;
@@ -26,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Kkumz -> SyncCMS / SyncShop 서비스 간 표준 REST API 클라이언트
  * X-Sync-Access-Key / X-Sync-Secret-Key 인증 헤더를 동적 주입하며,
- * kkumz_api_access_key 테이블의 OUTBOUND 키 설정 및 호출 통계를 실시간 연동한다.
+ * kkumz_api_access_key 테이블 및 sys_config 설정을 실시간 연동한다.
  */
 @Slf4j
 @Component
@@ -36,31 +37,57 @@ public class SyncServiceApiClient {
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${kkumz.integration.cms-base-url:http://localhost:18085}")
+    @Value("${kkumz.integration.cms-base-url:}")
     private String defaultCmsBaseUrl;
 
-    @Value("${kkumz.integration.cms-access-key:ak_cms_kkumz_live_01}")
+    @Value("${kkumz.integration.cms-access-key:}")
     private String defaultCmsAccessKey;
 
-    @Value("${kkumz.integration.cms-secret-key:sk_cms_kkumz_secret_2026_prod_99}")
+    @Value("${kkumz.integration.cms-secret-key:}")
     private String defaultCmsSecretKey;
 
-    @Value("${kkumz.integration.shop-base-url:http://localhost:8501}")
+    @Value("${kkumz.integration.shop-base-url:}")
     private String defaultShopBaseUrl;
 
-    @Value("${kkumz.integration.shop-access-key:ak_shop_kkumz_live_01}")
+    @Value("${kkumz.integration.shop-access-key:}")
     private String defaultShopAccessKey;
 
-    @Value("${kkumz.integration.shop-secret-key:sk_shop_kkumz_secret_2026_prod_88}")
+    @Value("${kkumz.integration.shop-secret-key:}")
     private String defaultShopSecretKey;
-
-    private static final long CIRCUIT_OPEN_COOLDOWN_MS = 60_000L;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofMillis(1500))
             .build();
 
     private final Map<String, Long> unreachableUntilEpochMs = new ConcurrentHashMap<>();
+
+    private String resolveCmsBaseUrl() {
+        return SystemConfigHolder.getValue("kkumz.integration.cms.base-url", defaultCmsBaseUrl);
+    }
+
+    private String resolveCmsAccessKey() {
+        return SystemConfigHolder.getValue("kkumz.integration.cms.access-key", defaultCmsAccessKey);
+    }
+
+    private String resolveCmsSecretKey() {
+        return SystemConfigHolder.getValue("kkumz.integration.cms.secret-key", defaultCmsSecretKey);
+    }
+
+    private String resolveShopBaseUrl() {
+        return SystemConfigHolder.getValue("kkumz.integration.shop.base-url", defaultShopBaseUrl);
+    }
+
+    private String resolveShopAccessKey() {
+        return SystemConfigHolder.getValue("kkumz.integration.shop.access-key", defaultShopAccessKey);
+    }
+
+    private String resolveShopSecretKey() {
+        return SystemConfigHolder.getValue("kkumz.integration.shop.secret-key", defaultShopSecretKey);
+    }
+
+    private long resolveCircuitCooldownMs() {
+        return SystemConfigHolder.getLong("kkumz.integration.circuit-cooldown-ms", 60_000L);
+    }
 
     private boolean isCircuitOpen(String serviceCode) {
         if (!StringUtils.hasText(serviceCode)) {
@@ -79,7 +106,7 @@ public class SyncServiceApiClient {
 
     private void markCircuitOpen(String serviceCode) {
         if (StringUtils.hasText(serviceCode)) {
-            unreachableUntilEpochMs.put(serviceCode.toUpperCase(), System.currentTimeMillis() + CIRCUIT_OPEN_COOLDOWN_MS);
+            unreachableUntilEpochMs.put(serviceCode.toUpperCase(), System.currentTimeMillis() + resolveCircuitCooldownMs());
         }
     }
 
@@ -116,7 +143,7 @@ public class SyncServiceApiClient {
             if (!rows.isEmpty()) {
                 Map<String, Object> row = rows.get(0);
                 String dbBaseUrl = row.get("base_url") != null ? String.valueOf(row.get("base_url")).trim() : "";
-                String fallbackBaseUrl = "SYNC_CMS".equalsIgnoreCase(serviceCode) ? defaultCmsBaseUrl : defaultShopBaseUrl;
+                String fallbackBaseUrl = "SYNC_CMS".equalsIgnoreCase(serviceCode) ? resolveCmsBaseUrl() : resolveShopBaseUrl();
                 return ServiceEndpointCredentials.builder()
                         .keyId(String.valueOf(row.get("id")))
                         .serviceCode(serviceCode)
@@ -133,17 +160,17 @@ public class SyncServiceApiClient {
             return ServiceEndpointCredentials.builder()
                     .keyId(null)
                     .serviceCode("SYNC_CMS")
-                    .baseUrl(trimTrailingSlash(defaultCmsBaseUrl))
-                    .accessKey(defaultCmsAccessKey != null ? defaultCmsAccessKey : "ak_cms_kkumz_live_01")
-                    .secretKey(defaultCmsSecretKey != null ? defaultCmsSecretKey : "sk_cms_kkumz_secret_2026_prod_99")
+                    .baseUrl(trimTrailingSlash(resolveCmsBaseUrl()))
+                    .accessKey(resolveCmsAccessKey())
+                    .secretKey(resolveCmsSecretKey())
                     .build();
         }
         return ServiceEndpointCredentials.builder()
                 .keyId(null)
                 .serviceCode("SYNC_SHOP")
-                .baseUrl(trimTrailingSlash(defaultShopBaseUrl))
-                .accessKey(defaultShopAccessKey != null ? defaultShopAccessKey : "ak_shop_kkumz_live_01")
-                .secretKey(defaultShopSecretKey != null ? defaultShopSecretKey : "sk_shop_kkumz_secret_2026_prod_88")
+                .baseUrl(trimTrailingSlash(resolveShopBaseUrl()))
+                .accessKey(resolveShopAccessKey())
+                .secretKey(resolveShopSecretKey())
                 .build();
     }
 

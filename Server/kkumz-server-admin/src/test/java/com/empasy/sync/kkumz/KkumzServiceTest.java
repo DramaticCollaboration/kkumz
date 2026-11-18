@@ -6,6 +6,7 @@ import com.empasy.sync.kkumz.domain.KkumzDTO.*;
 import com.empasy.sync.kkumz.domain.KkumzService;
 import com.empasy.sync.kkumz.system.KkumzSystemController;
 import com.empasy.sync.kkumz.system.KkumzSystemService;
+import com.empasy.sync.kkumz.system.SysDictController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,7 +54,8 @@ class KkumzServiceTest {
 
         KkumzController domainController = new KkumzController(kkumzService);
         KkumzSystemController sysController = new KkumzSystemController(systemService);
-        mockMvc = MockMvcBuilders.standaloneSetup(domainController, sysController)
+        SysDictController dictController = new SysDictController(systemService);
+        mockMvc = MockMvcBuilders.standaloneSetup(domainController, sysController, dictController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }

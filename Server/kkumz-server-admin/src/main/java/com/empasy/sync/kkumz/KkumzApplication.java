@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Kkumz(꿈즈) AI 브랜드·멀티사이트 빌더 & 창업 팀빌딩 커뮤니티 서버 메인 애플리케이션
  */
 @Slf4j
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.empasy.sync.kkumz", "com.empasy.sync.core"})
 public class KkumzApplication {
 
     public static void main(String[] args) {

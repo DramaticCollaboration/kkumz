@@ -129,41 +129,30 @@
         {
           field: 'direction',
           label: '연동 방향',
-          component: 'Select',
+          component: 'JDictSelectTag',
           componentProps: {
-            options: [
-              { label: '전체', value: '' },
-              { label: '외부 서비스 호출 (SyncCMS / SyncShop)', value: 'OUTBOUND' },
-              { label: '외부 연동 수신 (인바운드)', value: 'INBOUND' },
-            ],
+            dictCode: 'kkumz_api_direction',
+            placeholder: '전체',
           },
           colProps: { span: 6 },
         },
         {
           field: 'serviceCode',
           label: '대상 서비스',
-          component: 'Select',
+          component: 'JDictSelectTag',
           componentProps: {
-            options: [
-              { label: '전체', value: '' },
-              { label: 'SYNC_CMS', value: 'SYNC_CMS' },
-              { label: 'SYNC_SHOP', value: 'SYNC_SHOP' },
-              { label: 'SYNC_VERSE', value: 'SYNC_VERSE' },
-              { label: 'EXTERNAL_PARTNER', value: 'EXTERNAL_PARTNER' },
-            ],
+            dictCode: 'kkumz_api_service_code',
+            placeholder: '전체',
           },
           colProps: { span: 6 },
         },
         {
           field: 'status',
           label: '상태',
-          component: 'Select',
+          component: 'JDictSelectTag',
           componentProps: {
-            options: [
-              { label: '전체', value: '' },
-              { label: '정상 활성', value: 'ACTIVE' },
-              { label: '폐기/중지', value: 'REVOKED' },
-            ],
+            dictCode: 'kkumz_api_key_status',
+            placeholder: '전체',
           },
           colProps: { span: 5 },
         },

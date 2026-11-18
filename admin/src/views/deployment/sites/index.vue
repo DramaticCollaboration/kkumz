@@ -80,13 +80,10 @@
         {
           field: 'status',
           label: '운영 상태',
-          component: 'Select',
+          component: 'JDictSelectTag',
           componentProps: {
-            options: [
-              { label: '전체', value: '' },
-              { label: '정상 가동', value: 'ACTIVE' },
-              { label: '일시 정지', value: 'SUSPENDED' },
-            ],
+            dictCode: 'kkumz_site_status',
+            placeholder: '전체',
           },
           colProps: { span: 8 },
         },

@@ -37,30 +37,24 @@
       {
         field: 'direction',
         label: '연동 방향',
-        component: 'Select',
+        component: 'JDictSelectTag',
         required: true,
         defaultValue: 'OUTBOUND',
         componentProps: {
-          options: [
-            { label: '발신용 (Kkumz ➔ 외부 서비스 호출)', value: 'OUTBOUND' },
-            { label: '수신용 (외부 서비스 ➔ Kkumz 호출)', value: 'INBOUND' },
-          ],
+          dictCode: 'kkumz_api_direction',
+          showChooseOption: false,
         },
         colProps: { span: 8 },
       },
       {
         field: 'serviceCode',
         label: '대상 서비스',
-        component: 'Select',
+        component: 'JDictSelectTag',
         required: true,
         defaultValue: 'SYNC_CMS',
         componentProps: {
-          options: [
-            { label: 'SyncCMS (콘텐츠·배너·폼 백엔드)', value: 'SYNC_CMS' },
-            { label: 'SyncShop (상품·재고·주문 백엔드)', value: 'SYNC_SHOP' },
-            { label: 'SyncVerse (전사 총괄 에이전트)', value: 'SYNC_VERSE' },
-            { label: 'EXTERNAL_PARTNER (외부 파트너 앱)', value: 'EXTERNAL_PARTNER' },
-          ],
+          dictCode: 'kkumz_api_service_code',
+          showChooseOption: false,
         },
         colProps: { span: 12 },
       },
@@ -69,7 +63,7 @@
         label: '원격 Base URL',
         component: 'Input',
         componentProps: {
-          placeholder: '예: http://localhost:18085 또는 http://localhost:8501',
+          placeholder: '예: https://cms.empasy.com 또는 https://shop.empasy.com',
         },
         helpMessage: 'OUTBOUND 연동 시 호출할 대상 서비스의 기본 URL',
         colProps: { span: 12 },
@@ -118,13 +112,11 @@
       {
         field: 'status',
         label: '키 상태',
-        component: 'Select',
+        component: 'JDictSelectTag',
         defaultValue: 'ACTIVE',
         componentProps: {
-          options: [
-            { label: '정상 활성 (ACTIVE)', value: 'ACTIVE' },
-            { label: '폐기/중지 (REVOKED)', value: 'REVOKED' },
-          ],
+          dictCode: 'kkumz_api_key_status',
+          showChooseOption: false,
         },
         colProps: { span: 8 },
       },

@@ -34,18 +34,12 @@
       {
         field: 'stageType',
         label: '스튜디오 단계',
-        component: 'Select',
+        component: 'JDictSelectTag',
         required: true,
         defaultValue: 'NAMING',
         componentProps: {
-          options: [
-            { label: '브랜드 네이밍', value: 'NAMING' },
-            { label: '벡터 SVG 로고', value: 'LOGO_SVG' },
-            { label: '마크다운 기능명세서', value: 'SPEC_FRS' },
-            { label: '대화형 프리뷰 수정', value: 'CHAT_REFINE' },
-            { label: '사이트 컨시어지 상담', value: 'CONCIERGE' },
-            { label: 'WebIDE 빌드 패치', value: 'BUILD_FIX' },
-          ],
+          dictCode: 'kkumz_stage_type',
+          showChooseOption: false,
         },
         colProps: { span: 12 },
       },
@@ -89,13 +83,11 @@
       {
         field: 'status',
         label: '상태',
-        component: 'Select',
+        component: 'JDictSelectTag',
         defaultValue: 'ACTIVE',
         componentProps: {
-          options: [
-            { label: '활성', value: 'ACTIVE' },
-            { label: '비활성', value: 'INACTIVE' },
-          ],
+          dictCode: 'kkumz_active_status',
+          showChooseOption: false,
         },
         colProps: { span: 8 },
       },

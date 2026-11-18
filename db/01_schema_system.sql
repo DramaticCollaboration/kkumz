@@ -132,6 +132,35 @@ CREATE INDEX idx_kkumz_sys_perm_parent ON sys_permission(parent_id, sort_no);
 CREATE INDEX idx_kkumz_sys_dict_item_dict ON sys_dict_item(dict_id, sort_order);
 
 -- ==============================================================================
+-- 시스템 통합 동적 환경설정 테이블 (sys_config)
+-- ==============================================================================
+DROP TABLE IF EXISTS sys_config CASCADE;
+
+CREATE TABLE sys_config (
+    id VARCHAR(32) NOT NULL,
+    config_category VARCHAR(50) NOT NULL,
+    config_key VARCHAR(120) NOT NULL,
+    config_name VARCHAR(150) NOT NULL,
+    config_value TEXT DEFAULT NULL,
+    default_value TEXT DEFAULT NULL,
+    value_type VARCHAR(20) NOT NULL DEFAULT 'STRING',
+    is_secret BOOLEAN DEFAULT FALSE,
+    is_dynamic BOOLEAN DEFAULT TRUE,
+    status SMALLINT DEFAULT 1,
+    sort_order INTEGER DEFAULT 0,
+    description VARCHAR(500) DEFAULT NULL,
+    create_by VARCHAR(32) DEFAULT 'SYSTEM',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_by VARCHAR(32) DEFAULT NULL,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_sys_config_key UNIQUE (config_key)
+);
+
+CREATE INDEX idx_sys_config_category ON sys_config (config_category);
+COMMENT ON TABLE sys_config IS '시스템 통합 동적 환경설정';
+
+-- ==============================================================================
 -- 전사 공통 화면 사용자 가이드 및 데이터 Lineage 마스터 (sys_page_help)
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS sys_page_help (

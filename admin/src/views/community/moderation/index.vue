@@ -49,14 +49,10 @@
         {
           field: 'status',
           label: '처리 상태',
-          component: 'Select',
+          component: 'JDictSelectTag',
           componentProps: {
-            options: [
-              { label: '전체', value: '' },
-              { label: '심사 대기', value: 'PENDING' },
-              { label: '조치 완료', value: 'RESOLVED' },
-              { label: '반려', value: 'DISMISSED' },
-            ],
+            dictCode: 'kkumz_moderation_status',
+            placeholder: '전체',
           },
           colProps: { span: 8 },
         },

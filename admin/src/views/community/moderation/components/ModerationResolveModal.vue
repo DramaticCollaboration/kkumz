@@ -50,14 +50,12 @@
       {
         field: 'status',
         label: '심사 결정',
-        component: 'Select',
+        component: 'JDictSelectTag',
         required: true,
         defaultValue: 'RESOLVED',
         componentProps: {
-          options: [
-            { label: '조치 완료', value: 'RESOLVED' },
-            { label: '반려 / 이상 없음', value: 'DISMISSED' },
-          ],
+          dictCode: 'kkumz_moderation_status',
+          showChooseOption: false,
         },
         colProps: { span: 12 },
       },
