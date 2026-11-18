@@ -85,8 +85,8 @@ flowchart LR
 | `perm-kkumz-dom-021` | `perm-kkumz-dom-020` | 프로젝트 & 팀빌딩 관리 | `/community/projects` | `community/projects/index` | `1` (화면) | `1` | O | O |
 | `perm-kkumz-dom-022` | `perm-kkumz-dom-020` | 신고 심사 & 모더레이션 | `/community/moderation` | `community/moderation/index` | `1` (화면) | `2` | O | O |
 | `perm-kkumz-sys-010` | `NULL` | 시스템 관리 | `/system` | `LAYOUT` | `0` (폴더) | `90` | O | X |
-| `perm-kkumz-sys-011` | `perm-kkumz-sys-010` | 사용자 계정 관리 | `/system/user` | `system/user/index` | `1` (화면) | `1` | O | X |
-| `perm-kkumz-sys-012` | `perm-kkumz-sys-010` | 역할 및 권한 관리 | `/system/role` | `system/role/index` | `1` (화면) | `2` | O | X |
+| `perm-kkumz-sys-011` | `perm-kkumz-sys-010` | 사용자 사용자 | `/system/user` | `system/user/index` | `1` (화면) | `1` | O | X |
+| `perm-kkumz-sys-012` | `perm-kkumz-sys-010` | 역할 및 권한 | `/system/role` | `system/role/index` | `1` (화면) | `2` | O | X |
 | `perm-kkumz-sys-013` | `perm-kkumz-sys-010` | 메뉴 및 라우트 관리 | `/system/menu` | `system/menu/index` | `1` (화면) | `3` | O | X |
 | `perm-kkumz-sys-014` | `perm-kkumz-sys-010` | 공통 코드 관리 | `/system/dict` | `system/dict/index` | `1` (화면) | `4` | O | X |
 

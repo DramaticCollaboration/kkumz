@@ -12,7 +12,7 @@ import Bar from '/@/components/chart/Bar.vue';
 
 | 매개변수 이름    | 유형   | 필수의 | 설명       |
 | --------- | ------ | ---- | ---------- |
-| chartData | array  | ✔️   | 보고서 데이터 소스 |
+| chartData | array  | 필수 | 보고서 데이터 소스 |
 | width     | number |      | 보고서 너비   |
 | height    | number |      | 보고 높이   |
 
@@ -75,7 +75,7 @@ import BarMulti from '/@/components/chart/BarMulti.vue';
 
 | 매개변수 이름    | 유형   | 필수의 | 설명       |
 | --------- | ------ | ---- | ---------- |
-| chartData | array  | ✔️   | 보고서 데이터 소스 |
+| chartData | array  | 필수 | 보고서 데이터 소스 |
 | width     | number |      | 보고서 너비   |
 | height    | number |      | 보고 높이   |
 
@@ -132,7 +132,7 @@ import Line from '/@/components/chart/Line.vue';
 
 | 매개변수 이름    | 유형   | 필수의 | 설명       |
 | --------- | ------ | ---- | ---------- |
-| chartData | array  | ✔️   | 보고서 데이터 소스 |
+| chartData | array  | 필수 | 보고서 데이터 소스 |
 | width     | number |      | 보고서 너비   |
 | height    | number |      | 보고 높이   |
 | option    | object |      | 구성 항목     |
@@ -168,7 +168,7 @@ import LineMulti from '/@/components/chart/LineMulti.vue';
 
 | 매개변수 이름    | 유형   | 필수의 | 설명       |
 | --------- | ------ | ---- | ---------- |
-| chartData | array  | ✔️   | 보고서 데이터 소스 |
+| chartData | array  | 필수 | 보고서 데이터 소스 |
 | width     | number |      | 보고서 너비   |
 | height    | number |      | 보고 높이   |
 | option    | object |      | 구성 항목     |
@@ -189,7 +189,7 @@ import Pie from '/@/components/chart/Pie';
 
 | 매개변수 이름    | 유형   | 필수의 | 설명       |
 | --------- | ------ | ---- | ---------- |
-| chartData | array  | ✔️   | 보고서 데이터 소스 |
+| chartData | array  | 필수 | 보고서 데이터 소스 |
 | width     | number |      | 보고서 너비   |
 | height    | number |      | 보고 높이   |
 | option    | object |      | 구성 항목     |
@@ -218,7 +218,7 @@ import Radar from '/@/components/chart/Radar';
 
 | 매개변수 이름    | 유형   | 필수의 | 설명       |
 | --------- | ------ | ---- | ---------- |
-| chartData | array  | ✔️   | 보고서 데이터 소스 |
+| chartData | array  | 필수 | 보고서 데이터 소스 |
 | width     | number |      | 보고서 너비   |
 | height    | number |      | 보고 높이   |
 | option    | object |      | 구성 항목     |
@@ -247,7 +247,7 @@ import Gauge from '/@/components/chart/Gauge';
 
 | 매개변수 이름    | 유형   | 필수의 | 설명       |
 | --------- | ------ | ---- | ---------- |
-| chartData | array  | ✔️   | 보고서 데이터 소스 |
+| chartData | array  | 필수 | 보고서 데이터 소스 |
 | width     | number |      | 보고서 너비   |
 | height    | number |      | 보고 높이   |
 | option    | object |      | 구성 항목     |

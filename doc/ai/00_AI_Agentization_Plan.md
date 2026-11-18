@@ -87,3 +87,13 @@ flowchart TB
    - 모든 에이전트의 시스템 프롬프트, Temperature, 금지어 필터는 코드에 고정되지 않고 `kkumz_ai_prompt_template` 테이블에서 관리되며, 운영자가 `/studio/prompts` 화면에서 즉시 제어할 수 있습니다.
 2. **모더레이터 HITL (Human-in-the-Loop) 개입**:
    - 사용자 신고(`kkumz_moderation_report`)가 접수된 사이트나 모집 공고는 모더레이터(`role_moderator`)가 `/community/moderation` 화면에서 심사 후 단일 트랜잭션으로 사이트를 즉시 정지(`SUSPENDED`)시킬 수 있습니다.
+
+
+---
+## DB 기반 동적 설정(`SystemConfigHolder`), 동적 프롬프트(`SystemPromptHolder`) 및 클러스터 동기화(`ClusterEventBroadcaster`) 아키텍처
+1. **무하드코딩 동적 설정 (`sys_config` & `SystemConfigHolder`)**:
+   - 에이전트 추론 임계치, 타임아웃, 배치 주기, 기본 모델 파라미터는 소스코드에 하드코딩하지 않고 `SystemConfigHolder.getValue/getInt/getDouble/getBoolean`을 통해 PostgreSQL 18.6 `sys_config` 테이블에서 실시간 조회합니다.
+2. **동적 AI 프롬프트 및 버전 롤백 (`sys_prompt_template`, `sys_prompt_history` & `SystemPromptHolder`)**:
+   - 에이전트 시스템 프롬프트 및 판단 템플릿은 `SystemPromptHolder.getPrompt(promptCode, defaultPrompt)`로 조회하며, Admin UI(`시스템관리 > 프롬프트`, `/system/prompt`)에서 수정 시 `sys_prompt_history`에 버전 이력이 자동 보존되고 1-클릭 롤백을 지원합니다.
+3. **멀티 인스턴스 클러스터 동기화 (`ClusterEventBroadcaster`)**:
+   - 설정 또는 프롬프트 변경 시 `sync-core`의 `ClusterEventBroadcaster`(`RedisClusterStateBackingStore` 및 `SharedMemoryClusterStateBackingStore`)를 통해 전 인스턴스의 인메모리 캐시를 무재기동으로 즉시 갱신합니다.
