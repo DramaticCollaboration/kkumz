@@ -126,7 +126,7 @@ export const productData: StandaloneProductData = {
     },
     {
       "roleTitle": "크리에이터 스튜디오 체험 계정 (Studio Web App)",
-      "accountId": "creator_demo",
+      "accountId": "soyeon.jeju",
       "demoAccessCode": "123456",
       "scopeSummary": "kkumz-app.empasy.io · AI 브랜드·사이트 생성 스튜디오, WebIDE 편집, 라이브 배포 및 팀빌딩"
     }

@@ -4,12 +4,12 @@
 -- ============================================================================
 
 INSERT INTO sys_user (id, username, realname, password, salt, avatar, email, phone, org_code, status, del_flag, create_by) VALUES
-('usr-kkumz-001', 'admin', '김도현 총괄관리자', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'kkumz2026', '/icons/favicon-128x128.png', 'admin@kkumz.com', '010-2026-1001', 'KKUMZ-HQ', 1, 0, 'admin'),
-('usr-kkumz-002', 'moderator.kim', '김서연 모더레이터', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'kkumz2026', '/icons/favicon-128x128.png', 'moderator@kkumz.com', '010-2026-1002', 'KKUMZ-TRUST', 1, 0, 'admin'),
-('usr-kkumz-003', 'soyeon.jeju', '한소연 대표', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'kkumz2026', '/icons/favicon-128x128.png', 'soyeon@matcha-atelier.kr', '010-3412-8891', 'CREATOR', 1, 0, 'admin'),
-('usr-kkumz-004', 'minjun.maker', '박민준 메이커', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'kkumz2026', '/icons/favicon-128x128.png', 'minjun@deskorbit.io', '010-5821-3340', 'CREATOR', 1, 0, 'admin'),
-('usr-kkumz-005', 'jihoon.run', '정지훈 크루장', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'kkumz2026', '/icons/favicon-128x128.png', 'jihoon@seoulrun.club', '010-7719-0922', 'CREATOR', 1, 0, 'admin'),
-('usr-kkumz-006', 'hajun.roast', '최하준 헤드로스터', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'kkumz2026', '/icons/favicon-128x128.png', 'hajun@beanchronicle.kr', '010-9102-4418', 'CREATOR', 1, 0, 'admin');
+('usr-kkumz-001', 'admin', '김도현 총괄관리자', '$2a$10$m/W2rmwhIRDePfGUXsMs6.hj8bgi5RuH78rR/f3qLHZTk/eDY.FY6', 'kkumz2026', '/icons/favicon-128x128.png', 'admin@kkumz.com', '010-2026-1001', 'KKUMZ-HQ', 1, 0, 'admin'),
+('usr-kkumz-002', 'moderator.kim', '김서연 모더레이터', '$2a$10$m/W2rmwhIRDePfGUXsMs6.hj8bgi5RuH78rR/f3qLHZTk/eDY.FY6', 'kkumz2026', '/icons/favicon-128x128.png', 'moderator@kkumz.com', '010-2026-1002', 'KKUMZ-TRUST', 1, 0, 'admin'),
+('usr-kkumz-003', 'soyeon.jeju', '한소연 대표', '$2a$10$m/W2rmwhIRDePfGUXsMs6.hj8bgi5RuH78rR/f3qLHZTk/eDY.FY6', 'kkumz2026', '/icons/favicon-128x128.png', 'soyeon@matcha-atelier.kr', '010-3412-8891', 'CREATOR', 1, 0, 'admin'),
+('usr-kkumz-004', 'minjun.maker', '박민준 메이커', '$2a$10$m/W2rmwhIRDePfGUXsMs6.hj8bgi5RuH78rR/f3qLHZTk/eDY.FY6', 'kkumz2026', '/icons/favicon-128x128.png', 'minjun@deskorbit.io', '010-5821-3340', 'CREATOR', 1, 0, 'admin'),
+('usr-kkumz-005', 'jihoon.run', '정지훈 크루장', '$2a$10$m/W2rmwhIRDePfGUXsMs6.hj8bgi5RuH78rR/f3qLHZTk/eDY.FY6', 'kkumz2026', '/icons/favicon-128x128.png', 'jihoon@seoulrun.club', '010-7719-0922', 'CREATOR', 1, 0, 'admin'),
+('usr-kkumz-006', 'hajun.roast', '최하준 헤드로스터', '$2a$10$m/W2rmwhIRDePfGUXsMs6.hj8bgi5RuH78rR/f3qLHZTk/eDY.FY6', 'kkumz2026', '/icons/favicon-128x128.png', 'hajun@beanchronicle.kr', '010-9102-4418', 'CREATOR', 1, 0, 'admin');
 
 INSERT INTO sys_role (id, role_name, role_code, description, create_by) VALUES
 ('role_admin', '플랫폼 최고관리자', 'ROLE_ADMIN', '꿈즈 AI 스튜디오, 멀티사이트 배포, 커뮤니티 및 시스템 전체 권한', 'admin'),
