@@ -163,6 +163,7 @@
 
   .@{prefix-cls} {
     position: relative;
+    display: flow-root;
 
     .@{prefix-cls}-content {
       margin: 16px;

@@ -66,8 +66,7 @@ const closeTabContainCurrentRoute = (router, pathList) => {
 
 const cacheTab = projectSetting.multiTabsSetting.cache;
 
-export const useMultipleTabStore = defineStore({
-  id: 'app-multiple-tab',
+export const useMultipleTabStore = defineStore('app-multiple-tab', {
   state: (): MultipleTabState => ({
     // Tabs that need to be cached
     cacheTabList: new Set(),

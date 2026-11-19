@@ -1,0 +1,11 @@
+# SyncBoot (Enterprise BackOffice Framework & Backend Agent) — Standalone & SyncSeries Agent
+
+> 표준 백오피스 프레임워크 및 시스템 운영 에이전트
+
+- Product ID: sync-boot
+- Canonical API: /api/v1/boot
+- Documentation: https://doc.empasy.com/syncboot/
+- Standalone Docker Command: cd sync-boot && docker compose -f docker-compose-dev.yml up -d --build
+
+## Summary
+DB 기반 동적 메뉴 구성, 역할별 권한 관리, 암호화된 환경설정 변경, 외부 서비스 연결 상태 점검 기능을 갖춘 백오피스 표준 프레임워크입니다.

@@ -1,51 +1,30 @@
-import { getThemeColors, generateColors } from '../../../build/config/themeConfig';
-import {
-  replaceStyleVariables,
-  loadDarkThemeCss,
-  replaceCssColors,
-  darkCssIsReady,
-  linkID,
-  styleTagId,
-  appendCssToDom,
-  getStyleDom,
-} from '@rys-fe/vite-plugin-theme/es/client';
-import { mixLighten, mixDarken, tinycolor } from '@rys-fe/vite-plugin-theme/es/colorUtils';
+import { generateAntColors } from '../../../build/config/themeConfig';
 import { useAppStore } from '/@/store/modules/app';
-import { defHttp } from '/@/utils/http/axios';
 
-let cssText = '';
+/**
+ * Apply a new primary theme color using native CSS custom properties.
+ *
+ * Sets `--primary-color` plus `--primary-1` … `--primary-10` (light palette)
+ * and `--primary-dark-1` … `--primary-dark-10` (dark palette) on the document
+ * root element.  Ant Design Vue 4.x ConfigProvider handles component-level
+ * theming via its `theme` prop in App.vue.
+ */
 export async function changeTheme(color: string) {
   const appStore = useAppStore();
   appStore.setProjectConfig({ themeColor: color });
-  const colors = generateColors({
-    mixDarken,
-    mixLighten,
-    tinycolor,
-    color,
+
+  const style = document.documentElement.style;
+  style.setProperty('--primary-color', color);
+
+  // Light palette (indices 0-9 → --primary-1 … --primary-10)
+  const lightColors = generateAntColors(color, 'default');
+  lightColors.forEach((c, i) => {
+    style.setProperty(`--primary-${i + 1}`, c);
   });
-  if (import.meta.env.PROD && appStore.getDarkMode === 'dark') {
-    if (!darkCssIsReady && !cssText) {
-      await loadDarkThemeCss();
-    }
-    const el: HTMLLinkElement = document.getElementById(linkID) as HTMLLinkElement;
-    if (el?.href) {
-      // cssText = await fetchCss(el.href) as string;
-      !cssText && (cssText = await defHttp.get({ url: el.href }, { isTransformResponse: false }));
-      const colorVariables = [...getThemeColors(color), ...colors];
-      const processCss = await replaceCssColors(cssText, colorVariables);
-      appendCssToDom(getStyleDom(styleTagId) as HTMLStyleElement, processCss);
-    }
-  } else {
-    await replaceStyleVariables({
-      colorVariables: [...getThemeColors(color), ...colors],
-    });
-    fixDark();
-  }
-}
-// 【LOWCOD-2262】다크 모드에서 스킨 전환이 효과가 없던 문제를 수정했습니다.
-async function fixDark() {
-  const el = document.getElementById(styleTagId);
-  if (el) {
-    el.innerHTML = el.innerHTML.replace(/\\["']dark\\["']/g, `'dark'`);
-  }
+
+  // Dark palette
+  const darkColors = generateAntColors(color, 'dark');
+  darkColors.forEach((c, i) => {
+    style.setProperty(`--primary-dark-${i + 1}`, c);
+  });
 }

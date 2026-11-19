@@ -1,17 +1,19 @@
 import type { Router, RouteRecordRaw } from 'vue-router';
 
-import { usePermissionStoreWithOut } from '/@/store/modules/permission';
+import { usePermissionStore } from '/@/store/modules/permission';
 
 import { PageEnum } from '/@/enums/pageEnum';
-import { useUserStoreWithOut } from '/@/store/modules/user';
+import { useUserStore } from '/@/store/modules/user';
 
 import { PAGE_NOT_FOUND_ROUTE } from '/@/router/routes/basic';
-import { PAGE_NOT_FOUND_NAME } from '/@/router/constant';
 
 import { RootRoute } from '/@/router/routes';
 
 import { isOAuth2AppEnv } from '/@/views/sys/login/useLogin';
-import { setAuthCache } from "/@/utils/auth";
+import { OAUTH2_THIRD_LOGIN_TENANT_ID } from '/@/enums/cacheEnum';
+import { setAuthCache } from '/@/utils/auth';
+
+import { resolveInternalRedirect } from './safeRedirect';
 
 const LOGIN_PATH = PageEnum.BASE_LOGIN;
 //auth2 로그인 경로
@@ -25,25 +27,26 @@ const TOKEN_LOGIN = PageEnum.TOKEN_LOGIN;
 
 const ROOT_PATH = RootRoute.path;
 
-const whitePathList: PageEnum[] = [LOGIN_PATH, OAUTH2_LOGIN_PAGE_PATH,SYS_FILES_PATH, TOKEN_LOGIN ];
+//update-begin---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3은 auth2 로그인을 지원하지 않습니다------------
+//update-begin---author:wangshuai ---date:20221111  for: [VUEN-2472]로그인 없이 공유------------
+const whitePathList: PageEnum[] = [LOGIN_PATH, OAUTH2_LOGIN_PAGE_PATH, SYS_FILES_PATH, TOKEN_LOGIN];
+//update-end---author:wangshuai ---date:20221111  for: [VUEN-2472]로그인 없이 공유------------
+//update-end---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3은 auth2 로그인을 지원하지 않습니다------------
 
+/**
+ * Create permission guard.
+ */
 export function createPermissionGuard(router: Router) {
-  const userStore = useUserStoreWithOut();
-  const permissionStore = usePermissionStoreWithOut();
-  router.beforeEach(async (to, from, next) => {
-    if (to.path.startsWith('/ecommerce')) {
-      next({ path: PageEnum.BASE_HOME, replace: true });
-      return;
-    }
-
+  router.beforeEach(async (to, from) => {
+    const userStore = useUserStore();
+    const permissionStore = usePermissionStore();
     if (
       from.path === ROOT_PATH &&
       to.path === PageEnum.BASE_HOME &&
       userStore.getUserInfo.homePath &&
       userStore.getUserInfo.homePath !== PageEnum.BASE_HOME
     ) {
-      next(userStore.getUserInfo.homePath);
-      return;
+      return PageEnum.BASE_HOME;
     }
 
     const token = userStore.getToken;
@@ -52,147 +55,137 @@ export function createPermissionGuard(router: Router) {
     if (whitePathList.includes(to.path as PageEnum)) {
       if (to.path === LOGIN_PATH && token) {
         const isSessionTimeout = userStore.getSessionTimeout;
-        
-        //TODO vben은 기본 방식으로 작성되었습니다. 현재로서는 목적을 모르겠습니다. 문제가 있으면 먼저 주석을 달아주세요.
+        //update-begin---author:scott ---date:2023-04-24  for：【QQYUN-4713】로그인 코드 조정 논리에 문제가 있으며 변환은 아직 지켜봐야 합니다.
+        //NOTE:vben은 기본 방식으로 작성되었습니다. 현재로서는 목적을 모르겠습니다. 문제가 있으면 먼저 주석을 달아주세요.
         //await userStore.afterLoginAction();
-        
+        //update-end---author:scott ---date::2023-04-24  for：【QQYUN-4713】로그인 코드 조정 논리에 문제가 있으며 변환은 아직 지켜봐야 합니다.
         try {
           if (!isSessionTimeout) {
-            next((to.query?.redirect as string) || '/');
-            return;
+            return resolveInternalRedirect(to.query?.redirect, '/');
           }
-        } catch (e) {
-          console.warn('[PermissionGuard] 리디렉션 처리 예외:', e);
-        }
+        } catch {}
+        //update-begin---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3은 auth2 로그인을 지원하지 않습니다------------
       } else if (to.path === LOGIN_PATH && isOAuth2AppEnv() && !token) {
         //로그아웃하고 이 논리를 입력하세요.
         //입력한 페이지가 로그인 페이지이고 현재 환경이 OAuth2app이고 토큰이 비어 있으면 OAuth2 로그인 페이지로 들어갑니다.
-        next({ path: OAUTH2_LOGIN_PAGE_PATH });
-        return;
+        //update-begin---author:wangshuai ---date:20230224  for：[QQYUN-3440]새로운 기업 라인 및 Kakao 구성 테이블을 생성하고 테넌트 모드를 통해 격리합니다.------------
+        if (to.query.tenantId) {
+          setAuthCache(OAUTH2_THIRD_LOGIN_TENANT_ID, to.query.tenantId);
+        }
+        return { path: OAUTH2_LOGIN_PAGE_PATH };
+        //update-end---author:wangshuai ---date:20230224  for：[QQYUN-3440]새로운 기업 라인 및 Kakao 구성 테이블을 생성하고 테넌트 모드를 통해 격리합니다.------------
+        //update-end---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3은 auth2 로그인을 지원하지 않습니다------------
       }
-      next();
-      return;
+      return true;
     }
 
     // token does not exist
     if (!token) {
       // You can access without permission. You need to set the routing meta.ignoreAuth to true
       if (to.meta.ignoreAuth) {
-        next();
-        return;
+        return true;
       }
 
+      //update-begin---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3 Auth2가 구현되지 않았습니다.------------
       let path = LOGIN_PATH;
       if (whitePathList.includes(to.path as PageEnum)) {
         // 로그인 프리 화이트리스트에 입력한 페이지가 로그인 페이지이고, 현재 OAuth2app 환경이라면 OAuth2 로그인 페이지를 입력합니다.
         if (to.path === LOGIN_PATH && isOAuth2AppEnv()) {
-          next({ path: OAUTH2_LOGIN_PAGE_PATH });
+          return { path: OAUTH2_LOGIN_PAGE_PATH };
         } else {
           //로그인 없이 화이트리스트에 직접 입력
-          next();
+          return true;
         }
       } else {
+        //update-begin---author:wangshuai ---date:20230302  for：처음 로그인하고 라인 또는 Kakao를 사용할 때만 호출됩니다.------------
+        //----------【처음 로그인하고 라인 또는 Kakao를 사용할 때만 호출됩니다.】-----------------------------------------------
+        //처음 로그인하고 라인 또는 Kakao를 사용할 때만 호출됩니다.
+        const href = window.location.href;
+        //현재 페이지가 auth2이고 Kakao/Enterprise 라인이며 테넌트Id 매개변수를 포함하는지 확인합니다.
+        if (isOAuth2AppEnv() && href.indexOf('/tenantId/') != -1) {
+          const params = to.params;
+          if (params && params.path && params.path.length > 0) {
+            //매개변수의 마지막 숫자를 직접 가져옵니다.
+            setAuthCache(OAUTH2_THIRD_LOGIN_TENANT_ID, params.path[params.path.length - 1]);
+          }
+        }
+        //---------【처음 로그인하고 라인 또는 Kakao를 사용할 때만 호출됩니다.】------------------------------------------------
+        //update-end---author:wangshuai ---date:20230302  for：처음 로그인하고 라인 또는 Kakao를 사용할 때만 호출됩니다.------------
         // 현재 OAuth2APP 환경에 있다면 OAuth2 로그인 페이지로 이동하고, 그렇지 않으면 로그인 페이지로 이동하세요.
         path = isOAuth2AppEnv() ? OAUTH2_LOGIN_PAGE_PATH : LOGIN_PATH;
       }
+      //update-end---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3 Auth2가 구현되지 않았습니다.------------
       // redirect login page
       const redirectData: { path: string; replace: boolean; query?: Recordable<string> } = {
+        //update-begin---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3 Auth2가 구현되지 않았습니다.------------
         path: path,
+        //update-end---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3 Auth2가 구현되지 않았습니다.------------
         replace: true,
       };
 
+      //update-begin---author:scott ---date:2023-04-24  for：【QQYUN-4713】로그인 코드 조정 논리에 문제가 있으며 변환은 아직 지켜봐야 합니다.
       if (to.fullPath) {
-        console.log("to.fullPath 1",to.fullPath)
-        console.log("to.path 2",to.path)
-        
-        let getFullPath = to.fullPath;
-        if(getFullPath=='/' || getFullPath=='/500' || getFullPath=='/400' || getFullPath=='/login?redirect=/' || getFullPath=='/login?redirect=/login?redirect=/'){
-          return;
+        const getFullPath = to.fullPath;
+        if (
+          getFullPath == '/' ||
+          getFullPath == '/500' ||
+          getFullPath == '/400' ||
+          getFullPath == '/login?redirect=/' ||
+          getFullPath == '/login?redirect=/login?redirect=/'
+        ) {
+          return true;
         }
-        
+        //update-end---author:scott ---date:2023-04-24  for：【QQYUN-4713】로그인 코드 조정 논리에 문제가 있으며 변환은 아직 지켜봐야 합니다.
+
         redirectData.query = {
           ...redirectData.query,
+          // update-begin-author:sunjianlei date:20230306 for: 로그인 성공 후 올바르게 리디렉션되지 않는 문제가 수정되었습니다.
           redirect: to.fullPath,
-
+          // update-end-author:sunjianlei date:20230306 for: 로그인 성공 후 올바르게 리디렉션되지 않는 문제가 수정되었습니다.
         };
       }
-      next(redirectData);
-      return;
+      return redirectData;
     }
 
-    
-    const isNotFound = [PAGE_NOT_FOUND_ROUTE.name, PAGE_NOT_FOUND_NAME, `${PAGE_NOT_FOUND_NAME}Page`].includes(to.name as string);
+    //==============================【처음 로그인하고 라인 또는 Kakao를 사용할 때만 호출됩니다.】==================
+    //로그인이 필요 없는 페이지로 판단됩니다. 해당 페이지에 /tenantId/가 포함되어 있으면 홈페이지로 바로 이동합니다.
+    if (isOAuth2AppEnv() && to.path.indexOf('/tenantId/') != -1) {
+      return PageEnum.BASE_HOME;
+    }
+    //==============================【처음 로그인하고 라인 또는 Kakao를 사용할 때만 호출됩니다.】==================
+
     // Jump to the 404 page after processing the login
-    if (from.path === LOGIN_PATH && isNotFound && to.fullPath !== (userStore.getUserInfo.homePath || PageEnum.BASE_HOME)) {
-      next(userStore.getUserInfo.homePath || PageEnum.BASE_HOME);
-      return;
+    if (from.path === LOGIN_PATH && to.name === PAGE_NOT_FOUND_ROUTE.name && to.fullPath !== (userStore.getUserInfo.homePath || PageEnum.BASE_HOME)) {
+      return PageEnum.BASE_HOME;
     }
 
-    // // get userinfo while last fetch time is empty
-    // if (userStore.getLastUpdateTime === 0) {
-    //   try {
-    //     console.log("--LastUpdateTime---getUserInfoAction-----")
-    //     await userStore.getUserInfoAction();
-    //   } catch (err) {
-    //     console.info(err);
-    //     next();
-    //   }
-    // }
     if (userStore.getLastUpdateTime === 0) {
       userStore.setAllDictItemsByLocal();
     }
+
     if (permissionStore.getIsDynamicAddedRoute) {
-      const isRouteNotFound = [PAGE_NOT_FOUND_ROUTE.name, PAGE_NOT_FOUND_NAME, `${PAGE_NOT_FOUND_NAME}Page`].includes(to.name as string);
-      if (isRouteNotFound && token) {
-        const homePath = userStore.getUserInfo.homePath || PageEnum.BASE_HOME;
-        if (to.path !== homePath) {
-          next({ path: homePath, replace: true });
-          return;
-        }
-      }
-      next();
-      return;
+      return true;
     }
 
     // 배경 메뉴 라우팅 구축
-    try {
-      const routes = await permissionStore.buildRoutesAction();
-      routes.forEach((route) => {
-        router.addRoute(route as unknown as RouteRecordRaw);
-      });
-    } catch (e) {
-      userStore.setToken(undefined);
-      await userStore.logout(true);
-      return;
-    }
+    const routes = await permissionStore.buildRoutesAction();
+    routes.forEach((route) => {
+      router.addRoute(route as unknown as RouteRecordRaw);
+    });
 
     router.addRoute(PAGE_NOT_FOUND_ROUTE as unknown as RouteRecordRaw);
     permissionStore.setDynamicAddedRoute(true);
 
-    if (isNotFound) {
-      // 경로를 동적으로 추가한 후, 대상 경로가 실제로 존재하는지 확인
-      const resolved = router.resolve(to.fullPath);
-      const isStillNotFound = !resolved || [PAGE_NOT_FOUND_ROUTE.name, PAGE_NOT_FOUND_NAME, `${PAGE_NOT_FOUND_NAME}Page`].includes(resolved.name as string);
-      if (isStillNotFound && token) {
-        // 권한이 없거나 존재하지 않는 경로인 경우 사용자의 홈페이지로 안전하게 리디렉션
-        const homePath = userStore.getUserInfo.homePath || PageEnum.BASE_HOME;
-        next({ path: homePath, replace: true });
-        return;
-      }
+    if (to.name === PAGE_NOT_FOUND_ROUTE.name) {
       // 경로를 동적으로 추가한 후에는 fullPath로 리디렉션되어야 하며, 그렇지 않으면 404 페이지 콘텐츠가 로드됩니다.
-      next({ path: to.fullPath, replace: true, query: to.query });
+      return { path: to.fullPath, replace: true, query: to.query };
     } else {
-      const redirectPath = (from.query.redirect || to.path) as string;
-      const redirect = decodeURIComponent(redirectPath);
-      const resolved = router.resolve(redirect);
-      const isRedirectNotFound = !resolved || [PAGE_NOT_FOUND_ROUTE.name, PAGE_NOT_FOUND_NAME, `${PAGE_NOT_FOUND_NAME}Page`].includes(resolved.name as string);
-      if (isRedirectNotFound && token) {
-        const homePath = userStore.getUserInfo.homePath || PageEnum.BASE_HOME;
-        next({ path: homePath, replace: true });
-        return;
-      }
-      const nextData = to.path === redirect ? { ...to, replace: true } : { path: redirect };
-      next(nextData);
+      // fullPath 기반으로 통일하여 query string / hash 가 포함된 원본 navigation 의도를 보존한다.
+      // 인코딩된 redirect 값을 굳이 decode 하지 않아 router 가 자체적으로 정규화하도록 둔다.
+      const fallbackPath = to.fullPath || PageEnum.BASE_HOME;
+      const redirect = resolveInternalRedirect(from.query.redirect, fallbackPath);
+      const nextData = to.fullPath === redirect ? { ...to, replace: true } : redirect;
+      return nextData;
     }
   });
 }

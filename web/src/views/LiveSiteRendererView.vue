@@ -810,9 +810,9 @@
                 </span>
                 <h3 class="text-lg font-extrabold text-slate-900">오시는 길 및 교통 · 주차 안내</h3>
                 <div class="space-y-1.5 text-xs text-slate-700">
-                  <div><strong>📍 주소:</strong> {{ locationGuide.address }}</div>
-                  <div v-if="locationGuide.parking"><strong>🚗 주차 안내:</strong> {{ locationGuide.parking }}</div>
-                  <div v-if="locationGuide.publicTransit"><strong>🚌 대중교통:</strong> {{ locationGuide.publicTransit }}</div>
+                  <div><strong> 주소:</strong> {{ locationGuide.address }}</div>
+                  <div v-if="locationGuide.parking"><strong> 주차 안내:</strong> {{ locationGuide.parking }}</div>
+                  <div v-if="locationGuide.publicTransit"><strong> 대중교통:</strong> {{ locationGuide.publicTransit }}</div>
                 </div>
                 <div v-if="Array.isArray(locationGuide.nearbySpots) && locationGuide.nearbySpots.length" class="pt-2 space-y-1.5">
                   <strong class="block text-xs font-extrabold text-slate-900">주변 함께 가볼 만한 추천 코스</strong>
@@ -831,7 +831,7 @@
               </div>
 
               <div v-if="policyRules.length" class="p-6 rounded-3xl bg-amber-50/70 border border-amber-200 space-y-2.5">
-                <strong class="block text-sm font-extrabold text-amber-950">📌 이용수칙 및 예약·환불 규정 안내</strong>
+                <strong class="block text-sm font-extrabold text-amber-950"> 이용수칙 및 예약·환불 규정 안내</strong>
                 <ul class="space-y-1.5 text-xs text-amber-900 list-disc pl-4">
                   <li v-for="(rule, rIdx) in policyRules" :key="rIdx">{{ rule }}</li>
                 </ul>

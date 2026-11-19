@@ -1,7 +1,6 @@
 import type { BasicTableProps, TableRowSelection, BasicColumn } from '../types/table';
 import type { Ref, ComputedRef } from 'vue';
-import { computed, unref, ref, nextTick, watch } from 'vue';
-import { getViewportOffset } from '/@/utils/domUtils';
+import { computed, unref, ref, nextTick, watch, onBeforeUnmount } from 'vue';
 import { isBoolean } from '/@/utils/is';
 import { useWindowSizeFn } from '/@/hooks/event/useWindowSizeFn';
 import { useModalContext } from '/@/components/Modal';
@@ -20,8 +19,11 @@ export function useTableScroll(
 
   const modalFn = useModalContext();
 
-  // Greater than animation time 280
-  const debounceRedoHeight = useDebounceFn(redoHeight, 100);
+  const debounceRedoHeight = useDebounceFn(redoHeight, 80);
+  let followupTimer: ReturnType<typeof setTimeout> | null = null;
+  let headResizeObserver: ResizeObserver | null = null;
+  let observedHeadEl: HTMLElement | null = null;
+  let lastHeadWidth = 0;
 
   const getCanResize = computed(() => {
     const { canResize, scroll } = unref(propsRef);
@@ -29,14 +31,51 @@ export function useTableScroll(
   });
 
   watch(
-    () => [unref(getCanResize), unref(getDataSourceRef)?.length],
+    () => [unref(getCanResize), unref(getDataSourceRef)?.length, unref(propsRef).pagination],
     () => {
       debounceRedoHeight();
+      if (followupTimer) clearTimeout(followupTimer);
+      followupTimer = setTimeout(() => {
+        calcTableHeight();
+      }, 160);
     },
     {
       flush: 'post',
     }
   );
+
+  onBeforeUnmount(() => {
+    if (followupTimer) {
+      clearTimeout(followupTimer);
+      followupTimer = null;
+    }
+    if (headResizeObserver) {
+      headResizeObserver.disconnect();
+      headResizeObserver = null;
+      observedHeadEl = null;
+    }
+  });
+
+  function ensureHeadObserver(headEl: HTMLElement) {
+    if (typeof ResizeObserver === 'undefined' || observedHeadEl === headEl) return;
+    if (headResizeObserver) {
+      headResizeObserver.disconnect();
+    }
+    observedHeadEl = headEl;
+    lastHeadWidth = Math.round(headEl.getBoundingClientRect().width);
+    headResizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const w = Math.round(entry.contentRect.width);
+      if (w !== lastHeadWidth) {
+        lastHeadWidth = w;
+        if (w > 0) {
+          debounceRedoHeight();
+        }
+      }
+    });
+    headResizeObserver.observe(headEl);
+  }
 
   function redoHeight() {
     nextTick(() => {
@@ -44,101 +83,192 @@ export function useTableScroll(
     });
   }
 
-  function setHeight(heigh: number) {
-    tableHeightRef.value = heigh;
-    //  Solve the problem of modal adaptive height calculation when the form is placed in the modal
-    modalFn?.redoModalHeight?.();
+  function setHeight(height: Nullable<number>) {
+    if (tableHeightRef.value !== height) {
+      tableHeightRef.value = height;
+      modalFn?.redoModalHeight?.();
+    }
   }
 
-  // No need to repeat queries
-  let paginationEl: HTMLElement | null;
-  let footerEl: HTMLElement | null;
-  let bodyEl: HTMLElement | null;
-
   async function calcTableHeight() {
-    const { resizeHeightOffset, pagination, maxHeight, minHeight } = unref(propsRef);
+    const { resizeHeightOffset, pagination, maxHeight } = unref(propsRef);
     const tableData = unref(getDataSourceRef);
 
     const table = unref(tableElRef);
     if (!table) return;
 
-    const tableEl: Element = table.$el;
+    const tableEl = table.$el as HTMLElement | null;
     if (!tableEl) return;
 
-    if (!bodyEl) {
-      bodyEl = tableEl.querySelector('.ant-table-tbody');
-      if (!bodyEl) return;
+    const tbodyEl = tableEl.querySelector('.ant-table-tbody') as HTMLElement | null;
+    if (!tbodyEl) return;
+
+    if (tbodyEl.style.height && tbodyEl.style.height !== 'unset') {
+      tbodyEl.style.height = 'unset';
     }
 
-    const hasScrollBarY = bodyEl.scrollHeight > bodyEl.clientHeight;
-    const hasScrollBarX = bodyEl.scrollWidth > bodyEl.clientWidth;
-
-    if (hasScrollBarY) {
-      tableEl.classList.contains('hide-scrollbar-y') && tableEl.classList.remove('hide-scrollbar-y');
-    } else {
-      !tableEl.classList.contains('hide-scrollbar-y') && tableEl.classList.add('hide-scrollbar-y');
+    const headEl = tableEl.querySelector('.ant-table-thead') as HTMLElement | null;
+    if (headEl) {
+      ensureHeadObserver(headEl);
     }
 
+    const scrollBodyEl = (tableEl.querySelector('.ant-table-body') ||
+      tableEl.querySelector('.ant-table-content') ||
+      tbodyEl) as HTMLElement;
+
+    const hasScrollBarX = scrollBodyEl.scrollWidth > scrollBodyEl.clientWidth + 1;
     if (hasScrollBarX) {
       tableEl.classList.contains('hide-scrollbar-x') && tableEl.classList.remove('hide-scrollbar-x');
     } else {
       !tableEl.classList.contains('hide-scrollbar-x') && tableEl.classList.add('hide-scrollbar-x');
     }
 
-    bodyEl!.style.height = 'unset';
+    if (!unref(getCanResize) || !tableData || tableData.length === 0) {
+      setHeight(null);
+      !tableEl.classList.contains('hide-scrollbar-y') && tableEl.classList.add('hide-scrollbar-y');
+      return;
+    }
 
-    if (!unref(getCanResize) || ( !tableData || tableData.length === 0)) return;
+    const isInModalOrDrawer = Boolean(
+      tableEl.closest('.ant-modal-body, .ant-modal-content, .ant-drawer-body, .ant-drawer-content')
+    );
+    if (isInModalOrDrawer) {
+      setHeight(null);
+      !tableEl.classList.contains('hide-scrollbar-y') && tableEl.classList.add('hide-scrollbar-y');
+      return;
+    }
 
     await nextTick();
-    //Add a delay to get the correct bottomIncludeBody paginationHeight footerHeight headerHeight
-
-    const headEl = tableEl.querySelector('.ant-table-thead');
 
     if (!headEl) return;
 
-    // Table height from bottom
-    const { bottomIncludeBody } = getViewportOffset(headEl);
-    // Table height from bottom height-custom offset
+    const headRect = headEl.getBoundingClientRect();
+    if (headRect.width === 0 && headRect.height === 0) return;
 
-    const paddingHeight = 32;
-    // Pager height
-    let paginationHeight = 2;
-    if (!isBoolean(pagination)) {
-      paginationEl = tableEl.querySelector('.ant-pagination') as HTMLElement;
-      if (paginationEl) {
-        const offsetHeight = paginationEl.offsetHeight;
-        paginationHeight += offsetHeight || 0;
-      } else {
-        // TODO First fix 24
-        paginationHeight += 24;
+    const layoutContentEl = tableEl.closest('.jeecg-layout-content, .ant-layout-content') as HTMLElement | null;
+    const containerScrollTop =
+      (layoutContentEl?.scrollTop || 0) +
+      (document.body.scrollTop || document.documentElement.scrollTop || window.pageYOffset || 0);
+
+    const headTopUnscrolled = headRect.top + containerScrollTop;
+    const viewportHeight = document.documentElement.clientHeight;
+    const bottomIncludeBody = viewportHeight - headTopUnscrolled;
+
+    let ancestorBottomSpace = 0;
+    let hasBottomSibling = false;
+    let curr: HTMLElement | null = tableEl;
+    while (curr && curr !== document.body && curr !== document.documentElement) {
+      const cStyle = window.getComputedStyle(curr);
+      ancestorBottomSpace +=
+        (Number.parseFloat(cStyle.paddingBottom) || 0) +
+        (Number.parseFloat(cStyle.marginBottom) || 0) +
+        (Number.parseFloat(cStyle.borderBottomWidth) || 0);
+
+      const currRect = curr.getBoundingClientRect();
+      let sib = curr.nextElementSibling as HTMLElement | null;
+      while (sib) {
+        const sStyle = window.getComputedStyle(sib);
+        const tag = sib.tagName.toLowerCase();
+        if (
+          sStyle.display !== 'none' &&
+          sStyle.visibility !== 'hidden' &&
+          sStyle.position !== 'fixed' &&
+          sStyle.position !== 'absolute' &&
+          sib.offsetHeight > 4 &&
+          !sib.classList.contains('ant-drawer') &&
+          !sib.classList.contains('ant-modal-root') &&
+          tag !== 'script' &&
+          tag !== 'style'
+        ) {
+          const sibRect = sib.getBoundingClientRect();
+          if (sibRect.top >= currRect.bottom - 4) {
+            hasBottomSibling = true;
+            break;
+          }
+        }
+        sib = sib.nextElementSibling as HTMLElement | null;
       }
+
+      if (
+        curr.classList.contains('jeecg-layout-content') ||
+        curr.classList.contains('ant-layout-content')
+      ) {
+        break;
+      }
+      curr = curr.parentElement;
+    }
+
+    if (hasBottomSibling) {
+      setHeight(null);
+      !tableEl.classList.contains('hide-scrollbar-y') && tableEl.classList.add('hide-scrollbar-y');
+      return;
+    }
+
+    let paginationHeight = 0;
+    if (!isBoolean(pagination) || pagination) {
+      const paginationEl = tableEl.querySelector('.ant-pagination') as HTMLElement | null;
+      if (paginationEl && paginationEl.offsetHeight > 0) {
+        const pgStyle = window.getComputedStyle(paginationEl);
+        const pgMt = Number.parseFloat(pgStyle.marginTop) || 0;
+        const pgMb = Number.parseFloat(pgStyle.marginBottom) || 0;
+        paginationHeight = paginationEl.offsetHeight + pgMt + pgMb;
+      } else {
+        paginationHeight = 42;
+      }
+    }
+
+    const footerEl = tableEl.querySelector('.ant-table-footer') as HTMLElement | null;
+    const footerHeight = footerEl ? footerEl.offsetHeight : 0;
+
+    const summaryEl = tableEl.querySelector('.ant-table-container > .ant-table-summary') as HTMLElement | null;
+    const summaryHeight = summaryEl ? summaryEl.offsetHeight : 0;
+
+    const layoutFooterEl = document.querySelector('.jeecg-layout-footer, .ant-layout-footer') as HTMLElement | null;
+    const layoutFooterHeight = layoutFooterEl ? layoutFooterEl.offsetHeight : 0;
+
+    const headerHeight = Math.ceil(headRect.height);
+    const safetyBuffer = 8;
+
+    let availableHeight = Math.floor(
+      bottomIncludeBody -
+        (resizeHeightOffset || 0) -
+        headerHeight -
+        summaryHeight -
+        footerHeight -
+        paginationHeight -
+        ancestorBottomSpace -
+        layoutFooterHeight -
+        safetyBuffer
+    );
+
+    if (availableHeight < 200) {
+      setHeight(null);
+      !tableEl.classList.contains('hide-scrollbar-y') && tableEl.classList.add('hide-scrollbar-y');
+      return;
+    }
+
+    if (maxHeight && availableHeight > maxHeight) {
+      availableHeight = maxHeight;
+    }
+
+    const liveTbodyEl = tableEl.querySelector('.ant-table-tbody') as HTMLElement | null;
+    const naturalBodyHeight = liveTbodyEl ? liveTbodyEl.offsetHeight : 0;
+    const horizBarAllowance = hasScrollBarX ? 10 : 0;
+
+    if (naturalBodyHeight > 0 && naturalBodyHeight + horizBarAllowance <= availableHeight) {
+      setHeight(null);
+      !tableEl.classList.contains('hide-scrollbar-y') && tableEl.classList.add('hide-scrollbar-y');
     } else {
-      paginationHeight = -8;
+      setHeight(availableHeight);
+      tableEl.classList.contains('hide-scrollbar-y') && tableEl.classList.remove('hide-scrollbar-y');
+
+      if (document.body.scrollTop > 0) document.body.scrollTop = 0;
+      if (document.documentElement.scrollTop > 0) document.documentElement.scrollTop = 0;
+      if (layoutContentEl && layoutContentEl.scrollTop > 0) layoutContentEl.scrollTop = 0;
     }
-
-    let footerHeight = 0;
-    footerEl = tableEl.querySelector('.ant-table-footer');
-    if (footerEl) {
-      const offsetHeight = footerEl.offsetHeight;
-      footerHeight = offsetHeight || 0;
-    }
-
-    let headerHeight = 0;
-    if (headEl) {
-      headerHeight = (headEl as HTMLElement).offsetHeight;
-    }
-
-    let height = bottomIncludeBody - (resizeHeightOffset || 0) - paddingHeight - paginationHeight - footerHeight - headerHeight;
-    // 10+6(바깥 여백 패딩:10 + 내부 패딩-하단:6)
-    height -= 16;
-
-    height = (height < minHeight! ? (minHeight as number) : height) ?? height;
-    height = (height > maxHeight! ? (maxHeight as number) : height) ?? height;
-    setHeight(height);
-
-    bodyEl!.style.height = `${height}px`;
   }
-  useWindowSizeFn(calcTableHeight, 280);
+
+  useWindowSizeFn(calcTableHeight, 200);
   onMountedOrActivated(() => {
     calcTableHeight();
     nextTick(() => {
@@ -148,18 +278,16 @@ export function useTableScroll(
 
   const getScrollX = computed(() => {
     let width = 0;
-    // if (unref(rowSelectionRef)) {
-    //   width += 60;
-    // }
     const { maxColumnWidth } = unref(propsRef);
-    // TODO props ?? 0;
     const NORMAL_WIDTH = maxColumnWidth ?? 150;
 
     const columns = unref(columnsRef).filter((item) => !item.defaultHidden);
     columns.forEach((item) => {
-      width += Number.parseInt(item.width as string) || 0;
+      width += Number.parseInt(((item.width || (item as any).minWidth) as string)) || 0;
     });
-    const unsetWidthColumns = columns.filter((item) => !Reflect.has(item, 'width'));
+    const unsetWidthColumns = columns.filter(
+      (item) => !Reflect.has(item, 'width') && !Reflect.has(item, 'minWidth')
+    );
 
     const len = unsetWidthColumns.length;
     if (len !== 0) {
@@ -177,7 +305,7 @@ export function useTableScroll(
     const { table } = componentSetting;
     return {
       x: unref(getScrollX),
-      y: canResize ? tableHeight : null,
+      y: canResize && tableHeight ? tableHeight : undefined,
       scrollToFirstRowOnChange: table.scrollToFirstRowOnChange,
       ...scroll,
     };

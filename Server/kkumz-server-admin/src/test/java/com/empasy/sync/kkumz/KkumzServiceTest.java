@@ -7,7 +7,7 @@ import com.empasy.sync.kkumz.domain.KkumzService;
 import com.empasy.sync.kkumz.system.KkumzSystemController;
 import com.empasy.sync.kkumz.system.KkumzSystemService;
 import com.empasy.sync.kkumz.system.SysDictController;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -57,8 +57,7 @@ interface PermissionState {
   // 온라인 하위 테이블 버튼 권한
   onlineSubTableAuthMap: object;
 }
-export const usePermissionStore = defineStore({
-  id: 'app-permission',
+export const usePermissionStore = defineStore('app-permission', {
   state: (): PermissionState => ({
     permCodeList: [],
     // Whether the route has been dynamically added

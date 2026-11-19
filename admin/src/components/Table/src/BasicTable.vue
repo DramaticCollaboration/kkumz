@@ -506,8 +506,30 @@
       //}
     }
 
+    .ant-table-wrapper .ant-table-pagination.ant-pagination,
     .ant-pagination {
-      margin: 10px 0 0 0;
+      margin: 10px 0 0 0 !important;
+    }
+
+    .ant-table-body {
+      overflow-y: auto !important;
+    }
+
+    .hide-scrollbar-y {
+      .ant-table-body,
+      .ant-table-content {
+        overflow-y: hidden !important;
+      }
+      .ant-table-cell-scrollbar {
+        display: none !important;
+      }
+    }
+
+    .hide-scrollbar-x {
+      .ant-table-body,
+      .ant-table-content {
+        overflow-x: hidden !important;
+      }
     }
 
     .ant-table-footer {

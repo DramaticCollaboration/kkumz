@@ -50,3 +50,6 @@ export enum CacheTypeEnum {
   SESSION,
   LOCAL,
 }
+
+export const TENANT_ID = 'TENANT_ID';
+export const OAUTH2_THIRD_LOGIN_TENANT_ID = 'THIRD_LOGIN_TENANT_ID';

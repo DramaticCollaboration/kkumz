@@ -96,7 +96,10 @@ export function useContentHeight(
     if (!anchorEl) {
       return;
     }
-    const { bottomIncludeBody } = getViewportOffset(anchorEl);
+    const layoutContentEl = anchorEl.closest('.jeecg-layout-content, .ant-layout-content') as HTMLElement | null;
+    const containerScrollTop = (layoutContentEl?.scrollTop || 0) + (document.body.scrollTop || document.documentElement.scrollTop || window.pageYOffset || 0);
+    const anchorTopUnscrolled = anchorEl.getBoundingClientRect().top + containerScrollTop;
+    const bottomIncludeBody = document.documentElement.clientHeight - anchorTopUnscrolled;
 
     // substract elements height
     let substractHeight = 0;
@@ -153,7 +156,7 @@ export function useContentHeight(
       calcCompensationHeight();
     }
 
-    contentHeight.value = height;
+    contentHeight.value = Math.max(0, Math.floor(height - 2));
   }
 
   onMountedOrActivated(() => {

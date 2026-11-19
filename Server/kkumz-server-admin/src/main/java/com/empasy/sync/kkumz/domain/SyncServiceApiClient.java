@@ -1,8 +1,8 @@
 package com.empasy.sync.kkumz.domain;
 
 import com.empasy.sync.core.common.config.SystemConfigHolder;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

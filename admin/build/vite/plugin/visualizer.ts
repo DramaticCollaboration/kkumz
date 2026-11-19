@@ -1,11 +1,11 @@
 /**
  * Package file volume analysis
  */
-import visualizer from 'rollup-plugin-visualizer';
 import { isReportMode } from '../../utils';
 
-export function configVisualizerConfig() {
+export async function configVisualizerConfig() {
   if (isReportMode()) {
+    const { visualizer } = await import('rollup-plugin-visualizer');
     return visualizer({
       filename: './node_modules/.cache/visualizer/stats.html',
       open: true,

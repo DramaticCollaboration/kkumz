@@ -1,8 +1,9 @@
-﻿import type { RouteRecordRaw } from 'vue-router';
 import type { App } from 'vue';
+import type { RouteRecordRaw } from 'vue-router';
 
-import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import { basicRoutes } from './routes';
+import { patchRouterNavigationSafeguard } from './safeNavigation';
 
 // 화이트리스트에는 기본 정적 경로가 포함되어야 합니다.
 const WHITE_NAME_LIST: string[] = [];
@@ -15,15 +16,17 @@ getRouteNames(basicRoutes);
 
 // app router
 export const router = createRouter({
-  history: createWebHistory(import.meta.env.VITE_PUBLIC_PATH),
+  history: createWebHashHistory(import.meta.env.VITE_PUBLIC_PATH),
   routes: basicRoutes as unknown as RouteRecordRaw[],
   strict: true,
   scrollBehavior: () => ({ left: 0, top: 0 }),
 });
 
+patchRouterNavigationSafeguard(router);
+
 //
-router.beforeEach(async (to, from, next) => {
-  next();
+router.beforeEach(async (to, from) => {
+  return true;
 });
 
 // reset router

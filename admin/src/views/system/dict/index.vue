@@ -11,11 +11,11 @@
   <BasicTable @register="registerTable" :rowSelection="rowSelection">
     <!--슬롯: 테이블 제목-->
     <template #tableTitle>
-      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate"> 등록</a-button>
-      <a-button type="primary" preIcon="ant-design:export-outlined" @click="onExportXls"> Export</a-button>
-      <j-upload-button type="primary" preIcon="ant-design:import-outlined" @click="onImportXls">Import</j-upload-button>
-      <a-button type="primary" @click="handlerRefreshCache" preIcon="ant-design:sync-outlined"> 캐시 갱신</a-button>
-      <a-button type="primary" @click="openRecycleModal(true)" preIcon="ant-design:hdd-outlined"> 삭제</a-button>
+      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate">코드 그룹 등록</a-button>
+      <a-button type="primary" preIcon="ant-design:export-outlined" @click="onExportXls">내보내기</a-button>
+      <j-upload-button type="primary" preIcon="ant-design:import-outlined" @click="onImportXls">가져오기</j-upload-button>
+      <a-button type="primary" @click="handlerRefreshCache" preIcon="ant-design:sync-outlined">코드 캐시 갱신</a-button>
+      <a-button type="primary" @click="openRecycleModal(true)" preIcon="ant-design:hdd-outlined">휴지통</a-button>
 
       <a-dropdown v-if="selectedRowKeys.length > 0">
         <template #overlay>
