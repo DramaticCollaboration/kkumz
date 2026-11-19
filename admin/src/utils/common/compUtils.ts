@@ -21,13 +21,16 @@ export const getFileAccessHttpUrl = (fileUrl, prefix = 'http') => {
   let result = fileUrl;
   try {
     if (fileUrl && fileUrl.length > 0 && !fileUrl.startsWith(prefix)) {
+      if (/^(?:data:|blob:|\/)/.test(fileUrl)) {
+        return fileUrl;
+      }
       //배열 형식인지 확인
       let isArray = fileUrl.indexOf('[') != -1;
       if (!isArray) {
-        let prefix = `${baseApiUrl}/api/v1/kkumz/sys/common/static/`;
+        let staticPrefix = `${baseApiUrl}/api/v1/kkumz/sys/common/static/`;
         // 접두사가 포함되어 있는지 확인
-        if (!fileUrl.startsWith(prefix)) {
-          result = `${prefix}${fileUrl}`;
+        if (!fileUrl.startsWith(staticPrefix)) {
+          result = `${staticPrefix}${fileUrl}`;
         }
       }
     }

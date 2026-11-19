@@ -254,3 +254,31 @@ INSERT INTO sys_config (
 ('cfg-kkumz-013', 'STORAGE', 'kkumz.storage.upload-dir', '미디어·문서 업로드 로컬 루트 경로', 'uploads/kkumz', 'uploads/kkumz', 'STRING', FALSE, TRUE, 1, 10, '스튜디오 업로드 자산 및 Git 번들 저장 디렉터리 경로', 'admin'),
 ('cfg-kkumz-014', 'STORAGE', 'kkumz.storage.public-prefix', '정적 자산 공개 URL Prefix', '/api/v1/kkumz/assets/files', '/api/v1/kkumz/assets/files', 'STRING', FALSE, TRUE, 1, 20, '업로드된 미디어 파일 서빙을 위한 공개 URL 접두사', 'admin'),
 ('cfg-kkumz-015', 'BIZ_POLICY', 'kkumz.policy.default-rate-limit-rpm', 'API 키 기본 분당 호출 한도 (RPM)', '600', '600', 'NUMBER', FALSE, TRUE, 1, 10, '신규 API 액세스 키 발급 시 기본 분당 호출 허용 횟수', 'admin');
+
+-- ============================================================================
+-- 기본 홈 라우트, 조직 부서 트리, 알림 템플릿 및 초기 감사 로그 시드
+-- ============================================================================
+INSERT INTO sys_role_index (id, role_code, url, component, is_route, priority, status, create_by) VALUES
+('ridx-kkumz-001', 'DEF_INDEX_ALL', '/dashboard/analysis', 'dashboard/analysis/index', TRUE, 1, '1', 'admin');
+
+INSERT INTO sys_depart (
+    id, parent_id, depart_name, depart_name_en, depart_order, description,
+    org_category, org_type, org_code, mobile, fax, address, memo, status, del_flag, create_by
+) VALUES
+('dept-kkumz-001', NULL, '꿈즈 플랫폼 본부', 'Kkumz Platform HQ', 1, '꿈즈 창업·멀티사이트 플랫폼 운영 총괄 본부', '1', '1', 'KKUMZ-HQ', NULL, NULL, '서울특별시 강남구 테헤란로', '플랫폼 운영 총괄', '1', 0, 'admin'),
+('dept-kkumz-002', 'dept-kkumz-001', '신뢰안전·모더레이션팀', 'Trust and Safety', 2, '커뮤니티 게시물 및 배포 사이트 신고 심사 전담 팀', '2', '2', 'KKUMZ-TRUST', NULL, NULL, '서울특별시 강남구 테헤란로', '커뮤니티 모더레이션 전담', '1', 0, 'admin'),
+('dept-kkumz-003', 'dept-kkumz-001', '크리에이터 성장팀', 'Creator Growth', 3, '창업가 메이커 온보딩 및 AI 스튜디오 지원 팀', '2', '2', 'CREATOR', NULL, NULL, '서울특별시 강남구 테헤란로', '메이커 온보딩 지원', '1', 0, 'admin');
+
+INSERT INTO sys_message_template (
+    id, template_name, template_code, template_type, template_content, template_test_json, use_status, create_by
+) VALUES
+('msgtpl-kkumz-001', '사이트 배포 완료 알림', 'KKUMZ_SITE_DEPLOYED', '4', '${creatorName}님의 ${siteTitle} 사이트가 정상 배포되었습니다.', '{"creatorName":"메이커","siteTitle":"브랜드 스토어"}', '1', 'admin'),
+('msgtpl-kkumz-002', '커뮤니티 신고 심사 안내', 'KKUMZ_MODERATION_RESULT', '4', '접수된 신고(${reportId})의 처리 상태가 ${status}(으)로 업데이트되었습니다.', '{"reportId":"RPT-001","status":"조치 완료"}', '1', 'admin'),
+('msgtpl-kkumz-003', '팀빌딩 합류 요청 알림', 'KKUMZ_TEAM_INVITE', '4', '${projectName} 프로젝트의 ${roleName} 포지션 합류 요청이 도착했습니다.', '{"projectName":"꿈즈 프로젝트","roleName":"프론트엔드"}', '1', 'admin');
+
+INSERT INTO sys_log (
+    id, log_type, log_content, operate_type, userid, username, ip, method, request_url, request_param, client_type, cost_time
+) VALUES
+('log-kkumz-001', 1, '관리자 계정 시스템 로그인 성공', 1, 'usr-kkumz-001', 'admin', '127.0.0.1', 'POST', '/api/v1/kkumz/sys/login', '{}', 'WEB', 24),
+('log-kkumz-002', 2, '시스템 동적 메뉴 권한 트리 초기화 및 검증', 1, 'usr-kkumz-001', 'admin', '127.0.0.1', 'GET', '/api/v1/kkumz/sys/permission/getUserPermissionByToken', '{}', 'WEB', 15),
+('log-kkumz-003', 2, '멀티사이트 운영 환경설정 상태 점검 완료', 1, 'usr-kkumz-001', 'admin', '127.0.0.1', 'GET', '/api/v1/kkumz/sys/config/list', '{}', 'WEB', 18);

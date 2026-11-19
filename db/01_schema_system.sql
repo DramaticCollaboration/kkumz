@@ -2,6 +2,10 @@
 -- Kkumz (꿈즈) 플랫폼 공통 시스템 스키마 (01_schema_system.sql)
 -- ============================================================================
 
+DROP TABLE IF EXISTS sys_message_template CASCADE;
+DROP TABLE IF EXISTS sys_depart_permission CASCADE;
+DROP TABLE IF EXISTS sys_depart CASCADE;
+DROP TABLE IF EXISTS sys_role_index CASCADE;
 DROP TABLE IF EXISTS sys_log CASCADE;
 DROP TABLE IF EXISTS sys_dict_item CASCADE;
 DROP TABLE IF EXISTS sys_dict CASCADE;
@@ -124,10 +128,71 @@ CREATE TABLE sys_log (
     ip VARCHAR(64),
     method VARCHAR(255),
     request_url VARCHAR(500),
+    request_param TEXT,
+    client_type VARCHAR(32) DEFAULT 'WEB',
     cost_time BIGINT DEFAULT 0,
     create_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE sys_role_index (
+    id VARCHAR(64) PRIMARY KEY,
+    role_code VARCHAR(64) NOT NULL UNIQUE,
+    url VARCHAR(255) NOT NULL,
+    component VARCHAR(255) NOT NULL,
+    is_route BOOLEAN NOT NULL DEFAULT TRUE,
+    priority INTEGER NOT NULL DEFAULT 1,
+    status VARCHAR(16) NOT NULL DEFAULT '1',
+    create_by VARCHAR(64) DEFAULT 'admin',
+    create_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_by VARCHAR(64) DEFAULT 'admin',
+    update_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sys_depart (
+    id VARCHAR(64) PRIMARY KEY,
+    parent_id VARCHAR(64),
+    depart_name VARCHAR(100) NOT NULL,
+    depart_name_en VARCHAR(100),
+    depart_order INTEGER NOT NULL DEFAULT 0,
+    description VARCHAR(500),
+    org_category VARCHAR(16) NOT NULL DEFAULT '1',
+    org_type VARCHAR(16) NOT NULL DEFAULT '1',
+    org_code VARCHAR(64) NOT NULL UNIQUE,
+    mobile VARCHAR(32),
+    fax VARCHAR(32),
+    address VARCHAR(255),
+    memo VARCHAR(500),
+    status VARCHAR(16) NOT NULL DEFAULT '1',
+    del_flag INTEGER NOT NULL DEFAULT 0,
+    create_by VARCHAR(64) DEFAULT 'admin',
+    create_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_by VARCHAR(64) DEFAULT 'admin',
+    update_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sys_depart_permission (
+    id VARCHAR(64) PRIMARY KEY,
+    depart_id VARCHAR(64) NOT NULL REFERENCES sys_depart(id) ON DELETE CASCADE,
+    permission_id VARCHAR(64) NOT NULL REFERENCES sys_permission(id) ON DELETE CASCADE,
+    CONSTRAINT uk_kkumz_sys_depart_perm UNIQUE (depart_id, permission_id)
+);
+
+CREATE TABLE sys_message_template (
+    id VARCHAR(64) PRIMARY KEY,
+    template_name VARCHAR(120) NOT NULL,
+    template_code VARCHAR(64) NOT NULL UNIQUE,
+    template_type VARCHAR(16) NOT NULL DEFAULT '4',
+    template_content TEXT NOT NULL,
+    template_test_json TEXT,
+    use_status VARCHAR(16) NOT NULL DEFAULT '1',
+    create_by VARCHAR(64) DEFAULT 'admin',
+    create_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_by VARCHAR(64) DEFAULT 'admin',
+    update_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_kkumz_sys_depart_parent ON sys_depart(parent_id, depart_order);
+CREATE INDEX idx_kkumz_sys_log_type_time ON sys_log(log_type, create_time DESC);
 CREATE INDEX idx_kkumz_sys_perm_parent ON sys_permission(parent_id, sort_no);
 CREATE INDEX idx_kkumz_sys_dict_item_dict ON sys_dict_item(dict_id, sort_order);
 

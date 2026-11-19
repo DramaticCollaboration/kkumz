@@ -144,7 +144,7 @@ export const deleteHelpById = (id: string) =>
  * ?꾩?留??쇨큵 ??젣
  */
 export const deleteBatchHelp = (ids: string[]) =>
-  defHttp.delete({ url: Api.DeleteBatch, params: { ids: ids.join(',') } });
+  defHttp.delete({ url: Api.DeleteBatch, params: { ids: ids.join(',') } }, { joinParamsToUrl: true });
 
 /**
  * DB ?깅줉 硫붾돱 ?몃━ 議고쉶 (?쇱슦??寃쎈줈 ?좏깮湲곗슜)

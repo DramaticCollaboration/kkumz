@@ -155,7 +155,13 @@ export function createPermissionGuard(router: Router) {
     //==============================【처음 로그인하고 라인 또는 Kakao를 사용할 때만 호출됩니다.】==================
 
     // Jump to the 404 page after processing the login
-    if (from.path === LOGIN_PATH && to.name === PAGE_NOT_FOUND_ROUTE.name && to.fullPath !== (userStore.getUserInfo.homePath || PageEnum.BASE_HOME)) {
+    const pageNotFoundChildName = PAGE_NOT_FOUND_ROUTE.children?.[0]?.name;
+    const isNotFoundTarget =
+      to.name === PAGE_NOT_FOUND_ROUTE.name ||
+      (Boolean(pageNotFoundChildName) && to.name === pageNotFoundChildName) ||
+      to.matched.some((record) => record.name === PAGE_NOT_FOUND_ROUTE.name);
+
+    if (from.path === LOGIN_PATH && isNotFoundTarget && to.fullPath !== (userStore.getUserInfo.homePath || PageEnum.BASE_HOME)) {
       return PageEnum.BASE_HOME;
     }
 
@@ -176,9 +182,9 @@ export function createPermissionGuard(router: Router) {
     router.addRoute(PAGE_NOT_FOUND_ROUTE as unknown as RouteRecordRaw);
     permissionStore.setDynamicAddedRoute(true);
 
-    if (to.name === PAGE_NOT_FOUND_ROUTE.name) {
-      // 경로를 동적으로 추가한 후에는 fullPath로 리디렉션되어야 하며, 그렇지 않으면 404 페이지 콘텐츠가 로드됩니다.
-      return { path: to.fullPath, replace: true, query: to.query };
+    if (isNotFoundTarget) {
+      // 경로를 동적으로 추가한 후에는 원본 경로로 재매칭해야 404 자식 라우트에 고정되지 않습니다.
+      return { path: to.path, replace: true, query: to.query, hash: to.hash };
     } else {
       // fullPath 기반으로 통일하여 query string / hash 가 포함된 원본 navigation 의도를 보존한다.
       // 인코딩된 redirect 값을 굳이 decode 하지 않아 router 가 자체적으로 정규화하도록 둔다.
