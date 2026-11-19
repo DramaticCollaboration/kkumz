@@ -61,6 +61,10 @@ export default async ({ command, mode }: ConfigEnv): Promise<UserConfig> => {
           find: /@\//,
           replacement: pathResolve('src') + '/',
         },
+        {
+          find: /~@assets\//,
+          replacement: pathResolve('src/assets') + '/',
+        },
         // /#/xxxx => types/xxxx
         {
           find: /#\//,
