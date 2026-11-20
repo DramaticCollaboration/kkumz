@@ -22,7 +22,6 @@
         <module>Server</module>
         <module>admin</module>
         <module>web</module>
-        <module>homepage</module>
     </modules>
 
     <properties>
