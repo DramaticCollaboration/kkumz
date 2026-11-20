@@ -25,6 +25,17 @@ RUN echo 'server { \
         proxy_set_header X-Real-IP $remote_addr; \
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
     } \
+    location /media/ { \
+        proxy_pass http://kkumz-minio:9000/kkumz-media/; \
+        proxy_set_header Host $host; \
+        expires 7d; \
+        add_header Cache-Control "public, max-age=604800"; \
+    } \
+    location ^~ /images/ { \
+        try_files $uri =404; \
+        expires 7d; \
+        add_header Cache-Control "public, max-age=604800, immutable"; \
+    } \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \

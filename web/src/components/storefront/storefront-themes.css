@@ -1,0 +1,171 @@
+/* ============================================================================
+ * Kkumz Multi-Site SDUI Theme Archetype System (5 Distinct Visual Languages)
+ * - EDITORIAL_BOTANICAL : Warm paper surface, serif display, hairline borders
+ * - DARK_TECH_SHOWCASE  : Obsidian dark canvas, monospace specs, luminous rim
+ * - MAGAZINE_HYBRID     : Archival newsprint cream, editorial rules, journal-first
+ * - COMMUNITY_KINETIC   : High-contrast bold athletic typography & kinetic energy
+ * - SCENIC_HOSPITALITY  : Serene natural mist, generous framing, soft corners
+ * ============================================================================ */
+
+.sf-root {
+  --sf-primary: #14532d;
+  --sf-secondary: #15803d;
+  --sf-accent: #b45309;
+  --sf-bg: #ffffff;
+  --sf-surface: #f8fafc;
+  --sf-card: #ffffff;
+  --sf-card-alt: #f8fafc;
+  --sf-ink: #0f172a;
+  --sf-ink-soft: #475569;
+  --sf-ink-muted: #64748b;
+  --sf-border: rgba(15, 23, 42, 0.1);
+  --sf-border-strong: rgba(15, 23, 42, 0.18);
+  --sf-radius: 12px;
+  --sf-radius-lg: 20px;
+  --sf-font-heading: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  --sf-font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  --sf-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --sf-header-bg: rgba(255, 255, 255, 0.92);
+  --sf-footer-bg: #0f172a;
+  --sf-footer-ink: #cbd5e1;
+
+  background-color: var(--sf-bg);
+  color: var(--sf-ink);
+  font-family: var(--sf-font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.sf-surface-warm {
+  --sf-bg: #f8f5ef;
+  --sf-surface: #f1ece2;
+  --sf-card: #fdfcf9;
+  --sf-card-alt: #f4efe6;
+  --sf-ink: #1c1917;
+  --sf-ink-soft: #44403c;
+  --sf-ink-muted: #78716c;
+  --sf-border: rgba(28, 25, 23, 0.11);
+  --sf-border-strong: rgba(28, 25, 23, 0.24);
+  --sf-header-bg: rgba(248, 245, 239, 0.92);
+  --sf-footer-bg: #1c1917;
+  --sf-footer-ink: #d6d3d1;
+}
+
+.sf-surface-dark {
+  --sf-bg: #09090b;
+  --sf-surface: #111116;
+  --sf-card: #14141a;
+  --sf-card-alt: #1b1b24;
+  --sf-ink: #f4f4f5;
+  --sf-ink-soft: #d4d4d8;
+  --sf-ink-muted: #a1a1aa;
+  --sf-border: rgba(255, 255, 255, 0.1);
+  --sf-border-strong: rgba(255, 255, 255, 0.2);
+  --sf-header-bg: rgba(9, 9, 11, 0.86);
+  --sf-footer-bg: #050507;
+  --sf-footer-ink: #a1a1aa;
+}
+
+.sf-font-serif_editorial {
+  --sf-font-heading: 'Noto Serif KR', 'Cormorant Garamond', Georgia, serif;
+}
+
+.sf-font-tech_mono {
+  --sf-font-heading: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.sf-font-bold_sans {
+  --sf-font-heading: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.sf-heading {
+  font-family: var(--sf-font-heading);
+}
+
+.sf-mono {
+  font-family: var(--sf-font-mono);
+}
+
+.sf-card {
+  background-color: var(--sf-card);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-lg);
+}
+
+.sf-card-alt {
+  background-color: var(--sf-card-alt);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-lg);
+}
+
+.sf-btn-primary {
+  background-color: var(--sf-primary);
+  color: #ffffff;
+  border-radius: var(--sf-radius);
+  transition: transform 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
+}
+
+.sf-btn-primary:hover {
+  opacity: 0.93;
+  transform: translateY(-1px);
+}
+
+.sf-btn-outline {
+  background-color: transparent;
+  color: var(--sf-ink);
+  border: 1px solid var(--sf-border-strong);
+  border-radius: var(--sf-radius);
+  transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.sf-btn-outline:hover {
+  background-color: var(--sf-card-alt);
+}
+
+.sf-section-divider {
+  border-bottom: 1px solid var(--sf-border);
+}
+
+.sf-theme-magazine_hybrid .sf-section-divider {
+  border-top: 2px solid var(--sf-ink);
+  border-bottom: 1px solid var(--sf-border-strong);
+  padding-top: 1.25rem;
+}
+
+.sf-theme-editorial_botanical .sf-section-divider {
+  border-bottom: 1px solid var(--sf-border-strong);
+}
+
+.sf-theme-dark_tech_showcase .sf-card {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.sf-theme-dark_tech_showcase .sf-kicker {
+  font-family: var(--sf-font-mono);
+  letter-spacing: 0.14em;
+}
+
+.sf-theme-community_kinetic .sf-heading {
+  letter-spacing: -0.03em;
+}
+
+.sf-theme-community_kinetic .sf-section-divider {
+  border-bottom: 3px solid var(--sf-ink);
+}
+
+.sf-theme-editorial_botanical .sf-heading {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.sf-prose p {
+  margin-bottom: 0.75rem;
+  line-height: 1.75;
+}
+
+.sf-prose h3 {
+  font-family: var(--sf-font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+  color: var(--sf-ink);
+}

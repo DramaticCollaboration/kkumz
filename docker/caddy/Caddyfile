@@ -31,6 +31,14 @@
 			header_up X-Forwarded-Proto {scheme}
 		}
 	}
+
+	# 공유 미디어 오브젝트 스토리지 프록시 (/media/* -> MinIO kkumz-media 버킷)
+	handle_path /media/* {
+		rewrite * /kkumz-media{uri}
+		reverse_proxy kkumz-minio:9000 {
+			header_up Host {upstream_hostport}
+		}
+	}
 }
 
 # 1. 꿈즈 Kkumz 사용자 포털 & AI 스튜디오 (kkumz.empasy.io)

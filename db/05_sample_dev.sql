@@ -109,7 +109,7 @@ INSERT INTO kkumz_idea (
       {"screenKey":"ARTICLE_FEED","title":"러닝 코스 가이드 & 훈련 칼럼","layout":"EDITORIAL_CARDS","components":["CourseArticleList","PaceCalculatorCard"]},
       {"screenKey":"APPLY_FORM","title":"게스트 런 & 크루 합류 신청 폼","layout":"DYNAMIC_CMS_FORM","components":["SessionSelectField","PaceRadioGroup","SubmitApplicationButton"]}
     ]'::jsonb,
-    '["CMS_HERO_SHOWCASE","CMS_SESSION_TIMETABLE","CMS_BRAND_MAGAZINE","CMS_PHOTO_GALLERY","CMS_DYNAMIC_BOOKING_FORM","CMS_LIVE_POLL","CMS_LOCATION_DIRECTIONS","AI_TEAM_RECRUIT","AI_BRAND_CONCIERGE"]'::jsonb,
+    '["CMS_HERO_SHOWCASE","CMS_SESSION_TIMETABLE","CMS_SPACE_TOUR","CMS_BRAND_MAGAZINE","CMS_PHOTO_GALLERY","CMS_DYNAMIC_BOOKING_FORM","CMS_LIVE_POLL","CMS_LOCATION_DIRECTIONS","AI_TEAM_RECRUIT","AI_BRAND_CONCIERGE"]'::jsonb,
     '{"siteType":"CMS_SITE","siteTypeReason":"주간 러닝 세션 일정표, 코스 매거진, 게스트 참가 신청 폼이 중심인 커뮤니티 웹사이트입니다.","category":"스포츠 크루 · 러닝 커뮤니티 미디어","heroStyle":"FULL_SCENIC","brandSlogan":"서울의 밤을 가르는 페이스, 함께 달릴 때 더 멀리 가는 시티 러닝 커뮤니티"}'::jsonb,
     'PUBLISHED',
     CURRENT_TIMESTAMP - INTERVAL '3 days',
@@ -680,6 +680,34 @@ INSERT INTO kkumz_site (
     'ACTIVE',
     CURRENT_TIMESTAMP - INTERVAL '2 days',
     CURRENT_TIMESTAMP - INTERVAL '30 minutes'
+),
+(
+    'site-kkumz-005',
+    'idea-01137479',
+    'malgeunmul-minbak',
+    '맑은물 민박',
+    'HYBRID',
+    '숙박 · 민박 · 프라이빗 스테이',
+    '공주 청정 냇가 물소리와 따뜻한 황토 온돌이 맞이하는 사계절 시골 쉼터',
+    '<svg viewBox="0 0 185 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#0f766e"/><path d="M8 25 C13 19, 18 19, 23 25 C26 28, 30 28, 33 23" stroke="#99f6e4" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M12 18 L20 11 L28 18" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><text x="48" y="25" font-family="Pretendard, sans-serif" font-size="15" font-weight="800" fill="#0f766e">맑은물 민박</text></svg>',
+    NULL,
+    NULL,
+    'DYNAMIC_SDUI',
+    1,
+    1,
+    CURRENT_TIMESTAMP - INTERVAL '15 minutes',
+    '/s/malgeunmul-minbak',
+    'malgeunmul-minbak.kkumz.io',
+    TRUE,
+    'PUBLIC',
+    164,
+    9,
+    1720,
+    'admin',
+    '김도현 총괄관리자',
+    'ACTIVE',
+    CURRENT_TIMESTAMP - INTERVAL '1 day',
+    CURRENT_TIMESTAMP - INTERVAL '15 minutes'
 );
 
 -- 2-Track Releases & WebIDE Snapshots (kkumz_site_release)
@@ -709,19 +737,72 @@ INSERT INTO kkumz_site_release (
     'rel-kkumz-001-v2',
     'site-kkumz-001',
     2,
-    'WebIDE 커스텀 히어로 다도 가이드 배너 및 선물 포장 배지 추가 (코드 번들 빌드)',
+    '보태니컬 에디토리얼 아키타입 및 제주 다도 리추얼 스토어 개편 (커스텀 번들)',
     'CUSTOM_BUNDLE',
-    '{"primary":"#14532d","secondary":"#16a34a","accent":"#ca8a04","surface":"#f7fee7","radius":"14px"}'::jsonb,
-    '{"heroTitle":"2026 제주 첫물 세레모니얼 말차 & 백자 다완 아뜰리에","heroSubtitle":"화강암 맷돌 저온 분쇄로 지킨 에메랄드빛 우마미 · 전 상품 보자기 기프트 패키징 지원","ctaText":"첫물 말차 & 다구 세트 구매하기","showFlashDeal":true,"showAiConcierge":true,"customBadge":"2026 햇차 한정 수량"}'::jsonb,
+    '{"primary":"#14532d","secondary":"#15803d","accent":"#b45309","surface":"#f7f5ee","radius":"6px","surfaceMode":"WARM","fontPreset":"SERIF_EDITORIAL"}'::jsonb,
+    '{
+      "themeArchetype":"EDITORIAL_BOTANICAL",
+      "heroStyle":"EDITORIAL_STORY",
+      "heroTitle":"제주 화산토가 길러낸 첫물 차광 말차와 백자 다완의 고요한 의식",
+      "heroSubtitle":"서귀포 남원읍 단일 유기농 다원에서 21일간 빛을 가려 수확한 첫물 찻잎을 화강암 맷돌로 시간당 30g씩 저온 분쇄했습니다.",
+      "heroBannerImage":"/images/studio/banner-matcha-jeju.jpg",
+      "heroBannerCaption":{"title":"2026 서귀포 1번 차광 세레모니얼 햇차","sub":"유기농 단일 다원 · 화강암 석구 저온 분쇄"},
+      "ctaText":"첫물 말차 & 다구 컬렉션",
+      "showFlashDeal":true,
+      "showAiConcierge":true,
+      "showCmsArticles":true,
+      "showCmsForm":false,
+      "customBadge":"2026 제주 첫물 세레모니얼 햇차 오픈",
+      "sectionOrder":["CATALOG_GRID","STEP_GUIDE","EDITORIAL_FEED","REVIEWS_POLL","FAQ_LOCATION"],
+      "copyOverrides":{
+        "navCatalogLabel":"말차 · 다구",
+        "navEditorialLabel":"다원 스토리",
+        "navFaqLabel":"보관 · 배송 FAQ",
+        "catalogKicker":"JEJU CEREMONIAL ARCHIVE",
+        "catalogTitle":"세레모니얼 말차 & 수제 다기 컬렉션",
+        "catalogSubtitle":"격불용 최상급 햇차부터 이천 도예가 물레 백자 다완, 보자기 기프트 세트까지 큐레이션했습니다.",
+        "productPriceLabel":"공식 스토어가",
+        "productCtaLabel":"상세 보기 · 구매",
+        "stepKicker":"5-MINUTE TEA RITUAL",
+        "stepTitle":"바쁜 아침 5분, 완벽한 말차 격불 리추얼",
+        "stepSubtitle":"물 온도 75℃와 100본립 대나무 차선으로 에메랄드빛 벨벳 거품을 완성하는 정통 가이드",
+        "editorialKicker":"SEOGWIPO TEA JOURNAL",
+        "editorialTitle":"제주 다원 아카이브 & 다도 에세이",
+        "reviewKicker":"VERIFIED TEA LOVER REVIEWS",
+        "reviewTitle":"실구매자 & 티 소믈리에 시음 후기",
+        "faqKicker":"SHIPPING & STORAGE GUIDE",
+        "faqTitle":"신선 배송 · 보관 · 기프트 포장 안내",
+        "conciergeTitle":"AI 티 소믈리에 컨시어지",
+        "conciergeSubtitle":"라떼용과 격불용의 차이, 다완 입문 구성, 보자기 선물 포장까지 취향에 맞춰 추천해 드립니다.",
+        "conciergePresets":["격불 입문자에게 어울리는 첫물 말차와 다완 세트를 추천해 주세요","아이스 말차 라떼용 농축 베이스와 틴캔 파우더의 차이는 무엇인가요?","기업 답례품 보자기 패키징 주문 조건이 궁금합니다"]
+      },
+      "featureBlocks":{
+        "trustMetrics":[
+          {"label":"단일 유기농 다원","value":"제주 서귀포","sub":"화산암반수 · 21일 전통 차광 재배"},
+          {"label":"화강암 맷돌 분쇄","value":"30g / 시간","sub":"산화 없는 저온 저속 미세 분쇄"},
+          {"label":"실구매자 만족도","value":"4.97 / 5.0","sub":"티 소믈리에 및 홈다도 고객 실후기"},
+          {"label":"산지 직송 포장","value":"보자기 기프트","sub":"전 상품 냉장 신선 포장 및 선물 지원"}
+        ],
+        "stepGuide":[
+          {"step":"RITUAL 01","time":"75℃ 온수 예열","title":"백자 다완 데우기 & 차선 적시기","desc":"이천 수제 백자 다완에 따뜻한 물을 부어 온기를 채우고, 100본립 대나무 차선의 끝을 부드럽게 풀어줍니다."},
+          {"step":"RITUAL 02","time":"2g 고운 체치기","title":"첫물 세레모니얼 말차 2스쿱","desc":"산화를 막은 틴캔에서 에메랄드빛 말차 2g(차시 2스쿱)을 고운 체에 내려 뭉침 없이 다완에 담습니다."},
+          {"step":"RITUAL 03","time":"W자 20초 격불","title":"미세 크림 벨벳 거품 완성","desc":"75℃ 정수 60ml를 붓고 손목 스냅으로 20초간 빠르게 W자로 격불해 쫀쫀하고 고운 거품을 올립니다."}
+        ],
+        "policyRules":[
+          "서귀포 유기농 다원 출고센터에서 평일 오후 2시 이전 주문 시 당일 항공택배 출고됩니다.",
+          "빛과 습기에 민감한 첫물 말차 특성상 개봉 후 밀봉 냉장 보관을 권장하며 60일 이내 음용 시 최상의 향미를 느낄 수 있습니다.",
+          "수제 백자 다완은 배송 중 파손 시 사진 확인만으로 100% 무상 맞교환 발송해 드립니다."
+        ]
+      }
+    }'::jsonb,
     '[
-      {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"matcha-atelier-shell\" :style=\"{ ''--brand-primary'': tokens.primary }\">\n    <HeroSection :title=\"layout.heroTitle\" :subtitle=\"layout.heroSubtitle\" :badge=\"layout.customBadge\" />\n    <RitualGuideBanner />\n    <CatalogSection :products=\"products\" @add-cart=\"onAddCart\" />\n  </div>\n</template>\n<script setup lang=\"ts\">\nimport HeroSection from ''./sections/HeroSection.vue'';\nimport CatalogSection from ''./sections/CatalogSection.vue'';\n</script>"},
-      {"path":"src/sections/HeroSection.vue","language":"vue","content":"<template>\n  <section class=\"hero-botanical\">\n    <span class=\"badge\">{{ badge }}</span>\n    <h1>{{ title }}</h1>\n    <p>{{ subtitle }}</p>\n  </section>\n</template>\n<script setup lang=\"ts\">\ndefineProps<{ title: string; subtitle: string; badge?: string }>();\n</script>"},
-      {"path":"src/sections/CatalogSection.vue","language":"vue","content":"<template>\n  <section class=\"catalog-grid\">\n    <article v-for=\"item in products\" :key=\"item.id\" class=\"product-card\">\n      <h3>{{ item.name }}</h3>\n      <p>{{ item.subTitle }}</p>\n    </article>\n  </section>\n</template>\n<script setup lang=\"ts\">\ndefineProps<{ products: any[] }>();\n</script>"},
-      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#14532d\",\n  \"secondary\": \"#16a34a\",\n  \"accent\": \"#ca8a04\",\n  \"surface\": \"#f7fee7\",\n  \"radius\": \"14px\"\n}"}
+      {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"matcha-atelier-shell\" :style=\"{ ''--brand-primary'': tokens.primary }\">\n    <HeroSection :title=\"layout.heroTitle\" :subtitle=\"layout.heroSubtitle\" :badge=\"layout.customBadge\" />\n    <CatalogSection :products=\"products\" />\n  </div>\n</template>"},
+      {"path":"src/CustomStyles.css","language":"css","content":".sf-root { letter-spacing: -0.015em; }\n.sf-editorial-rule { border-color: rgba(20, 83, 45, 0.16); }"},
+      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#14532d\",\n  \"secondary\": \"#15803d\",\n  \"accent\": \"#b45309\",\n  \"surface\": \"#f7f5ee\",\n  \"radius\": \"6px\",\n  \"surfaceMode\": \"WARM\",\n  \"fontPreset\": \"SERIF_EDITORIAL\"\n}"}
     ]'::jsonb,
     'minio://kkumz-sites/matcha-atelier/v2/dist/index.js',
     'SUCCESS',
-    '[14:20:10] [Bundle-Builder] Compiling 4 virtual SFC files (App.vue, HeroSection.vue, CatalogSection.vue, theme.json)...\n[14:20:11] [Vite-SSR-Check] AST & TypeScript props verification passed (0 errors, 0 warnings).\n[14:20:12] [Artifact-Store] Uploaded bundle to minio://kkumz-sites/matcha-atelier/v2/dist/index.js (42.8 KB gzipped).\n[14:20:12] [Publish] Promoted v2 to active release for /s/matcha-atelier.',
+    '[14:20:10] [Bundle-Builder] Compiling Matcha Atelier Editorial Botanical bundle (App.vue, CustomStyles.css, theme.json)...\n[14:20:12] [Publish] Promoted v2 to active release for /s/matcha-atelier.',
     'soyeon.jeju',
     CURRENT_TIMESTAMP - INTERVAL '1 hour'
 ),
@@ -731,11 +812,11 @@ INSERT INTO kkumz_site_release (
     1,
     '데스크 오빗 초기 프로비저닝 및 다크 테크 테마 스키마 배포',
     'DYNAMIC_SDUI',
-    '{"primary":"#1e1b4b","secondary":"#4f46e5","accent":"#06b6d4","surface":"#f8fafc","radius":"10px"}'::jsonb,
-    '{"heroTitle":"Design Your Focus Orbit","heroSubtitle":"CNC 풀알루미늄 Qi2 충전 독과 북미산 호두나무 마그네틱 데스크 쉘프로 완성하는 무결점 워크스페이스","ctaText":"데스크 기어 컬렉션 보기","showFlashDeal":true,"showAiConcierge":true}'::jsonb,
+    '{"primary":"#6366f1","secondary":"#38bdf8","accent":"#22d3ee","surface":"#09090b","radius":"10px","surfaceMode":"DARK","fontPreset":"TECH_MONO"}'::jsonb,
+    '{"themeArchetype":"DARK_TECH_SHOWCASE","heroStyle":"PROMO_COMMERCE","heroTitle":"Design Your Focus Orbit","heroSubtitle":"CNC 풀알루미늄 Qi2 충전 독과 북미산 호두나무 마그네틱 데스크 쉘프로 완성하는 무결점 워크스페이스","heroBannerImage":"/images/studio/prod-walnut-shelf.jpg","ctaText":"데스크 기어 컬렉션 보기","showFlashDeal":true,"showAiConcierge":true,"showCmsForm":false}'::jsonb,
     '[
       {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"desk-orbit-app\">\n    <HeroSection />\n    <CatalogSection />\n  </div>\n</template>"},
-      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#1e1b4b\",\n  \"secondary\": \"#4f46e5\",\n  \"accent\": \"#06b6d4\"\n}"}
+      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#6366f1\",\n  \"secondary\": \"#38bdf8\",\n  \"accent\": \"#22d3ee\",\n  \"surface\": \"#09090b\",\n  \"surfaceMode\": \"DARK\"\n}"}
     ]'::jsonb,
     'minio://kkumz-sites/desk-orbit/v1/schema.json',
     'SUCCESS',
@@ -747,18 +828,72 @@ INSERT INTO kkumz_site_release (
     'rel-kkumz-002-v2',
     'site-kkumz-002',
     2,
-    '대화형 편집: 듀얼 모니터 셋업 호환성 배지 및 타임특가 섹션 강조 반영',
+    '다크 테크 쇼케이스 아키타입 & 하드웨어 스펙 비교 매트릭스 적용',
     'DYNAMIC_SDUI',
-    '{"primary":"#1e1b4b","secondary":"#4f46e5","accent":"#06b6d4","surface":"#f8fafc","radius":"10px"}'::jsonb,
-    '{"heroTitle":"케이블 없는 몰입의 궤도, 데스크 오빗 2026 컬렉션","heroSubtitle":"항공 등급 6061 알루미늄 Qi2 충전 스테이션 & 모듈형 마그네틱 월넛 데스크 쉘프 풀셋업","ctaText":"워크스테이션 기어 탐색","showFlashDeal":true,"showAiConcierge":true,"customBadge":"Qi2 공식 인증 · 당일 출고"}'::jsonb,
+    '{"primary":"#6366f1","secondary":"#38bdf8","accent":"#22d3ee","surface":"#09090b","radius":"10px","surfaceMode":"DARK","fontPreset":"TECH_MONO"}'::jsonb,
+    '{
+      "themeArchetype":"DARK_TECH_SHOWCASE",
+      "heroStyle":"PROMO_COMMERCE",
+      "heroTitle":"ZERO CABLE. PURE FOCUS ORBIT.",
+      "heroSubtitle":"항공 등급 6061 CNC 통절삭 알루미늄 Qi2 충전 스테이션과 마그네틱 월넛 데스크 쉘프. 개발자와 디자이너의 워크스테이션을 단 하나의 궤도로 정렬합니다.",
+      "heroBannerImage":"/images/studio/prod-walnut-shelf.jpg",
+      "heroBannerCaption":{"title":"DESK ORBIT 2026 MODULAR WORKSTATION","sub":"6061 CNC ALUMINUM · QI2 15W CERTIFIED · FAS WALNUT"},
+      "ctaText":"모듈러 기어 라인업 탐색",
+      "showFlashDeal":true,
+      "showAiConcierge":true,
+      "showCmsArticles":true,
+      "showCmsForm":false,
+      "customBadge":"QI2 OFFICIAL CERTIFIED · 성수 랩 당일 출고",
+      "sectionOrder":["CATALOG_GRID","SPEC_COMPARISON","EDITORIAL_FEED","REVIEWS_POLL","FAQ_LOCATION"],
+      "copyOverrides":{
+        "navCatalogLabel":"하드웨어 라인업",
+        "navSpecLabel":"스펙 · 호환성",
+        "navEditorialLabel":"셋업 가이드",
+        "navFaqLabel":"기술 지원 FAQ",
+        "catalogKicker":"PRECISION CNC HARDWARE LINEUP",
+        "catalogTitle":"모듈형 데스크테리어 & 워크스테이션 기어",
+        "catalogSubtitle":"네오디뮴 마그네틱 레일 규격으로 상호 호환되는 4대 핵심 하드웨어 라인업",
+        "productPriceLabel":"공식 리테일가",
+        "productCtaLabel":"스펙 확인 · 주문",
+        "specKicker":"HARDWARE ENGINEERING MATRIX",
+        "specTitle":"제품 라인업 핵심 사양 & 호환성 비교표",
+        "specSubtitle":"책상 가로 폭(1200~1600mm)과 보유 디바이스 규격에 맞춘 정밀 엔지니어링 제원",
+        "editorialKicker":"WORKSTATION SETUP LAB",
+        "editorialTitle":"개발자 · 크리에이터 데스크 셋업 리포트",
+        "reviewKicker":"VERIFIED MAKER & ENGINEER REVIEWS",
+        "reviewTitle":"현업 개발자 · 디자이너 실사용 리뷰",
+        "faqKicker":"COMPATIBILITY & FIRMWARE FAQ",
+        "faqTitle":"호환 규격 · QMK/VIA · 보증 안내",
+        "conciergeTitle":"AI 데스크 셋업 아키텍트",
+        "conciergeSubtitle":"책상 크기, 모니터 대수, 보유 기기(MacBook/iPhone/Galaxy)를 알려주시면 최적의 모듈 조합을 설계해 드립니다.",
+        "conciergePresets":["1400mm 책상에 듀얼 27인치 모니터 셋업 추천 조합 알려주세요","OrbitCube Qi2가 갤럭시 S25와 아이폰 16 프로 모두 15W 지원하나요?","OrbitPad QMK/VIA 매크로 패드 단축키 설정 방법이 궁금해요"]
+      },
+      "featureBlocks":{
+        "trustMetrics":[
+          {"label":"바디 가공 정밀도","value":"6061 CNC","sub":"항공 등급 통절삭 아노다이징 알루미늄"},
+          {"label":"무선 충전 인증","value":"Qi2 15W","sub":"스마트폰·워치·이어버드 3-in-1 동시 고속"},
+          {"label":"광학 색재현 지수","value":"Ra 97+","sub":"화면 반사 Zero 비대칭 듀얼 광원"},
+          {"label":"펌웨어 커스텀","value":"QMK / VIA","sub":"웹 브라우저 실시간 레이어 키매핑"}
+        ],
+        "specComparison":{
+          "title":"데스크 오빗 4대 코어 기어 제원 비교",
+          "columns":["모델명","핵심 소재","출력 / 규격","호환성 & 특징","권장 셋업"],
+          "rows":[
+            {"tier":"OrbitCube Qi2 3-in-1","spec1":"CNC 6061 알루미늄","spec2":"Qi2 15W + 45W GaN","spec3":"iPhone 12~16 / Galaxy Qi2","note":"무선 충전 케이블 3선 통합"},
+            {"tier":"Walnut Shelf 1200mm","spec1":"북미산 FAS 월넛 + 4T 스틸","spec2":"1200 × 240 × 110mm","spec3":"하단 마그네틱 모듈 레일","note":"32인치 듀얼 모니터 거치"},
+            {"tier":"HaloBar Pro 스크린바","spec1":"애노다이징 알루미늄","spec2":"2700K~6500K / Ra97","spec3":"1000R 커브드·울트라와이드","note":"무선 알루미늄 다이얼 포함"},
+            {"tier":"OrbitPad 9Key Macro","spec1":"CNC 블랙 알루미늄","spec2":"9키 + 듀얼 노브 + OLED","spec3":"QMK / VIA 핫스왑 스위치","note":"IDE · Figma · 편집 단축키"}
+          ]
+        }
+      }
+    }'::jsonb,
     '[
       {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"desk-orbit-app\">\n    <HeroSection :badge=\"layout.customBadge\" />\n    <CatalogSection />\n  </div>\n</template>"},
-      {"path":"src/sections/HeroSection.vue","language":"vue","content":"<template>\n  <section class=\"orbit-hero\">\n    <span class=\"badge\">{{ badge }}</span>\n    <h1>케이블 없는 몰입의 궤도</h1>\n  </section>\n</template>\n<script setup lang=\"ts\">\ndefineProps<{ badge?: string }>();\n</script>"},
-      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#1e1b4b\",\n  \"secondary\": \"#4f46e5\",\n  \"accent\": \"#06b6d4\"\n}"}
+      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#6366f1\",\n  \"secondary\": \"#38bdf8\",\n  \"accent\": \"#22d3ee\",\n  \"surface\": \"#09090b\",\n  \"surfaceMode\": \"DARK\",\n  \"fontPreset\": \"TECH_MONO\"\n}"}
     ]'::jsonb,
     'minio://kkumz-sites/desk-orbit/v2/schema.json',
     'SUCCESS',
-    '[16:40:12] [Chat-Refine] Updated hero copy and activated flash deal highlight. Live in 45ms.',
+    '[16:40:12] [Chat-Refine] Applied Dark Tech Showcase archetype & hardware spec comparison matrix. Live in 45ms.',
     'minjun.maker',
     CURRENT_TIMESTAMP - INTERVAL '2 hours'
 ),
@@ -766,18 +901,88 @@ INSERT INTO kkumz_site_release (
     'rel-kkumz-003-v1',
     'site-kkumz-003',
     1,
-    '서울 나이트 런 클럽 아티클 및 게스트 런 온라인 신청 폼 통합 배포',
+    '커뮤니티 키네틱 아키타입 · 주간 나이트 런 일정표 및 한강 코스 매거진 배포',
     'DYNAMIC_SDUI',
-    '{"primary":"#ea580c","secondary":"#0f172a","accent":"#f59e0b","surface":"#fff7ed","radius":"12px"}'::jsonb,
-    '{"heroTitle":"SEOUL NIGHT RUNNERS — 매주 화·목 서울의 밤을 달립니다","heroSubtitle":"반포 잠수교 · 성수 서울숲 · 여의도 한강공원 페이스별 그룹 러닝 및 마라톤 풀코스 훈련 커뮤니티","ctaText":"이번 주 게스트 런 신청하기","showCmsArticles":true,"showCmsForm":true,"customBadge":"매주 화·목 20:00 정규 세션"}'::jsonb,
+    '{"primary":"#ea580c","secondary":"#0f172a","accent":"#f59e0b","surface":"#ffffff","radius":"12px","surfaceMode":"LIGHT","fontPreset":"BOLD_SANS"}'::jsonb,
+    '{
+      "themeArchetype":"COMMUNITY_KINETIC",
+      "heroStyle":"FULL_SCENIC",
+      "heroTitle":"SEOUL NIGHT RUNNERS — 매주 화·목 서울의 밤을 달립니다",
+      "heroSubtitle":"반포 잠수교 · 성수 서울숲 · 여의도 한강공원. 530부터 630까지 전담 페이서와 함께 달리는 2030 시티 러닝 커뮤니티.",
+      "heroBannerImage":"/images/studio/banner-seoul-night-run.jpg",
+      "heroBannerCaption":{"title":"THIS WEEK SESSION · 반포 잠수교 7.5K 템포런","sub":"매주 화·목 20:00 · 530 / 600 / 630 페이스 그룹 운영"},
+      "ctaText":"이번 주 게스트 런 신청하기",
+      "showCmsArticles":true,
+      "showCmsForm":true,
+      "showPhotoGallery":true,
+      "customBadge":"매주 화·목 20:00 정규 세션 · 게스트 오픈 런",
+      "sectionOrder":["SESSION_TIMETABLE","EDITORIAL_FEED","SPACE_TOUR_GALLERY","REVIEWS_POLL","DYNAMIC_FORM","FAQ_LOCATION"],
+      "copyOverrides":{
+        "navTimetableLabel":"정규 세션 일정",
+        "navEditorialLabel":"한강 코스 가이드",
+        "navGalleryLabel":"코스 스폿 투어",
+        "navFormLabel":"게스트 런 신청",
+        "navFaqLabel":"참가 FAQ · 집결지",
+        "timetableKicker":"WEEKLY RUNNING SCHEDULE",
+        "timetableTitle":"이번 주 정규 나이트 런 & 주말 LSD 세션",
+        "timetableSubtitle":"원하는 요일과 페이스 그룹을 클릭하면 하단 게스트 런 신청 폼에 자동으로 선택됩니다.",
+        "editorialKicker":"SEOUL COURSE ARCHIVE & TRAINING",
+        "editorialTitle":"한강 러닝 코스 아카이브 & 트레이닝 칼럼",
+        "formKicker":"GUEST RUN & CREW APPLICATION",
+        "conciergeTitle":"AI 러닝 크루 페이스 코치",
+        "conciergeSubtitle":"초보 러너 페이스 배정, 짐보관 위치, 반포·성수 코스 노면 정보까지 바로 안내해 드립니다.",
+        "conciergePresets":["5K 완주가 처음인데 어떤 페이스 그룹으로 신청하면 좋을까요?","화요일 반포 잠수교 세션 집결지와 짐보관 방법을 알려주세요","정규 크루원 합류 조건과 운영진 모집 포지션이 궁금해요"]
+      },
+      "featureBlocks":{
+        "trustMetrics":[
+          {"label":"활성 크루 멤버","value":"1,240+","sub":"서울 2030 시티 러너 커뮤니티"},
+          {"label":"주간 정규 세션","value":"화·목·토","sub":"전담 페이서 3개 그룹 동시 운영"},
+          {"label":"누적 러닝 거리","value":"48,500 km","sub":"2026 시즌 크루 합산 마일리지"},
+          {"label":"게스트 재참여율","value":"92%","sub":"초보 러너 환영 리커버리 그룹 운영"}
+        ],
+        "sessionTimetable":[
+          {"day":"매주 화요일","time":"20:00 ~ 21:30","title":"반포 잠수교 7.5K 나이트 템포런","location":"반포한강공원 달빛광장 세빛섬 앞","pace":"530 / 600 / 630 그룹","capacity":"선착순 40명","badge":"정규 메인"},
+          {"day":"매주 목요일","time":"20:00 ~ 21:15","title":"성수 서울숲 ~ 뚝섬 5K 리커버리런","location":"서울숲역 3번 출구 보행데크 광장","pace":"600 / 630 / 700 입문","capacity":"선착순 35명","badge":"초보 추천"},
+          {"day":"매주 토요일","time":"07:00 ~ 09:00","title":"여의도 ~ 양화대교 12K 마라톤 LSD","location":"여의나루역 2번 출구 물빛무대","pace":"515 / 545 / 615 그룹","capacity":"선착순 30명","badge":"풀코스 대비"}
+        ],
+        "spaceTour":[
+          {"zone":"COURSE 01","title":"반포 잠수교 · 세빛섬 나이트 직선 주로","desc":"신호등 없이 한강 야경과 달빛무지개분수를 가르며 페이스 리듬을 맞추는 화요일 7.5K 대표 템포 코스입니다.","imageUrl":"/images/studio/run-course-banpo.jpg"},
+          {"zone":"COURSE 02","title":"성수 서울숲 · 뚝섬 리커버리 그린 루트","desc":"도심 숲길과 한강 자전거 보행 분리 도로가 이어져 러닝 입문자도 편안하게 완주할 수 있는 목요일 5K 코스입니다.","imageUrl":"/images/studio/run-course-seongsu.jpg"},
+          {"zone":"COURSE 03","title":"잠실 우레탄 트랙 스피드 인터벌 존","desc":"마라톤 기록 단축을 위한 400m·800m 인터벌과 러닝 드릴을 전문 코치와 함께 훈련하는 스피드 트레이닝 코스입니다.","imageUrl":"/images/studio/run-training-track.jpg"}
+        ],
+        "pollWidget":{
+          "question":"다음 달 스페셜 선라이즈 런 희망 코스를 투표해 주세요",
+          "totalVotes":318,
+          "options":[
+            {"label":"남산 북측순환로 업힐 8K + 브런치","votes":142,"percent":45},
+            {"label":"잠실대교 ~ 광나루 한강 일출 10K","votes":108,"percent":34},
+            {"label":"북악스카이웨이 야경 트레일 시티런","votes":68,"percent":21}
+          ]
+        },
+        "faqItems":[
+          {"q":"러닝 입문자도 게스트 런에 참여할 수 있나요?","a":"물론입니다. 목요일 성수 서울숲 5K 세션과 화요일 630 그룹에는 전담 후미 페이서가 함께 뛰어 초보자도 낙오 없이 완주할 수 있습니다."},
+          {"q":"세션 중 짐보관과 탈의는 어떻게 하나요?","a":"정규 세션 집결지에 크루 운영진 차량 및 유인 락커 보관 구역을 운영합니다. 귀중품은 최소화해 와주시면 편리합니다."},
+          {"q":"우천 시 세션 진행 여부는 언제 공지되나요?","a":"세션 시작 3시간 전(오후 5시) 시간당 강수량 3mm 이상 예보 시 안전을 위해 실내 보강 스트레칭 번개로 전환 또는 순연 공지합니다."}
+        ],
+        "locationGuide":{
+          "address":"서울특별시 서초구 신반포로11길 40 반포한강공원 달빛광장 (화요일 메인 집결지)",
+          "parking":"반포한강공원 제1·제2 공영주차장 이용 가능",
+          "publicTransit":"지하철 3·7·9호선 고속터미널역 8-1번 출구 도보 12분 / 신반포역 1번 출구 도보 10분",
+          "nearbySpots":[
+            {"name":"반포 달빛무지개분수","distance":"집결지 바로 앞","desc":"스트레칭 및 페이스 그룹 집결·단체 촬영 포인트"},
+            {"name":"잠수교 보행전용 구간","distance":"코스 2.5km 지점","desc":"신호등 없이 한강 야경을 가로지르는 핵심 직선 주로"},
+            {"name":"세빛섬 러너스 급수대","distance":"코스 반환점","desc":"전담 스태프 이온음료 보급 및 쿨다운 스트레칭 존"}
+          ]
+        }
+      }
+    }'::jsonb,
     '[
-      {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"seoul-run-cms\">\n    <RunClubHero />\n    <CourseMagazineSection />\n    <GuestRunApplyForm />\n  </div>\n</template>"},
-      {"path":"src/sections/RunClubHero.vue","language":"vue","content":"<template>\n  <section class=\"night-run-hero\">\n    <h1>SEOUL NIGHT RUNNERS</h1>\n    <p>반포 잠수교 · 성수 서울숲 · 여의도 한강공원 그룹 러닝</p>\n  </section>\n</template>"},
-      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#ea580c\",\n  \"secondary\": \"#0f172a\",\n  \"surface\": \"#fff7ed\"\n}"}
+      {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"seoul-run-cms\">\n    <RunClubHero />\n    <SessionTimetable />\n    <CourseMagazineSection />\n    <GuestRunApplyForm />\n  </div>\n</template>"},
+      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#ea580c\",\n  \"secondary\": \"#0f172a\",\n  \"surface\": \"#ffffff\",\n  \"surfaceMode\": \"LIGHT\",\n  \"fontPreset\": \"BOLD_SANS\"\n}"}
     ]'::jsonb,
     'minio://kkumz-sites/seoul-run-club/v1/schema.json',
     'SUCCESS',
-    '[09:30:00] [Content-Link] Provisioned 4 course articles and Guest Run registration form... OK',
+    '[09:30:00] [Content-Link] Provisioned Community Kinetic schedule, 3 course articles and Guest Run registration form... OK',
     'jihoon.run',
     CURRENT_TIMESTAMP - INTERVAL '3 days'
 ),
@@ -785,21 +990,210 @@ INSERT INTO kkumz_site_release (
     'rel-kkumz-004-v1',
     'site-kkumz-004',
     1,
-    '빈 크로니클 서울 로스터리 저널 + 브루잉 스토어 복합 사이트 배포',
+    '매거진 하이브리드 아키타입 · 산지 저널 + 스페셜티 원두 스토어 + 월간 구독 배포',
     'CUSTOM_BUNDLE',
-    '{"primary":"#78350f","secondary":"#b45309","accent":"#d97706","surface":"#fffbeb","radius":"12px"}'::jsonb,
-    '{"heroTitle":"산지의 떼루아부터 한 잔의 브루잉까지, 빈 크로니클 서울","heroSubtitle":"직교역 커피 농장 아카이브 저널과 이달의 싱글오리진 & 브루잉 머신 셀렉트 스토어","ctaText":"이달의 로스터리 셀렉션 & 저널 보기","showFlashDeal":true,"showCmsArticles":true,"showCmsForm":true,"customBadge":"산지 직교역 로스터리 · 당일 로스팅 발송"}'::jsonb,
+    '{"primary":"#78350f","secondary":"#b45309","accent":"#d97706","surface":"#fbf8f3","radius":"8px","surfaceMode":"WARM","fontPreset":"SERIF_EDITORIAL"}'::jsonb,
+    '{
+      "themeArchetype":"MAGAZINE_HYBRID",
+      "heroStyle":"SPLIT_VISUAL",
+      "heroTitle":"산지의 떼루아부터 한 잔의 브루잉까지, 빈 크로니클 서울",
+      "heroSubtitle":"콜롬비아·에티오피아 직교역 농장의 수확 기록을 담은 로스터리 저널과 성수동에서 당일 로스팅해 발송하는 이달의 마이크로랏 스토어.",
+      "heroBannerImage":"/images/studio/banner-geisha-coffee.jpg",
+      "heroBannerCaption":{"title":"ISSUE NO.14 · 콜롬비아 엘 파라이소 96h 게이샤","sub":"DIRECT TRADE ARCHIVE & SEONGSU ROASTERY SELECTION"},
+      "ctaText":"이달의 싱글오리진 & 저널 탐색",
+      "showFlashDeal":true,
+      "showCmsArticles":true,
+      "showCmsForm":true,
+      "customBadge":"성수동 산지 직교역 로스터리 · 주문 당일 로스팅 발송",
+      "sectionOrder":["EDITORIAL_FEED","CATALOG_GRID","SUBSCRIPTION_TIERS","STEP_GUIDE","REVIEWS_POLL","FAQ_LOCATION","DYNAMIC_FORM"],
+      "copyOverrides":{
+        "navEditorialLabel":"산지 저널",
+        "navCatalogLabel":"원두 · 기어 샵",
+        "navSubscriptionLabel":"월간 원두 구독",
+        "navFaqLabel":"로스터리 FAQ · 쇼룸",
+        "navFormLabel":"커핑 클래스 예약",
+        "editorialKicker":"DIRECT TRADE ROASTERY JOURNAL · ISSUE 14",
+        "editorialTitle":"산지 농장 아카이브 & 헤드로스터 추출 노트",
+        "editorialSubtitle":"농부의 발효 프로토콜부터 92℃ 클린컵 브루잉 레시피까지 매월 기록합니다.",
+        "catalogKicker":"SEONGSU ROASTERY SELECT SHOP",
+        "catalogTitle":"이달의 마이크로랏 원두 & 정밀 브루잉 기어",
+        "catalogSubtitle":"주문 당일 성수 로스터리에서 소량 배치 로스팅해 아로마 밸브 팩으로 발송합니다.",
+        "productPriceLabel":"로스터리 직판가",
+        "productCtaLabel":"테이스팅 노트 · 주문",
+        "subscriptionKicker":"MONTHLY ROASTER SUBSCRIPTION",
+        "subscriptionTitle":"매월 로스터가 선별하는 제철 싱글오리진 정기구독",
+        "subscriptionSubtitle":"분쇄도와 로스팅 성향에 맞춰 매월 첫째 주 목요일 갓 볶은 마이크로랏 원두를 보내드립니다.",
+        "stepKicker":"92℃ GOLDEN BREWING RECIPE",
+        "stepTitle":"성수동 헤드로스터의 V60 푸어오버 3단계 가이드",
+        "stepSubtitle":"원두 18g · 92℃ 정수 270ml · 총 추출 시간 2분 30초 기준 클린컵 표준 레시피",
+        "reviewKicker":"VERIFIED HOME BARISTA REVIEWS",
+        "reviewTitle":"홈 바리스타 & 바이어 실구매 테이스팅 후기",
+        "faqKicker":"ROASTING · DEGASSING · SHOWROOM",
+        "faqTitle":"로스팅 · 숙성 가이드 & 성수 쇼룸 오시는 길",
+        "formKicker":"WEEKEND CUPPING & B2B SAMPLE",
+        "conciergeTitle":"AI 수석 로스터 컨시어지",
+        "conciergeSubtitle":"선호하는 산미·바디감·추출 도구(V60/에스프레소/드립백)에 맞는 원두와 분쇄도를 추천해 드립니다.",
+        "conciergePresets":["산미가 화사하고 복숭아 향이 나는 원두를 추천해 주세요","게이샤 원두 디개싱 권장 기간과 92도 브루잉 레시피가 궁금해요","토요일 성수 로스터리 프라이빗 커핑 클래스 예약 방법을 알려주세요"]
+      },
+      "featureBlocks":{
+        "trustMetrics":[
+          {"label":"산지 직교역 농장","value":"14개 마이크로랏","sub":"콜롬비아·에티오피아·과테말라 직접 계약"},
+          {"label":"로스팅 신선도","value":"주문 당일 배전","sub":"성수 로스터리 소량 프로파일 관리"},
+          {"label":"누적 커핑 클래스","value":"340+ 세션","sub":"Q-Grader 헤드로스터 직접 진행"},
+          {"label":"정기구독 유지율","value":"96%","sub":"매월 제철 스페셜티 큐레이션 발송"}
+        ],
+        "subscriptionTiers":[
+          {"tier":"SINGLE ORIGIN EXPLORER","badge":"입문 추천","price":"28,000원","period":"/ 월 1회 (200g × 2종)","desc":"매월 서로 다른 산지·가공법의 제철 싱글오리진 2종과 헤드로스터 커핑 노트 카드를 받아보세요.","features":["200g × 2종 (매월 신규 마이크로랏)","홀빈 / 핸드드립 / 에스프레소 분쇄 선택","무료 배송 및 웰컴 브루잉 레시피북"]},
+          {"tier":"MICROLOT COLLECTOR","badge":"BEST 인기","price":"49,000원","period":"/ 월 1회 (게이샤 포함 3종)","desc":"96시간 무산소 발효 게이샤 등 희귀 옥션 랏 1종과 시그니처 싱글오리진 2종으로 구성된 마니아 플랜입니다.","features":["희귀 게이샤·옥션 랏 우선 배정","성수 쇼룸 주말 커핑 클래스 월 1회 무료","원두 10% 상시 추가 할인 혜택"],"highlighted":true},
+          {"tier":"OFFICE & CAFE B2B","badge":"사업자 전용","price":"145,000원","period":"/ 월 4kg 맞춤 로스팅","desc":"소규모 오피스 라운지나 스페셜티 카페를 위한 맞춤형 에스프레소 블렌드 및 싱글오리진 정기 납품 플랜입니다.","features":["주간/격주 분할 로스팅 당일 발송","추출 세팅 및 머신 캘리브레이션 상담","세금계산서 발행 및 샘플 3종 무상 제공"]}
+        ],
+        "stepGuide":[
+          {"step":"BREW 01","time":"0:00 ~ 0:40","title":"18g 중배전 분쇄 & 40ml 뜸들이기","desc":"92℃ 정수 40ml를 원두 전체에 고르게 적셔 40초간 CO2 가스를 충분히 배출시킵니다."},
+          {"step":"BREW 02","time":"0:40 ~ 1:45","title":"중심부 2차 푸어링 (누적 180ml)","desc":"구스넥 포트로 500원 동전 크기의 원을 그리며 140ml를 일정한 유속으로 부드럽게 추출합니다."},
+          {"step":"BREW 03","time":"1:45 ~ 2:30","title":"바이패스 마무리 & 테이스팅","desc":"남은 90ml를 가볍게 부어 총 270ml를 완성한 뒤, 온도가 살짝 내려갈 때 살아나는 백도·재스민 향미를 즐깁니다."}
+        ],
+        "locationGuide":{
+          "address":"서울특별시 성동구 서울숲2길 44 빈 크로니클 성수 로스터리 쇼룸 1층",
+          "parking":"인근 성동구민종합체육센터 공영주차장 도보 3분 (유료)",
+          "publicTransit":"수인분당선 서울숲역 5번 출구 도보 6분 / 2호선 뚝섬역 8번 출구 도보 8분",
+          "nearbySpots":[
+            {"name":"서울숲 공원 산책로","distance":"도보 3분","desc":"테이크아웃 푸어오버 한 잔과 함께 걷기 좋은 숲길"},
+            {"name":"성수동 아뜰리에 거리","distance":"도보 5분","desc":"독립 서점, 세라믹 공방, 편집샵이 모인 로컬 골목"},
+            {"name":"성수 로스터리 커핑 랩","distance":"쇼룸 2층","desc":"매주 토요일 14:00 프라이빗 커핑 클래스 전용 공간"}
+          ]
+        }
+      }
+    }'::jsonb,
     '[
-      {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"bean-chronicle-hybrid\" :style=\"{ ''--brand-primary'': tokens.primary }\">\n    <EditorialSplitHero :title=\"layout.heroTitle\" :subtitle=\"layout.heroSubtitle\" :badge=\"layout.customBadge\" />\n    <RoasteryShopSection :products=\"commerce.products\" />\n    <DirectTradeJournalSection :articles=\"cms.articles\" />\n    <CuppingClassForm :form=\"cms.forms?.[0]\" />\n  </div>\n</template>\n<script setup lang=\"ts\">\nimport EditorialSplitHero from ''./sections/HeroSection.vue'';\nimport RoasteryShopSection from ''./sections/CatalogSection.vue'';\n</script>"},
-      {"path":"src/sections/HeroSection.vue","language":"vue","content":"<template>\n  <section class=\"roastery-split-hero\">\n    <span class=\"roast-badge\">{{ badge }}</span>\n    <h1>{{ title }}</h1>\n    <p>{{ subtitle }}</p>\n  </section>\n</template>\n<script setup lang=\"ts\">\ndefineProps<{ title: string; subtitle: string; badge?: string }>();\n</script>"},
-      {"path":"src/sections/CatalogSection.vue","language":"vue","content":"<template>\n  <section class=\"roastery-catalog-grid\">\n    <article v-for=\"bean in products\" :key=\"bean.id\" class=\"bean-card\">\n      <h3>{{ bean.name }}</h3>\n      <p>{{ bean.subTitle }}</p>\n      <strong>{{ bean.promotionPrice || bean.price }}원</strong>\n    </article>\n  </section>\n</template>\n<script setup lang=\"ts\">\ndefineProps<{ products: any[] }>();\n</script>"},
-      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#78350f\",\n  \"secondary\": \"#b45309\",\n  \"accent\": \"#d97706\",\n  \"surface\": \"#fffbeb\",\n  \"radius\": \"12px\"\n}"}
+      {"path":"src/App.vue","language":"vue","content":"<template>\n  <div class=\"bean-chronicle-hybrid\" :style=\"{ ''--brand-primary'': tokens.primary }\">\n    <EditorialSplitHero :title=\"layout.heroTitle\" :subtitle=\"layout.heroSubtitle\" :badge=\"layout.customBadge\" />\n    <DirectTradeJournalSection :articles=\"cms.articles\" />\n    <RoasteryShopSection :products=\"commerce.products\" />\n    <CuppingClassForm :form=\"cms.forms?.[0]\" />\n  </div>\n</template>"},
+      {"path":"src/CustomStyles.css","language":"css","content":".sf-root { font-feature-settings: \"kern\" 1; }\n.sf-magazine-lead { border-bottom: 1px solid rgba(120, 53, 15, 0.18); }"},
+      {"path":"src/theme.json","language":"json","content":"{\n  \"primary\": \"#78350f\",\n  \"secondary\": \"#b45309\",\n  \"accent\": \"#d97706\",\n  \"surface\": \"#fbf8f3\",\n  \"radius\": \"8px\",\n  \"surfaceMode\": \"WARM\",\n  \"fontPreset\": \"SERIF_EDITORIAL\"\n}"}
     ]'::jsonb,
     'minio://kkumz-sites/bean-chronicle/v1/dist/index.js',
     'SUCCESS',
-    '[15:10:00] [Hybrid-Deploy] Linked specialty coffee catalog (4 products) + editorial journal (2 articles) + cupping reservation form.\n[15:10:01] [Publish] Custom bundle built and published to /s/bean-chronicle.',
+    '[15:10:00] [Hybrid-Deploy] Linked specialty coffee catalog (4 products) + editorial journal (2 articles) + monthly subscription tiers + cupping form.\n[15:10:01] [Publish] Custom bundle built and published to /s/bean-chronicle.',
     'hajun.roast',
     CURRENT_TIMESTAMP - INTERVAL '2 days'
+),
+(
+    'rel-kkumz-005-v1',
+    'site-kkumz-005',
+    1,
+    '시닉 호스피탈리티 아키타입 · 공주 냇가 독채 민박 & 시즌 요금표·스페이스 투어 배포',
+    'DYNAMIC_SDUI',
+    '{"primary":"#0f766e","secondary":"#115e59","accent":"#d97706","surface":"#f5f7f2","radius":"16px","surfaceMode":"WARM","fontPreset":"SERIF_EDITORIAL"}'::jsonb,
+    '{
+      "themeArchetype":"SCENIC_HOSPITALITY",
+      "heroStyle":"FULL_SCENIC",
+      "heroTitle":"공주 청정 냇가 물소리와 황토 온돌의 쉼, 맑은물 민박",
+      "heroSubtitle":"충남 공주 맑은 냇가 바로 앞에 자리한 프라이빗 황토 독채와 나무 그늘 평상. 능이 토종닭 백숙과 사계절 촌캉스를 온전히 누려보세요.",
+      "heroBannerImage":"/images/studio/banner-minbak-creek.jpg",
+      "heroBannerCaption":{"title":"충남 공주 반포면 청정 냇가 독채 & 평상 스테이","sub":"황토 온돌 독채 · 냇가 전용 평상 · 사계절 프라이빗 휴식"},
+      "ctaText":"객실 · 평상 & 패키지 보기",
+      "showFlashDeal":true,
+      "showPhotoGallery":true,
+      "showCmsArticles":false,
+      "showCmsForm":true,
+      "showAiConcierge":true,
+      "customBadge":"공주 청정 냇가 직결 · 공식 직예약 웰컴 혜택",
+      "sectionOrder":["CATALOG_GRID","PRICING_MATRIX","SPACE_TOUR_GALLERY","STEP_GUIDE","REVIEWS_POLL","FAQ_LOCATION","DYNAMIC_FORM"],
+      "copyOverrides":{
+        "navCatalogLabel":"독채 · 평상 안내",
+        "navPricingLabel":"시즌 요금표",
+        "navGalleryLabel":"공간 투어 · 갤러리",
+        "navFaqLabel":"숙박 FAQ · 오시는 길",
+        "navFormLabel":"맞춤 예약 신청",
+        "catalogKicker":"PRIVATE HANOK & CREEKSIDE STAY",
+        "catalogTitle":"황토 온돌 독채 · 냇가 평상 · 다이닝 패키지",
+        "catalogSubtitle":"가족 단위 1박 2일 독채 숙박부터 여름 냇가 평상 당일 대여와 능이 백숙 한상까지 바로 예약하세요.",
+        "productPriceLabel":"공식 직예약가",
+        "productCtaLabel":"상세 보기 · 예약",
+        "stepKicker":"1 NIGHT 2 DAYS HEALING COURSE",
+        "stepTitle":"맑은물 민박 1박 2일 추천 힐링 동선",
+        "stepSubtitle":"오후 3시 입실부터 냇가 평상 휴식, 저녁 숯불 만찬, 다음 날 아침 계곡 산책까지",
+        "conciergeTitle":"AI 맑은물 민박 호스트 컨시어지",
+        "conciergeSubtitle":"성인·아동 인원별 요금, 냇가 물놀이 수심, 바비큐·능이백숙 사전 주문까지 24시간 안내해 드립니다.",
+        "conciergePresets":["성인 4명 아이 2명 주말 황토 독채 1박 요금이 얼마인가요?","여름철 냇가 평상 당일 대여와 능이 토종닭 백숙 사전 주문이 가능한가요?","공주 KTX역에서 오시는 길과 주변 추천 관광 코스를 알려주세요"]
+      },
+      "customProducts":[
+        {"id":501,"name":"황토 온돌 독채 스테이 (기준 4인 / 최대 6인)","subTitle":"천연 황토벽·편백 마루 독채 + 냇가 전용 데크 + 웰컴 공주 알밤 다과 제공","description":"아이 동반 가족과 부모님 효도 여행에 최적화된 프라이빗 황토 온돌 독채 객실입니다.","pic":"/images/studio/minbak-room-ondol.jpg","price":190000,"promotionPrice":165000,"originalPrice":190000,"stock":3,"sale":214,"unit":"박","productCategoryName":"황토 독채 객실","badge":"SIGNATURE","detailHtml":"<p>천연 황토와 편백 원목으로 지어진 독립 채로, 거실 통창 너머로 공주 맑은 냇가가 한눈에 펼쳐집니다. 전용 야외 바비큐 데크와 개별 화장실, 풀옵션 주방이 구비되어 있습니다.</p>"},
+        {"id":502,"name":"냇가 나무 그늘 프라이빗 평상 당일 대여 (10:00~18:00)","subTitle":"계곡물 바로 옆 원목 평상 1동 + 아이스박스·취사 버너·샤워실 이용 포함","description":"숙박 없이도 여름철 시원한 냇가 물놀이와 그늘 휴식을 즐기는 당일 전용 평상 대여권입니다.","pic":"/images/studio/minbak-pyeongsang.jpg","price":80000,"promotionPrice":65000,"originalPrice":80000,"stock":6,"sale":348,"unit":"회","productCategoryName":"냇가 평상 대여","badge":"여름 인기"},
+        {"id":503,"name":"공주 토종닭 능이 백숙 & 참숯 바비큐 한상 패키지 (4인 기준)","subTitle":"국내산 1등급 능이버섯 토종닭 백숙 + 텃밭 유기농 쌈채소 + 참숯 그릴 세팅","description":"도착 시간에 맞춰 가마솥에 푹 고아낸 능이 백숙과 참숯 바비큐 세트를 야외 테라스에 차려드립니다.","pic":"/images/studio/minbak-dining-bbq.jpg","price":110000,"promotionPrice":95000,"originalPrice":110000,"stock":8,"sale":186,"unit":"세트","productCategoryName":"계절 다이닝","badge":"호스트 추천"}
+      ],
+      "customCmsForm":{
+        "id":501,
+        "title":"맑은물 민박 맞춤 일정 · 객실 · 다이닝 온라인 예약",
+        "formName":"맑은물 민박 온라인 예약",
+        "description":"희망 체크인 날짜와 객실/평상, 인원수, 식사 옵션을 남겨주시면 호스트 확인 후 예약 확정 문자를 발송해 드립니다.",
+        "submitText":"예약 신청 접수하기",
+        "fields":[
+          {"key":"checkInDate","label":"희망 체크인 / 방문 일자","type":"date","required":true},
+          {"key":"stayType","label":"희망 객실 / 평상 타입","type":"select","required":true,"options":["황토 온돌 독채 (1박 2일)","냇가 프라이빗 평상 (당일 대여)","독채 + 냇가 평상 올인원 패키지"]},
+          {"key":"guestCount","label":"방문 인원 (성인+아동)","type":"number","min":1,"max":12,"required":true},
+          {"key":"diningOptions","label":"사전 식사 · 바비큐 옵션","type":"checkbox","required":false,"options":["능이 토종닭 백숙 한상 (사전 예약)","참숯 바비큐 그릴 세팅","공주 알밤 군밤 체험 키트"]}
+        ]
+      },
+      "featureBlocks":{
+        "trustMetrics":[
+          {"label":"누적 가족 방문객","value":"3,400+","sub":"사계절 단골 가족이 찾는 공주 쉼터"},
+          {"label":"실제 투숙객 평점","value":"4.96 / 5.0","sub":"청결도·호스트 환대 부문 최상위"},
+          {"label":"냇가 접근 거리","value":"도보 10초","sub":"마당 바로 앞 청정 1급수 계곡"},
+          {"label":"재방문 추천율","value":"95%","sub":"여름 물놀이 · 가을 단풍 · 겨울 설경"}
+        ],
+        "pricingMatrix":{
+          "title":"맑은물 민박 시즌 · 요일 · 인원별 공식 요금표",
+          "columns":["구분","기준 / 최대 인원","비수기 주중","비수기 주말","성수기 (7~8월)","포함 혜택"],
+          "rows":[
+            {"tier":"황토 온돌 독채","capacity":"기준 4인 / 최대 6인","offPeakWeekday":"150,000원","offPeakWeekend":"185,000원","peakSeason":"240,000원","note":"전용 바비큐 데크 · 공주 알밤 다과"},
+            {"tier":"별채 대가족 스위트","capacity":"기준 6인 / 최대 10인","offPeakWeekday":"210,000원","offPeakWeekend":"260,000원","peakSeason":"320,000원","note":"독립 거실 2실 + 냇가 대형 평상 무료"},
+            {"tier":"냇가 평상 당일 대여","capacity":"기준 4인 (10:00~18:00)","offPeakWeekday":"60,000원","offPeakWeekend":"75,000원","peakSeason":"95,000원","note":"평상 1동 · 온수 샤워실 · 주차 무료"}
+          ]
+        },
+        "spaceTour":[
+          {"zone":"ZONE 01","title":"천연 황토 온돌 독채 실내","desc":"은은한 편백 향과 뜨끈한 온돌 바닥, 냇가가 한눈에 들어오는 넓은 원목 창이 마련된 프라이빗 공간입니다.","imageUrl":"/images/studio/minbak-room-ondol.jpg"},
+          {"zone":"ZONE 02","title":"청정 냇가 나무 그늘 평상존","desc":"발목~무릎 깊이의 맑은 1급수 계곡 바로 옆, 시원한 나무 그늘 아래서 아이들과 안심하고 물놀이를 즐길 수 있습니다.","imageUrl":"/images/studio/minbak-pyeongsang.jpg"},
+          {"zone":"ZONE 03","title":"가을 단풍 마당 & 야외 바비큐 테라스","desc":"황금빛 은행나무와 붉은 단풍에 둘러싸인 돌마당과 저녁 참숯 바비큐·능이백숙을 즐기는 조명 테라스입니다.","imageUrl":"/images/studio/minbak-autumn-yard.jpg"},
+          {"zone":"ZONE 04","title":"겨울 설경 냇가 정자 & 군밤 체험","desc":"눈이 소복이 쌓인 고요한 겨울 냇가 풍경을 감상하며 따뜻한 황토방과 공주 알밤 군밤 체험을 즐깁니다.","imageUrl":"/images/studio/minbak-winter-snow.jpg"}
+        ],
+        "stepGuide":[
+          {"step":"STEP 01","time":"15:00 체크인","title":"도착 & 공주 알밤 웰컴 티","desc":"호스트의 안내와 함께 황토 독채에 짐을 풀고 시원한 냇가 소리를 들으며 웰컴 다과로 여정을 시작합니다."},
+          {"step":"STEP 02","time":"16:00 냇가 휴식","title":"청정 계곡 물놀이 & 평상 다과","desc":"도보 10초 거리의 맑은 냇가에서 다슬기를 찾거나 나무 그늘 평상에 누워 여유로운 오후를 보냅니다."},
+          {"step":"STEP 03","time":"18:30 저녁 만찬","title":"가마솥 능이백숙 & 참숯 바비큐","desc":"노을이 지는 정원 테라스에서 정성스레 준비한 능이 토종닭 백숙과 참숯 바비큐 만찬을 즐깁니다."},
+          {"step":"STEP 04","time":"11:00 체크아웃","title":"아침 물안개 산책 & 공주 투어","desc":"아침 물안개가 피어오르는 계곡길을 산책한 뒤 공산성·마곡사 등 주변 명소로 이동합니다."}
+        ],
+        "reviews":[
+          {"author":"이*진 가족 고객님","rating":5,"date":"2026.10","tag":"황토 독채 1박","comment":"아이들이 마당 바로 앞 얕은 냇가에서 다슬기를 잡으며 시간 가는 줄 몰랐습니다. 황토방이 정말 따뜻하고 침구도 호텔처럼 뽀송해서 부모님도 대만족하셨어요."},
+          {"author":"박*호 가족 고객님","rating":5,"date":"2026.09","tag":"평상 + 능이백숙","comment":"나무 그늘 평상 바로 옆으로 맑은 계곡물이 흘러 에어컨이 필요 없었습니다. 미리 주문한 능이 토종닭 백숙 국물이 진국이라 가을 단풍 때 독채로 재방문 예약했습니다."},
+          {"author":"정*서 고객님","rating":5,"date":"2026.10","tag":"가을 촌캉스","comment":"사진보다 단풍 든 마당과 야외 바비큐 테라스 분위기가 훨씬 아늑했습니다. 호스트 부부분이 공주 알밤도 챙겨주셔서 따뜻한 시골 정을 듬뿍 느끼고 돌아왔습니다."}
+        ],
+        "faqItems":[
+          {"q":"입실·퇴실 시간과 얼리 체크인 가능 여부가 궁금합니다.","a":"정규 입실은 오후 3시, 퇴실은 오전 11시입니다. 당일 객실 정비 상황에 따라 사전 문의 시 1시간 내외 조율 가능합니다."},
+          {"q":"아이들과 냇가 물놀이할 때 수심이 안전한가요?","a":"민박 바로 앞 여울은 성인 발목에서 무릎 정도(30~60cm)의 완만하고 맑은 수심이며, 구명조끼와 다슬기 채집망을 무료로 대여해 드립니다."},
+          {"q":"능이 토종닭 백숙과 바비큐 숯불은 언제까지 예약해야 하나요?","a":"토종닭 백숙은 신선한 재료 준비를 위해 방문 최소 1일 전까지 예약 폼 또는 AI 컨시어지로 신청해 주셔야 합니다."}
+        ],
+        "locationGuide":{
+          "address":"충청남도 공주시 반포면 계룡산청정냇가길 82 (맑은물 민박)",
+          "parking":"민박 전용 무료 주차장 완비 (객실당 2대, 대형 SUV 및 카니발 주차 가능)",
+          "publicTransit":"KTX 공주역에서 차량 25분 / 대전 유성시외버스터미널에서 차량 20분",
+          "nearbySpots":[
+            {"name":"계룡산 동학사 계곡","distance":"차량 10분","desc":"사계절 단풍과 숲길이 아름다운 명산 사찰 산책 코스"},
+            {"name":"공주 공산성 & 무령왕릉","distance":"차량 18분","desc":"백제 유네스코 세계유산 야경과 전통 한옥마을 투어"},
+            {"name":"공주 알밤 체험 농원","distance":"차량 12분","desc":"가을철 가족과 함께 즐기는 공주 특산 알밤 줍기 체험"}
+          ]
+        },
+        "policyRules":[
+          "쾌적한 시골 밤의 휴식을 위해 오후 10시 이후 야외 매너타임을 준수해 주시기 바랍니다.",
+          "황토 목조 독채 실내 절대 금연이며, 숯불 화기는 지정된 야외 바비큐 테라스에서만 이용해 주세요.",
+          "예약일 7일 전 100% 환불, 5일 전 70% 환불, 3일 전 50% 환불, 당일 취소는 환불이 불가합니다."
+        ]
+      }
+    }'::jsonb,
+    '[]'::jsonb,
+    'minio://kkumz-sites/malgeunmul-minbak/v1/schema.json',
+    'SUCCESS',
+    '[12:00:00] [Provision] Published Malgeunmul Minbak Scenic Hospitality release v1 with pricing matrix, space tour, and seasonal gallery.',
+    'admin',
+    CURRENT_TIMESTAMP - INTERVAL '15 minutes'
 );
 
 -- Build Jobs History (kkumz_build_job)
@@ -1090,18 +1484,12 @@ INSERT INTO kkumz_screen_spec (
 INSERT INTO kkumz_idea_asset (
     id, idea_id, asset_type, original_name, stored_name, file_url, mime_type, file_size, caption, extracted_text, sort_no, uploaded_by, created_at
 ) VALUES
-('ast-4c14d423', 'idea-01137479', 'HERO', 'download1.jpg', 'idea-01137479-ast-4c14d423.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-4c14d423.jpg', 'image/jpeg', 24791, '냇가 바로 옆 시원한 나무 그늘 정자와 평상 대표 전경', NULL, 1, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-ab06955d', 'idea-01137479', 'PRODUCT', 'download2.jpg', 'idea-01137479-ast-ab06955d.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-ab06955d.jpg', 'image/jpeg', 27664, '사계절 맑은 물이 흐르는 공주 청정 시골 냇가 물길', NULL, 2, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-722c5dd5', 'idea-01137479', 'PRODUCT', 'download3.jpg', 'idea-01137479-ast-722c5dd5.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-722c5dd5.jpg', 'image/jpeg', 27804, '아이들과 함께 즐기는 겨울 얼음 냇가 눈썰매 체험', NULL, 3, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-2b5a8627', 'idea-01137479', 'ARTICLE', 'download4.jpg', 'idea-01137479-ast-2b5a8627.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-2b5a8627.jpg', 'image/jpeg', 30526, '봄꽃과 신록이 어우러진 민박 산책로와 계곡 풍경', NULL, 4, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-03809f76', 'idea-01137479', 'GALLERY', 'download5.jpg', 'idea-01137479-ast-03809f76.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-03809f76.jpg', 'image/jpeg', 20569, '가을 낙엽이 내려앉은 마당에서 즐기는 가족 놀이 시간', NULL, 5, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-04ed63a9', 'idea-01137479', 'ARTICLE', 'download6.jpg', 'idea-01137479-ast-04ed63a9.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-04ed63a9.jpg', 'image/jpeg', 31775, '황금빛 은행나무 단풍 아래 자리한 야외 평상 쉼터', NULL, 6, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-89ea84ad', 'idea-01137479', 'GALLERY', 'download8.jpg', 'idea-01137479-ast-89ea84ad.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-89ea84ad.jpg', 'image/jpeg', 30560, '맑고 얕은 여울에서 다슬기 잡기와 물놀이를 즐기는 모습', NULL, 7, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-55f599e5', 'idea-01137479', 'GALLERY', 'download9.jpg', 'idea-01137479-ast-55f599e5.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-55f599e5.jpg', 'image/jpeg', 15387, '자연 그대로의 냇가 바위와 시원한 계곡물 휴식 공간', NULL, 8, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-4244ce43', 'idea-01137479', 'GALLERY', 'download10.jpg', 'idea-01137479-ast-4244ce43.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-4244ce43.jpg', 'image/jpeg', 30063, '가을 단풍 숲으로 둘러싸인 아늑한 민박 마당 풍경', NULL, 9, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-81c33d7e', 'idea-01137479', 'PRODUCT', 'download12.jpg', 'idea-01137479-ast-81c33d7e.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-81c33d7e.jpg', 'image/jpeg', 51921, '독채 객실 앞 전용 정자와 야외 바비큐 테이블 전경', NULL, 10, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-a1a893a3', 'idea-01137479', 'GALLERY', 'download13.jpg', 'idea-01137479-ast-a1a893a3.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-a1a893a3.jpg', 'image/jpeg', 24791, '겨울 눈이 소복이 쌓인 냇가 정자와 고요한 설경', NULL, 11, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-('ast-368380cb', 'idea-01137479', 'GALLERY', 'download14.jpg', 'idea-01137479-ast-368380cb.jpg', '/api/v1/kkumz/assets/files/idea-01137479-ast-368380cb.jpg', 'image/jpeg', 27664, '얼어붙은 겨울 시골 냇가와 산자락이 어우러진 풍경', NULL, 12, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day');
+('ast-4c14d423', 'idea-01137479', 'HERO', 'banner-minbak-creek.jpg', 'banner-minbak-creek.jpg', '/images/studio/banner-minbak-creek.jpg', 'image/jpeg', 682400, '공주 청정 냇가 바로 옆 황토 독채와 나무 그늘 평상 전경', NULL, 1, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-ab06955d', 'idea-01137479', 'PRODUCT', 'minbak-room-ondol.jpg', 'minbak-room-ondol.jpg', '/images/studio/minbak-room-ondol.jpg', 'image/jpeg', 598120, '천연 황토벽과 편백 원목으로 완성한 따뜻한 온돌 독채 실내', NULL, 2, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-722c5dd5', 'idea-01137479', 'PRODUCT', 'minbak-pyeongsang.jpg', 'minbak-pyeongsang.jpg', '/images/studio/minbak-pyeongsang.jpg', 'image/jpeg', 612300, '시원한 계곡물 바로 옆 나무 그늘 프라이빗 원목 평상', NULL, 3, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-2b5a8627', 'idea-01137479', 'PRODUCT', 'minbak-dining-bbq.jpg', 'minbak-dining-bbq.jpg', '/images/studio/minbak-dining-bbq.jpg', 'image/jpeg', 645900, '노을 지는 야외 테라스 참숯 바비큐 & 능이 토종닭 백숙 한상', NULL, 4, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-03809f76', 'idea-01137479', 'GALLERY', 'minbak-autumn-yard.jpg', 'minbak-autumn-yard.jpg', '/images/studio/minbak-autumn-yard.jpg', 'image/jpeg', 631400, '황금빛 은행나무와 붉은 단풍에 둘러싸인 아늑한 민박 돌마당', NULL, 5, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+('ast-04ed63a9', 'idea-01137479', 'GALLERY', 'minbak-winter-snow.jpg', 'minbak-winter-snow.jpg', '/images/studio/minbak-winter-snow.jpg', 'image/jpeg', 589200, '눈이 소복이 쌓인 겨울 냇가 정자와 고요한 시골 설경', NULL, 6, 'admin', CURRENT_TIMESTAMP - INTERVAL '1 day');
 
 -- Managed Git Repositories for Provisioned Sites (kkumz_site_git_repo)
 INSERT INTO kkumz_site_git_repo (

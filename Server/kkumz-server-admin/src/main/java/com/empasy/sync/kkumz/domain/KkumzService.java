@@ -209,6 +209,9 @@ public class KkumzService {
         List<Map<String, Object>> starterPresets = new ArrayList<>();
         List<Map<String, Object>> featureCategories = new ArrayList<>();
         List<Map<String, Object>> heroStyles = new ArrayList<>();
+        List<Map<String, Object>> themeArchetypes = new ArrayList<>();
+        List<Map<String, Object>> fontPresets = new ArrayList<>();
+        Map<String, String> categoryLabels = new LinkedHashMap<>();
 
         for (Map<String, Object> row : rows) {
             String dictCode = String.valueOf(row.get("dictCode"));
@@ -220,6 +223,7 @@ public class KkumzService {
                 case "kkumz_layout_type" -> layoutLabels.put(itemValue, itemText);
                 case "kkumz_component_type" -> componentLabels.put(itemValue, itemText);
                 case "kkumz_recruit_role" -> roleLabels.put(itemValue, itemText);
+                case "kkumz_content_category" -> categoryLabels.put(itemValue, itemText);
                 case "kkumz_site_type" -> {
                     siteTypeLabels.put(itemValue, itemText);
                     Map<String, Object> st = new LinkedHashMap<>();
@@ -257,6 +261,19 @@ public class KkumzService {
                     hs.put("description", description);
                     heroStyles.add(hs);
                 }
+                case "kkumz_theme_archetype" -> {
+                    Map<String, Object> ta = new LinkedHashMap<>(parseJsonObject(description));
+                    ta.put("code", itemValue);
+                    ta.put("label", itemText);
+                    themeArchetypes.add(ta);
+                }
+                case "kkumz_font_preset" -> {
+                    Map<String, Object> fp = new LinkedHashMap<>();
+                    fp.put("code", itemValue);
+                    fp.put("label", itemText);
+                    fp.put("fontFamily", description);
+                    fontPresets.add(fp);
+                }
                 default -> {
                 }
             }
@@ -277,11 +294,14 @@ public class KkumzService {
         result.put("roleLabels", roleLabels);
         result.put("siteTypeLabels", siteTypeLabels);
         result.put("assetTypeLabels", assetTypeLabels);
+        result.put("categoryLabels", categoryLabels);
         result.put("siteTypes", siteTypes);
         result.put("assetTypes", assetTypes);
         result.put("starterPresets", starterPresets);
         result.put("featureCategories", featureCategories);
         result.put("heroStyles", heroStyles);
+        result.put("themeArchetypes", themeArchetypes);
+        result.put("fontPresets", fontPresets);
         result.put("featureCatalog", featureCatalog);
         return result;
     }
@@ -2427,21 +2447,36 @@ public class KkumzService {
         String logoSvg = resolveOrProvisionLogoSvg(ideaId, idea, brandName, siteSlug, category, tokens, rawLogoSvg);
 
         String brandSlogan = resolveBrandSlogan(idea, brandName, category, aiIntentAnalysis);
+        String resolvedCategoryLabel = resolveHumanCategoryLabel(category);
+        String themeArchetype = resolveThemeArchetype(
+                aiIntentAnalysis.get("themeArchetype") != null ? String.valueOf(aiIntentAnalysis.get("themeArchetype")) : null,
+                siteType,
+                category,
+                enabledFeatures
+        );
         String heroStyle = aiIntentAnalysis.get("heroStyle") != null && !String.valueOf(aiIntentAnalysis.get("heroStyle")).isBlank()
                 ? String.valueOf(aiIntentAnalysis.get("heroStyle"))
-                : ("COMMERCE".equalsIgnoreCase(siteType) ? "PROMO_COMMERCE" : "FULL_SCENIC");
+                : resolveDefaultHeroStyleForArchetype(themeArchetype, siteType);
+        if (aiIntentAnalysis.get("surfaceMode") != null && !String.valueOf(aiIntentAnalysis.get("surfaceMode")).isBlank()) {
+            tokens.putIfAbsent("surfaceMode", String.valueOf(aiIntentAnalysis.get("surfaceMode")));
+        }
+        if (aiIntentAnalysis.get("fontPreset") != null && !String.valueOf(aiIntentAnalysis.get("fontPreset")).isBlank()) {
+            tokens.putIfAbsent("fontPreset", String.valueOf(aiIntentAnalysis.get("fontPreset")));
+        }
         String deployMode = "DYNAMIC_SDUI";
 
+        boolean hasFormFeature = hasAnyFormFeature(enabledFeatures);
         Map<String, Object> layoutSchema = new LinkedHashMap<>();
+        layoutSchema.put("themeArchetype", themeArchetype);
         layoutSchema.put("heroTitle", brandName);
         layoutSchema.put("heroSubtitle", brandSlogan);
         layoutSchema.put("heroStyle", heroStyle);
-        layoutSchema.put("ctaText", needsShop && needsCms ? "객실·상품 및 예약 보기" : (needsShop ? "시그니처 컬렉션 보기" : "프로그램·예약 신청하기"));
-        layoutSchema.put("showFlashDeal", enabledFeatures.contains("SHOP_FLASH_DEAL") || needsShop);
-        layoutSchema.put("showAiConcierge", enabledFeatures.contains("AI_BRAND_CONCIERGE") || true);
-        layoutSchema.put("showCmsArticles", needsCms);
-        layoutSchema.put("showCmsForm", needsCms);
-        layoutSchema.put("customBadge", category);
+        layoutSchema.put("ctaText", needsShop && needsCms ? "시그니처 컬렉션 & 안내 보기" : (needsShop ? "시그니처 컬렉션 보기" : "프로그램·참가 신청하기"));
+        layoutSchema.put("showFlashDeal", enabledFeatures.contains("SHOP_FLASH_DEAL"));
+        layoutSchema.put("showAiConcierge", enabledFeatures.isEmpty() || enabledFeatures.contains("AI_BRAND_CONCIERGE"));
+        layoutSchema.put("showCmsArticles", needsCms || enabledFeatures.contains("CMS_BRAND_MAGAZINE"));
+        layoutSchema.put("showCmsForm", hasFormFeature || "CMS_SITE".equalsIgnoreCase(siteType));
+        layoutSchema.put("customBadge", resolvedCategoryLabel);
         layoutSchema.put("enabledFeatures", enabledFeatures);
 
         Long shopSiteId = null;
@@ -2602,15 +2637,15 @@ public class KkumzService {
                     }
                 });
             }
-            for (String tokenKey : List.of("primary", "secondary", "accent", "surface", "radius")) {
+            for (String tokenKey : List.of("primary", "secondary", "accent", "surface", "radius", "fontPreset", "surfaceMode")) {
                 if (parsed.containsKey(tokenKey)) {
                     tokens.put(tokenKey, parsed.get(tokenKey));
                 }
             }
             for (String layoutKey : List.of(
-                    "heroTitle", "heroSubtitle", "heroStyle", "ctaText", "customBadge",
-                    "showFlashDeal", "showAiConcierge", "enabledFeatures", "featureBlocks",
-                    "customProducts", "customArticles", "customCmsForm"
+                    "themeArchetype", "heroTitle", "heroSubtitle", "heroStyle", "ctaText", "customBadge",
+                    "sectionOrder", "copyOverrides", "showFlashDeal", "showAiConcierge", "enabledFeatures",
+                    "featureBlocks", "customProducts", "customArticles", "customCmsForm"
             )) {
                 if (parsed.containsKey(layoutKey)) {
                     layout.put(layoutKey, parsed.get(layoutKey));
@@ -3612,9 +3647,26 @@ public class KkumzService {
 
         String siteBrandName = String.valueOf(site.getOrDefault("siteName", "브랜드"));
         String siteBrandSlogan = String.valueOf(site.getOrDefault("brandSlogan", ""));
-        String siteCategory = String.valueOf(site.getOrDefault("category", "브랜드 · 서비스"));
-        ensureCatalogDefaultBlocks(siteBrandName, siteBrandSlogan, siteCategory, enabledFeatures, catalog, ideaAssets, featureBlocks);
-        layoutSchema.put("featureBlocks", featureBlocks);
+        String rawCategory = String.valueOf(site.getOrDefault("category", ""));
+        String siteCategoryLabel = resolveHumanCategoryLabel(rawCategory);
+        Map<String, Object> designTokens = new LinkedHashMap<>(parseJsonObject(String.valueOf(activeRel.get("designTokensJson"))));
+        List<Map<String, Object>> webideFiles = castMapList(parseJsonList(String.valueOf(activeRel.get("webideFilesJson"))));
+
+        String themeArchetype = resolveThemeArchetype(
+                layoutSchema.get("themeArchetype") != null ? String.valueOf(layoutSchema.get("themeArchetype")) : null,
+                siteType,
+                rawCategory,
+                enabledFeatures
+        );
+        String heroStyle = layoutSchema.get("heroStyle") != null && !String.valueOf(layoutSchema.get("heroStyle")).isBlank()
+                ? String.valueOf(layoutSchema.get("heroStyle"))
+                : resolveDefaultHeroStyleForArchetype(themeArchetype, siteType);
+        String surfaceMode = resolveSurfaceMode(designTokens, themeArchetype);
+        String fontPreset = resolveFontPreset(designTokens, themeArchetype);
+        designTokens.putIfAbsent("surfaceMode", surfaceMode);
+        designTokens.putIfAbsent("fontPreset", fontPreset);
+        layoutSchema.putIfAbsent("themeArchetype", themeArchetype);
+        layoutSchema.putIfAbsent("heroStyle", heroStyle);
 
         Map<String, Object> runtime = new LinkedHashMap<>();
         site.put("isOwner", isOwner);
@@ -3624,6 +3676,7 @@ public class KkumzService {
         site.put("hasUnpublishedChanges", hasUnpublishedChanges);
         site.put("renderedVersion", targetVer);
         site.put("isPreviewMode", isPreviewMode);
+        site.put("categoryLabel", siteCategoryLabel);
         runtime.putAll(site);
         runtime.put("isOwner", isOwner);
         runtime.put("canEdit", canEdit);
@@ -3635,17 +3688,23 @@ public class KkumzService {
         runtime.put("isPreviewMode", isPreviewMode);
         runtime.put("brandName", site.get("siteName"));
         runtime.put("tagline", site.get("brandSlogan"));
+        runtime.put("categoryLabel", siteCategoryLabel);
         runtime.put("site", site);
         runtime.put("activeVersion", activeVer);
         runtime.put("deployMode", activeRel.get("deployMode"));
         runtime.put("releaseNote", activeRel.get("releaseNote"));
-        runtime.put("designTokens", parseJsonObject(String.valueOf(activeRel.get("designTokensJson"))));
+        runtime.put("designTokens", designTokens);
         runtime.put("layoutSchema", layoutSchema);
-        runtime.put("heroStyle", layoutSchema.getOrDefault("heroStyle", "FULL_SCENIC"));
+        runtime.put("themeArchetype", themeArchetype);
+        runtime.put("surfaceMode", surfaceMode);
+        runtime.put("fontPreset", fontPreset);
+        runtime.put("heroStyle", heroStyle);
+        runtime.put("copyOverrides", layoutSchema.get("copyOverrides") instanceof Map<?, ?> co ? co : Map.of());
+        runtime.put("sectionOrder", layoutSchema.get("sectionOrder") instanceof List<?> so ? so : List.of());
+        runtime.put("customCss", extractSanitizedCustomCss(webideFiles));
         runtime.put("enabledFeatures", enabledFeatures);
         runtime.put("activeFeatureCards", activeFeatureCards);
-        runtime.put("featureBlocks", featureBlocks);
-        runtime.put("webideFiles", parseJsonList(String.valueOf(activeRel.get("webideFilesJson"))));
+        runtime.put("webideFiles", webideFiles);
         runtime.put("releases", allReleases);
         runtime.put("screenSpecs", listIdeaScreensInternal(ideaId));
         runtime.put("assets", ideaAssets);
@@ -3654,23 +3713,41 @@ public class KkumzService {
         runtime.put("coupons", List.of());
         runtime.put("articles", List.of());
         runtime.put("banners", List.of());
+        runtime.put("attributes", List.of());
+        runtime.put("skus", List.of());
+        runtime.put("brandProfile", Map.of());
+        runtime.put("companyAddress", Map.of());
 
         String resolvedSlug = String.valueOf(site.get("siteSlug"));
         Long shopSiteId = site.get("shopSiteId") != null ? ((Number) site.get("shopSiteId")).longValue() : null;
         Long cmsSiteId = site.get("cmsSiteId") != null ? ((Number) site.get("cmsSiteId")).longValue() : null;
 
+        Map<String, Object> commerceData = Map.of();
         if (shopSiteId != null || "COMMERCE".equalsIgnoreCase(siteType) || "HYBRID".equalsIgnoreCase(siteType)
                 || hasEngineFeature(enabledFeatures, catalog, "SYNC_SHOP")) {
-            Map<String, Object> commerceData = loadCommerceData(shopSiteId, resolvedSlug);
+            commerceData = loadCommerceData(shopSiteId, resolvedSlug);
             runtime.put("commerce", commerceData);
+            List<Map<String, Object>> skuList = commerceData.get("skus") instanceof List<?> sl
+                    ? castMapList(sl)
+                    : List.of();
+            runtime.put("skus", skuList);
             if (commerceData.get("products") instanceof List<?> pList) {
-                runtime.put("products", pList);
+                runtime.put("products", attachSkusToProducts(castMapList(pList), skuList));
             }
             if (commerceData.get("categories") instanceof List<?> cList) {
                 runtime.put("categories", cList);
             }
             if (commerceData.get("coupons") instanceof List<?> cpList) {
                 runtime.put("coupons", cpList);
+            }
+            if (commerceData.get("attributes") instanceof List<?> attrList) {
+                runtime.put("attributes", attrList);
+            }
+            if (commerceData.get("brandProfile") instanceof Map<?, ?> bp) {
+                runtime.put("brandProfile", bp);
+            }
+            if (commerceData.get("companyAddress") instanceof Map<?, ?> ca) {
+                runtime.put("companyAddress", ca);
             }
         }
 
@@ -3691,32 +3768,33 @@ public class KkumzService {
         }
         if (layoutSchema.get("customArticles") instanceof List<?> ca && !ca.isEmpty()) {
             runtime.put("articles", ca);
+        } else if (runtime.get("articles") instanceof List<?> existingArts && existingArts.isEmpty()
+                && commerceData.get("subjects") instanceof List<?> subjectList && !subjectList.isEmpty()) {
+            runtime.put("articles", subjectList);
         }
-        if (layoutSchema.get("customCmsForm") instanceof Map<?, ?> cf && !cf.isEmpty()) {
-            runtime.put("cmsForm", new LinkedHashMap<>((Map<String, Object>) cf));
-        } else if (runtime.get("cms") instanceof Map<?, ?> cmsMap && cmsMap.get("forms") instanceof List<?> fList && !fList.isEmpty()) {
-            runtime.put("cmsForm", new LinkedHashMap<>((Map<String, Object>) fList.get(0)));
-        } else {
-            Map<String, Object> defaultForm = new LinkedHashMap<>();
-            defaultForm.put("id", 1L);
-            defaultForm.put("title", site.get("siteName") + " 온라인 예약 · 문의 신청");
-            defaultForm.put("formName", site.get("siteName") + " 온라인 예약 · 문의 신청");
-            defaultForm.put("description", "원하시는 일정이나 문의 사항을 남겨주시면 빠르게 안내해 드립니다.");
-            defaultForm.put("submitText", "예약·문의 신청 접수하기");
-            runtime.put("cmsForm", defaultForm);
-        }
-        if (runtime.get("cmsForm") instanceof Map<?, ?> rawCmsForm) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> formMap = new LinkedHashMap<>((Map<String, Object>) rawCmsForm);
-            if (!(formMap.get("fields") instanceof List<?> fl && fl.size() >= 3)) {
-                formMap.put("fields", List.of(
-                        Map.of("key", "desiredDate", "label", "희망 방문 · 이용 일자", "type", "date", "required", true),
-                        Map.of("key", "partySize", "label", "방문 인원 / 수량", "type", "select", "required", true, "options", List.of("1~2인 (커플/개인)", "3~4인 (가족/소모임)", "5인 이상 (단체/별도 문의)")),
-                        Map.of("key", "programSelect", "label", "희망 공간 · 프로그램 선택", "type", "select", "required", true, "options", List.of("시그니처 메인 코스", "프리미엄 프라이빗 패키지", "당일 체험 & 라운지 이용")),
-                        Map.of("key", "optionItems", "label", "추가 신청 옵션", "type", "checkbox", "required", false, "options", List.of("웰컴 로컬 다과·음료 세트", "프라이빗 바비큐·다이닝 세팅", "레이트 체크아웃 / 시간 연장"))
-                ));
+
+        hydrateFeatureBlocksStrict(
+                siteBrandName,
+                siteBrandSlogan,
+                rawCategory,
+                enabledFeatures,
+                ideaAssets,
+                commerceData,
+                featureBlocks
+        );
+        layoutSchema.put("featureBlocks", featureBlocks);
+        runtime.put("featureBlocks", featureBlocks);
+
+        boolean allowForm = !Boolean.FALSE.equals(layoutSchema.get("showCmsForm"))
+                && (layoutSchema.get("customCmsForm") instanceof Map<?, ?>
+                || (runtime.get("cms") instanceof Map<?, ?> cm && cm.get("forms") instanceof List<?> fl && !fl.isEmpty())
+                || hasAnyFormFeature(enabledFeatures));
+        if (allowForm) {
+            if (layoutSchema.get("customCmsForm") instanceof Map<?, ?> cf && !cf.isEmpty()) {
+                runtime.put("cmsForm", new LinkedHashMap<>((Map<String, Object>) cf));
+            } else if (runtime.get("cms") instanceof Map<?, ?> cmsMap && cmsMap.get("forms") instanceof List<?> fList && !fList.isEmpty()) {
+                runtime.put("cmsForm", new LinkedHashMap<>((Map<String, Object>) fList.get(0)));
             }
-            runtime.put("cmsForm", formMap);
         }
         runtime.put("galleryImages", resolveGalleryAssets(layoutSchema, ideaAssets));
         runtime.put("downloadableDocs", resolveDocumentAssets(layoutSchema, ideaAssets));
@@ -3822,17 +3900,22 @@ public class KkumzService {
         }
 
         BigDecimal totalAmount = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        BigDecimal requestedDiscount = req.getDiscountAmount() != null ? req.getDiscountAmount() : BigDecimal.ZERO;
+        BigDecimal appliedDiscount = requestedDiscount.compareTo(BigDecimal.ZERO) > 0
+                ? requestedDiscount.min(totalAmount)
+                : BigDecimal.ZERO;
+        BigDecimal payAmount = totalAmount.subtract(appliedDiscount);
         Long orderId = shopJdbcTemplate.queryForObject("""
                 INSERT INTO oms_order (
                     site_id, member_id, order_sn, create_time, member_username,
                     total_amount, pay_amount, freight_amount, promotion_amount, integration_amount, coupon_amount, discount_amount,
                     pay_type, source_type, status, order_type,
                     receiver_name, receiver_phone, receiver_detail_address, note, confirm_status, delete_status
-                ) VALUES (?, 1001, ?, CURRENT_TIMESTAMP, ?, ?, ?, 0.00, 0.00, 0.00, 0.00, 0.00, 1, 1, 1, 0, ?, ?, ?, ?, 0, 0)
+                ) VALUES (?, 1001, ?, CURRENT_TIMESTAMP, ?, ?, ?, 0.00, 0.00, 0.00, ?, ?, 1, 1, 1, 0, ?, ?, ?, ?, 0, 0)
                 RETURNING id
                 """,
                 Long.class,
-                shopSiteId, orderSn, receiverName, totalAmount, totalAmount,
+                shopSiteId, orderSn, receiverName, totalAmount, payAmount, appliedDiscount, appliedDiscount,
                 receiverName, receiverPhone, receiverAddress,
                 req.getNote() != null ? req.getNote() : ""
         );
@@ -3844,7 +3927,7 @@ public class KkumzService {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 orderId, orderSn, resolvedProductId, productPic, productName, brandName,
-                productSn, unitPrice, quantity, categoryId, totalAmount
+                productSn, unitPrice, quantity, categoryId, payAmount
         );
 
         shopJdbcTemplate.update("""
@@ -3860,7 +3943,7 @@ public class KkumzService {
                 String.valueOf(site.get("ownerUsername")),
                 "COMMERCE_ORDER",
                 "[" + site.get("siteName") + "] 신규 주문 접수 (" + orderSn + ")",
-                receiverName + " 고객님이 '" + productName + "' " + quantity + "건(" + totalAmount + "원)을 주문했습니다.",
+                receiverName + " 고객님이 '" + productName + "' " + quantity + "건(" + payAmount + "원)을 주문했습니다.",
                 "/s/" + site.get("siteSlug")
         );
 
@@ -3872,9 +3955,12 @@ public class KkumzService {
         result.put("productName", productName);
         result.put("quantity", quantity);
         result.put("unitPrice", unitPrice);
-        result.put("payAmount", totalAmount);
+        result.put("totalAmount", totalAmount);
+        result.put("discountAmount", appliedDiscount);
+        result.put("payAmount", payAmount);
         result.put("remainingStock", remainingStock);
         result.put("receiverName", receiverName);
+        result.put("note", req.getNote() != null ? req.getNote() : "");
         result.put("status", "PAID_READY_FOR_SHIPMENT");
         result.put("orderedAt", Timestamp.from(Instant.now()));
         return result;
@@ -5325,24 +5411,28 @@ public class KkumzService {
                        sale,
                        unit,
                        note,
-                       keywords
+                       keywords,
+                       album_pics AS "albumPics",
+                       detail_title AS "detailTitle",
+                       detail_desc AS "detailDesc",
+                       detail_html AS "detailHtml"
                 FROM pms_product
                 WHERE site_id = ? AND delete_status = 0 AND publish_status = 1
-                ORDER BY sort ASC, id ASC
+                ORDER BY sort DESC, id ASC
                 """, shopSiteId);
 
         List<Map<String, Object>> banners = shopJdbcTemplate.queryForList("""
                 SELECT id, name, pic, url, note
                 FROM sms_home_advertise
                 WHERE site_id = ? AND status = 1
-                ORDER BY sort ASC, id ASC
+                ORDER BY sort DESC, id ASC
                 """, shopSiteId);
 
         List<Map<String, Object>> categories = shopJdbcTemplate.queryForList("""
                 SELECT id, name, icon, product_count AS "productCount"
                 FROM pms_product_category
                 WHERE site_id = ? AND show_status = 1
-                ORDER BY sort ASC, id ASC
+                ORDER BY sort DESC, id ASC
                 """, shopSiteId);
 
         List<Map<String, Object>> coupons = shopJdbcTemplate.queryForList("""
@@ -5352,12 +5442,114 @@ public class KkumzService {
                 ORDER BY id ASC
                 """, shopSiteId);
 
+        List<Map<String, Object>> reviews = shopJdbcTemplate.queryForList("""
+                SELECT id,
+                       product_id AS "productId",
+                       member_nick_name AS "author",
+                       product_name AS "productName",
+                       star AS "rating",
+                       product_attribute AS "tag",
+                       content AS "comment",
+                       content,
+                       to_char(create_time, 'YYYY.MM') AS "date",
+                       issue_tags_json::text AS "issueTagsJson"
+                FROM pms_comment
+                WHERE site_id = ? AND show_status = 1
+                ORDER BY create_time DESC, id DESC
+                LIMIT 12
+                """, shopSiteId);
+
+        List<Map<String, Object>> faqs = shopJdbcTemplate.queryForList("""
+                SELECT id,
+                       title AS "q",
+                       content AS "a",
+                       read_count AS "readCount"
+                FROM cms_help
+                WHERE site_id = ? AND show_status = 1
+                ORDER BY id ASC
+                LIMIT 12
+                """, shopSiteId);
+
+        List<Map<String, Object>> subjects = shopJdbcTemplate.queryForList("""
+                SELECT id,
+                       title,
+                       pic AS "cover",
+                       pic AS "thumbnailUrl",
+                       description AS "summary",
+                       description,
+                       content AS "bodyHtml",
+                       category_name AS "categoryName",
+                       read_count AS "clicks"
+                FROM cms_subject
+                WHERE site_id = ? AND show_status = 1
+                ORDER BY id ASC
+                LIMIT 8
+                """, shopSiteId);
+
+        List<Map<String, Object>> attributes = shopJdbcTemplate.queryForList("""
+                SELECT id,
+                       product_attribute_category_id AS "categoryId",
+                       name,
+                       input_list AS "inputList",
+                       type,
+                       sort
+                FROM pms_product_attribute
+                WHERE site_id = ?
+                ORDER BY sort DESC, id ASC
+                LIMIT 24
+                """, shopSiteId);
+
+        List<Map<String, Object>> skus = shopJdbcTemplate.queryForList("""
+                SELECT s.id,
+                       s.product_id AS "productId",
+                       s.sku_code AS "skuCode",
+                       s.price,
+                       s.promotion_price AS "promotionPrice",
+                       s.stock,
+                       s.pic,
+                       s.sp_data AS "spData"
+                FROM pms_sku_stock s
+                JOIN pms_product p ON p.id = s.product_id
+                WHERE p.site_id = ? AND p.delete_status = 0
+                ORDER BY s.id ASC
+                LIMIT 48
+                """, shopSiteId);
+
+        List<Map<String, Object>> brandRows = shopJdbcTemplate.queryForList("""
+                SELECT id, name, logo, big_pic AS "bigPic", brand_story AS "brandStory"
+                FROM pms_brand
+                WHERE site_id = ? AND show_status = 1
+                ORDER BY sort DESC, id ASC
+                LIMIT 1
+                """, shopSiteId);
+
+        List<Map<String, Object>> addrRows = shopJdbcTemplate.queryForList("""
+                SELECT address_name AS "addressName",
+                       name AS "contactName",
+                       phone,
+                       province,
+                       city,
+                       region,
+                       detail_address AS "detailAddress"
+                FROM oms_company_address
+                WHERE site_id = ?
+                ORDER BY id ASC
+                LIMIT 1
+                """, shopSiteId);
+
         Map<String, Object> commerce = new LinkedHashMap<>();
         commerce.put("shopSiteId", shopSiteId);
         commerce.put("products", products);
         commerce.put("banners", banners);
         commerce.put("categories", categories);
         commerce.put("coupons", coupons);
+        commerce.put("reviews", reviews);
+        commerce.put("faqs", faqs);
+        commerce.put("subjects", subjects);
+        commerce.put("attributes", attributes);
+        commerce.put("skus", skus);
+        commerce.put("brandProfile", brandRows.isEmpty() ? Map.of() : brandRows.get(0));
+        commerce.put("companyAddress", addrRows.isEmpty() ? Map.of() : addrRows.get(0));
         return commerce;
     }
 
@@ -5608,6 +5800,14 @@ public class KkumzService {
             if (title1.length() > 250) {
                 title1 = title1.substring(0, 250);
             }
+            Map<String, Object> curatedMedia = resolveCuratedMediaForCategory("LIFESTYLE_HYBRID");
+            String defaultHeroCover = curatedMedia.get("hero") != null ? String.valueOf(curatedMedia.get("hero")) : "";
+            List<String> curatedCovers = curatedMedia.get("items") instanceof List<?> ci
+                    ? ci.stream().map(String::valueOf).toList()
+                    : List.of();
+            String cover1 = !curatedCovers.isEmpty() ? curatedCovers.get(0) : defaultHeroCover;
+            String cover2 = curatedCovers.size() > 1 ? curatedCovers.get(1) : defaultHeroCover;
+
             String desc1 = brandName + " 공식 공간에 오신 것을 환영합니다. " + slogan + "의 가치를 담아 정성껏 준비한 프로그램과 공간 이야기를 소개합니다.";
             Long contentId1 = cmsJdbcTemplate.queryForObject("""
                     INSERT INTO cms_content (
@@ -5615,11 +5815,11 @@ public class KkumzService {
                         author, only_url, has_images, has_files, has_products, has_static,
                         description, cover, childs, scores, comments, clicks,
                         publish_date, create_date, sort, status, disabled, locale
-                    ) VALUES (?, ?, 1, ?, 'article', FALSE, FALSE, ?, FALSE, TRUE, FALSE, FALSE, FALSE, ?, '/images/studio/ed-1.jpg', 0, 95, 4, 128, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day', 100, 1, FALSE, 'ko')
+                    ) VALUES (?, ?, 1, ?, 'article', FALSE, FALSE, ?, FALSE, TRUE, FALSE, FALSE, FALSE, ?, ?, 0, 95, 4, 128, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day', 100, 1, FALSE, 'ko')
                     RETURNING id
                     """,
                     Long.class,
-                    siteIdShort, title1, categoryId, safeAuthor, desc1
+                    siteIdShort, title1, categoryId, safeAuthor, desc1, cover1
             );
             String body1 = "<p>" + escapeXml(desc1) + "</p>";
             cmsJdbcTemplate.update(
@@ -5627,22 +5827,22 @@ public class KkumzService {
                     contentId1, body1, desc1.length()
             );
 
-            String title2 = "[이용 및 예약 안내] " + brandName + " 주요 시설 · 프로그램 및 오시는 길 안내";
+            String title2 = "[이용 및 안내] " + brandName + " 주요 프로그램 및 이용 가이드";
             if (title2.length() > 250) {
                 title2 = title2.substring(0, 250);
             }
-            String desc2 = "방문 전 확인하실 수 있는 이용 시간, 예약 방법, 주변 안내 및 자주 묻는 질문을 정리했습니다. 온라인 신청 폼 또는 AI 컨시어지를 통해 언제든 문의하실 수 있습니다.";
+            String desc2 = "방문 전 확인하실 수 있는 이용 시간, 신청 방법, 상세 안내 및 자주 묻는 질문을 정리했습니다. AI 컨시어지를 통해 언제든 문의하실 수 있습니다.";
             Long contentId2 = cmsJdbcTemplate.queryForObject("""
                     INSERT INTO cms_content (
                         site_id, title, user_id, category_id, model_id, copied, contribute,
                         author, only_url, has_images, has_files, has_products, has_static,
                         description, cover, childs, scores, comments, clicks,
                         publish_date, create_date, sort, status, disabled, locale
-                    ) VALUES (?, ?, 1, ?, 'article', FALSE, FALSE, ?, FALSE, TRUE, FALSE, FALSE, FALSE, ?, '/images/studio/ed-4.jpg', 0, 88, 2, 94, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 95, 1, FALSE, 'ko')
+                    ) VALUES (?, ?, 1, ?, 'article', FALSE, FALSE, ?, FALSE, TRUE, FALSE, FALSE, FALSE, ?, ?, 0, 88, 2, 94, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 95, 1, FALSE, 'ko')
                     RETURNING id
                     """,
                     Long.class,
-                    siteIdShort, title2, categoryId, safeAuthor, desc2
+                    siteIdShort, title2, categoryId, safeAuthor, desc2, cover2
             );
             String body2 = "<p>" + escapeXml(desc2) + "</p>";
             cmsJdbcTemplate.update(
@@ -5656,6 +5856,8 @@ public class KkumzService {
                 Integer.class, siteIdShort
         );
         if (bannerCount == null || bannerCount == 0) {
+            Map<String, Object> curatedBannerMedia = resolveCuratedMediaForCategory("LIFESTYLE_HYBRID");
+            String defaultBannerImg = curatedBannerMedia.get("hero") != null ? String.valueOf(curatedBannerMedia.get("hero")) : "";
             String bannerTitle = (brandName + " — " + slogan);
             if (bannerTitle.length() > 195) {
                 bannerTitle = bannerTitle.substring(0, 195);
@@ -5663,9 +5865,9 @@ public class KkumzService {
             cmsJdbcTemplate.update("""
                     INSERT INTO cms_banner (
                         site_id, zone_code, title, sub_title, image_url, link_url, start_date, end_date, sort, status
-                    ) VALUES (?, 'MAIN_HERO', ?, '공식 브랜드 스토리 및 온라인 예약·문의 접수 중', '/images/studio/ed-1.jpg', '#section-form', '2025-01-01 00:00:00', '2030-12-31 23:59:59', 100, 1)
+                    ) VALUES (?, 'MAIN_HERO', ?, '공식 브랜드 스토리 및 프로그램 안내', ?, '#section-form', '2025-01-01 00:00:00', '2030-12-31 23:59:59', 100, 1)
                     """,
-                    siteIdShort, bannerTitle
+                    siteIdShort, bannerTitle, defaultBannerImg
             );
         }
 
@@ -6566,27 +6768,35 @@ public class KkumzService {
                 && !isConversationalRawPrompt(String.valueOf(aiContent.get("heroSubtitle")))) {
             layoutSchema.put("heroSubtitle", String.valueOf(aiContent.get("heroSubtitle")).trim());
         }
+        if (aiContent.get("themeArchetype") != null && !String.valueOf(aiContent.get("themeArchetype")).isBlank()) {
+            layoutSchema.put("themeArchetype", String.valueOf(aiContent.get("themeArchetype")).trim());
+        }
         if (aiContent.get("heroStyle") != null && !String.valueOf(aiContent.get("heroStyle")).isBlank()) {
             layoutSchema.put("heroStyle", String.valueOf(aiContent.get("heroStyle")).trim());
         }
         if (aiContent.get("ctaText") != null && !String.valueOf(aiContent.get("ctaText")).isBlank()) {
             layoutSchema.put("ctaText", String.valueOf(aiContent.get("ctaText")).trim());
         }
+        if (aiContent.get("sectionOrder") instanceof List<?> so && !so.isEmpty()) {
+            layoutSchema.put("sectionOrder", so);
+        }
+        if (aiContent.get("copyOverrides") instanceof Map<?, ?> co && !co.isEmpty()) {
+            layoutSchema.put("copyOverrides", co);
+        }
 
-        // 3. featureBlocks 병합 (AI 생성 데이터 + DB kkumz_feature_catalog.defaultConfig 스키마 결합)
+        // 3. featureBlocks 병합 (AI 생성 데이터 + 엄격한 선택 기능 게이팅)
         Map<String, Object> featureBlocks = layoutSchema.get("featureBlocks") instanceof Map<?, ?> existingFb
                 ? new LinkedHashMap<>((Map<String, Object>) existingFb)
                 : new LinkedHashMap<>();
         if (aiContent.get("featureBlocks") instanceof Map<?, ?> aiFb) {
             aiFb.forEach((k, v) -> {
-                if (v != null) {
+                if (v != null && !(v instanceof String s && s.isBlank())) {
                     featureBlocks.put(String.valueOf(k), v);
                 }
             });
         }
 
-        // DB kkumz_feature_catalog의 defaultConfig를 사용하여 선택된 기능 중 누락된 블록을 보완
-        ensureCatalogDefaultBlocks(brandName, brandSlogan, category, enabledFeatures, catalog, assets, featureBlocks);
+        hydrateFeatureBlocksStrict(brandName, brandSlogan, category, enabledFeatures, assets, Map.of(), featureBlocks);
         layoutSchema.put("featureBlocks", featureBlocks);
 
         // 4. 상품/객실(customProducts) 및 SyncShop pms_product 동기화
@@ -6649,8 +6859,8 @@ public class KkumzService {
                     log.debug("cms_form 동적 스키마 업데이트 생략: {}", e.getMessage());
                 }
             }
-        } else if (!layoutSchema.containsKey("customCmsForm")) {
-            // DB kkumz_feature_catalog의 CMS_DYNAMIC_BOOKING_FORM defaultConfig를 기반으로 기본 동적 폼 구성
+        } else if (!layoutSchema.containsKey("customCmsForm") && hasAnyFormFeature(enabledFeatures)) {
+            // 선택된 폼 기능이 활성화된 경우에만 DB kkumz_feature_catalog defaultConfig 기반 폼 구성
             catalog.stream()
                     .filter(fc -> "CMS_DYNAMIC_BOOKING_FORM".equals(fc.get("featureCode")) || "CMS_DYNAMIC_FORM".equals(fc.get("featureCode")))
                     .findFirst()
@@ -6658,157 +6868,335 @@ public class KkumzService {
                         Map<String, Object> defCfg = (Map<String, Object>) fc.getOrDefault("defaultConfig", Map.of());
                         Map<String, Object> formMap = new LinkedHashMap<>();
                         formMap.put("id", 1L);
-                        formMap.put("title", brandName + " 온라인 예약 · 문의 신청");
-                        formMap.put("formName", brandName + " 온라인 예약 · 문의 신청");
-                        formMap.put("description", brandSlogan + " — 원하시는 일정과 옵션을 선택해 주세요.");
-                        formMap.put("submitText", "온라인 예약·문의 접수하기");
+                        formMap.put("title", brandName + " 온라인 신청 · 문의");
+                        formMap.put("formName", brandName + " 온라인 신청 · 문의");
+                        formMap.put("description", brandSlogan);
+                        formMap.put("submitText", "신청서 접수하기");
                         Object rawFields = defCfg.get("fields");
                         if (rawFields instanceof List<?> fl && !fl.isEmpty()) {
                             formMap.put("fields", fl);
-                        } else {
-                            formMap.put("fields", List.of(
-                                    Map.of("key", "desiredDate", "label", "희망 방문 · 이용 일자", "type", "date", "required", true),
-                                    Map.of("key", "partySize", "label", "방문 인원 / 수량", "type", "select", "required", true, "options", List.of("1~2인 (커플/개인)", "3~4인 (가족/소모임)", "5인 이상 (단체/별도 문의)")),
-                                    Map.of("key", "programSelect", "label", "희망 공간 · 프로그램 선택", "type", "select", "required", true, "options", List.of("시그니처 메인 코스", "프리미엄 프라이빗 패키지", "당일 체험 & 라운지 이용")),
-                                    Map.of("key", "optionItems", "label", "추가 신청 옵션", "type", "checkbox", "required", false, "options", List.of("웰컴 로컬 다과·음료 세트", "프라이빗 바비큐·다이닝 세팅", "레이트 체크아웃 / 시간 연장"))
-                            ));
                         }
                         layoutSchema.put("customCmsForm", formMap);
                     });
         }
     }
 
+    private static final Set<String> FORM_FEATURE_CODES = Set.of(
+            "CMS_DYNAMIC_BOOKING_FORM",
+            "CMS_DYNAMIC_FORM",
+            "CMS_B2B_INQUIRY_FORM",
+            "CMS_VIP_CONSULT_BOOKING"
+    );
+
+    private boolean hasAnyFormFeature(List<String> enabledFeatures) {
+        if (enabledFeatures == null || enabledFeatures.isEmpty()) {
+            return false;
+        }
+        for (String code : enabledFeatures) {
+            if (FORM_FEATURE_CODES.contains(code)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @SuppressWarnings("unchecked")
-    private void ensureCatalogDefaultBlocks(
+    private List<Map<String, Object>> castMapList(List<?> rawList) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Object o : rawList) {
+            if (o instanceof Map<?, ?> m) {
+                result.add(new LinkedHashMap<>((Map<String, Object>) m));
+            }
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> attachSkusToProducts(
+            List<Map<String, Object>> products,
+            List<Map<String, Object>> skus
+    ) {
+        if (products.isEmpty() || skus.isEmpty()) {
+            return products;
+        }
+        Map<Long, List<Map<String, Object>>> skusByProd = new LinkedHashMap<>();
+        for (Map<String, Object> sku : skus) {
+            Object pidObj = sku.get("productId");
+            if (pidObj instanceof Number n) {
+                Map<String, Object> copy = new LinkedHashMap<>(sku);
+                Object spRaw = copy.get("spData");
+                if (spRaw instanceof String spStr && !spStr.isBlank()) {
+                    copy.put("specs", parseJsonList(spStr));
+                }
+                skusByProd.computeIfAbsent(n.longValue(), k -> new ArrayList<>()).add(copy);
+            }
+        }
+        List<Map<String, Object>> enriched = new ArrayList<>();
+        for (Map<String, Object> prod : products) {
+            Map<String, Object> copy = new LinkedHashMap<>(prod);
+            Object idObj = copy.get("id");
+            if (idObj instanceof Number n) {
+                List<Map<String, Object>> matchedSkus = skusByProd.getOrDefault(n.longValue(), List.of());
+                if (!matchedSkus.isEmpty()) {
+                    copy.put("skus", matchedSkus);
+                    List<String> optionLabels = new ArrayList<>();
+                    for (Map<String, Object> s : matchedSkus) {
+                        if (s.get("specs") instanceof List<?> specList) {
+                            for (Object sp : specList) {
+                                if (sp instanceof Map<?, ?> spMap && spMap.get("value") != null) {
+                                    String label = String.valueOf(spMap.get("value")).trim();
+                                    if (!label.isBlank() && !optionLabels.contains(label)) {
+                                        optionLabels.add(label);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (!optionLabels.isEmpty()) {
+                        copy.put("options", optionLabels);
+                    }
+                }
+            }
+            enriched.add(copy);
+        }
+        return enriched;
+    }
+
+    private String resolveHumanCategoryLabel(String rawCategory) {
+        if (rawCategory == null || rawCategory.isBlank() || "AUTO".equalsIgnoreCase(rawCategory.trim())) {
+            return "브랜드 · 서비스";
+        }
+        String trimmed = rawCategory.trim();
+        if (!trimmed.matches("^[A-Z0-9_]+$")) {
+            return trimmed;
+        }
+        try {
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+                    SELECT i.item_text AS "label"
+                    FROM sys_dict_item i
+                    JOIN sys_dict d ON d.id = i.dict_id
+                    WHERE d.dict_code = 'kkumz_content_category'
+                      AND i.item_value = ?
+                      AND i.status = 1
+                    LIMIT 1
+                    """, trimmed);
+            if (!rows.isEmpty() && rows.get(0).get("label") != null) {
+                return String.valueOf(rows.get(0).get("label"));
+            }
+        } catch (Exception e) {
+            log.debug("카테고리 라벨 사전 조회 생략: {}", e.getMessage());
+        }
+        return trimmed.replace('_', ' ');
+    }
+
+    private Map<String, Object> resolveCuratedMediaForCategory(String rawCategory) {
+        String key = (rawCategory != null && !rawCategory.isBlank()) ? rawCategory.trim().toUpperCase(Locale.ROOT) : "LIFESTYLE_HYBRID";
+        if (!key.matches("^[A-Z0-9_]+$")) {
+            key = "HOSPITALITY_STAY";
+        }
+        try {
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+                    SELECT i.description AS "mediaJson"
+                    FROM sys_dict_item i
+                    JOIN sys_dict d ON d.id = i.dict_id
+                    WHERE d.dict_code = 'kkumz_curated_media'
+                      AND i.item_value = ?
+                      AND i.status = 1
+                    LIMIT 1
+                    """, key);
+            if (!rows.isEmpty() && rows.get(0).get("mediaJson") != null) {
+                return parseJsonObject(String.valueOf(rows.get(0).get("mediaJson")));
+            }
+        } catch (Exception e) {
+            log.debug("큐레이션 미디어 사전 조회 생략: {}", e.getMessage());
+        }
+        return Map.of();
+    }
+
+    private String resolveThemeArchetype(String explicit, String siteType, String rawCategory, List<String> enabledFeatures) {
+        if (explicit != null && !explicit.isBlank()) {
+            return explicit.trim().toUpperCase(Locale.ROOT);
+        }
+        String cat = rawCategory != null ? rawCategory.trim().toUpperCase(Locale.ROOT) : "";
+        if ("TECH_HARDWARE".equals(cat) || (enabledFeatures != null && enabledFeatures.contains("SHOP_SPEC_COMPARISON"))) {
+            return "DARK_TECH_SHOWCASE";
+        }
+        if ("COMMUNITY_MEDIA".equals(cat) || "CMS_SITE".equalsIgnoreCase(siteType)) {
+            return "COMMUNITY_KINETIC";
+        }
+        if (enabledFeatures != null && enabledFeatures.contains("SHOP_PRICING_MATRIX")) {
+            return "SCENIC_HOSPITALITY";
+        }
+        if ("FOOD_BEVERAGE".equals(cat) || "COMMERCE".equalsIgnoreCase(siteType)) {
+            return "EDITORIAL_BOTANICAL";
+        }
+        return "MAGAZINE_HYBRID";
+    }
+
+    private String resolveDefaultHeroStyleForArchetype(String archetype, String siteType) {
+        if ("DARK_TECH_SHOWCASE".equals(archetype)) {
+            return "PROMO_COMMERCE";
+        }
+        if ("EDITORIAL_BOTANICAL".equals(archetype)) {
+            return "EDITORIAL_STORY";
+        }
+        if ("MAGAZINE_HYBRID".equals(archetype)) {
+            return "SPLIT_VISUAL";
+        }
+        return "FULL_SCENIC";
+    }
+
+    private String resolveSurfaceMode(Map<String, Object> designTokens, String archetype) {
+        if (designTokens != null && designTokens.get("surfaceMode") != null
+                && !String.valueOf(designTokens.get("surfaceMode")).isBlank()) {
+            return String.valueOf(designTokens.get("surfaceMode")).trim().toUpperCase(Locale.ROOT);
+        }
+        if ("DARK_TECH_SHOWCASE".equals(archetype)) {
+            return "DARK";
+        }
+        if ("COMMUNITY_KINETIC".equals(archetype)) {
+            return "LIGHT";
+        }
+        return "WARM";
+    }
+
+    private String resolveFontPreset(Map<String, Object> designTokens, String archetype) {
+        if (designTokens != null && designTokens.get("fontPreset") != null
+                && !String.valueOf(designTokens.get("fontPreset")).isBlank()) {
+            return String.valueOf(designTokens.get("fontPreset")).trim().toUpperCase(Locale.ROOT);
+        }
+        if ("DARK_TECH_SHOWCASE".equals(archetype)) {
+            return "TECH_MONO";
+        }
+        if ("COMMUNITY_KINETIC".equals(archetype)) {
+            return "BOLD_SANS";
+        }
+        return "SERIF_EDITORIAL";
+    }
+
+    private String extractSanitizedCustomCss(List<Map<String, Object>> webideFiles) {
+        if (webideFiles == null || webideFiles.isEmpty()) {
+            return "";
+        }
+        StringBuilder css = new StringBuilder();
+        for (Map<String, Object> file : webideFiles) {
+            String path = file.get("path") != null ? String.valueOf(file.get("path")).toLowerCase(Locale.ROOT) : "";
+            if (path.endsWith(".css")) {
+                String content = file.get("content") != null ? String.valueOf(file.get("content")) : "";
+                if (!content.isBlank()) {
+                    String safe = content
+                            .replaceAll("(?i)<\\s*/?\\s*script[^>]*>", "")
+                            .replaceAll("(?i)<\\s*/?\\s*style[^>]*>", "")
+                            .replaceAll("(?i)@import[^;]+;", "")
+                            .replaceAll("(?i)javascript\\s*:", "")
+                            .replaceAll("(?i)expression\\s*\\(", "");
+                    css.append(safe).append('\n');
+                }
+            }
+        }
+        return css.toString().trim();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void hydrateFeatureBlocksStrict(
             String brandName,
             String brandSlogan,
             String category,
             List<String> enabledFeatures,
-            List<Map<String, Object>> catalog,
             List<Map<String, Object>> assets,
+            Map<String, Object> commerceData,
             Map<String, Object> featureBlocks
     ) {
-        String heroImg = assets != null && !assets.isEmpty()
-                ? String.valueOf(assets.get(0).getOrDefault("fileUrl", "/images/studio/ed-1.jpg"))
-                : "/images/studio/ed-1.jpg";
+        Set<String> enabledSet = enabledFeatures != null ? new LinkedHashSet<>(enabledFeatures) : Set.of();
 
+        // 1. pricingMatrix: SHOP_PRICING_MATRIX 활성 시에만 정규화 유지 (비활성 사이트 오염 차단)
         Object rawPm = featureBlocks.get("pricingMatrix");
         if (rawPm instanceof List<?> pmList && !pmList.isEmpty()) {
             List<Map<String, Object>> normalizedRows = new ArrayList<>();
             for (Object item : pmList) {
                 if (item instanceof Map<?, ?> m) {
-                    Map<String, Object> row = new LinkedHashMap<>((Map<String, Object>) m);
-                    row.putIfAbsent("capacity", row.getOrDefault("target", "2인 ~ 4인 기준"));
-                    row.putIfAbsent("target", row.getOrDefault("capacity", "2인 ~ 4인 기준"));
-                    row.putIfAbsent("note", row.getOrDefault("includes", "웰컴 키트 · 기본 편의시설 일체 포함"));
-                    row.putIfAbsent("includes", row.getOrDefault("note", "웰컴 키트 · 기본 편의시설 일체 포함"));
-                    normalizedRows.add(row);
+                    normalizedRows.add(new LinkedHashMap<>((Map<String, Object>) m));
                 }
             }
             featureBlocks.put("pricingMatrix", Map.of(
-                    "title", brandName + " 시즌 · 요일 · 인원별 상세 요금 안내",
+                    "title", brandName + " 상세 요금표",
                     "columns", defaultPricingColumns(),
                     "rows", normalizedRows
             ));
-        } else if (!(rawPm instanceof Map<?, ?> pmMap && pmMap.get("rows") instanceof List<?> pmRows && !pmRows.isEmpty())) {
-            featureBlocks.put("pricingMatrix", Map.of(
-                    "title", brandName + " 시즌 · 요일 · 인원별 상세 요금 안내",
-                    "columns", defaultPricingColumns(),
-                    "rows", List.of(
-                            Map.of("tier", "시그니처 기본 이용", "capacity", "2인 ~ 4인 기준", "target", "2인 ~ 4인 기준", "offPeakWeekday", "120,000원", "offPeakWeekend", "160,000원", "peakSeason", "200,000원", "note", "웰컴 키트 · 기본 편의시설 일체 포함", "includes", "웰컴 키트 · 기본 편의시설 일체 포함"),
-                            Map.of("tier", "프리미엄 패밀리 · 단체 패키지", "capacity", "4인 ~ 8인 기준", "target", "4인 ~ 8인 기준", "offPeakWeekday", "180,000원", "offPeakWeekend", "240,000원", "peakSeason", "290,000원", "note", "전용 공간 전체 + 스페셜 바비큐·다이닝 옵션", "includes", "전용 공간 전체 + 스페셜 바비큐·다이닝 옵션"),
-                            Map.of("tier", "당일 프라이빗 대여 · 체험", "capacity", "당일 이용 (10:00~18:00)", "target", "당일 이용 (10:00~18:00)", "offPeakWeekday", "60,000원", "offPeakWeekend", "80,000원", "peakSeason", "100,000원", "note", "프라이빗 공간 대여 + 현장 케어 서비스", "includes", "프라이빗 공간 대여 + 현장 케어 서비스")
-                    )
-            ));
+        } else if (rawPm instanceof String) {
+            featureBlocks.remove("pricingMatrix");
+        }
+        if (!enabledSet.isEmpty() && !enabledSet.contains("SHOP_PRICING_MATRIX")
+                && !(rawPm instanceof Map<?, ?> pmMap && pmMap.get("rows") instanceof List<?> pmRows && !pmRows.isEmpty())) {
+            featureBlocks.remove("pricingMatrix");
         }
 
+        // 2. spaceTour: CMS_SPACE_TOUR 활성 시 + 실제 업로드 자산이 있을 때만 구성 (ed-1.jpg 소파 폴백 영구 제거)
         if (!(featureBlocks.get("spaceTour") instanceof List<?> st && !st.isEmpty())) {
-            List<Map<String, Object>> spots = new ArrayList<>();
-            int limit = assets != null ? Math.min(4, assets.size()) : 0;
-            for (int i = 0; i < limit; i++) {
-                Map<String, Object> a = assets.get(i);
-                String descText = brandName + "의 감성과 자연스러운 휴식을 경험할 수 있는 핵심 공간 포인트입니다.";
-                spots.add(Map.of(
-                        "zone", "SPACE 0" + (i + 1),
-                        "title", String.valueOf(a.getOrDefault("caption", brandName + " 주요 공간 #" + (i + 1))),
-                        "desc", descText,
-                        "description", descText,
-                        "imageUrl", String.valueOf(a.getOrDefault("fileUrl", heroImg))
-                ));
+            if (enabledSet.contains("CMS_SPACE_TOUR") && assets != null && !assets.isEmpty()) {
+                List<Map<String, Object>> spots = new ArrayList<>();
+                int limit = Math.min(4, assets.size());
+                for (int i = 0; i < limit; i++) {
+                    Map<String, Object> a = assets.get(i);
+                    String fileUrl = a.get("fileUrl") != null ? String.valueOf(a.get("fileUrl")).trim() : "";
+                    if (!fileUrl.isBlank()) {
+                        String caption = String.valueOf(a.getOrDefault("caption", brandName + " 공간 #" + (i + 1)));
+                        spots.add(Map.of(
+                                "zone", "ZONE 0" + (i + 1),
+                                "title", caption,
+                                "desc", brandSlogan,
+                                "description", brandSlogan,
+                                "imageUrl", fileUrl
+                        ));
+                    }
+                }
+                if (!spots.isEmpty()) {
+                    featureBlocks.put("spaceTour", spots);
+                }
             }
-            if (spots.isEmpty()) {
-                spots.add(Map.of("zone", "SPACE 01", "title", brandName + " 메인 라운지", "desc", brandSlogan, "description", brandSlogan, "imageUrl", heroImg));
-            }
-            featureBlocks.put("spaceTour", spots);
         }
 
-        if (!(featureBlocks.get("stepGuide") instanceof List<?> sg && !sg.isEmpty())) {
-            featureBlocks.put("stepGuide", List.of(
-                    Map.of("step", "STEP 01", "time", "웰컴 & 체크인", "title", "여유로운 도착 및 공간 안내", "desc", brandName + "에 도착하여 호스트의 안내와 함께 공간과 이용 가이드를 확인합니다."),
-                    Map.of("step", "STEP 02", "time", "시그니처 경험", "title", "핵심 프로그램 & 프라이빗 휴식", "desc", category + " 본연의 매력을 만끽하며 온전한 쉼과 체험을 즐깁니다."),
-                    Map.of("step", "STEP 03", "time", "다이닝 & 리추얼", "title", "저녁 만찬과 감성 나이트 타임", "desc", "소중한 사람들과 함께 정성스러운 다이닝과 여유로운 밤 시간을 보냅니다."),
-                    Map.of("step", "STEP 04", "time", "모닝 & 체크아웃", "title", "상쾌한 아침 산책 및 마무리", "desc", "여유로운 아침 풍경을 감상한 뒤 기분 좋게 일정을 마무리합니다.")
-            ));
-        }
-
-        if (!(featureBlocks.get("faqItems") instanceof List<?> fq && !fq.isEmpty())) {
-            featureBlocks.put("faqItems", List.of(
-                    Map.of("q", "예약 확정 및 일정 변경은 어떻게 진행되나요?", "a", "온라인 예약·문의 폼 또는 즉시 예약을 남겨주시면 호스트 확인 후 확정 안내 메시지를 발송해 드립니다. 일정 변경은 이용일 7일 전까지 가능합니다."),
-                    Map.of("q", "전용 주차 공간과 대중교통 접근성이 궁금합니다.", "a", "방문객 전용 무료 주차 공간이 마련되어 있으며, 하단 오시는 길 섹션에서 상세 주소와 내비게이션 키워드를 확인하실 수 있습니다."),
-                    Map.of("q", "단체 예약이나 맞춤 옵션 추가가 가능한가요?", "a", "네, 인원 추가·바비큐·특화 패키지 등 맞춤 옵션을 예약 폼에서 함께 선택하시거나 AI 컨시어지에 문의해 주세요.")
-            ));
-        }
-
-        if (!(featureBlocks.get("locationGuide") instanceof Map<?, ?> lg && !lg.isEmpty())) {
-            List<Map<String, Object>> courses = new ArrayList<>();
-            courses.add(Map.of("name", "주변 자연 산책 코스", "distance", "도보 5분", "desc", "계절마다 아름다운 풍경을 감상할 수 있는 힐링 산책로"));
-            courses.add(Map.of("name", "로컬 미식 & 카페 거리", "distance", "차량 10분", "desc", "지역 특산 요리와 감성 베이커리 카페 추천 코스"));
-            courses.add(Map.of("name", "대표 문화·역사 명소", "distance", "차량 15분", "desc", "가족·연인과 함께 둘러보기 좋은 대표 관광 명소"));
-            featureBlocks.put("locationGuide", Map.of(
-                    "address", brandName + " 공식 오프라인 공간 (" + category + ")",
-                    "parking", "전용 무료 주차장 완비 (대형 SUV 및 다수 차량 주차 가능)",
-                    "publicTransit", "주요 역·터미널에서 택시 또는 시내버스로 편리하게 이동 가능",
-                    "transit", "주요 역·터미널에서 택시 또는 시내버스로 편리하게 이동 가능",
-                    "nearbySpots", courses,
-                    "nearbyCourses", courses
-            ));
-        }
-
-        if (!(featureBlocks.get("policyRules") instanceof List<?> pr && !pr.isEmpty())) {
-            featureBlocks.put("policyRules", List.of(
-                    "이용 시간 및 체크인·체크아웃 시간을 준수해 주시기 바랍니다.",
-                    "쾌적하고 안전한 환경을 위해 실내 절대 금연 및 화기 사용 수칙을 지켜주세요.",
-                    "예약일 7일 전 100% 환불, 5일 전 70% 환불, 3일 전 50% 환불, 당일 취소는 환불이 불가합니다."
-            ));
-        }
-
+        // 3. reviews: SyncShop pms_comment 실구매 리뷰 자동 연동 (가짜 민박 리뷰 제거)
         if (!(featureBlocks.get("reviews") instanceof List<?> rv && !rv.isEmpty())) {
-            String rv1 = "사진보다 실제 공간이 훨씬 더 아름답고 쾌적했습니다. 호스트분도 정말 친절하셔서 가족 모두 최고의 시간을 보냈어요!";
-            String rv2 = "예약 과정부터 이용 안내까지 체계적이고 세심해서 감동받았습니다. 다음 시즌에 꼭 다시 찾고 싶은 곳입니다.";
-            featureBlocks.put("reviews", List.of(
-                    Map.of("author", "김*연 고객님", "rating", 5, "date", "2026.10", "tag", "재방문 의사 100%", "comment", rv1, "content", rv1, "photoUrl", heroImg),
-                    Map.of("author", "박*훈 고객님", "rating", 5, "date", "2026.10", "tag", "시그니처 추천", "comment", rv2, "content", rv2, "photoUrl", heroImg)
+            if (commerceData != null && commerceData.get("reviews") instanceof List<?> shopReviews && !shopReviews.isEmpty()) {
+                featureBlocks.put("reviews", shopReviews);
+            }
+        }
+
+        // 4. faqItems: SyncShop cms_help 도메인 FAQ 자동 연동 (가짜 주차/바비큐 FAQ 제거)
+        if (!(featureBlocks.get("faqItems") instanceof List<?> fq && !fq.isEmpty())) {
+            if (commerceData != null && commerceData.get("faqs") instanceof List<?> shopFaqs && !shopFaqs.isEmpty()) {
+                featureBlocks.put("faqItems", shopFaqs);
+            }
+        }
+
+        // 5. specComparison: SHOP_SPEC_COMPARISON 활성 시 SyncShop pms_product_attribute 실데이터로 구성
+        if (featureBlocks.get("specComparison") instanceof String) {
+            featureBlocks.remove("specComparison");
+        }
+        if (!(featureBlocks.get("specComparison") instanceof Map<?, ?> sc && !sc.isEmpty())
+                && enabledSet.contains("SHOP_SPEC_COMPARISON")
+                && commerceData != null
+                && commerceData.get("attributes") instanceof List<?> attrList && !attrList.isEmpty()) {
+            List<Map<String, Object>> specRows = new ArrayList<>();
+            for (Map<String, Object> attr : castMapList(attrList)) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("tier", String.valueOf(attr.getOrDefault("name", "")));
+                row.put("spec1", String.valueOf(attr.getOrDefault("inputList", "")));
+                row.put("note", Integer.valueOf(1).equals(attr.get("type")) ? "제품 사양 파라미터" : "선택 옵션");
+                specRows.add(row);
+            }
+            featureBlocks.put("specComparison", Map.of(
+                    "title", brandName + " 상세 사양 · 옵션 매트릭스",
+                    "columns", List.of("항목", "제원 / 옵션", "구분"),
+                    "rows", specRows
             ));
         }
 
-        if (!(featureBlocks.get("pollWidget") instanceof Map<?, ?> pw && !pw.isEmpty())) {
-            featureBlocks.put("pollWidget", Map.of(
-                    "question", brandName + "에서 가장 기대되는 경험은 무엇인가요?",
-                    "totalVotes", 248,
-                    "options", List.of(
-                            Map.of("label", "시그니처 공간에서의 프라이빗 휴식", "votes", 112, "percent", 45),
-                            Map.of("label", "스페셜 다이닝 & 시즌 프로그램 체험", "votes", 84, "percent", 34),
-                            Map.of("label", "감성 포토 스팟 & 주변 여행 코스", "votes", 52, "percent", 21)
-                    )
-            ));
-        }
-
-        if (!(featureBlocks.get("trustMetrics") instanceof List<?> tm && !tm.isEmpty())) {
-            featureBlocks.put("trustMetrics", List.of(
-                    Map.of("label", "누적 방문·이용 고객", "value", "4,800+", "sub", "높은 만족도와 입소문으로 검증된 브랜드"),
-                    Map.of("label", "실제 이용객 평점", "value", "4.95 / 5.0", "sub", "실제 예약·구매 고객 후기 기준"),
-                    Map.of("label", "재방문 & 지인 추천율", "value", "94%", "sub", "사계절 다시 찾는 시그니처 공간")
-            ));
+        // 6. 문자열 플레이스홀더 블록 정리 (AI가 미사용 블록을 안내 문자열로 출력한 경우 제거)
+        for (String blockKey : List.of("subscriptionTiers", "sessionTimetable")) {
+            if (featureBlocks.get(blockKey) instanceof String) {
+                featureBlocks.remove(blockKey);
+            }
         }
     }
 
@@ -6819,6 +7207,12 @@ public class KkumzService {
             List<Map<String, Object>> assets,
             Long shopSiteId
     ) {
+        Map<String, Object> curatedMedia = resolveCuratedMediaForCategory(category);
+        List<String> curatedItems = curatedMedia.get("items") instanceof List<?> ci
+                ? ci.stream().map(String::valueOf).toList()
+                : List.of();
+        String curatedHero = curatedMedia.get("hero") != null ? String.valueOf(curatedMedia.get("hero")) : "";
+
         List<Map<String, Object>> result = new ArrayList<>();
         int idx = 1;
         for (Map<String, Object> rp : rawProducts) {
@@ -6826,12 +7220,14 @@ public class KkumzService {
             String subTitle = String.valueOf(rp.getOrDefault("subTitle", rp.getOrDefault("description", brandName + " 대표 라인업"))).trim();
             String desc = String.valueOf(rp.getOrDefault("description", subTitle)).trim();
             String pic = String.valueOf(rp.getOrDefault("pic", rp.getOrDefault("imageUrl", ""))).trim();
-            if (pic.isBlank() || pic.contains("prod-matcha") || pic.contains("prod-tea")) {
+            if (pic.isBlank()) {
                 if (assets != null && !assets.isEmpty()) {
                     Map<String, Object> asset = assets.get((idx - 1) % assets.size());
-                    pic = String.valueOf(asset.getOrDefault("fileUrl", "/images/studio/ed-1.jpg"));
+                    pic = String.valueOf(asset.getOrDefault("fileUrl", curatedHero));
+                } else if (!curatedItems.isEmpty()) {
+                    pic = curatedItems.get((idx - 1) % curatedItems.size());
                 } else {
-                    pic = "/images/studio/ed-1.jpg";
+                    pic = curatedHero;
                 }
             }
             int defaultPrice = idx == 1 ? 150000 : (idx == 2 ? 75000 : 120000);
@@ -6916,7 +7312,7 @@ public class KkumzService {
             String summary = String.valueOf(ra.getOrDefault("summary", ra.getOrDefault("description", title))).trim();
             String cover = String.valueOf(ra.getOrDefault("cover", ra.getOrDefault("thumbnailUrl", ""))).trim();
             if (cover.isBlank() && assets != null && !assets.isEmpty()) {
-                cover = String.valueOf(assets.get((idx - 1) % assets.size()).getOrDefault("fileUrl", "/images/studio/ed-1.jpg"));
+                cover = String.valueOf(assets.get((idx - 1) % assets.size()).getOrDefault("fileUrl", ""));
             }
             String catName = String.valueOf(ra.getOrDefault("categoryName", "브랜드 저널"));
 

@@ -187,7 +187,10 @@ INSERT INTO sys_dict (id, dict_name, dict_code, description, create_by) VALUES
 ('dict-kkumz-019', '샌드박스 빌드 상태', 'kkumz_build_status', 'WebIDE 및 멀티사이트 빌드 실행 상태', 'admin'),
 ('dict-kkumz-020', '사이트 운영 상태', 'kkumz_site_status', '멀티사이트 라이브 가동 및 정지 상태', 'admin'),
 ('dict-kkumz-021', 'AI 스튜디오 생성 단계', 'kkumz_stage_type', 'AI 스튜디오 파이프라인 단계 코드', 'admin'),
-('dict-kkumz-022', '공통 활성 상태', 'kkumz_active_status', '템플릿 및 정책 활성/비활성 상태', 'admin');
+('dict-kkumz-022', '공통 활성 상태', 'kkumz_active_status', '템플릿 및 정책 활성/비활성 상태', 'admin'),
+('dict-kkumz-023', '멀티사이트 디자인 아키타입', 'kkumz_theme_archetype', '업종 및 브랜드 무드별 멀티사이트 비주얼·레이아웃 아키타입', 'admin'),
+('dict-kkumz-024', '멀티사이트 타이포그래피 프리셋', 'kkumz_font_preset', '브랜드 사이트 헤딩·본문 웹폰트 페어링 프리셋', 'admin'),
+('dict-kkumz-025', '업종별 큐레이션 스튜디오 미디어', 'kkumz_curated_media', '미업로드 신규 사이트의 업종별 대표 스튜디오 이미지 카탈로그', 'admin');
 
 INSERT INTO sys_dict_item (id, dict_id, item_text, item_value, description, sort_order, status) VALUES
 ('ditem-kkumz-1101', 'dict-kkumz-011', 'AI & LLM 엔진', 'AI_LLM', 'AI 모델 및 추론 타임아웃 설정', 1, 1),
@@ -230,7 +233,21 @@ INSERT INTO sys_dict_item (id, dict_id, item_text, item_value, description, sort
 ('ditem-kkumz-2107', 'dict-kkumz-021', '아키텍처·기능 진단', 'INTENT_ADVISOR', '프롬프트 기반 아키텍처 및 52종 기능 추천', 7, 1),
 ('ditem-kkumz-2108', 'dict-kkumz-021', '초기 사이트 콘텐츠 생성', 'SITE_CONTENT_PROVISION', '업종 맞춤 초기 상품·요금표·예약폼 생성', 8, 1),
 ('ditem-kkumz-2201', 'dict-kkumz-022', '활성', 'ACTIVE', '활성 상태', 1, 1),
-('ditem-kkumz-2202', 'dict-kkumz-022', '비활성', 'INACTIVE', '비활성 상태', 2, 1);
+('ditem-kkumz-2202', 'dict-kkumz-022', '비활성', 'INACTIVE', '비활성 상태', 2, 1),
+('ditem-kkumz-2301', 'dict-kkumz-023', '에디토리얼 보태니컬', 'EDITORIAL_BOTANICAL', '{"surfaceMode":"WARM","fontPreset":"SERIF_EDITORIAL","heroStyle":"EDITORIAL_STORY","radius":"6px","desc":"웜 아이보리 페이퍼 배경과 세리프 타이포, 넓은 여백이 돋보이는 공예·티·뷰티 D2C 아키타입"}', 1, 1),
+('ditem-kkumz-2302', 'dict-kkumz-023', '다크 테크 쇼케이스', 'DARK_TECH_SHOWCASE', '{"surfaceMode":"DARK","fontPreset":"TECH_MONO","heroStyle":"PROMO_COMMERCE","radius":"10px","desc":"옵시디언 다크 캔버스와 모노스페이스 스펙 표기, 벤토 그리드 중심의 하드웨어·테크 아키타입"}', 2, 1),
+('ditem-kkumz-2303', 'dict-kkumz-023', '매거진 하이브리드', 'MAGAZINE_HYBRID', '{"surfaceMode":"WARM","fontPreset":"SERIF_EDITORIAL","heroStyle":"SPLIT_VISUAL","radius":"8px","desc":"저널 아티클과 커머스 셀렉션, 구독 플랜이 자연스럽게 교차하는 로스터리·라이프스타일 복합 아키타입"}', 3, 1),
+('ditem-kkumz-2304', 'dict-kkumz-023', '커뮤니티 키네틱', 'COMMUNITY_KINETIC', '{"surfaceMode":"LIGHT","fontPreset":"BOLD_SANS","heroStyle":"FULL_SCENIC","radius":"12px","desc":"하이콘트라스트 볼드 타이포, 주간 세션 일정표, 참가 신청 폼 중심의 크루·커뮤니티 아키타입"}', 4, 1),
+('ditem-kkumz-2305', 'dict-kkumz-023', '시닉 호스피탈리티', 'SCENIC_HOSPITALITY', '{"surfaceMode":"WARM","fontPreset":"SERIF_EDITORIAL","heroStyle":"FULL_SCENIC","radius":"16px","desc":"풀블리드 자연 풍경 히어로, 공간 투어, 시즌 요금표, 맞춤 예약 폼 특화 스테이·민박 아키타입"}', 5, 1),
+('ditem-kkumz-2401', 'dict-kkumz-024', '모던 산스 (Pretendard)', 'MODERN_SANS', 'Pretendard, -apple-system, BlinkMacSystemFont, sans-serif', 1, 1),
+('ditem-kkumz-2402', 'dict-kkumz-024', '에디토리얼 세리프 (Noto Serif KR)', 'SERIF_EDITORIAL', '"Noto Serif KR", "Cormorant Garamond", Georgia, serif', 2, 1),
+('ditem-kkumz-2403', 'dict-kkumz-024', '테크 모노 (JetBrains Mono)', 'TECH_MONO', '"JetBrains Mono", "Pretendard", monospace', 3, 1),
+('ditem-kkumz-2404', 'dict-kkumz-024', '키네틱 볼드 (Pretendard Heavy)', 'BOLD_SANS', 'Pretendard, -apple-system, BlinkMacSystemFont, sans-serif', 4, 1),
+('ditem-kkumz-2501', 'dict-kkumz-025', 'F&B·티·식품 큐레이션', 'FOOD_BEVERAGE', '{"hero":"/images/studio/banner-matcha-jeju.jpg","items":["/images/studio/prod-matcha-tin.jpg","/images/studio/prod-matcha-chawan.jpg","/images/studio/prod-matcha-latte.jpg","/images/studio/prod-matcha-chocolate.jpg"]}', 1, 1),
+('ditem-kkumz-2502', 'dict-kkumz-025', '테크·하드웨어 큐레이션', 'TECH_HARDWARE', '{"hero":"/images/studio/banner-ai-workstation.jpg","items":["/images/studio/prod-qi2-station.jpg","/images/studio/prod-walnut-shelf.jpg","/images/studio/prod-monitor-lightbar.jpg","/images/studio/prod-macropad.jpg"]}', 2, 1),
+('ditem-kkumz-2503', 'dict-kkumz-025', '커뮤니티·스포츠 큐레이션', 'COMMUNITY_MEDIA', '{"hero":"/images/studio/banner-seoul-night-run.jpg","items":["/images/studio/run-course-banpo.jpg","/images/studio/run-course-seongsu.jpg","/images/studio/run-training-track.jpg"]}', 3, 1),
+('ditem-kkumz-2504', 'dict-kkumz-025', '로스터리·라이프스타일 복합', 'LIFESTYLE_HYBRID', '{"hero":"/images/studio/banner-geisha-coffee.jpg","items":["/images/studio/prod-geisha-beans.jpg","/images/studio/prod-dripbag-gift.jpg","/images/studio/prod-pourover-kettle.jpg","/images/studio/prod-coffee-sampler.jpg"]}', 4, 1),
+('ditem-kkumz-2505', 'dict-kkumz-025', '숙박·스테이·공간대여', 'HOSPITALITY_STAY', '{"hero":"/images/studio/banner-minbak-creek.jpg","items":["/images/studio/minbak-room-ondol.jpg","/images/studio/minbak-pyeongsang.jpg","/images/studio/minbak-dining-bbq.jpg","/images/studio/minbak-autumn-yard.jpg","/images/studio/minbak-winter-snow.jpg"]}', 5, 1);
 
 -- ============================================================================
 -- 시스템 통합 동적 환경설정 초기 시드 (sys_config)
@@ -253,7 +270,8 @@ INSERT INTO sys_config (
 ('cfg-kkumz-012', 'SECURITY', 'kkumz.security.jwt-expire-ms', 'JWT 인증 세션 유효기간 (ms)', '86400000', '86400000', 'NUMBER', FALSE, TRUE, 1, 10, '로그인 액세스 토큰 기본 만료 시간(밀리초)', 'admin'),
 ('cfg-kkumz-013', 'STORAGE', 'kkumz.storage.upload-dir', '미디어·문서 업로드 로컬 루트 경로', 'uploads/kkumz', 'uploads/kkumz', 'STRING', FALSE, TRUE, 1, 10, '스튜디오 업로드 자산 및 Git 번들 저장 디렉터리 경로', 'admin'),
 ('cfg-kkumz-014', 'STORAGE', 'kkumz.storage.public-prefix', '정적 자산 공개 URL Prefix', '/api/v1/kkumz/assets/files', '/api/v1/kkumz/assets/files', 'STRING', FALSE, TRUE, 1, 20, '업로드된 미디어 파일 서빙을 위한 공개 URL 접두사', 'admin'),
-('cfg-kkumz-015', 'BIZ_POLICY', 'kkumz.policy.default-rate-limit-rpm', 'API 키 기본 분당 호출 한도 (RPM)', '600', '600', 'NUMBER', FALSE, TRUE, 1, 10, '신규 API 액세스 키 발급 시 기본 분당 호출 허용 횟수', 'admin');
+('cfg-kkumz-015', 'BIZ_POLICY', 'kkumz.policy.default-rate-limit-rpm', 'API 키 기본 분당 호출 한도 (RPM)', '600', '600', 'NUMBER', FALSE, TRUE, 1, 10, '신규 API 액세스 키 발급 시 기본 분당 호출 허용 횟수', 'admin'),
+('cfg-kkumz-016', 'STORAGE', 'kkumz.storage.media-base-url', '공유 미디어 허브 공개 Base URL', '/media', '/media', 'STRING', FALSE, TRUE, 1, 30, 'MinIO/S3 공유 오브젝트 스토리지 프록시 미디어 기본 경로', 'admin');
 
 -- ============================================================================
 -- 기본 홈 라우트, 조직 부서 트리, 알림 템플릿 및 초기 감사 로그 시드

@@ -246,6 +246,17 @@ export const kkumzApi = {
         label: string;
         desc?: string;
       }>;
+      themeArchetypes?: Array<{
+        code: string;
+        label: string;
+        desc?: string;
+      }>;
+      fontPresets?: Array<{
+        code: string;
+        label: string;
+        desc?: string;
+      }>;
+      categoryLabels?: Record<string, string>;
       starterPresets: Array<{
         code: string;
         label: string;

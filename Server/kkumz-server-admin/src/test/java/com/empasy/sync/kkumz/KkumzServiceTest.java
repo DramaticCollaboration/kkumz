@@ -980,4 +980,144 @@ class KkumzServiceTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
     }
+
+    @Test
+    @DisplayName("19. [엄격 기능 게이팅 & SyncShop 실데이터 연동] D2C 쇼핑몰(matcha-atelier)에 민박 더미 미오염 및 실리뷰·FAQ·SKU·커스텀CSS 연동 검증")
+    void testStrictFeatureGatingAndSyncShopRealDataFederation() {
+        Map<String, Object> siteRow = new LinkedHashMap<>();
+        siteRow.put("id", "site-kkumz-001");
+        siteRow.put("ideaId", "idea-kkumz-001");
+        siteRow.put("siteSlug", "matcha-atelier");
+        siteRow.put("siteName", "말차 아뜰리에 제주");
+        siteRow.put("siteType", "COMMERCE");
+        siteRow.put("category", "FOOD_BEVERAGE");
+        siteRow.put("brandSlogan", "제주 서귀포 첫물 차광 말차 아뜰리에");
+        siteRow.put("shopSiteId", 2L);
+        siteRow.put("cmsSiteId", null);
+        siteRow.put("deployMode", "CUSTOM_BUNDLE");
+        siteRow.put("activeVersion", 2);
+        siteRow.put("publishedVersion", 2);
+        siteRow.put("visibility", "PUBLIC");
+        siteRow.put("status", "ACTIVE");
+        siteRow.put("ownerUsername", "soyeon.jeju");
+
+        Map<String, Object> releaseRow = new LinkedHashMap<>();
+        releaseRow.put("id", "rel-kkumz-001-v2");
+        releaseRow.put("versionNo", 2);
+        releaseRow.put("deployMode", "CUSTOM_BUNDLE");
+        releaseRow.put("releaseNote", "보태니컬 에디토리얼 개편");
+        releaseRow.put("designTokensJson", "{\"primary\":\"#14532d\",\"surface\":\"#f7f5ee\",\"surfaceMode\":\"WARM\",\"fontPreset\":\"SERIF_EDITORIAL\"}");
+        releaseRow.put("layoutSchemaJson", "{\"themeArchetype\":\"EDITORIAL_BOTANICAL\",\"heroStyle\":\"EDITORIAL_STORY\",\"showCmsForm\":false,\"enabledFeatures\":[\"SHOP_PRODUCT_GRID\",\"SHOP_PHOTO_REVIEWS\",\"CMS_BRAND_MAGAZINE\",\"CMS_FAQ_ACCORDION\"]}");
+        releaseRow.put("webideFilesJson", "[{\"path\":\"src/CustomStyles.css\",\"language\":\"css\",\"content\":\".sf-root { letter-spacing: -0.01em; } <style>body{display:none}</style><script>alert(1)</script>\"}]");
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), eq("matcha-atelier"), eq("matcha-atelier")))
+                .thenReturn(List.of(siteRow));
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site_release"), eq("site-kkumz-001"), eq(2)))
+                .thenReturn(List.of(releaseRow));
+        when(jdbcTemplate.queryForList(contains("kkumz_content_category"), eq("FOOD_BEVERAGE")))
+                .thenReturn(List.of(Map.of("label", "F&B & 로스터리")));
+
+        when(shopJdbcTemplate.queryForList(contains("FROM pms_product"), eq(2L)))
+                .thenReturn(List.of(new LinkedHashMap<>(Map.of("id", 201L, "name", "첫물 말차 40g 틴캔", "pic", "/images/studio/prod-matcha-tin.jpg", "price", 38000))));
+        when(shopJdbcTemplate.queryForList(contains("FROM sms_home_advertise"), eq(2L)))
+                .thenReturn(List.of(Map.of("id", 201L, "name", "햇차 오픈", "pic", "/images/studio/banner-matcha-jeju.jpg")));
+        when(shopJdbcTemplate.queryForList(contains("FROM pms_product_category"), eq(2L)))
+                .thenReturn(List.of(Map.of("id", 201L, "name", "세레모니얼 말차")));
+        when(shopJdbcTemplate.queryForList(contains("FROM sms_coupon"), eq(2L)))
+                .thenReturn(List.of(Map.of("id", 201L, "name", "웰컴 바우처", "amount", 5000, "code", "MATCHA-JEJU-5K")));
+        when(shopJdbcTemplate.queryForList(contains("FROM pms_comment"), eq(2L)))
+                .thenReturn(List.of(Map.of("id", 201L, "author", "최*우 티소믈리에", "rating", 5, "comment", "에메랄드빛 수색과 깊은 감칠맛이 일품입니다.")));
+        when(shopJdbcTemplate.queryForList(contains("FROM cms_help"), eq(2L)))
+                .thenReturn(List.of(Map.of("id", 201L, "q", "개봉 후 말차 가루 보관 방법이 궁금합니다.", "a", "밀봉 후 냉장 보관을 권장합니다.")));
+        when(shopJdbcTemplate.queryForList(contains("FROM cms_subject"), eq(2L)))
+                .thenReturn(List.of(Map.of("id", 201L, "title", "제주 서귀포 21일 차광 재배의 비밀", "cover", "/images/studio/banner-matcha-jeju.jpg")));
+        when(shopJdbcTemplate.queryForList(contains("FROM pms_sku_stock"), eq(2L)))
+                .thenReturn(List.of(Map.of("id", 2001L, "productId", 201L, "skuCode", "MA-40G", "spData", "[{\"key\":\"용량\",\"value\":\"40g 틴캔\"}]")));
+
+        Map<String, Object> runtime = kkumzService.getSiteRuntime("matcha-atelier");
+
+        assertEquals("EDITORIAL_BOTANICAL", runtime.get("themeArchetype"));
+        assertEquals("WARM", runtime.get("surfaceMode"));
+        assertEquals("SERIF_EDITORIAL", runtime.get("fontPreset"));
+        assertEquals("F&B & 로스터리", runtime.get("categoryLabel"));
+        assertNull(runtime.get("cmsForm"), "순수 D2C 스토어에는 강제 예약 폼이 주입되어서는 안 됩니다.");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> fb = (Map<String, Object>) runtime.get("featureBlocks");
+        assertNull(fb.get("pricingMatrix"), "SHOP_PRICING_MATRIX 미선택 사이트에 시즌 요금표가 오염되어서는 안 됩니다.");
+        assertNull(fb.get("spaceTour"), "CMS_SPACE_TOUR 미선택 사이트에 스페이스 투어가 오염되어서는 안 됩니다.");
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> reviews = (List<Map<String, Object>>) fb.get("reviews");
+        assertEquals(1, reviews.size());
+        assertEquals("최*우 티소믈리에", reviews.get(0).get("author"));
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> faqs = (List<Map<String, Object>>) fb.get("faqItems");
+        assertEquals(1, faqs.size());
+        assertEquals("개봉 후 말차 가루 보관 방법이 궁금합니다.", faqs.get(0).get("q"));
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> articles = (List<Map<String, Object>>) runtime.get("articles");
+        assertEquals(1, articles.size());
+        assertEquals("제주 서귀포 21일 차광 재배의 비밀", articles.get(0).get("title"));
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> products = (List<Map<String, Object>>) runtime.get("products");
+        @SuppressWarnings("unchecked")
+        List<String> prodOptions = (List<String>) products.get(0).get("options");
+        assertNotNull(prodOptions);
+        assertEquals("40g 틴캔", prodOptions.get(0));
+
+        String customCss = String.valueOf(runtime.get("customCss"));
+        assertTrue(customCss.contains("letter-spacing"));
+        assertFalse(customCss.contains("<script>"), "CustomStyles.css 내 스크립트 태그는 반드시 새니타이징되어야 합니다.");
+        assertFalse(customCss.contains("<style>"), "CustomStyles.css 내 style 태그도 백엔드에서 새니타이징되어야 합니다.");
+    }
+
+    @Test
+    @DisplayName("20. [장바구니 쿠폰 할인 & 옵션 메모 반영] createCommerceOrder 로컬 JDBC 결제 시 할인액 차감 및 옵션·쿠폰 메모 영속화 검증")
+    void testCreateCommerceOrderAppliesCouponDiscountAndOptionNote() {
+        Map<String, Object> siteRow = new LinkedHashMap<>();
+        siteRow.put("id", "site-kkumz-001");
+        siteRow.put("siteSlug", "matcha-atelier");
+        siteRow.put("siteName", "말차 아뜰리에 제주");
+        siteRow.put("shopSiteId", 2L);
+        siteRow.put("ownerUsername", "soyeon.jeju");
+
+        Map<String, Object> prodRow = new LinkedHashMap<>();
+        prodRow.put("id", 201L);
+        prodRow.put("name", "첫물 세레모니얼 말차 40g");
+        prodRow.put("pic", "/images/studio/prod-matcha-tin.jpg");
+        prodRow.put("product_sn", "MA-CER-040");
+        prodRow.put("brand_name", "말차 아뜰리에 제주");
+        prodRow.put("product_category_id", 201L);
+        prodRow.put("price", new java.math.BigDecimal("42000"));
+        prodRow.put("promotion_price", new java.math.BigDecimal("38000"));
+        prodRow.put("stock", 25);
+
+        when(jdbcTemplate.queryForList(contains("FROM kkumz_site WHERE site_slug = ?"), eq("matcha-atelier"), eq("matcha-atelier")))
+                .thenReturn(List.of(siteRow));
+        when(shopJdbcTemplate.queryForList(contains("FROM pms_product WHERE id = ? AND site_id = ?"), eq(201L), eq(2L)))
+                .thenReturn(List.of(prodRow));
+        when(shopJdbcTemplate.queryForObject(contains("INSERT INTO oms_order"), eq(Long.class), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(9001L);
+
+        CommerceOrderRequest req = new CommerceOrderRequest();
+        req.setProductId(201L);
+        req.setQuantity(2);
+        req.setReceiverName("한소연");
+        req.setReceiverPhone("CONTACT-KR-MATCHA");
+        req.setReceiverAddress("제주 서귀포시 안덕면");
+        req.setDiscountAmount(new BigDecimal("5000"));
+        req.setNote("[옵션: 40g 틴캔] [쿠폰: MATCHA-JEJU-5K (-5,000원)]");
+
+        Map<String, Object> res = kkumzService.createCommerceOrder("matcha-atelier", req);
+
+        assertEquals(new BigDecimal("76000"), res.get("totalAmount"));
+        assertEquals(new BigDecimal("5000"), res.get("discountAmount"));
+        assertEquals(new BigDecimal("71000"), res.get("payAmount"));
+        assertEquals("[옵션: 40g 틴캔] [쿠폰: MATCHA-JEJU-5K (-5,000원)]", res.get("note"));
+        assertEquals(23, res.get("remainingStock"));
+    }
 }

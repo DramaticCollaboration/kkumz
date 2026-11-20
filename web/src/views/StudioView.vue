@@ -683,6 +683,40 @@
 
               <!-- 탭 2: 배너·브랜드·컬러·노출 섹션 직접 편집 -->
               <div v-else-if="step4Tab === 'VISUAL_THEME'" class="tab-pane">
+                <div v-if="themeArchetypes.length" class="mini-field">
+                  <label>비주얼 테마 아키타입</label>
+                  <select v-model="visualForm.themeArchetype">
+                    <option v-for="arch in themeArchetypes" :key="arch.code" :value="arch.code">
+                      {{ arch.label }}
+                    </option>
+                  </select>
+                </div>
+                <div v-if="heroStyles.length" class="mini-field">
+                  <label>히어로 레이아웃 스타일</label>
+                  <select v-model="visualForm.heroStyle">
+                    <option v-for="hs in heroStyles" :key="hs.code" :value="hs.code">
+                      {{ hs.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="color-picker-row">
+                  <div class="mini-field">
+                    <label>서피스 무드</label>
+                    <select v-model="visualForm.surfaceMode">
+                      <option value="LIGHT">라이트 (화이트)</option>
+                      <option value="WARM">웜 (아이보리/페이퍼)</option>
+                      <option value="DARK">다크 (스튜디오 블랙)</option>
+                    </select>
+                  </div>
+                  <div v-if="fontPresets.length" class="mini-field">
+                    <label>타이포그래피 프리셋</label>
+                    <select v-model="visualForm.fontPreset">
+                      <option v-for="fp in fontPresets" :key="fp.code" :value="fp.code">
+                        {{ fp.label }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
                 <div class="mini-field">
                   <label>상단 GNB 사이트 브랜드명</label>
                   <input v-model="visualForm.siteName" type="text" placeholder="예: 냇가식당, 청류민박" />
@@ -1232,6 +1266,8 @@ const componentLabels = ref<Record<string, string>>({});
 const featureCatalog = ref<any[]>([]);
 const featureCategories = ref<Array<{ code: string; label: string; desc?: string }>>([]);
 const heroStyles = ref<Array<{ code: string; label: string; desc?: string }>>([]);
+const themeArchetypes = ref<Array<{ code: string; label: string; desc?: string }>>([]);
+const fontPresets = ref<Array<{ code: string; label: string; desc?: string }>>([]);
 
 const enabledFeatures = ref<string[]>([]);
 const aiIntentAnalysis = ref<Record<string, any>>({});
@@ -1324,6 +1360,10 @@ const chatInstruction = ref('');
 const visualForm = ref({
   siteName: '',
   brandSlogan: '',
+  themeArchetype: 'EDITORIAL_BOTANICAL',
+  heroStyle: 'EDITORIAL_STORY',
+  surfaceMode: 'WARM',
+  fontPreset: 'SERIF_EDITORIAL',
   customBadge: '',
   heroTitle: '',
   heroSubtitle: '',
@@ -1904,6 +1944,10 @@ function syncVisualFormFromRuntime(rt: any) {
   visualForm.value = {
     siteName: normalized.siteName || '',
     brandSlogan: normalized.brandSlogan || '',
+    themeArchetype: normalized.themeArchetype || layout.themeArchetype || 'EDITORIAL_BOTANICAL',
+    heroStyle: normalized.heroStyle || layout.heroStyle || 'EDITORIAL_STORY',
+    surfaceMode: normalized.surfaceMode || tokens.surfaceMode || 'WARM',
+    fontPreset: normalized.fontPreset || tokens.fontPreset || 'SERIF_EDITORIAL',
     customBadge: layout.customBadge || '공식 브랜드 쇼케이스',
     heroTitle: layout.heroTitle || normalized.siteName || '',
     heroSubtitle: layout.heroSubtitle || normalized.brandSlogan || '',
@@ -1950,14 +1994,15 @@ function syncVisualFormFromRuntime(rt: any) {
 
   const formObj = layout.customCmsForm || normalized.cmsForm || normalized.cms?.forms?.[0] || {};
   editableCmsForm.value = {
-    title: formObj.title || formObj.formName || `${normalized.siteName || '브랜드'} 온라인 예약 · 문의 신청`,
+    title: formObj.title || formObj.formName || `${normalized.siteName || '브랜드'} 온라인 신청 · 문의`,
     description:
       formObj.description ||
-      '원하시는 일정, 인원 또는 문의 사항을 남겨주시면 확인 후 신속히 안내해 드립니다.',
+      '원하시는 문의 내용이나 신청 정보를 남겨주시면 확인 후 신속히 안내해 드립니다.',
     submitText: formObj.submitText || '온라인 신청 접수',
     conciergeGreeting:
       layout.conciergeGreeting ||
-      `안녕하세요! ${normalized.siteName || '브랜드'} AI 컨시어지입니다. 상품·객실·요금·예약 관련 궁금한 점을 물어보세요.`,
+      layout.copyOverrides?.conciergeSubtitle ||
+      '',
   };
 
   deployForm.value.deployMode = normalized.deployMode || 'DYNAMIC_SDUI';
@@ -1977,6 +2022,8 @@ async function initStudio() {
     featureCatalog.value = meta?.featureCatalog || [];
     featureCategories.value = meta?.featureCategories || [];
     heroStyles.value = meta?.heroStyles || [];
+    themeArchetypes.value = meta?.themeArchetypes || [];
+    fontPresets.value = meta?.fontPresets || [];
   } catch {
     layoutLabels.value = {};
     componentLabels.value = {};
@@ -1987,6 +2034,8 @@ async function initStudio() {
     featureCatalog.value = [];
     featureCategories.value = [];
     heroStyles.value = [];
+    themeArchetypes.value = [];
+    fontPresets.value = [];
   }
   const routeIdeaId = route.params.ideaId ? String(route.params.ideaId) : '';
   if (!isAuthenticated.value && !routeIdeaId) {
@@ -3381,8 +3430,12 @@ async function saveVisualThemeOverrides() {
         surface: visualForm.value.surfaceColor,
         surfaceColor: visualForm.value.surfaceColor,
         radius: visualForm.value.radius,
+        surfaceMode: visualForm.value.surfaceMode,
+        fontPreset: visualForm.value.fontPreset,
       },
       layoutOverrides: {
+        themeArchetype: visualForm.value.themeArchetype,
+        heroStyle: visualForm.value.heroStyle,
         customBadge: visualForm.value.customBadge,
         heroTitle: visualForm.value.heroTitle,
         heroSubtitle: visualForm.value.heroSubtitle,

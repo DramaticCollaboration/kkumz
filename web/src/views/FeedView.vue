@@ -28,7 +28,7 @@
           <textarea
             v-model="quickPrompt"
             class="prompt-textarea"
-            rows="2"
+            rows="3"
             placeholder="어떤 브랜드나 서비스를 만들고 싶으신가요? (예: 제주 서귀포 첫물 유기농 말차와 수제 백자 다완을 판매하는 프리미엄 다도 스토어)"
             @keydown.enter.exact.prevent="startStudioWithPrompt(false)"
           ></textarea>
@@ -562,6 +562,7 @@ onMounted(() => {
 .badge-dot {
   width: 7px;
   height: 7px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: #6366f1;
   animation: pulseDot 2s infinite ease-in-out;
@@ -573,9 +574,11 @@ onMounted(() => {
 .badge-title {
   color: #4f46e5;
   font-weight: 700;
+  white-space: nowrap;
 }
 .badge-divider {
   color: #cbd5e1;
+  flex-shrink: 0;
 }
 .badge-sub {
   color: #64748b;
@@ -590,6 +593,7 @@ onMounted(() => {
   color: #0f172a;
   letter-spacing: -0.025em;
   word-break: keep-all;
+  text-wrap: balance;
   margin: 0 0 14px;
 }
 .gradient-text {
@@ -629,7 +633,12 @@ onMounted(() => {
   line-height: 1.55;
   color: #0f172a;
   resize: none;
+  overflow-y: auto;
+  scrollbar-width: none;
   font-family: inherit;
+}
+.prompt-textarea::-webkit-scrollbar {
+  display: none;
 }
 .prompt-textarea::placeholder {
   color: #94a3b8;
@@ -865,11 +874,12 @@ onMounted(() => {
   position: relative;
 }
 .custom-select {
-  appearance: none;
-  background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") no-repeat right 10px center / 14px;
+  background-color: #f8fafc;
+  background-image: none;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  padding: 8px 30px 8px 12px;
+  min-height: 40px;
+  padding: 8px 12px;
   font-size: 13px;
   font-weight: 500;
   color: #334155;
@@ -1021,11 +1031,14 @@ onMounted(() => {
 .banner-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 14px;
 }
 .badge-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
 }
@@ -1034,6 +1047,8 @@ onMounted(() => {
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .type-pill.commerce {
   background: #dcfce7;
@@ -1054,6 +1069,8 @@ onMounted(() => {
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .my-site-pill {
   background: #4f46e5;
@@ -1062,6 +1079,8 @@ onMounted(() => {
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .deploy-pill {
   font-size: 11px;
@@ -1071,6 +1090,8 @@ onMounted(() => {
   padding: 4px 10px;
   border-radius: 9999px;
   border: 1px solid rgba(226, 232, 240, 0.6);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .logo-preview {
   height: 44px;
@@ -1193,12 +1214,15 @@ onMounted(() => {
   align-items: center;
   gap: 5px;
   padding: 6px 11px;
+  min-height: 36px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
   font-size: 12px;
   font-weight: 600;
   color: #475569;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
   transition: all 0.12s ease;
 }
@@ -1214,11 +1238,14 @@ onMounted(() => {
   font-size: 11px;
   color: #94a3b8;
   margin-left: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .card-actions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 .btn-outline {
   padding: 8px 14px;
@@ -1228,6 +1255,7 @@ onMounted(() => {
   color: #334155;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   transition: all 0.12s ease;
 }
@@ -1243,6 +1271,7 @@ onMounted(() => {
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   transition: all 0.12s ease;
 }
@@ -1355,13 +1384,26 @@ onMounted(() => {
    ============================================================ */
 @media (max-width: 768px) {
   .hero-section {
-    padding: 36px 16px 32px;
+    padding: 28px 16px 28px;
+  }
+  .hero-badge {
+    max-width: 100%;
+    padding: 6px 12px;
+  }
+  .badge-divider,
+  .badge-sub {
+    display: none;
   }
   .hero-heading {
-    font-size: 26px;
+    font-size: 24px;
   }
   .hero-desc {
-    font-size: 13px;
+    font-size: 13.5px;
+    margin-bottom: 22px;
+  }
+  .type-chip-btn {
+    min-height: 38px;
+    padding: 6px 12px;
   }
   .showcase-grid {
     grid-template-columns: 1fr;
@@ -1377,20 +1419,66 @@ onMounted(() => {
   .fasttrack-cta-btn,
   .create-cta-btn {
     width: 100%;
+    min-height: 44px;
     justify-content: center;
+  }
+  .filter-tabs {
+    width: 100%;
+    padding-right: 24px;
+    -webkit-mask-image: linear-gradient(to right, #000 86%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 86%, transparent 100%);
+  }
+  .tab-btn {
+    min-height: 40px;
   }
   .filter-controls-group {
     width: 100%;
     justify-content: space-between;
+  }
+  .sort-btn {
+    min-height: 34px;
+    padding: 6px 12px;
   }
   .search-box {
     width: 100%;
   }
   .search-input {
     width: 100%;
+    min-height: 40px;
   }
   .search-input:focus {
     width: 100%;
+  }
+  .card-banner {
+    padding: 16px 18px;
+  }
+  .card-body {
+    padding: 18px;
+  }
+  .card-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px 18px;
+  }
+  .metrics {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .like-btn,
+  .comment-btn {
+    min-height: 40px;
+  }
+  .card-actions {
+    width: 100%;
+  }
+  .card-actions .btn-outline,
+  .card-actions .btn-solid {
+    flex: 1;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 </style>
