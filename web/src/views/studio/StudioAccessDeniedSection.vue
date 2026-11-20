@@ -1,8 +1,8 @@
 <template>
   <section class="studio-access-denied" data-testid="studio-access-denied">
     <div class="access-denied-card">
-      <span class="denied-badge">OWNERSHIP PROTECTION · HTTP 403</span>
-      <h2>이 프로젝트의 열람 및 수정 권한이 없습니다</h2>
+      <span class="denied-badge">접근 권한 안내</span>
+      <h1>이 프로젝트의 열람 및 수정 권한이 없습니다</h1>
       <p>
         <strong>{{ accessDeniedBrand }}</strong> 프로젝트는
         <strong>{{ accessDeniedOwner }}</strong>님이 만든 프로젝트입니다.<br />

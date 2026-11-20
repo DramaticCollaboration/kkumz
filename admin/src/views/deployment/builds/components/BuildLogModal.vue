@@ -2,7 +2,7 @@
   <BasicModal
     v-bind="$attrs"
     @register="registerModal"
-    title="WebIDE 빌드 파이프라인 상세 콘솔 로그"
+    title="사이트 자동 발행 상세 로그"
     :width="760"
     :showOkBtn="false"
     cancelText="닫기"

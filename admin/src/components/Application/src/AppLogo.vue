@@ -4,28 +4,13 @@
 -->
 <template>
   <div class="anticon flex items-center cursor-pointer select-none py-1.5 px-2.5" :class="getAppLogoClass" @click="goHome">
-    <svg
-      viewBox="0 0 36 36"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      class="w-8 h-8 rounded-lg shadow-sm mr-2.5 shrink-0 transition-transform hover:scale-105"
-    >
-      <rect width="36" height="36" rx="10" fill="url(#kkumzLogoGrad)" />
-      <path
-        d="M11 10V26M11 18L20 10M15 15L21.5 26"
-        stroke="white"
-        stroke-width="3.2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-      <circle cx="26" cy="11" r="2.6" fill="#FDE047" />
-      <defs>
-        <linearGradient id="kkumzLogoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#4F46E5" />
-          <stop offset="1" stop-color="#9333EA" />
-        </linearGradient>
-      </defs>
-    </svg>
+    <img
+      :src="kkumzLogo"
+      alt="꿈즈 Kkumz"
+      width="36"
+      height="36"
+      class="w-9 h-9 rounded-lg shadow-sm mr-2.5 shrink-0 transition-transform hover:scale-105"
+    />
 
     <div class="flex items-center text-lg font-bold tracking-tight whitespace-nowrap" :class="getTitleClass" v-show="showTitle">
       <span
@@ -50,6 +35,7 @@
 
 <script lang="ts" setup>
   import { computed, unref } from 'vue';
+  import kkumzLogo from '/@/assets/svg/kkumz-logo.svg';
   import { useGlobSetting } from '/@/hooks/setting';
   import { useGo } from '/@/hooks/web/usePage';
   import { useMenuSetting } from '/@/hooks/setting/useMenuSetting';

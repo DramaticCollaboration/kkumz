@@ -1,4 +1,5 @@
 import type { Router, RouteRecordRaw } from 'vue-router';
+import type { AppRouteRecordRaw } from '/@/router/types';
 
 import { usePermissionStore } from '/@/store/modules/permission';
 
@@ -117,32 +118,26 @@ export function createPermissionGuard(router: Router) {
       //update-end---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3 Auth2가 구현되지 않았습니다.------------
       // redirect login page
       const redirectData: { path: string; replace: boolean; query?: Recordable<string> } = {
-        //update-begin---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3 Auth2가 구현되지 않았습니다.------------
         path: path,
-        //update-end---author:wangshuai ---date:20220629  for：[issues/I5BG1I]vue3 Auth2가 구현되지 않았습니다.------------
         replace: true,
       };
 
-      //update-begin---author:scott ---date:2023-04-24  for：【QQYUN-4713】로그인 코드 조정 논리에 문제가 있으며 변환은 아직 지켜봐야 합니다.
       if (to.fullPath) {
         const getFullPath = to.fullPath;
-        if (
-          getFullPath == '/' ||
-          getFullPath == '/500' ||
-          getFullPath == '/400' ||
-          getFullPath == '/login?redirect=/' ||
-          getFullPath == '/login?redirect=/login?redirect=/'
-        ) {
-          return true;
+        const skipRedirectPaths = [
+          '/',
+          '/500',
+          '/400',
+          '/login',
+          '/login?redirect=/',
+          '/login?redirect=/login?redirect=/',
+        ];
+        if (!skipRedirectPaths.includes(getFullPath)) {
+          redirectData.query = {
+            ...redirectData.query,
+            redirect: to.fullPath,
+          };
         }
-        //update-end---author:scott ---date:2023-04-24  for：【QQYUN-4713】로그인 코드 조정 논리에 문제가 있으며 변환은 아직 지켜봐야 합니다.
-
-        redirectData.query = {
-          ...redirectData.query,
-          // update-begin-author:sunjianlei date:20230306 for: 로그인 성공 후 올바르게 리디렉션되지 않는 문제가 수정되었습니다.
-          redirect: to.fullPath,
-          // update-end-author:sunjianlei date:20230306 for: 로그인 성공 후 올바르게 리디렉션되지 않는 문제가 수정되었습니다.
-        };
       }
       return redirectData;
     }
@@ -173,8 +168,19 @@ export function createPermissionGuard(router: Router) {
       return true;
     }
 
-    // 배경 메뉴 라우팅 구축
-    const routes = await permissionStore.buildRoutesAction();
+    if (!userStore.getToken) {
+      return { path: LOGIN_PATH, replace: true };
+    }
+
+    // 배경 메뉴 라우팅 구축 (만료된 토큰 등으로 실패 시 조용히 로그인 페이지로 복귀)
+    let routes: AppRouteRecordRaw[] = [];
+    try {
+      routes = await permissionStore.buildRoutesAction();
+    } catch {
+      userStore.setToken(undefined);
+      permissionStore.resetState();
+      return { path: LOGIN_PATH, replace: true };
+    }
     routes.forEach((route) => {
       router.addRoute(route as unknown as RouteRecordRaw);
     });

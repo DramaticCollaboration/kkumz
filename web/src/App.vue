@@ -29,7 +29,7 @@
           </div>
         </div>
 
-        <nav class="nav-links">
+        <nav class="nav-links desktop-only" aria-label="주 메뉴">
           <router-link to="/feed" class="nav-item" :class="{ active: route.name === 'FeedView' }">
             쇼케이스 피드
           </router-link>
@@ -46,7 +46,7 @@
           </a>
         </nav>
 
-        <div class="gnb-actions">
+        <div class="gnb-actions desktop-only">
           <template v-if="isAuthenticated">
             <div class="user-profile-pill">
               <span class="user-avatar-dot">{{ (kkumzAuth.user?.realname || kkumzAuth.user?.username || 'M').slice(0, 1) }}</span>
@@ -101,12 +101,121 @@
             + 새 아이디어 시작
           </button>
         </div>
+
+        <!-- 모바일 전용 햄버거 버튼 (<= 900px) -->
+        <button
+          type="button"
+          class="mobile-menu-btn"
+          :aria-expanded="mobileMenuOpen"
+          aria-label="메뉴 열기"
+          @click="mobileMenuOpen = !mobileMenuOpen"
+        >
+          <svg v-if="!mobileMenuOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- 모바일 드로어 내비게이션 -->
+      <div v-if="mobileMenuOpen" class="mobile-nav-drawer">
+        <nav class="mobile-nav-links" aria-label="모바일 메뉴">
+          <router-link
+            to="/feed"
+            class="mobile-nav-item"
+            :class="{ active: route.name === 'FeedView' }"
+            @click="mobileMenuOpen = false"
+          >
+            쇼케이스 피드
+          </router-link>
+          <router-link
+            to="/lounge"
+            class="mobile-nav-item"
+            :class="{ active: route.name === 'ProjectLoungeView' }"
+            @click="mobileMenuOpen = false"
+          >
+            팀빌딩 라운지
+          </router-link>
+          <a
+            href="/workspace"
+            class="mobile-nav-item"
+            :class="{ active: route.name === 'WorkspaceView' }"
+            @click.prevent="mobileMenuOpen = false; handleProtectedNav('/workspace', '내 워크스페이스 조회 및 관리를 위해 로그인해 주세요.')"
+          >
+            내 워크스페이스
+          </a>
+        </nav>
+
+        <div class="mobile-drawer-divider"></div>
+
+        <div class="mobile-drawer-actions">
+          <template v-if="isAuthenticated">
+            <div class="mobile-user-row">
+              <div class="user-profile-pill">
+                <span class="user-avatar-dot">{{ (kkumzAuth.user?.realname || kkumzAuth.user?.username || 'M').slice(0, 1) }}</span>
+                <span class="user-realname">{{ kkumzAuth.user?.realname || kkumzAuth.user?.username }}</span>
+                <span class="user-role-tag">{{ formatUserRoleLabel(kkumzAuth.roles) }}</span>
+              </div>
+              <button class="ghost-auth-btn" type="button" @click="mobileMenuOpen = false; handleLogout()">
+                로그아웃
+              </button>
+            </div>
+          </template>
+          <template v-else>
+            <div class="mobile-auth-row">
+              <button class="ghost-auth-btn flex-1" type="button" @click="mobileMenuOpen = false; openAuthModal('login')">
+                로그인
+              </button>
+              <button class="outline-auth-btn flex-1" type="button" @click="mobileMenuOpen = false; openAuthModal('register')">
+                회원가입
+              </button>
+            </div>
+          </template>
+
+          <button
+            class="primary-cta mobile-full-cta"
+            type="button"
+            @click="mobileMenuOpen = false; handleProtectedNav('/studio', '새 브랜드 아이디어를 만들고 내 사이트로 저장하려면 로그인해 주세요.')"
+          >
+            + 새 아이디어 시작
+          </button>
+        </div>
       </div>
     </header>
 
     <main :class="isCommunityLayout ? 'kkumz-main-community' : 'kkumz-main-full'">
       <router-view />
     </main>
+
+    <!-- 공식 기업 법적 고지 푸터 (커뮤니티 레이아웃 공통) -->
+    <footer v-if="isCommunityLayout" class="kkumz-footer">
+      <div class="kkumz-footer-inner">
+        <div class="footer-top">
+          <div class="footer-brand">
+            <strong>꿈즈 Kkumz</strong>
+            <span>AI 브랜드 스튜디오 &amp; 창업 커뮤니티</span>
+          </div>
+          <div class="footer-legal-links">
+            <a href="https://empasy.io/ko/pages/terms.html" target="_blank" rel="noopener noreferrer">이용약관</a>
+            <span class="footer-dot" aria-hidden="true">·</span>
+            <a href="https://empasy.io/ko/pages/privacy.html" target="_blank" rel="noopener noreferrer" class="privacy-strong">개인정보 처리방침</a>
+          </div>
+        </div>
+        <div class="footer-corp-info">
+          <p>
+            <strong>주식회사 엠파시 (Empasy Inc.)</strong> | 대표이사: 오병문 | 사업자등록번호: 547-81-03408 | 혁신성장유형 벤처기업 확인 (제 20261111030084 호)
+          </p>
+          <p>
+            주소: 서울 금천구 가산디지털1로 205-27 2층 208호 | 대표번호: 0507-1360-8169 | 이메일: poh@empasy.com
+          </p>
+        </div>
+        <div class="footer-copy">
+          &copy; 2026 주식회사 엠파시 (Empasy Inc.). All rights reserved.
+        </div>
+      </div>
+    </footer>
 
     <!-- 통합 로그인 · 셀프 회원가입 모달 -->
     <div v-if="kkumzAuth.authModalOpen" class="auth-modal-backdrop" @click.self="closeAuthModal">
@@ -159,6 +268,7 @@
           <label class="auth-field">
             <span>비밀번호</span>
             <input
+              ref="loginPasswordInput"
               v-model="loginForm.password"
               type="password"
               placeholder="비밀번호 입력"
@@ -170,10 +280,10 @@
             {{ authSubmitting ? '인증 중...' : '로그인' }}
           </button>
 
-          <div class="quick-demo-box">
+          <div v-if="isDemoMode" class="quick-demo-box">
             <div class="quick-demo-head">
-              <strong>시드 메이커 계정 빠른 전환</strong>
-              <span>클릭 시 해당 브랜드 소유자로 즉시 로그인</span>
+              <strong>체험 계정으로 둘러보기</strong>
+              <span>클릭 시 샘플 브랜드 체험 계정 선택</span>
             </div>
             <div class="quick-demo-grid">
               <button
@@ -259,7 +369,7 @@
                 @click="registerForm.roleCode = 'ROLE_DEVELOPER'"
               >
                 <strong>프론트엔드 개발자</strong>
-                <span>팀 합류 · WebIDE 커스텀 코드 고도화</span>
+                <span>팀 합류 · 맞춤 디자인·코드 고도화</span>
               </button>
             </div>
           </div>
@@ -289,7 +399,10 @@ const route = useRoute();
 const router = useRouter();
 
 const isCommunityLayout = computed(() => route.meta.layout === 'community');
+const isDemoMode = computed(() => import.meta.env.VITE_DEMO_MODE !== 'false');
 
+const mobileMenuOpen = ref(false);
+const loginPasswordInput = ref<HTMLInputElement | null>(null);
 const notifications = ref<any[]>([]);
 const showNotifDropdown = ref(false);
 const authSubmitting = ref(false);
@@ -313,26 +426,26 @@ const demoAccounts = [
   {
     username: 'soyeon.jeju',
     realname: '한소연 대표',
-    badge: '소유자',
-    brandName: '말차 아뜰리에 제주 (/s/matcha-atelier)',
+    badge: '체험',
+    brandName: '말차 아뜰리에 제주',
   },
   {
     username: 'minjun.maker',
     realname: '박민준 메이커',
-    badge: '소유자',
-    brandName: '데스크 오빗 (/s/desk-orbit)',
+    badge: '체험',
+    brandName: '데스크 오빗',
   },
   {
     username: 'jihoon.run',
     realname: '정지훈 크루장',
-    badge: '소유자',
-    brandName: '서울 나이트 런 클럽 (/s/seoul-run-club)',
+    badge: '체험',
+    brandName: '서울 나이트 런 클럽',
   },
   {
     username: 'hajun.roast',
     realname: '최하준 헤드로스터',
-    badge: '소유자',
-    brandName: '빈 크로니클 서울 (/s/bean-chronicle)',
+    badge: '체험',
+    brandName: '빈 크로니클 서울',
   },
 ];
 
@@ -416,9 +529,14 @@ async function submitLogin() {
 }
 
 async function quickLoginAs(username: string) {
+  const demoPw = (import.meta.env.VITE_DEMO_USER_PW as string) || '';
   loginForm.username = username;
-  loginForm.password = '123456';
-  await submitLogin();
+  if (demoPw) {
+    loginForm.password = demoPw;
+    await submitLogin();
+  } else {
+    loginPasswordInput.value?.focus();
+  }
 }
 
 async function submitRegister() {
@@ -452,6 +570,13 @@ async function handleLogout() {
 }
 
 watch(
+  () => route.fullPath,
+  () => {
+    mobileMenuOpen.value = false;
+  },
+);
+
+watch(
   () => kkumzAuth.user?.username,
   () => {
     loadNotifications();
@@ -475,19 +600,20 @@ onMounted(async () => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 .kkumz-gnb {
   position: sticky;
   top: 0;
   z-index: 50;
-  height: 68px;
+  min-height: 68px;
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid #e2e8f0;
 }
 .gnb-inner {
   max-width: 1320px;
-  height: 100%;
+  height: 68px;
   margin: 0 auto;
   padding: 0 24px;
   display: flex;
@@ -500,6 +626,7 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 .logo-mark {
   width: 36px;
@@ -509,16 +636,19 @@ onMounted(async () => {
 .brand-titles {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 .brand-ko {
   font-size: 17px;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 .brand-sub {
   font-size: 11px;
   color: #64748b;
+  white-space: nowrap;
 }
 .nav-links {
   display: flex;
@@ -531,6 +661,8 @@ onMounted(async () => {
   font-size: 14px;
   font-weight: 700;
   color: #475569;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 .nav-item:hover {
@@ -644,6 +776,8 @@ onMounted(async () => {
   color: #fff;
   font-size: 13px;
   font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
 }
@@ -736,6 +870,8 @@ onMounted(async () => {
 .auth-modal-card {
   width: 100%;
   max-width: 520px;
+  max-height: 92vh;
+  overflow-y: auto;
   background: #fff;
   border-radius: 22px;
   border: 1px solid #e2e8f0;
@@ -775,9 +911,11 @@ onMounted(async () => {
   background: #f8fafc;
   color: #475569;
   border-radius: 8px;
-  padding: 6px 11px;
+  padding: 6px 12px;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
 }
 .auth-tabs {
@@ -956,5 +1094,187 @@ onMounted(async () => {
   margin-top: 2px;
   font-size: 10px;
   color: #64748b;
+}
+
+/* Mobile Header Drawer & Responsive Breakpoints */
+.mobile-menu-btn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.mobile-menu-btn svg {
+  width: 22px;
+  height: 22px;
+}
+.mobile-nav-drawer {
+  display: none;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 14px 16px 18px;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mobile-nav-item {
+  display: block;
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+}
+.mobile-nav-item.active,
+.mobile-nav-item:hover {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+.mobile-drawer-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 12px 0;
+}
+.mobile-drawer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mobile-auth-row,
+.mobile-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.flex-1 {
+  flex: 1;
+  text-align: center;
+}
+.mobile-full-cta {
+  width: 100%;
+  text-align: center;
+}
+
+@media (max-width: 960px) {
+  .gnb-inner {
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+  .mobile-nav-drawer {
+    display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  .brand-sub {
+    display: none;
+  }
+  .kkumz-main-community {
+    padding: 18px 12px 48px;
+  }
+  .auth-modal-card {
+    padding: 20px 16px;
+  }
+  .auth-form-row,
+  .quick-demo-grid,
+  .role-select-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Official Corporate Legal Footer */
+.kkumz-footer {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12px;
+  padding: 32px 24px 36px;
+}
+.kkumz-footer-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.footer-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.footer-brand strong {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.footer-brand span {
+  color: #64748b;
+  font-size: 12px;
+}
+.footer-legal-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.footer-legal-links a {
+  color: #475569;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.footer-legal-links a:hover {
+  color: #0f172a;
+  text-decoration: underline;
+}
+.footer-legal-links .privacy-strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+.footer-dot {
+  color: #cbd5e1;
+}
+.footer-corp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.6;
+  color: #64748b;
+  word-break: keep-all;
+}
+.footer-corp-info p {
+  margin: 0;
+}
+.footer-corp-info strong {
+  color: #334155;
+}
+.footer-copy {
+  font-size: 11px;
+  color: #94a3b8;
 }
 </style>

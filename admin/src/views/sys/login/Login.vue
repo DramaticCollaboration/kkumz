@@ -1,9 +1,9 @@
 <template>
   <div :class="prefixCls" class="relative w-full min-h-screen px-3 sm:px-4 flex flex-col justify-start xl:justify-between overflow-x-hidden">
     <!-- 모바일 전용 상단 헤더 바 (로고 + 다크모드/언어) -->
-    <header class="flex items-center justify-between w-full pt-3 pb-2 px-2 xl:hidden z-20 shrink-0 mb-1">
+    <header v-if="!isDesktop" class="flex items-center justify-between w-full pt-3 pb-2 px-2 z-20 shrink-0 mb-1">
       <div class="mobile-logo-wrap">
-        <AppLogo :alwaysShowTitle="true" />
+        <AppLogo :alwaysShowTitle="true" theme="dark" />
       </div>
       <div class="flex items-center gap-2.5">
         <AppDarkModeToggle v-if="!sessionTimeout" class="enter-x" />
@@ -12,25 +12,25 @@
     </header>
 
     <!-- 데스크톱 전용 상단 미니 유틸리티 (다크모드 & 언어) -->
-    <div class="hidden xl:flex absolute top-5 right-8 z-20 items-center gap-3">
+    <div v-if="isDesktop" class="flex absolute top-5 right-8 z-20 items-center gap-3">
       <AppDarkModeToggle v-if="!sessionTimeout" class="enter-x" />
       <AppLocalePicker class="enter-x text-slate-400 hover:text-slate-600" :showText="false" v-if="!sessionTimeout && showLocale" />
     </div>
 
     <div class="container relative min-h-0 xl:min-h-full py-1 sm:py-4 mx-auto sm:px-10 flex-1 flex flex-col justify-start xl:justify-center">
       <div class="flex h-auto xl:h-full items-start xl:items-center w-full">
-        <!-- 좌측 브랜딩 & 소셜 프루프 영역 (데스크톱 xl 이상만 노출) -->
-        <div class="hidden min-h-full pl-4 mr-4 xl:flex xl:flex-col xl:w-6/12 justify-center">
-          <AppLogo class="-enter-x mb-6" />
-          <div class="pr-8">
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-500/15 border border-slate-400/30 text-slate-300 text-xs font-medium mb-5 -enter-x">
-              꿈즈 Kkumz AI 브랜드·멀티사이트 빌더 관제 백오피스
+        <!-- 좌측 브랜딩 & 운영 개요 영역 (블루 커브 안쪽 안전 폭 max-w-[420px] 엄격 준수) -->
+        <div v-if="isDesktop" class="min-h-full pl-4 mr-4 flex flex-col w-6/12 justify-center">
+          <div class="max-w-[420px] pr-10">
+            <AppLogo theme="dark" class="-enter-x mb-6" />
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-blue-100 text-xs font-medium mb-5 -enter-x">
+              꿈즈 Kkumz 브랜드·커뮤니티 통합 운영 콘솔
             </div>
-            <h1 class="text-3xl font-bold text-white tracking-tight leading-snug -enter-x">
-              AI 스튜디오 · 멀티사이트 배포 · 커뮤니티까지<br />단일 백오피스에서 통합 관제
+            <h1 class="text-2xl 2xl:text-3xl font-bold text-white tracking-tight leading-snug break-keep -enter-x">
+              AI 스튜디오 · 멀티사이트 배포 ·<br />커뮤니티까지 한곳에서 운영
             </h1>
-            <p class="mt-4 text-slate-300 text-sm font-normal leading-relaxed -enter-x">
-              AI 브랜드 네이밍·로고 생성 프롬프트 거버넌스부터 멀티사이트 릴리즈/롤백, WebIDE 빌드 파이프라인, 팀빌딩 라운지 및 모더레이션 심사까지 실시간으로 운영합니다.
+            <p class="mt-4 text-blue-100/90 text-sm font-normal leading-relaxed break-keep -enter-x">
+              AI 브랜드 이름·로고 AI 생성 품질 관리부터 사이트 자동 발행 흐름, 버전 관리, 팀빌딩 라운지 및 커뮤니티 심사까지 실시간으로 운영합니다.
             </p>
           </div>
         </div>
@@ -43,9 +43,28 @@
           >
             <LoginForm />
 
-            <!-- 하단 약관 & 보안 안내 푸터 -->
-            <div class="mt-3 text-center text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-3">
-              <span>꿈즈 Kkumz Admin · 256bit SSL 보안</span>
+            <!-- 하단 약관 & 공식 기업 안내 푸터 -->
+            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-center text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-center gap-2.5">
+              <a
+                href="https://empasy.io/ko/pages/terms.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:text-blue-600 dark:hover:text-blue-400"
+              >
+                이용약관
+              </a>
+              <span>·</span>
+              <a
+                href="https://empasy.io/ko/pages/privacy.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:text-blue-600 dark:hover:text-blue-400 font-medium"
+              >
+                개인정보 처리방침
+              </a>
+            </div>
+            <div class="mt-1.5 text-center text-[11px] text-slate-400 dark:text-slate-500">
+              &copy; 2026 주식회사 엠파시 (Empasy Inc.). All rights reserved.
             </div>
           </div>
         </div>
@@ -55,6 +74,7 @@
 </template>
 <script lang="ts" setup>
   import { computed } from 'vue';
+  import { useWindowSize } from '@vueuse/core';
   import { AppLogo } from '/@/components/Application';
   import { AppLocalePicker, AppDarkModeToggle } from '/@/components/Application';
   import LoginForm from './LoginForm.vue';
@@ -69,6 +89,8 @@
     },
   });
 
+  const { width: windowWidth } = useWindowSize();
+  const isDesktop = computed(() => windowWidth.value >= 1280);
   const globSetting = useGlobSetting();
   const { prefixCls } = useDesign('login');
   const { t } = useI18n();
@@ -215,9 +237,10 @@
     }
 
     .@{logo-prefix-cls} {
-      position: absolute;
-      top: 12px;
-      height: 30px;
+      position: relative;
+      top: auto;
+      height: auto;
+      padding-left: 0;
 
       &__title {
         font-size: 16px;
@@ -225,15 +248,20 @@
       }
 
       img {
-        width: 32px;
+        width: 34px;
+        height: 34px;
       }
     }
 
     .container {
       .@{logo-prefix-cls} {
+        position: relative;
+        top: auto;
+        left: auto;
         display: flex;
-        width: 60%;
-        height: 80px;
+        width: auto;
+        height: auto;
+        padding-left: 0;
 
         &__title {
           font-size: 24px;
@@ -241,7 +269,8 @@
         }
 
         img {
-          width: 48px;
+          width: 40px;
+          height: 40px;
         }
       }
     }

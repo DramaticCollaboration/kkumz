@@ -59,9 +59,8 @@
                 {{ formatSiteTypeLabel(runtime.siteType) }}
               </span>
               <span class="kkumz-badge bg-emerald-50 text-emerald-700 border border-emerald-200">
-                {{ formatDeployModeLabel(runtime.deployMode) }} · v{{ runtime.activeVersionNo || runtime.activeVersion || 1 }}
+                {{ formatDeployModeLabel(runtime.deployMode) }}
               </span>
-              <span class="text-xs font-mono text-slate-400">/s/{{ runtime.siteSlug }}</span>
             </div>
             <h1 class="text-2xl font-extrabold text-slate-900">{{ runtime.brandName || runtime.siteName }}</h1>
             <p class="text-sm text-slate-600 mt-1">{{ runtime.tagline || runtime.brandSlogan }}</p>

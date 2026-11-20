@@ -61,7 +61,7 @@
           <div class="panel-header">
             <div>
               <span class="step-kicker">STEP 01 · 만들고 싶은 사이트 알려주기</span>
-              <h2>어떤 사이트를 만들고 싶으신가요?</h2>
+              <h1 class="studio-main-heading">어떤 사이트를 만들고 싶으신가요?</h1>
               <p>만들고 싶은 사이트를 편하게 한 줄로 적어주시면, AI가 어울리는 이름·로고부터 꼭 필요한 기능까지 알아서 챙겨드립니다.</p>
             </div>
             <div class="header-btns">

@@ -1,0 +1,17 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="36" height="36" rx="10" fill="url(#kkumzLogoGrad)" />
+  <path
+    d="M11 10V26M11 18L20 10M15 15L21.5 26"
+    stroke="white"
+    stroke-width="3.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="26" cy="11" r="2.6" fill="#FDE047" />
+  <defs>
+    <linearGradient id="kkumzLogoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5" />
+      <stop offset="1" stop-color="#9333EA" />
+    </linearGradient>
+  </defs>
+</svg>

@@ -55,8 +55,9 @@
               title="클릭하여 새로고침"
             >
               <img
-                v-if="randCodeData.requestCodeSuccess"
+                v-if="randCodeData.requestCodeSuccess && randCodeData.randCodeImage"
                 :src="randCodeData.randCodeImage"
+                alt="보안 인증코드"
                 class="h-full object-contain"
               />
               <span v-else class="text-xs text-slate-400">인증코드 불러오는 중</span>
@@ -196,9 +197,15 @@
     formData.inputCode = '';
     randCodeData.checkKey = new Date().getTime();
     getCodeInfo(randCodeData.checkKey).then((res) => {
-      randCodeData.randCodeImage = res;
-      randCodeData.requestCodeSuccess = true;
+      if (typeof res === 'string' && res.startsWith('data:image/')) {
+        randCodeData.randCodeImage = res;
+        randCodeData.requestCodeSuccess = true;
+      } else {
+        randCodeData.randCodeImage = '';
+        randCodeData.requestCodeSuccess = false;
+      }
     }).catch(() => {
+      randCodeData.randCodeImage = '';
       randCodeData.requestCodeSuccess = false;
     });
   }

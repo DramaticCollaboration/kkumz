@@ -19,7 +19,7 @@ export const steps: StudioStepMeta[] = [
   { no: 2, displayNo: 2, title: '2. 네이밍 & 로고', desc: '브랜드명 8종 & 고화질 로고', optional: false },
   { no: 3, displayNo: 3, title: '3. 기능명세서 & 화면설계', desc: '블루프린트 & 버전 관리', optional: false },
   { no: 4, displayNo: 4, title: '4. 실시간 프리뷰 편집', desc: 'AI 대화·비주얼·상품 편집', optional: false },
-  { no: 5, displayNo: 5, title: '5. WebIDE 코드 편집', desc: '개발자용 코드 커스텀', optional: true },
+  { no: 5, displayNo: 5, title: '5. 맞춤 코드 편집', desc: '전문가용 세부 커스텀', optional: true },
   { no: 6, displayNo: 6, title: '6. 빌드 & 배포', desc: '라이브 발행 & 버전 롤백', optional: false },
 ];
 

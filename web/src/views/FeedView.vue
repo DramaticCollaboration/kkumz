@@ -57,7 +57,9 @@
                 :disabled="creating"
                 @click="startStudioWithPrompt(true)"
               >
-                <span class="fast-icon">⚡</span>
+                <svg class="fast-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                </svg>
                 <span>{{ creating ? '자동 완성 준비 중...' : '1분 자동 완성으로 바로 보기' }}</span>
               </button>
               <button
@@ -195,10 +197,15 @@
               <span v-if="item.canEdit" class="my-site-pill">
                 {{ item.isOwner ? '내 사이트' : '팀 프로젝트' }}
               </span>
-              <span v-if="item.isFeatured" class="featured-pill">★ 추천 쇼케이스</span>
+              <span v-if="item.isFeatured" class="featured-pill">
+                <svg class="inline-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                추천 쇼케이스
+              </span>
             </div>
             <span class="deploy-pill">
-              {{ formatDeployModeLabel(item.deployMode) }} · v{{ item.activeVersion }}
+              {{ formatDeployModeLabel(item.deployMode) }}
             </span>
           </div>
           <div class="logo-preview" v-html="item.logoSvg"></div>
@@ -207,7 +214,6 @@
         <div class="card-body">
           <div class="title-row">
             <h2>{{ item.siteName }}</h2>
-            <span class="slug-badge">/s/{{ item.siteSlug }}</span>
           </div>
           <p class="slogan">{{ item.brandSlogan }}</p>
 
@@ -233,7 +239,10 @@
         <div class="card-footer">
           <div class="metrics">
             <button type="button" class="like-btn" @click="handleLike(item)">
-              <span class="like-icon">♥</span> {{ item.likeCount }}
+              <svg class="like-icon-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+              </svg>
+              <span>{{ item.likeCount }}</span>
             </button>
             <button type="button" class="comment-btn" @click="openCommentModal(item)">
               댓글 {{ item.commentCount }}
@@ -580,6 +589,7 @@ onMounted(() => {
   font-weight: 900;
   color: #0f172a;
   letter-spacing: -0.025em;
+  word-break: keep-all;
   margin: 0 0 14px;
 }
 .gradient-text {
@@ -591,6 +601,7 @@ onMounted(() => {
   font-size: 15px;
   line-height: 1.65;
   color: #64748b;
+  word-break: keep-all;
   max-width: 640px;
   margin: 0 auto 32px;
 }
@@ -691,6 +702,24 @@ onMounted(() => {
 .fasttrack-cta-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+.fast-svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+.inline-icon {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 2px;
+}
+.like-icon-svg {
+  width: 13px;
+  height: 13px;
+  color: #ef4444;
+  flex-shrink: 0;
 }
 
 .create-cta-btn {
@@ -1160,6 +1189,9 @@ onMounted(() => {
 }
 .like-btn,
 .comment-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 6px 11px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;

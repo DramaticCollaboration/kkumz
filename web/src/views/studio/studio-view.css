@@ -745,9 +745,12 @@
   color: #4f46e5;
   letter-spacing: 0.06em;
 }
+.panel-header h1,
 .panel-header h2 {
   margin: 4px 0 6px;
   font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
 }
 .panel-header p {
   margin: 0;

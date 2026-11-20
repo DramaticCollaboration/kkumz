@@ -143,13 +143,13 @@ export function formatSiteTypeLabel(siteType?: string): string {
 }
 
 /**
- * 배포 방식 친근한 한국어 라벨 변환
+ * 사이트 공개 방식 친근한 한국어 라벨 변환
  */
 export function formatDeployModeLabel(deployMode?: string): string {
   if ((deployMode || '').toUpperCase() === 'CUSTOM_BUNDLE') {
-    return '개발자 코드 맞춤 배포';
+    return '맞춤 디자인 적용';
   }
-  return '1초 즉시 오픈 (빌드 대기 없음)';
+  return '바로 공개됨';
 }
 
 /**

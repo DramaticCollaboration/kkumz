@@ -1,4 +1,4 @@
 export default {
-  login: 'Login',
-  errorLogList: 'Error Log',
+  login: '로그인',
+  errorLogList: '오류 로그',
 };
