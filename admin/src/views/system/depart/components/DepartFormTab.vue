@@ -1,5 +1,5 @@
 <template>
-  <a-spin :spinning="loading">
+  <div v-loading="loading" class="relative">
     <BasicForm @register="registerForm" />
     <div class="j-box-bottom-button offset-20" style="margin-top: 30px">
       <div class="j-box-bottom-button-float" :class="[`${prefixCls}`]">
@@ -7,7 +7,7 @@
         <a-button type="primary" class="rounded-md" preIcon="ant-design:save-filled" @click="onSubmit">{{ t('appUi.k1f1712ac') }}</a-button>
       </div>
     </div>
-  </a-spin>
+  </div>
 </template>
 
 <script lang="ts" setup>

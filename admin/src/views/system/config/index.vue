@@ -158,7 +158,7 @@ const activeTab = ref<string>('INTEGRATION');
 const searchKeyword = ref<string>('');
 const configList = ref<SysConfigModel[]>([]);
 const categoryLabelMap = reactive<Record<string, string>>({});
-const formModel = reactive<Record<string, any>>({});
+const formModel = reactive<Record<string, string | number | boolean | undefined>>({});
 const boolModel = reactive<Record<string, boolean>>({});
 const saving = ref<boolean>(false);
 const refreshing = ref<boolean>(false);
@@ -235,8 +235,8 @@ async function loadConfigs() {
         }
       });
     }
-  } catch (e: any) {
-    message.error(t('appUi.k76b4fe13') + (e.message || t('appUi.k5e9f6b80')));
+  } catch (e: unknown) {
+    message.error(t('appUi.k76b4fe13') + ((e instanceof Error ? e.message : (e as { message?: string })?.message) || t('appUi.k5e9f6b80')));
   }
 }
 
@@ -271,8 +271,8 @@ async function handleSaveCurrentCategory() {
     await updateBatchConfig(itemsToUpdate);
     message.success(t('appUi.kb8cff7dc'));
     await loadConfigs();
-  } catch (e: any) {
-    message.error(t('appUi.kd763edfb') + (e.message || t('appUi.k5e9f6b80')));
+  } catch (e: unknown) {
+    message.error(t('appUi.kd763edfb') + ((e instanceof Error ? e.message : (e as { message?: string })?.message) || t('appUi.k5e9f6b80')));
   } finally {
     saving.value = false;
   }
@@ -283,8 +283,8 @@ async function handleResetSingle(item: SysConfigModel) {
     await resetConfig(item.configKey);
     message.success(t('appUi.kcf57fbd1', { p0: item.configName }));
     await loadConfigs();
-  } catch (e: any) {
-    message.error(t('appUi.kb66dac2e') + (e.message || t('appUi.k5e9f6b80')));
+  } catch (e: unknown) {
+    message.error(t('appUi.kb66dac2e') + ((e instanceof Error ? e.message : (e as { message?: string })?.message) || t('appUi.k5e9f6b80')));
   }
 }
 
@@ -294,8 +294,8 @@ async function handleRefreshCache() {
     await refreshConfigCache();
     message.success(t('appUi.k8cc04e24'));
     await loadConfigs();
-  } catch (e: any) {
-    message.error(t('appUi.kcb87df22') + (e.message || t('appUi.k5e9f6b80')));
+  } catch (e: unknown) {
+    message.error(t('appUi.kcb87df22') + ((e instanceof Error ? e.message : (e as { message?: string })?.message) || t('appUi.k5e9f6b80')));
   } finally {
     refreshing.value = false;
   }
@@ -310,8 +310,8 @@ async function handleTestIntegrationConnection() {
       endpoint,
     });
     openDiagModal(true, { diagResult: res });
-  } catch (e: any) {
-    message.error(t('appUi.kf749a189') + (e.message || t('appUi.kf0e53658')));
+  } catch (e: unknown) {
+    message.error(t('appUi.kf749a189') + ((e instanceof Error ? e.message : (e as { message?: string })?.message) || t('appUi.kf0e53658')));
   } finally {
     testing.value = false;
   }

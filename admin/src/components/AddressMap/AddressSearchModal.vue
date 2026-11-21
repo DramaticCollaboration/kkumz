@@ -250,10 +250,10 @@ async function handleKeywordSearch() {
     if (list.length > 0) {
       handleSelectGeocodeItem(list[0]);
     } else {
-      message.info('일치하는 장소 좌표를 찾지 못했습니다. 도로명 또는 행정동 단위로 검색해 보세요.');
+      message.info(t('appUi.kb9b3034c'));
     }
   } catch {
-    message.error('지도 검색 중 오류가 발생했습니다.');
+    message.error(t('appUi.k6c94efca'));
   } finally {
     keywordSearching.value = false;
   }

@@ -96,7 +96,7 @@ export const isRoleExist = (params) => {
         const code = String(params?.roleCode || '').trim();
         const id = params?.id ? String(params.id) : '';
         const exists = records.some(
-          (r: any) => String(r?.roleCode || '').toLowerCase() === code.toLowerCase() && String(r?.id || '') !== id
+          (r: Record<string, unknown>) => String(r?.roleCode || '').toLowerCase() === code.toLowerCase() && String(r?.id || '') !== id
         );
         resolve({
           success: !exists,
@@ -115,7 +115,7 @@ export const isRoleExist = (params) => {
 export const queryTreeListForRole = async () => {
   const treeList = await defHttp.get({ url: Api.queryTreeListForRole });
   const ids: string[] = [];
-  const collectIds = (nodes: any[]) => {
+  const collectIds = (nodes: Array<Record<string, unknown>>) => {
     if (!Array.isArray(nodes)) return;
     for (const node of nodes) {
       if (node?.key || node?.id) {
@@ -135,7 +135,7 @@ export const queryTreeListForRole = async () => {
 export const queryRolePermission = async (params) => {
   const res = await defHttp.get({ url: Api.list, params: { pageNo: 1, pageSize: 200 } });
   const records = Array.isArray(res) ? res : res?.records || [];
-  const matched = records.find((r: any) => String(r.id) === String(params?.roleId));
+  const matched = records.find((r: Record<string, unknown>) => String(r.id) === String(params?.roleId));
   return Array.isArray(matched?.permissionIds) ? matched.permissionIds : [];
 };
 /**

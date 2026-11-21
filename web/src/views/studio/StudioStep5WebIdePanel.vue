@@ -29,7 +29,7 @@
           type="text"
           class="hint-input"
           placeholder="빌드 커밋 메모"
-          @input="(e: any) => emit('update:webIdeCommitMsg', e.target.value)"
+          @input="(e: Event) => emit('update:webIdeCommitMsg', (e.target as HTMLInputElement).value)"
         />
         <button type="button" class="secondary-btn" :disabled="busy" @click="emit('save-and-build')">
           코드 저장 &amp; 번들 빌드
@@ -382,17 +382,18 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { ref } from 'vue';
 
 defineProps<{
   busy: boolean;
   activeSiteSlug: string;
-  webIdeData: any | null;
+  webIdeData: KkumzEntity | null;
   webIdeFiles: Array<{ path: string; language: string; content: string }>;
   activeFileIndex: number;
   activeWebIdeFile: { path: string; language: string; content: string } | null;
   webIdeCommitMsg: string;
-  gitRepoInfo: any | null;
+  gitRepoInfo: KkumzEntity | null;
   showGitConfigForm: boolean;
   gitForm: {
     repoOwner: string;

@@ -28,6 +28,7 @@
   </BasicTable>
 </template>
 <script lang="ts" name="monitor-log" setup>
+  import type { BasicColumn, FormSchema } from '/@/components/Table';
   import { ref } from 'vue';
   import { BasicTable, useTable, TableAction } from '/@/components/Table';
   import { getLogList } from './log.api';
@@ -45,8 +46,8 @@
   const { createMessage } = useMessage();
   const checkedKeys = ref<Array<string | number>>([]);
 
-  const logColumns = ref<any>(columns);
-  const searchSchema = ref<any>(searchFormSchema);
+  const logColumns = ref<BasicColumn[]>(columns);
+  const searchSchema = ref<FormSchema[]>(searchFormSchema);
   const searchInfo = { logType: '4' };
   // 목록 페이지 공개 매개변수 및 메소드
   const { prefixCls, tableContext } = useListPage({

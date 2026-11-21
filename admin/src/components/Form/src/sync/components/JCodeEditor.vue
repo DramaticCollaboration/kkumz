@@ -88,7 +88,7 @@
         tabSize: 2,
         // 테마, 해당 테마 라이브러리 JS를 사전에 도입해야 합니다.
         theme: getDarkMode.value == ThemeEnum.DARK ? 'monokai' : props.theme,
-        smartIndent: true, // 스마트 들여쓰기 사용 여부
+        smartIndent: true, // Enable smart indentation
         // 줄 번호 표시
         lineNumbers: true,
         line: true,

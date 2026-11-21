@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white m-4 mr-0 overflow-hidden">
-    <a-spin :spinning="loading">
+    <div v-loading="loading" class="relative">
       <template v-if="userIdentity === '2'">
         <!--조직도-->
         <BasicTree
@@ -21,7 +21,7 @@
         />
       </template>
       <a-empty v-else :description="t('appUi.kc7e3403c')" />
-    </a-spin>
+    </div>
   </div>
 </template>
 
@@ -74,7 +74,7 @@
 
   // 상위 노드를 자동으로 확장하고 한 수준만 확장합니다.
   function autoExpandParentNode() {
-    let keys: Array<any> = [];
+    let keys: Array<string | number> = [];
     treeData.value.forEach((item, index) => {
       if (item.children && item.children.length > 0) {
         keys.push(item.key);

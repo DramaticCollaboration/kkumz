@@ -110,7 +110,7 @@ const emit = defineEmits<{
 
 const mapContainerRef = ref<HTMLElement | null>(null);
 const geocoding = ref(false);
-const currentLat = ref<number>(37.5665); // 기본 중심: 서울 시청 인근
+const currentLat = ref<number>(37.5665); // Default center: Seoul City Hall
 const currentLon = ref<number>(126.978);
 const hasCoords = ref(false);
 
@@ -310,7 +310,7 @@ async function copyFullAddress() {
     await navigator.clipboard.writeText(textToCopy);
     message.success(t('appUi.kfdfa5066'));
   } catch {
-    message.info(`주소: ${textToCopy}`);
+    message.info(t('appUi.kb0bcdaf0', { p0: textToCopy }));
   }
 }
 

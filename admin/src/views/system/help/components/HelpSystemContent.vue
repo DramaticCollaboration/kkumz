@@ -5,11 +5,11 @@
       <div class="sys-hero-tags">
         <a-tag color="default">{{ guide.appCode || defaultAppCode }}</a-tag>
         <a-tag color="cyan">{{ t('appUi.k368c6bad') }}</a-tag>
-        <a-tag v-if="guide.category && guide.category !== '시스템 안내'" color="blue">
+        <a-tag v-if="guide.category && guide.category !== t('appUi.k368c6bad')" color="blue">
           {{ guide.category }}
         </a-tag>
       </div>
-      <h2 class="sys-hero-title">{{ guide.title }}</h2>
+      <div class="sys-hero-title">{{ guide.title }}</div>
       <p class="sys-hero-summary">{{ guide.summary }}</p>
       <div v-if="guide.overview" class="sys-hero-overview">
         {{ guide.overview }}

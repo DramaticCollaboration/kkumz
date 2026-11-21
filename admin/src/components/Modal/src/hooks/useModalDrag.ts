@@ -26,11 +26,11 @@ export function useModalDragMove(context: UseModalDragMoveContext) {
       // 마우스를 누르면 현재 요소와 보이는 영역 사이의 거리가 계산됩니다.
       const disX = e.clientX;
       const disY = e.clientY;
-      const screenWidth = document.body.clientWidth; // 신체 현재 폭
-      const screenHeight = document.documentElement.clientHeight; // 가시 영역 높이(신체의 높이여야 하는데 상황에 따라 구할 수 없는 경우도 있습니다.)
+      const screenWidth = document.body.clientWidth; // Current viewport width
+      const screenHeight = document.documentElement.clientHeight; // Visible viewport height
 
-      const dragDomWidth = dragDom.offsetWidth; // 대화상자 너비
-      const dragDomheight = dragDom.offsetHeight; // 대화상자 높이
+      const dragDomWidth = dragDom.offsetWidth; // Dialog width
+      const dragDomheight = dragDom.offsetHeight; // Dialog height
 
       const minDragDomLeft = dragDom.offsetLeft;
 

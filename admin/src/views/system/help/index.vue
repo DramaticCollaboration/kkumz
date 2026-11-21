@@ -113,7 +113,7 @@
   const [registerTable, { reload }] = useTable({
     title: t('appUi.k4b62d0f9'),
     api: async (params) => {
-      const res: any = await getHelpList(params);
+      const res = (await getHelpList(params)) as SysPageHelpModel[] | { records?: SysPageHelpModel[] };
       const list: SysPageHelpModel[] = Array.isArray(res) ? res : Array.isArray(res?.records) ? res.records : [];
 
       let filtered = list;

@@ -7,49 +7,35 @@
     :showOkBtn="false"
     :cancelText="t('appUi.k94b7dba1')"
   >
-    <div class="space-y-4">
-      <a-descriptions bordered size="small" :column="{ xs: 1, sm: 1, md: 2, lg: 3 }">
-        <a-descriptions-item :label="t('appUi.k5bef10a7')">
-          <span class="font-mono text-xs font-semibold">{{ currentRecord.promptCode }}</span>
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('appUi.kef80204d')">
-          {{ currentRecord.promptName }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('appUi.kdfc80c3b')">
-          <a-tag color="blue">v{{ currentRecord.version || 1 }}</a-tag>
-        </a-descriptions-item>
-      </a-descriptions>
-
-      <a-table
-        :dataSource="historyList"
-        :columns="historyColumns"
-        rowKey="id"
+    <div class="p-2 space-y-4">
+      <Description
+        :schema="promptDescSchema"
+        :data="currentRecord"
+        :column="{ xs: 1, sm: 1, md: 2, lg: 3 }"
         size="small"
         bordered
-        :pagination="{ pageSize: 8 }"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.dataIndex === 'version'">
-            <a-tag :color="record.version === currentRecord.version ? 'green' : 'default'">
-              v{{ record.version }}
-            </a-tag>
-          </template>
-          <template v-else-if="column.dataIndex === 'action'">
-            <a-space>
-              <a-button type="link" size="small" @click="selectedSnapshot = record">
-                {{ t('appUi.k2d2bf613') }}
-              </a-button>
-              <a-popconfirm
-                v-if="record.version !== currentRecord.version"
-                :title="t('appUi.k27fe7499', { p0: record.version })"
-                @confirm="handleRollback(record)"
-              >
-                <a-button type="link" size="small">{{ t('appUi.k4eeaf478') }}</a-button>
-              </a-popconfirm>
-            </a-space>
-          </template>
+      />
+
+      <BasicTable @register="registerHistoryTable">
+        <template #action="{ record }">
+          <TableAction
+            :actions="[
+              {
+                label: t('appUi.k2d2bf613'),
+                onClick: handleSelectSnapshot.bind(null, record),
+              },
+              {
+                label: t('appUi.k4eeaf478'),
+                ifShow: record.version !== currentRecord.version,
+                popConfirm: {
+                  title: t('appUi.k27fe7499', { p0: record.version }),
+                  confirm: handleRollback.bind(null, record),
+                },
+              },
+            ]"
+          />
         </template>
-      </a-table>
+      </BasicTable>
 
       <div v-if="selectedSnapshot" class="p-3 bg-gray-50 rounded border border-gray-200 space-y-2">
         <div class="font-semibold text-xs text-gray-700">
@@ -69,8 +55,11 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref } from 'vue';
+  import { h, ref } from 'vue';
+  import { Tag } from 'ant-design-vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
+  import { Description, DescItem } from '/@/components/Description';
+  import { BasicTable, useTable, TableAction, BasicColumn } from '/@/components/Table';
   import { useMessage } from '/@/hooks/web/useMessage';
   import {
     getPromptHistory,
@@ -88,14 +77,64 @@
   const historyList = ref<SysPromptHistoryModel[]>([]);
   const selectedSnapshot = ref<SysPromptHistoryModel | null>(null);
 
-  const historyColumns = [
-    { title: t('appUi.k593f8a81'), dataIndex: 'version', width: 80, align: 'center' as const },
-    { title: t('appUi.k4ac852d6'), dataIndex: 'changeReason', align: 'left' as const },
-    { title: t('appUi.k83b47117'), dataIndex: 'temperature', width: 85, align: 'center' as const },
-    { title: t('appUi.k52164040'), dataIndex: 'createdBy', width: 100, align: 'center' as const },
-    { title: t('appUi.kc4090341'), dataIndex: 'createdAt', width: 170, align: 'center' as const },
-    { title: t('appUi.kc29fba5a'), dataIndex: 'action', width: 180, align: 'center' as const },
+  const promptDescSchema: DescItem[] = [
+    {
+      field: 'promptCode',
+      label: t('appUi.k5bef10a7'),
+      render: (val) => h('span', { class: 'font-mono text-xs font-semibold' }, val || ''),
+    },
+    {
+      field: 'promptName',
+      label: t('appUi.kef80204d'),
+    },
+    {
+      field: 'version',
+      label: t('appUi.kdfc80c3b'),
+      render: (val) => h(Tag, { color: 'blue' }, () => `v${val || 1}`),
+    },
   ];
+
+  const historyColumns: BasicColumn[] = [
+    {
+      title: t('appUi.k593f8a81'),
+      dataIndex: 'version',
+      width: 80,
+      align: 'center',
+      customRender: ({ record }) =>
+        h(
+          Tag,
+          { color: record.version === currentRecord.value.version ? 'green' : 'default' },
+          () => `v${record.version}`,
+        ),
+    },
+    { title: t('appUi.k4ac852d6'), dataIndex: 'changeReason', align: 'left' },
+    { title: t('appUi.k83b47117'), dataIndex: 'temperature', width: 85, align: 'center' },
+    { title: t('appUi.k52164040'), dataIndex: 'createdBy', width: 100, align: 'center' },
+    { title: t('appUi.kc4090341'), dataIndex: 'createdAt', width: 170, align: 'center' },
+  ];
+
+  const [registerHistoryTable, { setTableData }] = useTable({
+    columns: historyColumns,
+    dataSource: historyList,
+    rowKey: 'id',
+    size: 'small',
+    bordered: true,
+    pagination: { pageSize: 8 },
+    showIndexColumn: false,
+    showTableSetting: false,
+    canResize: false,
+    actionColumn: {
+      title: t('appUi.kc29fba5a'),
+      dataIndex: 'action',
+      width: 180,
+      align: 'center',
+      slots: { customRender: 'action' },
+    },
+  });
+
+  function handleSelectSnapshot(record: SysPromptHistoryModel) {
+    selectedSnapshot.value = record;
+  }
 
   const [registerModal, { closeModal }] = useModalInner(async (data) => {
     const record: SysPromptModel = data?.record || {};
@@ -104,11 +143,13 @@
     if (record.id) {
       const list = await getPromptHistory(record.id);
       historyList.value = Array.isArray(list) ? list : [];
+      setTableData(historyList.value);
       if (historyList.value.length > 0) {
         selectedSnapshot.value = historyList.value[0];
       }
     } else {
       historyList.value = [];
+      setTableData([]);
     }
   });
 

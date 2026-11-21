@@ -20,7 +20,7 @@
             :value="namingTonePreference"
             class="tone-select"
             title="네이밍 톤앤매너 선택"
-            @change="(e: any) => emit('update:namingTonePreference', e.target.value)"
+            @change="(e: Event) => emit('update:namingTonePreference', (e.target as HTMLInputElement).value)"
           >
             <option value="ALL">전체 조화형 톤</option>
             <option value="PURE_KOREAN">순우리말 · 자연 감성</option>
@@ -33,7 +33,7 @@
             type="text"
             class="hint-input"
             placeholder="네이밍 키워드 힌트 입력"
-            @input="(e: any) => emit('update:keywordHint', e.target.value)"
+            @input="(e: Event) => emit('update:keywordHint', (e.target as HTMLInputElement).value)"
           />
         </template>
         <button type="button" class="secondary-btn" :disabled="busy" @click="emit('regenerate-names')">
@@ -250,7 +250,7 @@
       >
         <div class="name-top">
           <span class="score-pill">추천도 {{ name.score }}점</span>
-          <span class="slug-ok">✓ 인터넷 주소 사용 가능</span>
+          <span class="slug-ok">인터넷 주소 사용 가능</span>
         </div>
         <h4>{{ name.brandName }}</h4>
         <div class="pronun">{{ name.pronunciation }} · /s/{{ name.siteSlug }}</div>
@@ -351,6 +351,7 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { ref } from 'vue';
 import { sanitizeBrandStoryText, renderLogoWithBrand } from './studioFormatters';
 
@@ -368,15 +369,15 @@ defineProps<{
     svgCode: string;
     colorPalette: Record<string, string>;
   };
-  selectedNameObj: any | null;
-  selectedLogoObj: any | null;
+  selectedNameObj: KkumzEntity | null;
+  selectedLogoObj: KkumzEntity | null;
   previewLogoSvg: string;
   previewBrandName: string;
   activeSiteSlug: string;
   generatingNames: boolean;
   generatingLogos: boolean;
-  nameSuggestions: any[];
-  logoSuggestions: any[];
+  nameSuggestions: KkumzEntity[];
+  logoSuggestions: KkumzEntity[];
   selectedNameId: string;
   selectedLogoId: string;
 }>();
@@ -388,8 +389,8 @@ const emit = defineEmits<{
   (e: 'regenerate-logos'): void;
   (e: 'upload-logo', file: File): void;
   (e: 'confirm-brand'): void;
-  (e: 'select-name', name: any): void;
-  (e: 'select-logo', logo: any): void;
+  (e: 'select-name', name: KkumzEntity): void;
+  (e: 'select-logo', logo: KkumzEntity): void;
   (e: 'custom-palette-change'): void;
   (e: 'custom-brand-name-input'): void;
   (e: 'custom-slug-input'): void;

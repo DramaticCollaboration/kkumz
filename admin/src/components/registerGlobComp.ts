@@ -140,5 +140,5 @@ export function registerGlobComp(app: App) {
     .use(Typography)
     .use(Timeline)
     .use(Image);
-  console.log('---초기화---, Antd, 대시보드, 프로세스 디자이너, 온라인, 프로세스 및 기타 컴포넌트를 전역적으로 등록합니다.--------------');
+  console.log('[Init] Registering global UI components (Antd, Dashboard, Online, etc.)');
 }

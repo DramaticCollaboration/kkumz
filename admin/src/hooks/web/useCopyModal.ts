@@ -41,7 +41,7 @@ function createCopyModal(options: Partial<IOptions>) {
           resolve();
         });
         clipboard.on('error', () => {
-          createMessage.error('이 브라우저는 자동 복사를 지원하지 않습니다');
+          createMessage.error($t('appUi.k085108ec'));
           clipboard.destroy();
           resolve();
         });

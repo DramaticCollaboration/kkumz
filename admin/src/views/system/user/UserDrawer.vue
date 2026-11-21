@@ -49,7 +49,7 @@
           data.record.selectedroles = userRoles;
         }
       } catch (error) {
-        console.error('사용자 역할 조회 실패:', error);
+        console.error('Failed to fetch user roles:', error);
       }
 
       //부서/직무를 확인하세요

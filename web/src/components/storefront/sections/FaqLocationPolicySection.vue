@@ -169,6 +169,7 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity, KkumzRecord } from '@/types/kkumz';
 import { ref, computed } from 'vue';
 import {
   resolveGridColumnsClass,
@@ -178,7 +179,7 @@ import {
 
 const props = defineProps<{
   faqItems: Array<Record<string, any>>;
-  locationGuide?: Record<string, any> | null;
+  locationGuide?: KkumzRecord | null;
   policyRules: string[];
   downloadableDocs: Array<Record<string, any>>;
   copyOverrides: StorefrontCopyOverrides;
@@ -195,7 +196,7 @@ const nearbySpots = computed<Array<Record<string, any>>>(() => {
 const spotsGridClass = computed(() => resolveGridColumnsClass(nearbySpots.value.length, 3));
 const docsGridClass = computed(() => resolveGridColumnsClass(props.downloadableDocs.length, 2));
 
-function formatSize(bytes: any): string {
+function formatSize(bytes: unknown): string {
   const num = Number(bytes || 0);
   if (!num || num <= 0) return '0 KB';
   if (num < 1024) return `${num} B`;

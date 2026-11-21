@@ -10,7 +10,7 @@ import echarts from '/@/utils/lib/echarts';
 import { useRootSetting } from '/@/hooks/setting/useRootSetting';
 
 export function useECharts(elRef: Ref<HTMLDivElement>, theme: 'light' | 'dark' | 'default' = 'default') {
-  console.log("---useECharts---초기 로드---")
+  console.log("[useECharts] initial load")
 
   const { getDarkMode: getSysDarkMode } = useRootSetting();
 

@@ -1,10 +1,10 @@
 <!--
   @component SystemRoleManagement
-  @description RBAC 기반 시스템 역할(Role) 마스터 및 권한 매트릭스 설정 화면
+  @description RBAC system role master and permission matrix view
   @features
-    - 역할(Role) 등록 및 코드(RoleCode) 중복 검증
-    - 역할별 허용 메뉴 트리 및 기능 버튼 권한(Permission ID) 인가 매핑 드로어 연동
-    - 역할별 사용자 배정 현황 열람
+    - Role registration and RoleCode uniqueness validation
+    - Role menu tree and button permission assignment drawer
+    - View users assigned per role
 -->
 <template>
   <BasicTable @register="registerTable">

@@ -74,8 +74,8 @@ export function definedComponent() {
   addComponent(JVxeTypes.radio, JVxeRadioCell);
   addComponent(JVxeTypes.checkbox, JVxeCheckboxCell);
   addComponent(JVxeTypes.select, JVxeSelectCell);
-  addComponent(JVxeTypes.selectSearch, JVxeSelectCell); // 드롭다운 검색
-  addComponent(JVxeTypes.selectMultiple, JVxeSelectCell); // 드롭다운 다중 선택
+  addComponent(JVxeTypes.selectSearch, JVxeSelectCell); // Dropdown search
+  addComponent(JVxeTypes.selectMultiple, JVxeSelectCell); // Dropdown multi-select
   addComponent(JVxeTypes.date, JVxeDateCell);
   addComponent(JVxeTypes.datetime, JVxeDateCell);
   addComponent(JVxeTypes.time, JVxeTimeCell);

@@ -227,6 +227,7 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { ref, computed, watch } from 'vue';
 import BrandImage from '../BrandImage.vue';
 import {
@@ -243,7 +244,7 @@ interface OptionChoice {
 }
 
 const props = defineProps<{
-  product: Record<string, any> | null;
+  product: KkumzEntity | null;
   brandName: string;
   theme: ResolvedThemeSpec;
 }>();
@@ -286,7 +287,7 @@ const selectableOptions = computed<OptionChoice[]>(() => {
   const skus = props.product.skus;
   if (Array.isArray(skus) && skus.length > 0) {
     return skus
-      .map((sku: any) => {
+      .map((sku: KkumzEntity) => {
         const label = formatSkuLabel(sku);
         return {
           label,
@@ -298,7 +299,7 @@ const selectableOptions = computed<OptionChoice[]>(() => {
   }
   const opts = props.product.options;
   if (Array.isArray(opts) && opts.length > 0) {
-    return opts.map((opt: any) => ({
+    return opts.map((opt) => ({
       label: String(opt),
       price: basePrice.value,
       stock: Number(props.product?.stock ?? 99),
@@ -321,14 +322,14 @@ const activeStock = computed(() =>
 
 const maxQty = computed(() => Math.max(1, Math.min(99, activeStock.value || 99)));
 
-function formatSkuLabel(sku: Record<string, any>): string {
+function formatSkuLabel(sku: KkumzEntity): string {
   const rawSp = sku.spData;
   if (typeof rawSp === 'string' && rawSp.trim()) {
     try {
       const parsed = JSON.parse(rawSp);
       if (Array.isArray(parsed)) {
         const parts = parsed
-          .map((item: any) => String(item?.value || item?.key || '').trim())
+          .map((item: KkumzEntity) => String(item?.value || item?.key || '').trim())
           .filter(Boolean);
         if (parts.length > 0) return parts.join(' / ');
       }
@@ -367,7 +368,7 @@ function handleAddToCart(openCartAfter: boolean) {
   emit(
     'add-to-cart',
     {
-      productId: props.product.id,
+      productId: Number(props.product.id || 0),
       name: String(props.product.name || ''),
       pic: String(props.product.pic || activeImage.value || ''),
       unitPrice: activePrice.value,

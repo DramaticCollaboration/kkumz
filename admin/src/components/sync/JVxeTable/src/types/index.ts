@@ -37,29 +37,29 @@ export interface IJVxeColumn extends VxeColumnProps {
   linkageKey?: string;
   // 컴포넌트에 전달된 다른 속성을 사용자 정의합니다.
   props?: Recordable;
-  allowClear?: boolean; // 삭제를 허용하다
+  allowClear?: boolean; // Allow clear
   // 【inputNumber】통계 열인지 여부는 inputNumber만 통계 열을 설정할 수 있습니다.통계 열：합계 합계; 평균 평균값
   statistics?: boolean | [statisticsTypes, statisticsTypes?];
   // 【select】
-  dictCode?: string; // 사전 코드
-  options?: { title?: string; label?: string; text?: string; value: any; disabled?: boolean }[]; // 옵션 드롭다운 목록
-  allowInput?: boolean; // 입력 허용
-  allowSearch?: boolean; // 검색 허용
+  dictCode?: string; // Dictionary code
+  options?: { title?: string; label?: string; text?: string; value: any; disabled?: boolean }[]; // Dropdown options list
+  allowInput?: boolean; // Allow custom input
+  allowSearch?: boolean; // Allow search
   // 【slot】
-  slotName?: string; // 슬롯 이름
+  slotName?: string; // Slot name
   // 【checkbox】
-  customValue?: [any, any]; // 맞춤 값
-  defaultChecked?: boolean; // 기본적으로 선택됨
+  customValue?: [any, any]; // Custom checked/unchecked values
+  defaultChecked?: boolean; // Checked by default
   // 【upload】 upload
-  btnText?: string; // 업로드 버튼 텍스트
-  token?: boolean; // 토큰 전달 여부
-  responseName?: string; // 반환값 이름
-  action?: string; // 주소 업로드
-  allowRemove?: boolean; // 삭제 허용 여부
-  allowDownload?: boolean; // 다운로드 허용 여부
+  btnText?: string; // Upload button text
+  token?: boolean; // Whether to attach auth token
+  responseName?: string; // Response field name
+  action?: string; // Upload endpoint URL
+  allowRemove?: boolean; // Allow file removal
+  allowDownload?: boolean; // Allow file download
   // 【드롭다운 사전 검색】
-  dict?: string; // 사전 테이블 구성 정보：데이터베이스 테이블 이름, 표시 필드 이름, 저장 필드 이름
-  async?: boolean; // 모드 동기화 여부
+  dict?: string; // Dict table config: table name, label field, value field
+  async?: boolean; // Whether to use async mode
   tipsContent?: string;
   // 【popup】
   popupCode?: string;

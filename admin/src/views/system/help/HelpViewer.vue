@@ -113,9 +113,9 @@
   const [registerEditModal, { openModal: openEditModal }] = useModal();
 
   const isAdminUser = computed(() => {
-    const info: any = userStore.getUserInfo || {};
+    const info = (userStore.getUserInfo || {}) as Record<string, unknown>;
     const username = String(info.username || '').toLowerCase();
-    const roles: any[] = Array.isArray(userStore.getRoleList) ? userStore.getRoleList : [];
+    const roles: Array<string | { value?: string; roleCode?: string }> = Array.isArray(userStore.getRoleList) ? (userStore.getRoleList as Array<string | { value?: string; roleCode?: string }>) : [];
     const roleCodes = roles.map((r) => String(typeof r === 'object' ? r?.value || r?.roleCode : r).toLowerCase());
     if (!username && roleCodes.length === 0) return true;
     return username === 'admin' || roleCodes.includes('admin') || roleCodes.includes('role_admin');
@@ -130,10 +130,10 @@
   async function loadAllGuides() {
     loading.value = true;
     try {
-      const res: any = await getHelpList();
+      const res = (await getHelpList()) as SysPageHelpModel[] | { records?: SysPageHelpModel[] };
       const records: SysPageHelpModel[] = Array.isArray(res)
         ? res
-        : Array.isArray(res?.records)
+        : !Array.isArray(res) && Array.isArray(res?.records)
         ? res.records
         : [];
       const active = records.filter((i) => i.status === 'ACTIVE' || !i.status);

@@ -1,4 +1,5 @@
 import { formatSiteTypeLabel } from '@/api/kkumzApi';
+import type { KkumzEntity } from '@/types/kkumz';
 
 export interface StudioStepMeta {
   no: number;
@@ -30,7 +31,7 @@ export const engineFilterOptions = [
   { code: 'AI_CORE', label: 'AI 자동상담 · 커뮤니티' },
 ];
 
-export function sanitizeBrandStoryText(raw: any): string {
+export function sanitizeBrandStoryText(raw: unknown): string {
   if (!raw) return '';
   return String(raw).trim();
 }
@@ -43,7 +44,7 @@ export function escapeXmlText(str: string): string {
 }
 
 export function renderLogoWithBrand(
-  svgCode: any,
+  svgCode: unknown,
   overrideBrandName?: string,
   fallbackBrandName?: string,
 ): string {
@@ -105,7 +106,7 @@ export function isStandardLayoutType(code?: string): boolean {
   );
 }
 
-export function isImageAsset(asset: any): boolean {
+export function isImageAsset(asset: KkumzEntity): boolean {
   if (!asset) return false;
   const mime = String(asset.mimeType || '').toLowerCase();
   const ext = String(asset.fileExt || '').toLowerCase();
@@ -115,7 +116,7 @@ export function isImageAsset(asset: any): boolean {
   );
 }
 
-export function formatFileSize(bytes: any): string {
+export function formatFileSize(bytes: unknown): string {
   const num = Number(bytes || 0);
   if (!num || num <= 0) return '0 KB';
   if (num < 1024) return `${num} B`;
@@ -123,13 +124,24 @@ export function formatFileSize(bytes: any): string {
   return `${(num / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+interface AxiosLikeError {
+  code?: string;
+  message?: string;
+  config?: { method?: string; url?: string };
+  response?: {
+    status?: number;
+    data?: { message?: string; msg?: string; error_description?: string };
+  };
+}
+
 export function formatApiError(
-  err: any,
+  err: unknown,
   fallbackDetail: string,
 ): { detail: string; endpoint: string } {
-  const status = err?.response?.status;
-  const method = (err?.config?.method || 'POST').toUpperCase();
-  const rawUrl = err?.config?.url || '';
+  const e = (err || {}) as AxiosLikeError;
+  const status = e.response?.status;
+  const method = (e.config?.method || 'POST').toUpperCase();
+  const rawUrl = e.config?.url || '';
   const fullPath = rawUrl
     ? rawUrl.startsWith('/api')
       ? rawUrl
@@ -137,7 +149,7 @@ export function formatApiError(
     : '';
   const endpoint = fullPath ? `${method} ${fullPath}${status ? ` (${status})` : ''}` : status ? `HTTP ${status}` : '';
 
-  const serverData = err?.response?.data;
+  const serverData = e.response?.data;
   const serverMsg =
     (typeof serverData === 'object' &&
       (serverData?.message || serverData?.msg || serverData?.error_description)) ||
@@ -152,9 +164,9 @@ export function formatApiError(
     detail = cleanServerMsg
       ? `${fallbackDetail} (서버 내부 오류 500: ${cleanServerMsg})`
       : `${fallbackDetail} — 서버 내부 오류가 발생하여 요청을 완료하지 못했습니다. 잠시 후 다시 시도를 누르거나 서버 상태를 확인해 주세요.`;
-  } else if (err?.code === 'ECONNABORTED') {
+  } else if (e.code === 'ECONNABORTED') {
     detail = `${fallbackDetail} — AI 생성 응답 대기 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.`;
-  } else if (!err?.response) {
+  } else if (!e.response) {
     detail = `${fallbackDetail} — 백엔드 서버와 통신할 수 없습니다. 서버 실행 상태를 확인해 주세요.`;
   } else if (cleanServerMsg) {
     detail = `${fallbackDetail} (${cleanServerMsg})`;
@@ -165,10 +177,10 @@ export function formatApiError(
   return { detail, endpoint };
 }
 
-export function normalizeRuntime(raw: any): any {
+export function normalizeRuntime(raw: KkumzEntity | null | undefined): KkumzEntity | null {
   if (!raw) return null;
-  const site = raw.site || raw;
-  const rel = raw.release || {};
+  const site = (raw.site || raw) as KkumzEntity;
+  const rel = (raw.release || {}) as KkumzEntity;
   return {
     ...site,
     ...raw,

@@ -1,10 +1,10 @@
 <!--
   @component SystemDictManagement
-  @description 전사 표준 공통 코드 및 시스템 사전(SysDict) 관리 화면
+  @description Enterprise standard common code and system dictionary (SysDict) management view
   @features
-    - 사전 코드 및 사전 명칭 마스터 관리
-    - 사전별 항목 명칭 및 값 세부 목록 그리드
-    - 등록/수정/삭제 시 Redis 캐시 자동 무효화 연동
+    - Dictionary code and name master management
+    - Per-dictionary item label and value detail grid
+    - Automatic Redis cache invalidation on create/update/delete
 -->
 <template>
   <!--참고표-->
@@ -159,7 +159,7 @@
       userStore.setAllDictItems(res.result);
       createMessage.success(t('appUi.kd5b58e07'));
     } else {
-      createMessage.error('캐시를 새로 고치지 못했습니다!');
+      createMessage.error(t('appUi.k14f9e5fd'));
     }
   }
   /**

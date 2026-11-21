@@ -44,7 +44,7 @@
         type: [String, Array],
         default: '',
       },
-      noresize: Boolean, // 컨테이너 크기가 변경되지 않으면 성능을 최적화하도록 설정하는 것이 가장 좋습니다.
+      noresize: Boolean, // Disable resize observer if container size is fixed for better performance
       tag: {
         type: String,
         default: 'div',

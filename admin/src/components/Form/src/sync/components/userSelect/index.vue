@@ -139,7 +139,7 @@
         emit('update:value', str);
         emit('change', str);
         formItemContext.onFieldChange();
-        console.log('데이터 선택', str);
+        console.log('Selected data:', str);
       }
 
       watch(

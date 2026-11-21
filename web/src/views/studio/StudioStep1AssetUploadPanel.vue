@@ -18,7 +18,7 @@
           :value="uploadAssetType"
           class="asset-type-select"
           title="업로드 파일 기본 용도"
-          @change="(e: any) => emit('update:uploadAssetType', e.target.value)"
+          @change="(e: Event) => emit('update:uploadAssetType', (e.target as HTMLInputElement).value)"
         >
           <option v-for="at in assetTypes" :key="at.code" :value="at.code">
             {{ at.label }}
@@ -134,11 +134,12 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { ref } from 'vue';
 import { isImageAsset, formatFileSize } from './studioFormatters';
 
 const props = defineProps<{
-  ideaAssets: any[];
+  ideaAssets: KkumzEntity[];
   assetTypes: Array<{ code: string; label: string; desc?: string }>;
   selectableAssetTypes: Array<{ code: string; label: string; desc?: string }>;
   assetTypeLabels: Record<string, string>;
@@ -150,9 +151,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:uploadAssetType', val: string): void;
   (e: 'upload-files', files: File[]): void;
-  (e: 'asset-meta-change', asset: any): void;
-  (e: 'apply-asset-text', asset: any): void;
-  (e: 'remove-asset', asset: any): void;
+  (e: 'asset-meta-change', asset: KkumzEntity): void;
+  (e: 'apply-asset-text', asset: KkumzEntity): void;
+  (e: 'remove-asset', asset: KkumzEntity): void;
 }>();
 
 const fileInputRef = ref<HTMLInputElement | null>(null);

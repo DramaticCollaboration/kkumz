@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { VxeTablePropTypes } from 'vxe-table';
 import { isArray } from '/@/utils/is';
 import { HandleArgs } from './useColumns';
@@ -79,23 +80,23 @@ function handlerConvertToValidator(event) {
 
 // 온라인 규칙과 호환 가능
 const fooPatterns = [
-  { title: '비어 있지 않음', value: '*', pattern: /^.+$/ },
-  { title: '6~16자리', value: 'n6-16', pattern: /^\d{6,16}$/ },
-  { title: '6~16자로 입력해 주세요.', value: '*6-16', pattern: /^.{6,16}$/ },
-  { title: '6~18자', value: 's6-18', pattern: /^[a-z|A-Z]{6,18}$/ },
+  { title: $t('appUi.k20a9ceb7'), value: '*', pattern: /^.+$/ },
+  { title: $t('appUi.k788c6b9d'), value: 'n6-16', pattern: /^\d{6,16}$/ },
+  { title: $t('appUi.k329d2603'), value: '*6-16', pattern: /^.{6,16}$/ },
+  { title: $t('appUi.kab45087b'), value: 's6-18', pattern: /^[a-z|A-Z]{6,18}$/ },
   {
     title: 'URL',
     value: 'url',
     pattern: /^((ht|f)tps?):\/\/[\w\-]+(\.[\w\-]+)+([\w\-.,@?^=%&:\/~+#]*[\w\-@?^=%&\/~+#])?$/,
   },
-  { title: '이메일', value: 'e', pattern: /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/ },
-  { title: '전화 번호', value: 'm', pattern: /^010([-\s]?)([0-9]{4})([-\s]?)([0-9]{4})$/ },
-  { title: '우편번호', value: 'p', pattern: /^\d{6}$/ },
-  { title: '편지', value: 's', pattern: /^[A-Z|a-z]+$/ },
-  { title: '숫자', value: 'n', pattern: /^-?\d+(\.?\d+|\d?)$/ },
-  { title: '정수', value: 'z', pattern: /^-?\d+$/ },
+  { title: $t('appUi.k3c37764a'), value: 'e', pattern: /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/ },
+  { title: $t('appUi.kfbf7b5bb'), value: 'm', pattern: /^010([-\s]?)([0-9]{4})([-\s]?)([0-9]{4})$/ },
+  { title: $t('appUi.kcd21379e'), value: 'p', pattern: /^\d{6}$/ },
+  { title: $t('appUi.k53bf9898'), value: 's', pattern: /^[A-Z|a-z]+$/ },
+  { title: $t('appUi.kdd588621'), value: 'n', pattern: /^-?\d+(\.?\d+|\d?)$/ },
+  { title: $t('appUi.kf0729903'), value: 'z', pattern: /^-?\d+$/ },
   {
-    title: '양',
+    title: $t('appUi.k2ce295bd'),
     value: 'money',
     pattern: /^(([1-9][0-9]*)|([0]\.\d{0,2}|[1-9][0-9]*\.\d{0,5}))$/,
   },

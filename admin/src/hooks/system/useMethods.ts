@@ -65,7 +65,7 @@ export function useMethods() {
             centered: false,
             content: `<div>
                                 <span>${msg}</span><br/> 
-                                <span>구체적인 내용은 부탁드립니다<a href = ${href} download = ${fileName}> 다운로드하려면 클릭하세요 </a> </span> 
+                                <span>${$t('appUi.k7529aed0')} <a href="${href}" download="${fileName}">${$t('appUi.k0bc26a00')}</a></span> 
                               </div>`,
           });
         } else if (fileInfo.code === 500 || fileInfo.code === 510) {
@@ -74,7 +74,7 @@ export function useMethods() {
           createMessage.success(fileInfo.message || $t('appUi.k94e1977a', { p0: data.file.name }));
         }
       } catch (error) {
-        console.log('가져온 데이터가 비정상입니다.', error);
+        console.log('Abnormal imported data:', error);
       } finally {
         typeof success === 'function' ? success(fileInfo) : '';
       }
@@ -114,8 +114,8 @@ export function useMethods() {
       link.setAttribute('download', name + fileSuffix);
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link); //전체 제거 요소 다운로드
-      window.URL.revokeObjectURL(url); //블롭 객체 해제
+      document.body.removeChild(link); // Remove temporary download anchor
+      window.URL.revokeObjectURL(url); // Release blob object URL
     }
   }
 }

@@ -187,27 +187,28 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { ref, computed, watch } from 'vue';
 import type { ResolvedThemeSpec, StorefrontCopyOverrides } from '../storefrontTypes';
 
 const props = defineProps<{
-  cmsForm?: Record<string, any> | null;
+  cmsForm?: KkumzEntity | null;
   recruits: Array<Record<string, any>>;
   prefillMessage?: string;
   submitting: boolean;
-  formSubmitResult?: Record<string, any> | null;
+  formSubmitResult?: KkumzEntity | null;
   copyOverrides: StorefrontCopyOverrides;
   theme: ResolvedThemeSpec;
 }>();
 
 const emit = defineEmits<{
   (e: 'submit-form', payload: {
-    formId?: any;
+    formId?: string | number;
     applicantName: string;
     phone: string;
     optionValue: string;
     message: string;
-    extraFields: Record<string, any>;
+    extraFields: KkumzEntity;
   }): void;
 }>();
 
@@ -233,14 +234,14 @@ const customFields = computed(() => {
   const rawFields = props.cmsForm?.fields;
   if (!Array.isArray(rawFields)) return [];
   return rawFields
-    .map((f: any) => ({
+    .map((f: KkumzEntity) => ({
       ...f,
       resolvedKey: String(f?.key || f?.field || f?.name || ''),
     }))
     .filter(
-      (f: any) =>
+      (f: KkumzEntity) =>
         f.resolvedKey &&
-        !/^(applicantName|phone|message)$/i.test(f.resolvedKey),
+        !/^(applicantName|phone|message)$/i.test(String(f.resolvedKey || "")),
     );
 });
 
@@ -266,7 +267,7 @@ function handleSubmit() {
     .map(([k, v]) => `${k}:${Array.isArray(v) ? v.join(',') : v}`)
     .join(' | ');
   emit('submit-form', {
-    formId: props.cmsForm?.id,
+    formId: props.cmsForm?.id !== undefined ? Number(props.cmsForm.id) : undefined,
     applicantName: applicantName.value.trim(),
     phone: phone.value.trim(),
     optionValue: summary || '온라인 신청',

@@ -66,7 +66,7 @@ function handleIndexColumn(propsRef: ComputedRef<BasicTableProps>, getPagination
   columns.unshift({
     flag: INDEX_COLUMN_FLAG,
     width: 50,
-    title: $t('component.table.index', '순번'),
+    title: $t('component.table.index'),
     align: 'center',
     customRender: ({ index }) => {
       const getPagination = unref(getPaginationRef);

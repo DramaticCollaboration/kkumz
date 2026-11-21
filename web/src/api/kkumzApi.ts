@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { KkumzEntity, KkumzRecord } from '@/types/kkumz';
 import { computed, reactive } from 'vue';
 
 const AI_TIMEOUT = 120000;
@@ -13,7 +14,7 @@ function readStoredToken(): string {
   }
 }
 
-function readStoredUser(): Record<string, any> | null {
+function readStoredUser(): KkumzEntity | null {
   try {
     const raw = localStorage.getItem(USER_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -24,8 +25,8 @@ function readStoredUser(): Record<string, any> | null {
 
 export const kkumzAuth = reactive<{
   token: string;
-  user: Record<string, any> | null;
-  roles: Array<Record<string, any>>;
+  user: KkumzEntity | null;
+  roles: KkumzRecord[];
   authModalOpen: boolean;
   authModalTab: 'login' | 'register';
   authModalHint: string;
@@ -46,11 +47,11 @@ export const isAuthenticated = computed(() =>
 
 export function setAuthSession(payload: {
   token: string;
-  userInfo: Record<string, any>;
-  roles?: Array<Record<string, any>>;
+  userInfo: KkumzEntity;
+  roles?: KkumzRecord[];
 }) {
   const roles = payload.roles || payload.userInfo?.roles || [];
-  const mergedUser = { ...payload.userInfo, roles };
+  const mergedUser: KkumzEntity = { ...payload.userInfo, roles };
   kkumzAuth.token = payload.token;
   kkumzAuth.user = mergedUser;
   kkumzAuth.roles = roles;
@@ -107,14 +108,14 @@ const http = axios.create({
 http.interceptors.request.use((config) => {
   const token = kkumzAuth.token || readStoredToken();
   if (token) {
-    config.headers = config.headers || ({} as any);
+    config.headers = config.headers || ({} as typeof config.headers);
     config.headers['X-Access-Token'] = token;
     config.headers['Authorization'] = `Bearer ${token}`;
   }
   return config;
 });
 
-function unwrap<T = any>(res: any): T {
+function unwrap<T = KkumzEntity>(res: { data?: Record<string, unknown> }): T {
   if (res?.data && typeof res.data === 'object') {
     if ('result' in res.data && res.data.result !== undefined) {
       return res.data.result as T;
@@ -172,9 +173,9 @@ export const kkumzApi = {
   // 0-0. 인증 (로그인 / 셀프 회원가입 / 현재 사용자 조회 / 로그아웃)
   async login(payload: { username: string; password: string }) {
     const res = await http.post('/sys/login', payload);
-    const data = unwrap<any>(res);
+    const data = unwrap<KkumzEntity>(res);
     if (data?.token && data?.userInfo) {
-      setAuthSession(data);
+      setAuthSession({ token: data.token, userInfo: data.userInfo, roles: data.roles });
     }
     return data;
   },
@@ -187,15 +188,15 @@ export const kkumzApi = {
     roleCode?: string;
   }) {
     const res = await http.post('/sys/register', payload);
-    const data = unwrap<any>(res);
+    const data = unwrap<KkumzEntity>(res);
     if (data?.token && data?.userInfo) {
-      setAuthSession(data);
+      setAuthSession({ token: data.token, userInfo: data.userInfo, roles: data.roles });
     }
     return data;
   },
   async fetchCurrentUser() {
     const res = await http.get('/sys/user/getUserInfo');
-    const data = unwrap<any>(res);
+    const data = unwrap<KkumzEntity>(res);
     const userInfo = data?.userInfo || data;
     if (userInfo?.username) {
       const roles = userInfo.roles || data?.roles || [];
@@ -235,7 +236,7 @@ export const kkumzApi = {
         label: string;
         description: string;
       }>;
-      featureCatalog?: any[];
+      featureCatalog?: KkumzEntity[];
       featureCategories?: Array<{
         code: string;
         label: string;
@@ -271,7 +272,7 @@ export const kkumzApi = {
   // 1. 아이디어 & 버전/화면설계
   async listIdeas(params?: { authorUsername?: string; siteType?: string; mineOnly?: boolean }) {
     const res = await http.get('/ideas', { params });
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async createIdea(payload: {
     title?: string;
@@ -285,11 +286,11 @@ export const kkumzApi = {
     authorDisplayName?: string;
   }) {
     const res = await http.post('/ideas', payload);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async getIdeaDetail(ideaId: string) {
     const res = await http.get(`/ideas/${encodeURIComponent(ideaId)}`);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async analyzeIdeaIntent(
     ideaId: string,
@@ -308,7 +309,7 @@ export const kkumzApi = {
       payload || {},
       { timeout: AI_TIMEOUT },
     );
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async updateIdeaFeatures(
     ideaId: string,
@@ -319,12 +320,12 @@ export const kkumzApi = {
       siteType?: string;
       category?: string;
       tags?: string[];
-      aiIntentAnalysis?: Record<string, any>;
+      aiIntentAnalysis?: KkumzRecord;
       syncScreens?: boolean;
     },
   ) {
     const res = await http.put(`/ideas/${encodeURIComponent(ideaId)}/features`, payload);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async saveOrRollbackIdeaVersion(
     ideaId: string,
@@ -332,33 +333,33 @@ export const kkumzApi = {
       title?: string;
       promptText?: string;
       specMarkdown?: string;
-      screens?: any[];
+      screens?: KkumzEntity[];
       rollbackToVersionNo?: number;
       createdBy?: string;
     },
   ) {
     const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/versions`, payload);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async listIdeaScreens(ideaId: string) {
     const res = await http.get(`/ideas/${encodeURIComponent(ideaId)}/screens`);
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
-  async saveIdeaScreen(ideaId: string, payload: any) {
+  async saveIdeaScreen(ideaId: string, payload: KkumzEntity) {
     const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/screens`, payload);
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async deleteIdeaScreen(ideaId: string, screenId: string) {
     const res = await http.delete(
       `/ideas/${encodeURIComponent(ideaId)}/screens/${encodeURIComponent(screenId)}`,
     );
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
 
   // 1-2. 아이디어·사이트 업로드 자산 (현장/상품 사진, 로고, 안내문·요금표 문서)
   async listIdeaAssets(ideaId: string) {
     const res = await http.get(`/ideas/${encodeURIComponent(ideaId)}/assets`);
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async uploadIdeaAssets(
     ideaId: string,
@@ -404,7 +405,7 @@ export const kkumzApi = {
     const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/assets`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async updateIdeaAsset(
     ideaId: string,
@@ -418,19 +419,19 @@ export const kkumzApi = {
         sortNo: payload.sortNo ?? payload.sortOrder,
       },
     );
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async deleteIdeaAsset(ideaId: string, assetId: string) {
     const res = await http.delete(
       `/ideas/${encodeURIComponent(ideaId)}/assets/${encodeURIComponent(assetId)}`,
     );
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async applyAssetToPrompt(ideaId: string, assetId: string) {
     const res = await http.post(
       `/ideas/${encodeURIComponent(ideaId)}/assets/${encodeURIComponent(assetId)}/apply-prompt`,
     );
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async uploadCustomBrandLogo(ideaId: string, file: File, styleName?: string) {
     const formData = new FormData();
@@ -441,7 +442,7 @@ export const kkumzApi = {
     const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/upload-logo`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
 
   // 2. AI 브랜드 네이밍 8종 & 벡터 SVG 로고 6종
@@ -452,7 +453,7 @@ export const kkumzApi = {
     const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/generate/names`, payload || {}, {
       timeout: AI_TIMEOUT,
     });
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async generateLogos(
     ideaId: string,
@@ -466,7 +467,7 @@ export const kkumzApi = {
     const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/generate/logos`, payload || {}, {
       timeout: AI_TIMEOUT,
     });
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async selectBrand(
     ideaId: string,
@@ -481,8 +482,8 @@ export const kkumzApi = {
       brandStory?: string;
       logoSvg?: string;
       customLogoSvg?: string;
-      designTokens?: Record<string, any>;
-      colorPalette?: Record<string, any>;
+      designTokens?: KkumzRecord;
+      colorPalette?: KkumzRecord;
     },
   ) {
     const normalized = {
@@ -496,7 +497,7 @@ export const kkumzApi = {
       designTokens: payload.designTokens || payload.colorPalette,
     };
     const res = await http.put(`/ideas/${encodeURIComponent(ideaId)}/select-brand`, normalized);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
 
   // 3. AI 마크다운 서비스 기획서
@@ -505,7 +506,7 @@ export const kkumzApi = {
       params: { forceRegenerate },
       timeout: AI_TIMEOUT,
     });
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async updateSpec(
     ideaId: string,
@@ -516,15 +517,15 @@ export const kkumzApi = {
       category?: string;
       tags?: string[];
       enabledFeatures?: string[];
-      aiIntentAnalysis?: Record<string, any>;
+      aiIntentAnalysis?: KkumzRecord;
       visibility?: string;
       specMarkdown: string;
-      screens?: any[];
+      screens?: KkumzEntity[];
       updatedBy?: string;
     },
   ) {
     const res = await http.put(`/ideas/${encodeURIComponent(ideaId)}/spec`, payload);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
 
   // 4. 멀티사이트 스캐폴딩, 실시간 프리뷰 편집, WebIDE, 빌드 & 배포
@@ -532,7 +533,7 @@ export const kkumzApi = {
     const res = await http.post(`/ideas/${encodeURIComponent(ideaId)}/scaffold-site`, null, {
       timeout: AI_TIMEOUT,
     });
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async chatRefineSite(
     siteSlug: string,
@@ -542,19 +543,19 @@ export const kkumzApi = {
       siteName?: string;
       brandSlogan?: string;
       logoSvg?: string;
-      tokenOverrides?: Record<string, any>;
-      layoutOverrides?: Record<string, any>;
+      tokenOverrides?: KkumzRecord;
+      layoutOverrides?: KkumzRecord;
       username?: string;
     },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/chat-refine`, payload, {
       timeout: AI_TIMEOUT,
     });
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async getWebIdeFiles(siteSlug: string) {
     const res = await http.get(`/sites/${encodeURIComponent(siteSlug)}/webide/files`);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async updateWebIdeFiles(
     siteSlug: string,
@@ -566,7 +567,7 @@ export const kkumzApi = {
     },
   ) {
     const res = await http.put(`/sites/${encodeURIComponent(siteSlug)}/webide/files`, payload);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async aiFixBuildError(siteSlug: string, errorContext?: string, username?: string) {
     const res = await http.post(
@@ -577,7 +578,7 @@ export const kkumzApi = {
       },
       { timeout: AI_TIMEOUT },
     );
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async deploySite(
     siteSlug: string,
@@ -590,21 +591,21 @@ export const kkumzApi = {
     },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/deploy`, payload || {});
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async unpublishSite(siteSlug: string) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/unpublish`, {});
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async rollbackSiteRelease(siteSlug: string, versionNo: number) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/rollback/${versionNo}`);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
 
   // 4-2. GitHub 리포지토리 프로비저닝, Git 커밋/푸시 & 사용자 전용 배포 키 관리
   async getSiteGitRepo(siteSlug: string) {
     const res = await http.get(`/sites/${encodeURIComponent(siteSlug)}/git`);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async provisionSiteGitRepo(
     siteSlug: string,
@@ -622,7 +623,7 @@ export const kkumzApi = {
       `/sites/${encodeURIComponent(siteSlug)}/git/provision`,
       payload || {},
     );
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async pushSiteToGitRepo(
     siteSlug: string,
@@ -634,7 +635,7 @@ export const kkumzApi = {
     },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/git/push`, payload || {});
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async rotateSiteGitKeys(
     siteSlug: string,
@@ -649,7 +650,7 @@ export const kkumzApi = {
       `/sites/${encodeURIComponent(siteSlug)}/git/rotate-keys`,
       payload || {},
     );
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   getSshKeyDownloadUrl(siteSlug: string) {
     const token = kkumzAuth.token || readStoredToken();
@@ -665,7 +666,7 @@ export const kkumzApi = {
   // 5. 라이브 멀티사이트 런타임 & 실주문/폼제출/AI컨시어지
   async getSiteRuntime(siteSlug: string) {
     const res = await http.get(`/sites/${encodeURIComponent(siteSlug)}/runtime`);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async createCommerceOrder(
     siteSlug: string,
@@ -680,7 +681,7 @@ export const kkumzApi = {
     },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/commerce/order`, payload);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async submitCmsForm(
     siteSlug: string,
@@ -690,11 +691,11 @@ export const kkumzApi = {
       phone: string;
       optionValue?: string;
       message?: string;
-      extraFields?: Record<string, any>;
+      extraFields?: KkumzRecord;
     },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteSlug)}/cms/form-submit`, payload);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async askSiteConcierge(siteSlug: string, question: string) {
     const res = await http.post(
@@ -702,7 +703,7 @@ export const kkumzApi = {
       { question },
       { timeout: AI_TIMEOUT },
     );
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
 
   // 6. 쇼케이스 피드, 좋아요, 댓글, 팀빌딩, 알림
@@ -713,26 +714,26 @@ export const kkumzApi = {
     keyword?: string;
   }) {
     const res = await http.get('/feed', { params });
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async toggleSiteLike(siteId: string, username: string) {
     const res = await http.post(`/sites/${encodeURIComponent(siteId)}/like`, { username });
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async listSiteComments(siteId: string) {
     const res = await http.get(`/sites/${encodeURIComponent(siteId)}/comments`);
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async addSiteComment(
     siteId: string,
     payload: { username?: string; displayName?: string; authorRoleBadge?: string; content: string },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteId)}/comments`, payload);
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async listSiteRecruits(siteId: string) {
     const res = await http.get(`/sites/${encodeURIComponent(siteId)}/recruits`);
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async createSiteRecruit(
     siteId: string,
@@ -745,11 +746,11 @@ export const kkumzApi = {
     },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteId)}/recruits`, payload);
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async listSiteTeamMembers(siteId: string) {
     const res = await http.get(`/sites/${encodeURIComponent(siteId)}/members`);
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async applyToTeam(
     siteId: string,
@@ -762,7 +763,7 @@ export const kkumzApi = {
     },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteId)}/team/apply`, payload);
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async inviteTeamMember(
     siteId: string,
@@ -775,7 +776,7 @@ export const kkumzApi = {
     },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteId)}/team/invite`, payload);
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async updateTeamMemberStatus(
     siteId: string,
@@ -786,7 +787,7 @@ export const kkumzApi = {
       `/sites/${encodeURIComponent(siteId)}/team/members/${encodeURIComponent(memberId)}/status`,
       payload,
     );
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async reportContent(
     siteId: string,
@@ -799,14 +800,14 @@ export const kkumzApi = {
     },
   ) {
     const res = await http.post(`/sites/${encodeURIComponent(siteId)}/report`, payload);
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
   async listNotifications(username?: string) {
     const res = await http.get('/notifications', { params: { username } });
-    return unwrap<any[]>(res);
+    return unwrap<KkumzEntity[]>(res);
   },
   async markAllNotificationsRead(username?: string) {
     const res = await http.put('/notifications/read-all', null, { params: { username } });
-    return unwrap<any>(res);
+    return unwrap<KkumzEntity>(res);
   },
 };

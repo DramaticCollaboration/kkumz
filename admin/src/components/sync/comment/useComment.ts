@@ -45,7 +45,7 @@ export const list = (params) => defHttp.get({ url: Api.list, params });
 
 export function getGloablEmojiIndex(){
   if(window['myEmojiIndex']){
-    console.log("----창문으로 가세요['myEmojiIndex']캐시, 새로운 개체는 없습니다!")
+    console.log("[Comment] Using cached window['myEmojiIndex']")
     return window['myEmojiIndex'];
   }
   
@@ -234,7 +234,7 @@ export function useFileList() {
     image
   };
    function getBackground(item) {
-    console.log('파일 배경 이미지 가져오기', item);
+    console.log('Resolve file preview background:', item);
     if (isImage(item)) {
       return 'none'
     } else {

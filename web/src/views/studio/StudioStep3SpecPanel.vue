@@ -42,7 +42,7 @@
             </div>
             <div class="parsed-spec-lines">
               <div v-for="(_, idx) in editableHighlights" :key="idx" class="spec-bullet-item editable-bullet-row">
-                <span class="bullet-dot">✓</span>
+                <span class="bullet-dot">-</span>
                 <input
                   v-model="editableHighlights[idx]"
                   type="text"
@@ -69,7 +69,7 @@
             :value="editableSpecMarkdown"
             rows="12"
             class="spec-textarea"
-            @input="(e: any) => emit('update:editableSpecMarkdown', e.target.value)"
+            @input="(e: Event) => emit('update:editableSpecMarkdown', (e.target as HTMLInputElement).value)"
             @change="emit('sync-markdown-to-highlights')"
           ></textarea>
         </div>
@@ -189,7 +189,7 @@
                 <select
                   class="comp-add-select"
                   value=""
-                  @change="(e: any) => onAddComponent(scr, e)"
+                  @change="(e: Event) => onAddComponent(scr, e)"
                 >
                   <option value="">+ 기능 모듈 추가</option>
                   <option value="HeroBanner">히어로 배너</option>
@@ -227,18 +227,19 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { formatSiteTypeLabel, isStandardLayoutType } from './studioFormatters';
 
 const props = defineProps<{
   busy: boolean;
   specEditMode: boolean;
-  currentIdea: any | null;
+  currentIdea: KkumzEntity | null;
   activeSiteSlug: string;
   previewBrandName: string;
   editableHighlights: string[];
   editableSpecMarkdown: string;
-  editableScreens: any[];
-  ideaVersions: any[];
+  editableScreens: KkumzEntity[];
+  ideaVersions: KkumzEntity[];
   layoutLabels: Record<string, string>;
   componentLabels: Record<string, string>;
 }>();
@@ -269,7 +270,7 @@ function formatComponentLabel(code: string) {
   return props.componentLabels[code] || code;
 }
 
-function onAddComponent(scr: any, event: Event) {
+function onAddComponent(scr: KkumzEntity, event: Event) {
   const select = event.target as HTMLSelectElement;
   const compCode = select.value;
   select.value = '';

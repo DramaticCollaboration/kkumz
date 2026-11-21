@@ -63,7 +63,7 @@ async function bootstrap() {
   // 마운트 애플리케이션
   app.mount('#app', true);
 
-  console.log(" vue3 앱이 로드되었습니다!")
+  console.log("[App] Vue 3 app mounted")
 }
 
 bootstrap();

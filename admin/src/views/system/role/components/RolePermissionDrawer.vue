@@ -53,6 +53,7 @@
   import RoleDataRuleDrawer from './RoleDataRuleDrawer.vue';
   import { queryTreeListForRole, queryRolePermission, saveRolePermission } from '../role.api';
   import { useI18n } from "/@/hooks/web/useI18n";
+  const { t } = useI18n();
   import { ROLE_AUTH_CONFIG_KEY } from '/@/enums/cacheEnum';
   const emit = defineEmits(['register']);
   //나무 정보
@@ -60,7 +61,7 @@
   //트리의 모든 노드 정보
   const allTreeKeys = ref([]);
   //트리 선택 노드 정보
-  const checkedKeys = ref<any>([]);
+  const checkedKeys = ref<Array<string | number>>([]);
   const defaultCheckedKeys = ref([]);
   //트리의 선택된 노드 정보
   const selectedKeys = ref([]);
@@ -70,7 +71,7 @@
   const loading = ref(false);
 
   //접힌 키 펼치기
-  const expandedKeys = ref<any>([]);
+  const expandedKeys = ref<Array<string | number>>([]);
   //상위 노드와 하위 노드의 선택된 상태가 관련되어 있는지 여부를 True는 관련이 없고, False는 관련이 있습니다.
   const checkStrictly = ref<boolean>(false);
   const [registerDrawer1, { openDrawer: openDataRuleDrawer }] = useDrawer();
@@ -105,7 +106,6 @@
     if (data?.length) {
       data.forEach((item) => {
         if (item.slotTitle) {
-          const { t } = useI18n();
           if (item.slotTitle.includes("t('") && t) {
             item.slotTitle = new Function('t', `return ${item.slotTitle}`)(t);
           }
@@ -156,18 +156,18 @@
    * liaozhiyang
    * 현재 노드와 아래의 모든 자손의 키를 가져옵니다.
    */
-  function getNodeAllKey(node: any, children: any, key: string) {
-    const result: any = [];
+  function getNodeAllKey(node: Record<string, unknown>, children: string, key: string) {
+    const result: unknown[] = [];
     result.push(node[key]);
-    const recursion = (data) => {
-      data.forEach((item: any) => {
+    const recursion = (data: Array<Record<string, unknown>>) => {
+      data.forEach((item: Record<string, unknown>) => {
         result.push(item[key]);
-        if (item[children]?.length) {
-          recursion(item[children]);
+        if (Array.isArray(item[children]) && (item[children] as unknown[]).length) {
+          recursion(item[children] as Array<Record<string, unknown>>);
         }
       });
     };
-    node[children]?.length && recursion(node[children]);
+    Array.isArray(node[children]) && (node[children] as unknown[]).length && recursion(node[children] as Array<Record<string, unknown>>);
     return result;
   }
 
@@ -213,7 +213,7 @@
     if(loading.value===false){
       await doSave(params)
     }else{
-      console.log('마지막 실행이 완료될 때까지 기다려주세요!');
+      console.log('Please wait for the previous operation to complete.');
     }
     if(exit){
       // 닫혀 있으면

@@ -224,7 +224,7 @@
           }
         } else {
           if (!dict) {
-            console.error('검색 컴포넌트에 구성된 사전 항목이 없습니다.');
+            console.error('No dictionary entry configured for JSearchSelect.');
           } else {
             //또한 처음에 일부 데이터를 비동기식으로 로드합니다.
             loading.value = true;
@@ -292,7 +292,7 @@
           value = option.value;
           label = option.children()[0].children;
         }catch (e) {
-          console.log('드롭다운 항목을 가져오지 못했습니다.', e)
+          console.log('Failed to load dropdown options:', e)
         }
         let str = input.toLowerCase();
         return value.toLowerCase().indexOf(str) >= 0 || label.toLowerCase().indexOf(str) >= 0;

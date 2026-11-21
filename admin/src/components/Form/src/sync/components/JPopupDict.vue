@@ -22,6 +22,7 @@
   </div>
 </template>
 <script lang="ts">
+  import { $t } from '/@/locales';
   import JPopupOnlReportModal from './modal/JPopupOnlReportModal.vue';
   import { defineComponent, ref, nextTick, watch, reactive, unref } from 'vue';
   import { useModal } from '/@/components/Modal';
@@ -69,7 +70,7 @@
       const labelFiled = props.dictCode.split(',')[1];
       const valueFiled = props.dictCode.split(',')[2];
       if (!code || !valueFiled || !labelFiled) {
-        createMessage.error('popupDict 매개변수가 올바르게 구성되지 않았습니다!');
+        createMessage.error($t('appUi.k969104cc'));
       }
       //모델등록
       const [regModal, { openModal }] = useModal();

@@ -61,8 +61,8 @@
 
       function open(event, level = 0) {
         if (level > 3) {
-          createMessage.error('하위 표를 열지 못했습니다.');
-          console.warn('【JVxeSubPopover】하위 표를 열지 못했습니다.');
+          createMessage.error(t('appUi.kce7b539a'));
+          console.warn('[JVxeSubPopover] Failed to open sub-table.');
           return;
         }
 

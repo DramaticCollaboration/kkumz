@@ -247,7 +247,7 @@ export function numToUpper(value) {
         }
         if (value.charAt(length - i - 1) == 0) {
           if (i != 0 && i != 1) {
-            if (result.charAt(0) != '영' && result.charAt(0) != '원' && result.charAt(0) != '만') {
+            if (result.charAt(0) != $t('appUi.k2bc634a4') && result.charAt(0) != $t('appUi.k21ba070b') && result.charAt(0) != $t('appUi.k63948d05')) {
               result = $t('appUi.k2bc634a4') + result;
             }
           }
@@ -255,7 +255,7 @@ export function numToUpper(value) {
         }
         result = toDx(value.charAt(length - i - 1)) + unit[unit.length - i - 1] + result;
       }
-      result += result.charAt(result.length - 1) == '원' ? $t('appUi.k3efcb4f1') : '';
+      result += result.charAt(result.length - 1) == $t('appUi.k21ba070b') ? $t('appUi.k3efcb4f1') : '';
       return result;
     } else {
       return null;
@@ -375,7 +375,7 @@ export function getWeekMonthQuarterYear(date) {
   // ISO 주 번호를 얻는 기능
   const getISOWeek = (date) => {
     const jan4 = new Date(date.getFullYear(), 0, 4);
-    const oneDay = 86400000; // 하루에 밀리초
+    const oneDay = 86400000; // Milliseconds per day
     return Math.ceil(((date - jan4.getTime()) / oneDay + jan4.getDay() + 1) / 7);
   };
   // 타임스탬프를 날짜 객체로 변환
@@ -383,7 +383,7 @@ export function getWeekMonthQuarterYear(date) {
   // 계산 주간
   const week = getISOWeek(dateObj);
   // 월 계산
-  const month = dateObj.getMonth() + 1; // 월은 0부터 시작하므로 1을 더합니다.
+  const month = dateObj.getMonth() + 1; // Month is 0-indexed, so add 1
   // 분기 계산
   const quarter = Math.floor(dateObj.getMonth() / 3) + 1;
   // 계산연도

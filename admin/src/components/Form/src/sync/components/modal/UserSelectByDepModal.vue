@@ -1,4 +1,4 @@
-<!--부서별 사용자 선택-->
+<!-- Select user by department -->
 <template>
   <BasicModal v-bind="$attrs" @register="register" :title="modalTitle" width="1200px" @ok="handleOk" destroyOnClose @visible-change="visibleChange">
     <a-row :gutter="10">
@@ -179,7 +179,7 @@
        * 사용자 정의 재설정 방법
        * */
       async function customResetFunc() {
-        console.log('맞춤 쿼리');
+        console.log('Custom query');
         //트리 노드 지우기
         selectedDepIds.value = [];
         //쿼리 조건 지우기

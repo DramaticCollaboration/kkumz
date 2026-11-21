@@ -19,7 +19,7 @@ export function demoFieldDefVal_getAddress(arg) {
   if (!arg) {
     arg = $t('appUi.k66801387');
   }
-  반환$t('appUi.k6e47475a', { p0: arg });
+  return $t('appUi.k6e47475a', { p0: arg });
 }
 
 /** 사용자 정의 JS 함수 예 */

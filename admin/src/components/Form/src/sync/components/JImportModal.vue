@@ -159,7 +159,7 @@
           centered: false,
           content: `<div>
                         <span>${tipMessage}</span><br/>
-                        <span>구체적인 내용은 부탁드립니다<a href = ${href} target="_blank"> 다운로드하려면 클릭하세요 </a> </span>
+                        <span>${t('appUi.k7529aed0')} <a href="${href}" target="_blank">${t('appUi.k0bc26a00')}</a></span>
                       </div>`,
         });
       }

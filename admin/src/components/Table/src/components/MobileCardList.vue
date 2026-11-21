@@ -97,6 +97,7 @@
 </template>
 
 <script lang="ts">
+  import { KOREAN_INDEX_COLUMN_TITLE, STATUS_FIELD_NAME_RE } from '/@/locales/koPatterns';
   import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, computed, h, Comment, Text, Fragment, PropType, VNode } from 'vue';
   import { Spin, Empty, Pagination } from 'ant-design-vue';
@@ -209,12 +210,12 @@
           if (c.defaultHidden) return false;
           if (c.flag === INDEX_COLUMN_FLAG || c.flag === ACTION_COLUMN_FLAG) return false;
           if (c.key === 'action' || c.dataIndex === 'action' || c.key === 'row-selection-column') return false;
-          if (c.dataIndex === 'rowIndex' || c.title === '#' || c.customTitle === '순번' || c.customTitle === 'Index') return false;
+          if (c.dataIndex === 'rowIndex' || c.title === '#' || c.customTitle === KOREAN_INDEX_COLUMN_TITLE || c.customTitle === 'Index') return false;
           return true;
         })
       );
 
-      const STATUS_FIELD_RE = /status|state|level|severity|상태/i;
+      const STATUS_FIELD_RE = STATUS_FIELD_NAME_RE;
       const badgeColumn = computed(() =>
         dataColumns.value.find((c) => {
           if (c.mobileBadge === true) return true;

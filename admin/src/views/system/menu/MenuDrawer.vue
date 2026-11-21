@@ -11,6 +11,7 @@
   import { list, saveOrUpdateMenu } from './menu.api';
   import { useDrawerAdaptiveWidth } from '/@/hooks/sync/useAdaptiveWidth';
   import { useI18n } from "/@/hooks/web/useI18n";
+  const { t } = useI18n();
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
   const { adaptiveWidth } = useDrawerAdaptiveWidth();
@@ -120,7 +121,6 @@
   */
   function translateMenu(data, key) {
     if (data?.length) {
-      const { t } = useI18n();
       data.forEach((item) => {
         if (item[key]) {
           if (item[key].includes("t('") && t) {

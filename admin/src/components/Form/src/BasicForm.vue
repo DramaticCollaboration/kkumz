@@ -143,7 +143,7 @@
               valueFormat = componentProps?.valueFormat;
             }
             if(!valueFormat){
-              console.warn("ValueFormat이 구성되지 않아 형식 오류가 발생할 수 있습니다!");
+              console.warn("valueFormat is not configured; formatting errors may occur.");
             }
             if (!Array.isArray(defaultValue)) {
               if(valueFormat){

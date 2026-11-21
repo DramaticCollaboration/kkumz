@@ -328,7 +328,7 @@ async function handleDict({ col, methods }: HandleArgs) {
       await nextTick();
       await methods.getXTable().updateData();
     } catch (e) {
-      console.group(`[JVxeTable] 쿼리 사전 "${col.params.dictCode}" 예외가 발생합니다!`);
+      console.group(`[JVxeTable] Exception while querying dict "${col.params.dictCode}"`);
       console.warn(e);
       console.groupEnd();
     }

@@ -156,6 +156,7 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity, KkumzRecord } from '@/types/kkumz';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
@@ -167,9 +168,9 @@ import {
 } from '@/api/kkumzApi';
 
 const router = useRouter();
-const ideas = ref<any[]>([]);
-const mySites = ref<any[]>([]);
-const pendingApplicants = ref<any[]>([]);
+const ideas = ref<KkumzEntity[]>([]);
+const mySites = ref<KkumzEntity[]>([]);
+const pendingApplicants = ref<KkumzEntity[]>([]);
 
 function goNewStudio() {
   if (!isAuthenticated.value) {
@@ -185,7 +186,7 @@ function openLiveSiteInNewTab(slug: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-function resolveIdeaSite(idea: any): any | null {
+function resolveIdeaSite(idea: KkumzEntity): KkumzEntity | null {
   if (!idea) return null;
   if (idea.site && idea.site.siteSlug) return idea.site;
   if (Array.isArray(idea.deployedSites) && idea.deployedSites.length > 0) {
@@ -194,12 +195,12 @@ function resolveIdeaSite(idea: any): any | null {
   return null;
 }
 
-function resolveIdeaSiteSlug(idea: any): string {
+function resolveIdeaSiteSlug(idea: KkumzEntity): string {
   const site = resolveIdeaSite(idea);
   return site?.siteSlug || idea?.selectedSiteSlug || '';
 }
 
-function isIdeaPublished(idea: any): boolean {
+function isIdeaPublished(idea: KkumzEntity): boolean {
   const site = resolveIdeaSite(idea);
   if (site) {
     if (typeof site.isPublished === 'boolean') {
@@ -220,10 +221,10 @@ function isIdeaPublished(idea: any): boolean {
 }
 
 const publishedSitesCount = computed(
-  () => mySites.value.filter((s: any) => Boolean(s.isPublished)).length,
+  () => mySites.value.filter((s: KkumzEntity) => Boolean(s.isPublished)).length,
 );
 const draftSitesCount = computed(
-  () => mySites.value.filter((s: any) => !s.isPublished).length,
+  () => mySites.value.filter((s: KkumzEntity) => !s.isPublished).length,
 );
 const totalLikesCount = computed(() => mySites.value.reduce((acc, s) => acc + (s.likeCount || 0), 0));
 
@@ -260,12 +261,12 @@ async function loadWorkspace() {
   }
   mySites.value = Array.from(siteMap.values());
 
-  const applicants: any[] = [];
+  const applicants: KkumzEntity[] = [];
   for (const site of mySites.value) {
     try {
       const runtime = await kkumzApi.getSiteRuntime(site.siteSlug);
       const members = runtime?.teamMembers || [];
-      for (const m of members) {
+      for (const m of (Array.isArray(members) ? members : [])) {
         if (m.status === 'PENDING') {
           applicants.push({
             ...m,

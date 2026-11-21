@@ -169,7 +169,7 @@
               }
             });
           } else {
-            console.warn('【JPopup】분류기 매개변수가 잘못되었습니다.');
+            console.warn('[JPopup] Invalid sorter parameter.');
           }
         }
       });

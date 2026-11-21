@@ -103,7 +103,7 @@ export interface HelpStepItem {
 export interface HelpRelatedScreen {
   title: string;
   path: string;
-  relation: '선행 설정' | '후속 작업' | '연관 분석' | string;
+  relation: string;
 }
 
 export interface HelpFaqItem {
@@ -144,15 +144,6 @@ export interface SysPageHelpModel {
   updateTime?: string;
 }
 
-export const getHelpByPageKey = (pageKey: string, appCode = DEFAULT_APP_CODE) => {
-  return defHttp.get<SysPageHelpModel>(
-    {
-      url: Api.GuideByPath,
-      params: { path: pageKey, appCode },
-    },
-    { errorMessageMode: 'none' },
-  );
-};
 
 export const getHelpGuideByPath = (params: { path: string; appCode?: string; routeName?: string }) =>
   defHttp.get<SysPageHelpModel>(
@@ -173,8 +164,6 @@ export const getHelpList = (params?: Record<string, any>) =>
     params: { appCode: DEFAULT_APP_CODE, ...params },
   });
 
-export const getHelpById = (id: string) =>
-  defHttp.get<SysPageHelpModel>({ url: `${Api.Detail}/${id}` });
 
 export const saveOrUpdateHelp = (params: SysPageHelpModel) =>
   defHttp.post({
@@ -185,31 +174,14 @@ export const saveOrUpdateHelp = (params: SysPageHelpModel) =>
     },
   });
 
-export const savePageHelp = (data: Partial<SysPageHelpModel>, _isUpdate = false) => {
-  return defHttp.post({
-    url: Api.Save,
-    data: { appCode: DEFAULT_APP_CODE, ...data },
-  });
-};
 
 export const deleteHelpById = (id: string) =>
   defHttp.delete({ url: `${Api.Delete}/${id}` });
 
-export const deletePageHelp = (id: string) => {
-  return defHttp.delete({
-    url: `${Api.Delete}/${encodeURIComponent(id)}`,
-  });
-};
 
 export const deleteBatchHelp = (ids: string[]) =>
   defHttp.delete({ url: Api.DeleteBatch, params: { ids: ids.join(',') } }, { joinParamsToUrl: true });
 
-export const batchDeletePageHelp = (ids: string) => {
-  return defHttp.delete({
-    url: Api.DeleteBatch,
-    params: { ids },
-  });
-};
 
 export const getRegisteredMenuRoutes = async (): Promise<
   Array<{ label: string; value: string; title: string; category?: string }>
@@ -220,11 +192,12 @@ export const getRegisteredMenuRoutes = async (): Promise<
     const options: Array<{ label: string; value: string; title: string; category?: string }> = [];
     const seen = new Set<string>();
 
-    const traverse = (nodes: any[], parentTitle = '') => {
+    const traverse = (nodes: Array<Record<string, unknown>>, parentTitle = '') => {
       if (!Array.isArray(nodes)) return;
       for (const node of nodes) {
         const path = node.path || node.url;
-        const title = node.meta?.title || node.name || path;
+        const meta = node.meta as { title?: string } | undefined;
+        const title = meta?.title || node.name || path;
         if (path && typeof path === 'string' && path.startsWith('/') && !seen.has(path)) {
           seen.add(path);
           options.push({
@@ -235,7 +208,7 @@ export const getRegisteredMenuRoutes = async (): Promise<
           });
         }
         if (Array.isArray(node.children) && node.children.length > 0) {
-          traverse(node.children, String(title));
+          traverse(node.children as Array<Record<string, unknown>>, String(title));
         }
       }
     };

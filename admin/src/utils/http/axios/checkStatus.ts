@@ -1,3 +1,4 @@
+import { KOREAN_AUTH_ERROR_KEYWORDS } from '/@/locales/koPatterns';
 /**
  * @fileoverview HTTP 표준 상태 코드(400, 401, 403, 404, 500, 502, 504)별 에러 메시지 매핑
  * @description
@@ -54,7 +55,7 @@ export function checkStatus(status: number, msg: string, errorMessageMode: Error
       errMessage = t('sys.api.errMsg408');
       break;
     case 500:
-      if (!isLoginApi && msg && (msg.includes('로그인') || msg.includes('토큰'))) {
+      if (!isLoginApi && msg && KOREAN_AUTH_ERROR_KEYWORDS.some((kw) => msg.includes(kw))) {
         userStore.setToken(undefined);
         errMessage = msg;
         userStore.logout(true);

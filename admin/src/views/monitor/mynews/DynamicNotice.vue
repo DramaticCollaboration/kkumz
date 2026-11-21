@@ -9,7 +9,7 @@
   });
   const modalVisible = ref<Boolean>(false);
   const currentModal = shallowRef<Nullable<ComponentOptions>>(null);
-  const formData = ref<any>(props.formData);
+  const formData = ref<Record<string, unknown>>(props.formData as Record<string, unknown>);
 
   const componentType = {
   };

@@ -1,10 +1,10 @@
 <!--
   @component SystemUserManagement
-  @description 전사 시스템 사용자 계정 및 권한 매핑 관리 화면
+  @description System user account and role mapping management view
   @features
-    - 사용자 계정 생성, 정보 수정, 계정 동결(Status=2), 완전 삭제 라이프사이클 관리
-    - 비밀번호 초기화 및 SHA-256 솔트 암호화 정책 준수
-    - N:M 사용자-역할(Role) 및 소속 부서 배정 모달 연동
+    - User account lifecycle: create, edit, freeze (Status=2), permanent delete
+    - Password reset with salted SHA-256 hashing policy
+    - N:M user-role and department assignment modal
 -->
 <template>
   <div>

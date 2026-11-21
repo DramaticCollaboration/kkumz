@@ -41,19 +41,19 @@ export function connectWebSocket(url: string) {
 }
 
 function onOpen() {
-  console.log('[WebSocket] 연결 성공');
+  console.log('[WebSocket] Connected');
 }
 
 function onClose(e) {
-  console.log('[WebSocket] 연결 끊김：', e);
+  console.log('[WebSocket] Disconnected:', e);
 }
 
 function onError(e) {
-  console.log('[WebSocket] 연결 오류가 발생했습니다.: ', e);
+  console.log('[WebSocket] Connection error:', e);
 }
 
 function onMessage(e) {
-  console.debug('[WebSocket] -----메시지 수신-------', e.data);
+  console.debug('[WebSocket] Message received:', e.data);
   try {
     if(e==='ping'){
       return;
@@ -67,7 +67,7 @@ function onMessage(e) {
       }
     }
   } catch (err) {
-    console.error('[WebSocket] 데이터 구문 분석에 실패했습니다.：', err);
+    console.error('[WebSocket] Failed to parse message:', err);
   }
 }
 
@@ -81,7 +81,7 @@ export function onWebSocket(callback: (data: object) => any) {
     if (typeof callback === 'function') {
       listeners.set(callback, null);
     } else {
-      console.debug('[WebSocket] WebSocket 메시지 리스너를 추가하지 못했습니다.：전달된 매개변수가 메소드가 아닙니다.');
+      console.debug('[WebSocket] Failed to add listener: callback is not a function.');
     }
   }
 }

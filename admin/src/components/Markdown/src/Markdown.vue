@@ -23,7 +23,7 @@
     },
     emits: ['change', 'get', 'update:value'],
     setup(props, { attrs, emit }) {
-      console.log("---Markdown---초기화---")
+      console.log("[Markdown] initialized")
       const wrapRef = ref<ElRef>(null);
       const vditorRef = ref(null) as Ref<Nullable<Vditor>>;
       const initedRef = ref(false);
@@ -197,7 +197,7 @@
         if (!vditorInstance) return;
         try {
           vditorInstance?.destroy?.();
-        } catch (error) { console.debug("작업 처리 중 예외 발생:", error); }
+        } catch (error) { console.debug("Exception during operation:", error); }
         vditorRef.value = null;
         initedRef.value = false;
       }

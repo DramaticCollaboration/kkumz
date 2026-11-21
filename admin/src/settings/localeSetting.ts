@@ -1,3 +1,4 @@
+import { KOREAN_NATIVE_LABEL } from '/@/locales/koPatterns';
 import type { DropMenu } from '../components/Dropdown';
 import type { LocaleSetting, LocaleType } from '/#/config';
 
@@ -75,7 +76,7 @@ export const localeSetting: LocaleSetting = {
 // 언어 선택 목록
 export const localeList: DropMenu[] = [
   {
-    text: '한국어',
+    text: KOREAN_NATIVE_LABEL,
     event: LOCALE.KO_KR,
   },
   {

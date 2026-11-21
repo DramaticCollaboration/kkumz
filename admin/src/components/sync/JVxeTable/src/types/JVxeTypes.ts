@@ -32,7 +32,7 @@ export enum JVxeTypes {
   userSelect = 'user-select',
 
   // 예인선 태그（아직 유용하지 않음）
-  tags = 'tags', // 구현될 TODO
+  tags = 'tags', // Tag list renderer
 
   slot = 'slot',
   normal = 'normal',

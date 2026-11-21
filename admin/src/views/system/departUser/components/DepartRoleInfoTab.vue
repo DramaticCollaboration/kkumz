@@ -167,7 +167,7 @@
       await deleteDepartRole(selectedRowKeys, true);
       // 일괄 삭제 성공 후 선택 지우기
       clearSelection();
-    } catch (e) { console.debug("작업 처리 중 예외 발생:", e); }
+    } catch (e) { console.debug("Exception during operation:", e); }
   }
 
   // Form 팝업 창 성공 후 콜백

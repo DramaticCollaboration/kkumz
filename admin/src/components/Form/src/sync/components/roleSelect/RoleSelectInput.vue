@@ -118,11 +118,11 @@
         emit('update:value', str);
         emit('change', str);
         formItemContext.onFieldChange();
-        console.log('데이터 선택', str);
+        console.log('Selected data:', str);
       }
 
       function onSelected(_v, values) {
-        console.log('역할 선택 완료：', values);
+        console.log('Role selection completed:', values);
         loading.value = false;
         if (values && values.length > 0) {
           selectedList.value = values;

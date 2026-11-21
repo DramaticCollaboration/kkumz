@@ -1,6 +1,6 @@
 <template>
   <BasicDrawer :title="t('appUi.k1590891e')" :width="365" @close="onClose" @register="registerDrawer">
-    <a-spin :spinning="loading">
+    <div v-loading="loading" class="relative">
       <a-tabs defaultActiveKey="1">
         <a-tab-pane :tab="t('appUi.k6296eba0')" key="1">
           <a-checkbox-group v-model:value="dataRuleChecked" v-if="dataRuleList.length > 0">
@@ -20,7 +20,7 @@
           <a-empty v-else :description="t('appUi.kc395f1f1')" />
         </a-tab-pane>
       </a-tabs>
-    </a-spin>
+    </div>
   </BasicDrawer>
 </template>
 
@@ -36,8 +36,8 @@
   const loading = ref<boolean>(false);
   const departId = ref('');
   const functionId = ref('');
-  const dataRuleList = ref<Array<any>>([]);
-  const dataRuleChecked = ref<Array<any>>([]);
+  const dataRuleList = ref<Array<Record<string, unknown>>>([]);
+  const dataRuleChecked = ref<Array<string | number>>([]);
 
   // 서랍 컴포넌트 등록
   const [registerDrawer, { closeDrawer }] = useDrawerInner((data) => {

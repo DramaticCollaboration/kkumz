@@ -7,10 +7,10 @@
     aria-live="polite"
   >
     <span class="toast-icon">
-      {{ toastType === 'error' ? '!' : toastType === 'success' ? '✓' : 'i' }}
+      {{ toastType === 'error' ? '!' : toastType === 'success' ? 'OK' : 'i' }}
     </span>
     <span class="toast-text">{{ toastMessage }}</span>
-    <button type="button" class="toast-close" @click="emit('clear-toast')">✕</button>
+    <button type="button" class="toast-close" @click="emit('clear-toast')">닫기</button>
   </div>
 
   <div v-if="busy" class="studio-progress-banner" role="status" aria-live="polite">
@@ -32,7 +32,7 @@
         :class="`step-${bStep.status}`"
       >
         <span class="p-step-icon">
-          {{ bStep.status === 'done' ? '✓' : bStep.status === 'active' ? '▶' : '•' }}
+          {{ bStep.status === 'done' ? 'OK' : bStep.status === 'active' ? '>' : '•' }}
         </span>
         <span>{{ bStep.label }}</span>
       </div>
@@ -70,7 +70,7 @@
         2단계 화면으로 이동 →
       </button>
       <button type="button" class="error-dismiss-btn" @click="emit('dismiss-error')">
-        닫기 ✕
+        닫기
       </button>
     </div>
   </div>

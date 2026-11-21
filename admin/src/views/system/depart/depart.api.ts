@@ -114,7 +114,6 @@ export const doUpdateDepartInfo = (params) => defHttp.put({ url: Api.doUpdateDep
  * 삭제부서
  * @param id
  */
-export const deleteDepart = (id) => defHttp.delete({ url: Api.delete, params:{ id } }, { joinParamsToUrl: true });
 
 /**
  * 담당자 설정 담당자 취소

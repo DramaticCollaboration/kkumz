@@ -3,12 +3,12 @@
     v-bind="$attrs"
     @register="registerModal"
     :width="860"
-    :title="$t('sys.errorLog.modalTitle', '오류 상세')"
+    :title="$t('sys.errorLog.modalTitle')"
     :canFullscreen="true"
     :draggable="true"
     :resizable="true"
     :showCancelBtn="false"
-    :okText="$t('common.closeText', '닫기')"
+    :okText="$t('common.closeText')"
     @ok="closeModal"
   >
     <div class="p-2 error-detail-modal-body">

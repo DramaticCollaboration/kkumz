@@ -168,7 +168,7 @@
       function beforeUpload(file) {
         let fileType = file.type;
         if (fileType.indexOf('image') < 0) {
-          createMessage.info('사진을 올려주세요');
+          createMessage.info($t('appUi.k03ae2439'));
           return false;
         }
       }
@@ -179,7 +179,7 @@
         initTag.value = false;
         // uploadFileList.value = fileList;
         if (file.status === 'error') {
-          createMessage.error(`${file.name} 업로드에 실패했습니다.`);
+          createMessage.error($t('appUi.k10cd3177', { p0: file.name }));
         }
         let fileUrls = [];
         let noUploadingFileCount = 0;

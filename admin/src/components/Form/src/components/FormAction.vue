@@ -3,14 +3,14 @@
     <div style="width: 100%" :style="{ textAlign: actionColOpt.style.textAlign }">
       <FormItem :wrapper-col="{ span: 24 }">
         <div class="inline-flex items-center justify-end flex-nowrap whitespace-nowrap">
-          <slot name="submitBefore"></slot>
-          <Button type="primary" class="mr-2" v-bind="getSubmitBtnOptions" @click="submitAction" v-if="showSubmitButton">
-            {{ getSubmitBtnOptions.text }}
-          </Button>
-
           <slot name="resetBefore"></slot>
           <Button type="default" class="mr-2" v-bind="getResetBtnOptions" @click="resetAction" v-if="showResetButton">
             {{ getResetBtnOptions.text }}
+          </Button>
+
+          <slot name="submitBefore"></slot>
+          <Button type="primary" class="mr-2" v-bind="getSubmitBtnOptions" @click="submitAction" v-if="showSubmitButton">
+            {{ getSubmitBtnOptions.text }}
           </Button>
 
           <slot name="advanceBefore"></slot>

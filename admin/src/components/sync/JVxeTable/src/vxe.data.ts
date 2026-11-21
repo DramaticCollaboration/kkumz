@@ -82,7 +82,7 @@ export const vxeProps = () => ({
   asyncRemove: propTypes.bool.def(false),
   // 컴포넌트를 항상 표시할지 여부입니다. false인 경우 클릭할 때만 컴포넌트가 나타납니다.
   // 메모：이 매개변수는 동적으로 수정할 수 없습니다. 행과 열이 많으면 시스템 성능에 따라 다양한 정도의 지연이 발생합니다.
-  // TODO vxe-table의 새 버전에서는 보이는 매개변수가 취소되어 이 기능을 구현할 수 없습니다.
+  // 참고: vxe-table의 새 버전에서는 보이는 매개변수가 취소되어 이 기능을 지원하지 않습니다.
   alwaysEdit: propTypes.bool.def(false),
   // 연결 구성, 어레이, 자세한 구성은 설명서를 참조하세요.
   linkageConfig: propTypes.array.def(() => []),

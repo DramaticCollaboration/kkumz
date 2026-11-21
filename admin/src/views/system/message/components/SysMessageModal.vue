@@ -192,7 +192,7 @@
       const showSearch = ref(false);
 
       function handleChangeSearchPerson(value, a) {
-        console.log('변경을 선택하세요', value, a);
+        console.log('Selection changed:', value, a);
         showSearch.value = true;
       }
 
@@ -231,7 +231,7 @@
       const showRangeDate = computed(() => {
         let temp = dateTags.filter((i) => i.active == true);
         if (temp && temp.length > 0) {
-          if (temp[0].text == '사용자 정의') {
+          if (temp[0].key == 'zdy') {
             return true;
           }
         }

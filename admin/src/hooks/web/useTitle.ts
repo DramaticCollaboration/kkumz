@@ -52,7 +52,7 @@ export function useTitle() {
 /** 
  2023-11-09
  liaozhiyang
- 경로 일치 패턴의 실제 페이지 이름을 가져옵니다.
+ Resolve actual page title matching the route pattern.
 */
 function getMatchingRouterName(menus, path) {
   for (let i = 0, len = menus.length; i < len; i++) {

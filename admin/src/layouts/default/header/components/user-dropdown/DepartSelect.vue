@@ -117,7 +117,7 @@
         window.location.reload();
       })
       .catch((e) => {
-        console.log('로그인 선택 문제', e);
+        console.log('Login selection error:', e);
       })
       .finally(() => {
         close();

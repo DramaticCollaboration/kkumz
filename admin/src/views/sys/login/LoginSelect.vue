@@ -152,14 +152,14 @@
                 emit('success');
               })
               .catch((e) => {
-                console.log('로그인 선택 문제', e);
+                console.log('Login selection error:', e);
               })
               .finally(() => {
                 close();
               });
           })
           .catch((err) => {
-            console.log('Form 확인 실패 오류', err);
+            console.log('Form validation failed:', err);
           });
       }
       /**

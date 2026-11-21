@@ -485,7 +485,7 @@ export function usePopBiz(ob, tableRef?) {
   function handleExport() {
     const { handleExportXls } = useMethods();
     let url = `${configUrl.export}${cgRpConfigId.value}`;
-    let params = getQueryParams(); //쿼리 조건
+    let params = getQueryParams(); // Query parameters
     // 【VUEN-1568】일부 행을 선택하면 선택한 행만 내보내집니다.
     let keys = unref(checkedKeys);
     if (keys.length > 0) {
@@ -549,7 +549,7 @@ export function usePopBiz(ob, tableRef?) {
         dynamicParamHandler(res.result);
         queryInfo.value = res.result;
         console.log('queryInfo==>', queryInfo.value);
-        //쿼리 조건이 로드된 후 데이터 요청
+        // Query parameters이 로드된 후 데이터 요청
         if (data) {
           setDataSource(data);
           //라우팅 매개변수와 동적 매개변수 전달은 적용되지 않습니다.
@@ -572,7 +572,7 @@ export function usePopBiz(ob, tableRef?) {
     if (arg == 1) {
       pagination.current = 1;
     }
-    let params = getQueryParams(); //쿼리 조건
+    let params = getQueryParams(); // Query parameters
     params['onlRepUrlParamStr'] = getUrlParamString();
     console.log('params', params);
     loading.value = true;
@@ -583,7 +583,7 @@ export function usePopBiz(ob, tableRef?) {
       res.result.dictOptions && initDictOptionData(res.result.dictOptions);
       loading.value = false;
       let data = res.result.data;
-      console.log('Form 정보:', data);
+      console.log('Form data:', data);
       setDataSource(data);
     });
   }
@@ -650,7 +650,7 @@ export function usePopBiz(ob, tableRef?) {
    */
   function dynamicParamHandler(arr?) {
     if (arr && arr.length > 0) {
-      //쿼리 조건을 처음 로드하기 전에 queryParam을 빈 개체로 초기화합니다.
+      // Query parameters을 처음 로드하기 전에 queryParam을 빈 개체로 초기화합니다.
       let queryTemp = {};
       for (let item of arr) {
         if (item.mode === 'single') {
@@ -672,7 +672,7 @@ export function usePopBiz(ob, tableRef?) {
           if (str && str.startsWith("'") && str.endsWith("'")) {
             str = str.substring(1, str.length - 1);
           }
-          //쿼리 조건에 매개변수가 포함된 경우 값을 설정하세요.
+          // Query parameters에 매개변수가 포함된 경우 값을 설정하세요.
           unref(queryParam)[key] = str;
         }
         dynamicTemp[key] = props.param[key];

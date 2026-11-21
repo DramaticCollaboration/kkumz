@@ -95,7 +95,7 @@ export const duplicateCheck = async (params) => {
     const fieldVal = String(params?.fieldVal || '').trim().toLowerCase();
     const dataId = params?.dataId ? String(params.dataId).trim() : '';
     const duplicated = records.some(
-      (r: any) =>
+      (r: Record<string, unknown>) =>
         String(r.dictCode || '').trim().toLowerCase() === fieldVal &&
         (!dataId || String(r.id) !== dataId),
     );
@@ -197,7 +197,7 @@ export const dictItemCheck = async (params) => {
     const val = String(params?.itemValue || '').trim().toLowerCase();
     const id = params?.id ? String(params.id).trim() : '';
     const duplicated = listData.some(
-      (item: any) =>
+      (item: Record<string, unknown>) =>
         String(item.itemValue || '').trim().toLowerCase() === val &&
         (!id || String(item.id) !== id),
     );
@@ -222,7 +222,7 @@ export const refreshCache = async () => {
 export const queryAllDictItems = async () => {
   const page = await defHttp.get({ url: Api.list, params: { pageNo: 1, pageSize: 500 } });
   const records = Array.isArray(page?.records) ? page.records : [];
-  const dictMap: Record<string, any[]> = {};
+  const dictMap: Record<string, unknown[]> = {};
   for (const d of records) {
     if (d?.dictCode) {
       dictMap[d.dictCode] = Array.isArray(d.items) ? d.items : [];

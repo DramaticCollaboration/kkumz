@@ -185,7 +185,7 @@
       handleHiddenNode(res.result);
       treeData.value = [...res.result];
     } else {
-      console.log('여러 루트 노드About 비정상적인 쿼리 결과', res);
+      console.log('Unexpected query result for multiple root nodes:', res);
     }
   }
 
@@ -284,11 +284,11 @@
           if (typeof test == 'object' && test) {
             resolve();
           } else {
-            createMessage.error('JTreeSelect-condition 컴포넌트가 잘못된 값을 전달하고 json 문자열이 필요합니다!');
+            createMessage.error(t('appUi.k838f1883'));
             reject();
           }
         } catch (e) {
-          createMessage.error('JTreeSelect-condition 컴포넌트가 잘못된 값을 전달하고 json 문자열이 필요합니다!');
+          createMessage.error(t('appUi.k838f1883'));
           reject();
         }
       }
@@ -316,7 +316,7 @@
       handleHiddenNode(res.result);
       treeData.value = [...res.result];
     } else {
-      console.log('여러 루트 노드About 비정상적인 쿼리 결과', res);
+      console.log('Unexpected query result for multiple root nodes:', res);
     }
   }
 

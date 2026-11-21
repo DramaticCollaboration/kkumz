@@ -50,7 +50,7 @@ export const createContextMenu = function (options: CreateContextOptions) {
       menuManager.domList.forEach((dom: Element) => {
         try {
           dom && body.removeChild(dom);
-        } catch (error) { console.debug("작업 처리 중 예외 발생:", error); }
+        } catch (error) { console.debug("Exception during operation:", error); }
       });
       body.removeEventListener('click', handleClick);
       body.removeEventListener('scroll', handleClick);

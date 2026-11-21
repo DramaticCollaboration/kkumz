@@ -84,7 +84,7 @@
     emits: ['change', 'update:modelValue', 'inited', 'init-error'],
     setup(props, { emit, attrs }) {
       const { t } = useI18n();
-      console.log('---Tinymce---초기화---');
+      console.log('[Tinymce] initialized');
 
       const editorRef = ref<Nullable<any>>(null);
       const fullscreen = ref(false);

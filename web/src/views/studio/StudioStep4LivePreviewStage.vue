@@ -18,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { computed } from 'vue';
 import StorefrontRenderer from '@/components/storefront/StorefrontRenderer.vue';
 import { renderLogoWithBrand } from './studioFormatters';
@@ -25,14 +26,14 @@ import { renderLogoWithBrand } from './studioFormatters';
 const props = defineProps<{
   viewportMode: 'DESKTOP' | 'TABLET' | 'MOBILE';
   visualForm: Record<string, any>;
-  siteRuntime: any;
+  siteRuntime: KkumzEntity;
   previewBrandName: string;
   previewHeroStyle: Record<string, string>;
-  previewProducts: any[];
-  previewCategories: any[];
-  previewGalleryImages: any[];
-  previewArticles: any[];
-  previewDownloadableDocs: any[];
+  previewProducts: KkumzEntity[];
+  previewCategories: KkumzEntity[];
+  previewGalleryImages: KkumzEntity[];
+  previewArticles: KkumzEntity[];
+  previewDownloadableDocs: KkumzEntity[];
   previewFeatureBlocks: Record<string, any>;
   editableCmsForm: {
     title: string;

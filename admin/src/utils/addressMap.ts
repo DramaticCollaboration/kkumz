@@ -1,3 +1,4 @@
+import { KOREAN_BNAME_SUFFIX_RE, KOREAN_COUNTRY_NAME, KOREAN_PROVINCE_SHORT_RULES } from '/@/locales/koPatterns';
 import { $t } from '/@/locales';
 export interface DaumPostcodeData {
   zonecode: string;
@@ -150,7 +151,7 @@ export function parseDaumPostcodeData(data: DaumPostcodeData): {
 
   const extraParts: string[] = [];
   if (data.userSelectedType === 'R') {
-    if (data.bname && /[동|로|가]$/g.test(data.bname)) {
+    if (data.bname && KOREAN_BNAME_SUFFIX_RE.test(data.bname)) {
       extraParts.push(data.bname);
     }
     if (data.buildingName) {
@@ -183,25 +184,10 @@ function buildKoreanAddressCandidates(rawQuery: string): string[] {
   }
 
   // 2) 시/도 명칭 축약 버전 추가
-  const shortProvince = withoutParens
-    .replace(/^서울특별시/, '서울')
-    .replace(/^부산광역시/, '부산')
-    .replace(/^대구광역시/, '대구')
-    .replace(/^인천광역시/, '인천')
-    .replace(/^광주광역시/, '광주')
-    .replace(/^대전광역시/, '대전')
-    .replace(/^울산광역시/, '울산')
-    .replace(/^세종특별자치시/, '세종')
-    .replace(/^경기도/, '경기')
-    .replace(/^강원특별자치도|^강원도/, '강원')
-    .replace(/^충청북도/, '충북')
-    .replace(/^충청남도/, '충남')
-    .replace(/^전북특별자치도|^전라북도/, '전북')
-    .replace(/^전라남도/, '전남')
-    .replace(/^경상북도/, '경북')
-    .replace(/^경상남도/, '경남')
-    .replace(/^제주특별자치도|^제주도/, '제주')
-    .trim();
+  const shortProvince = KOREAN_PROVINCE_SHORT_RULES.reduce(
+    (acc, [pattern, shortName]) => acc.replace(pattern, shortName),
+    withoutParens
+  ).trim();
   if (shortProvince) {
     candidates.add(shortProvince);
   }
@@ -243,7 +229,7 @@ function formatNominatimAddress(item: any): GeocodeResultItem {
     roadAddress = String(item.display_name)
       .split(',')
       .map((s) => s.trim())
-      .filter((s) => s && s !== '대한민국' && !/^\d{5}$/.test(s))
+      .filter((s) => s && s !== KOREAN_COUNTRY_NAME && !/^\d{5}$/.test(s))
       .reverse()
       .join(' ');
   }

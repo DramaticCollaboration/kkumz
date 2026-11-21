@@ -441,10 +441,10 @@
               wrapperCol={wrapperCol}
             >
               <div style="display:flex">
-                {/* author: sunjianlei for: 【VUEN-744】여기에 너비를 추가하세요.: 100%; 컴포넌트 너비가 FormItem을 초과하는 것을 방지하고 싶기 때문입니다. */}
-                {/* update-begin--author:liaozhiyang---date:20240510---for：【TV360X-719】Form 유효성 검사에 실패한 항목은 표시 영역으로 스크롤됩니다. */}
+                {/* Set width: 100% to prevent child component width from overflowing FormItem */}
+                {/* Scroll form validation failed item into viewport */}
                 <Middleware>{getContent()}</Middleware>
-                {/* update-end--author:liaozhiyang---date:20240510---for：【TV360X-719】Form 유효성 검사에 실패한 항목은 표시 영역으로 스크롤됩니다. */}
+                {/* End scroll-to-error wrapper */}
                 {showSuffix && <span class="suffix">{getSuffix}</span>}
               </div>
             </Form.Item>

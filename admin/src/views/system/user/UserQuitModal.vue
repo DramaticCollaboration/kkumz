@@ -79,7 +79,7 @@
       cancelText: t('appUi.k19b2d19b'),
       onOk: () => {
         let rowValue = selectedRows.value;
-        let rowData: any = [];
+        let rowData: Array<Record<string, unknown>> = [];
         for (const value of rowValue) {
           rowData.push(value.username);
         }

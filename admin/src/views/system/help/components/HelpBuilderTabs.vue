@@ -104,7 +104,7 @@
           size="small"
           @click="
             formState.relatedScreens.push({
-              type: isSystem ? '담당 역할' : '연관 화면',
+              type: isSystem ? t('appUi.ka1037c16') : t('appUi.k6c837656'),
               title: '',
               path: '',
               description: '',
@@ -134,7 +134,7 @@
         <a-button
           type="dashed"
           size="small"
-          @click="formState.lineageSources.push({ origin: '', cycle: '실시간', description: '' })"
+          @click="formState.lineageSources.push({ origin: '', cycle: t('appUi.kc2712f0f'), description: '' })"
         >
           {{ t('appUi.kb1dcec43') }}
         </a-button>
@@ -162,7 +162,7 @@
           @click="
             formState.lineageDestinations.push({
               target: '',
-              timing: '즉시 반영',
+              timing: t('appUi.k8afd2698'),
               description: '',
             })
           "

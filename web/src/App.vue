@@ -384,6 +384,7 @@
 </template>
 
 <script setup lang="ts">
+import { extractErrorMessage, type KkumzEntity, type KkumzRecord } from '@/types/kkumz';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
@@ -403,7 +404,7 @@ const isDemoMode = computed(() => import.meta.env.VITE_DEMO_MODE !== 'false');
 
 const mobileMenuOpen = ref(false);
 const loginPasswordInput = ref<HTMLInputElement | null>(null);
-const notifications = ref<any[]>([]);
+const notifications = ref<KkumzEntity[]>([]);
 const showNotifDropdown = ref(false);
 const authSubmitting = ref(false);
 const authError = ref('');
@@ -476,7 +477,7 @@ async function markAllRead() {
   }
 }
 
-function openNotifLink(n: any) {
+function openNotifLink(n: KkumzEntity) {
   showNotifDropdown.value = false;
   if (n.linkUrl) {
     router.push(n.linkUrl);
@@ -521,8 +522,8 @@ async function submitLogin() {
     });
     loginForm.password = '';
     await completeAuthFlow();
-  } catch (e: any) {
-    authError.value = e?.response?.data?.message || e?.message || '로그인에 실패했습니다.';
+  } catch (e: unknown) {
+    authError.value = extractErrorMessage(e, '로그인에 실패했습니다.');
   } finally {
     authSubmitting.value = false;
   }
@@ -553,8 +554,8 @@ async function submitRegister() {
     });
     registerForm.password = '';
     await completeAuthFlow();
-  } catch (e: any) {
-    authError.value = e?.response?.data?.message || e?.message || '회원가입 처리 중 오류가 발생했습니다.';
+  } catch (e: unknown) {
+    authError.value = extractErrorMessage(e, '회원가입 처리 중 오류가 발생했습니다.');
   } finally {
     authSubmitting.value = false;
   }

@@ -1,10 +1,10 @@
 <!--
   @component SystemDepartManagement
-  @description 전사 기업 조직도 및 부서 계층 트리 관리 화면
+  @description Enterprise organization chart and department hierarchy tree view
   @features
-    - 본부 - 실 - 팀 다단계 조직 트리 시각화 및 드래그 앤 드롭 정렬
-    - 부서 코드, 부서장 계정, 부서별 데이터 스코프(Data Scope) 설정
-    - 부서 소속 임직원 명단 조회
+    - Multi-level department tree visualization and drag-and-drop ordering
+    - Department code, manager account, and per-department Data Scope config
+    - Department member directory lookup
 -->
 <template>
   <a-row :class="['p-4', `${prefixCls}--box`]" type="flex" :gutter="10">

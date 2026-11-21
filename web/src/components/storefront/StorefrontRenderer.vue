@@ -336,6 +336,7 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { ref, computed, watch } from 'vue';
 import './storefront-themes.css';
 import {
@@ -368,12 +369,12 @@ import ArticleReaderModal from './modals/ArticleReaderModal.vue';
 import FloatingConciergeWidget, { type ConciergeMessage } from './modals/FloatingConciergeWidget.vue';
 
 const props = defineProps<{
-  runtime: Record<string, any>;
+  runtime: KkumzEntity;
   previewMode?: boolean;
   placingOrder?: boolean;
-  orderResult?: Record<string, any> | null;
+  orderResult?: KkumzEntity | null;
   submittingForm?: boolean;
-  formSubmitResult?: Record<string, any> | null;
+  formSubmitResult?: KkumzEntity | null;
   conciergeMessages?: ConciergeMessage[];
   askingConcierge?: boolean;
 }>();
@@ -389,12 +390,12 @@ const emit = defineEmits<{
   }): void;
   (e: 'dismiss-order-result'): void;
   (e: 'submit-form', payload: {
-    formId?: any;
+    formId?: string | number;
     applicantName: string;
     phone: string;
     optionValue: string;
     message: string;
-    extraFields: Record<string, any>;
+    extraFields: KkumzEntity;
   }): void;
   (e: 'ask-concierge', question: string): void;
   (e: 'focus-tab', tab: 'AI_CHAT' | 'VISUAL_THEME' | 'CATALOG_EDIT' | 'FORM_EDIT'): void;
@@ -720,7 +721,7 @@ function onPreviewFocus(tab: 'AI_CHAT' | 'VISUAL_THEME' | 'CATALOG_EDIT' | 'FORM
   }
 }
 
-function handleInspectProduct(prod: Record<string, any>) {
+function handleInspectProduct(prod: KkumzEntity) {
   if (props.previewMode) {
     emit('focus-tab', 'CATALOG_EDIT');
     return;
@@ -728,7 +729,7 @@ function handleInspectProduct(prod: Record<string, any>) {
   inspectedProduct.value = prod;
 }
 
-function handleQuickAddToCart(prod: Record<string, any>) {
+function handleQuickAddToCart(prod: KkumzEntity) {
   if (props.previewMode) {
     emit('focus-tab', 'CATALOG_EDIT');
     return;
@@ -737,7 +738,7 @@ function handleQuickAddToCart(prod: Record<string, any>) {
     Array.isArray(prod.options) && prod.options.length > 0 ? String(prod.options[0]) : undefined;
   handleAddCartItem(
     {
-      productId: prod.id,
+      productId: Number(prod.id || 0),
       name: String(prod.name || ''),
       pic: String(prod.pic || ''),
       unitPrice: displayProductPrice(prod),
@@ -799,12 +800,12 @@ function scrollToFormOrConcierge(messageText: string) {
   }
 }
 
-function handleSelectSession(session: Record<string, any>) {
+function handleSelectSession(session: KkumzEntity) {
   const text = `[세션 참가 신청] ${session.day || ''} ${session.time || ''} ${session.title || ''} (${session.pace || ''})`.trim();
   scrollToFormOrConcierge(text);
 }
 
-function handleSelectPlan(plan: Record<string, any>) {
+function handleSelectPlan(plan: KkumzEntity) {
   const text = `[정기 구독 신청] ${plan.tier || ''} (${plan.price || ''}) 구독 안내를 요청합니다.`.trim();
   scrollToFormOrConcierge(text);
 }

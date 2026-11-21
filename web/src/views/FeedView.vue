@@ -160,7 +160,7 @@
               placeholder="브랜드명, 슬로건 검색..."
               @keyup.enter="loadFeed"
             />
-            <button v-if="keyword" type="button" class="search-clear-btn" @click="clearKeyword">✕</button>
+            <button v-if="keyword" type="button" class="search-clear-btn" @click="clearKeyword">닫기</button>
           </div>
         </div>
       </div>
@@ -270,7 +270,7 @@
             <h3>{{ activeSiteForComments.siteName }} — 커뮤니티 응원 & 피드백</h3>
             <p class="modal-sub">{{ activeSiteForComments.brandSlogan }}</p>
           </div>
-          <button type="button" class="close-btn" @click="activeSiteForComments = null">✕</button>
+          <button type="button" class="close-btn" @click="activeSiteForComments = null">닫기</button>
         </div>
 
         <div class="comment-list">
@@ -305,6 +305,7 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity, KkumzRecord } from '@/types/kkumz';
 import { onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
@@ -332,8 +333,8 @@ const filterTabs = [
   { value: 'HYBRID', label: '홍보 + 쇼핑 복합 사이트' },
 ];
 
-const feedItems = ref<any[]>([]);
-const presetKeywords = ref<any[]>([]);
+const feedItems = ref<KkumzEntity[]>([]);
+const presetKeywords = ref<KkumzEntity[]>([]);
 const loading = ref(false);
 const creating = ref(false);
 
@@ -346,7 +347,7 @@ const sortBy = ref('POPULAR');
 const keyword = ref('');
 
 const activeSiteForComments = ref<any | null>(null);
-const comments = ref<any[]>([]);
+const comments = ref<KkumzEntity[]>([]);
 const newCommentAuthor = ref('');
 const newCommentText = ref('');
 
@@ -431,7 +432,7 @@ async function startStudioWithPrompt(fastTrack = false) {
   }
 }
 
-async function handleLike(item: any) {
+async function handleLike(item: KkumzEntity) {
   if (!isAuthenticated.value) {
     openAuthModal(
       'login',
@@ -440,16 +441,16 @@ async function handleLike(item: any) {
     );
     return;
   }
-  const res = await kkumzApi.toggleSiteLike(item.id, kkumzAuth.user?.username);
+  const res = await kkumzApi.toggleSiteLike(String(item.id || ""), kkumzAuth.user?.username);
   item.likeCount = res.likeCount;
 }
 
-async function openCommentModal(item: any) {
+async function openCommentModal(item: KkumzEntity) {
   activeSiteForComments.value = item;
   if (kkumzAuth.user?.realname || kkumzAuth.user?.username) {
     newCommentAuthor.value = kkumzAuth.user.realname || kkumzAuth.user.username;
   }
-  comments.value = (await kkumzApi.listSiteComments(item.id)) || [];
+  comments.value = (await kkumzApi.listSiteComments(String(item.id || ""))) || [];
 }
 
 async function submitComment() {
@@ -474,18 +475,18 @@ async function submitComment() {
   newCommentText.value = '';
 }
 
-function openStudio(item: any) {
+function openStudio(item: KkumzEntity) {
   if (!item.canEdit) {
     return;
   }
   router.push({ name: 'StudioView', params: { ideaId: item.ideaId } });
 }
 
-function openLounge(item: any) {
+function openLounge(item: KkumzEntity) {
   router.push({ name: 'ProjectLoungeView', params: { siteSlug: item.siteSlug } });
 }
 
-function openLiveSite(item: any) {
+function openLiveSite(item: KkumzEntity) {
   const url = router.resolve({ name: 'LiveSiteRendererView', params: { siteSlug: item.siteSlug } }).href;
   window.open(url, '_blank', 'noopener,noreferrer');
 }

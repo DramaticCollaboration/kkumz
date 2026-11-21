@@ -51,9 +51,9 @@ export const getUserRoles = async (params) => {
   try {
     const res = await defHttp.get({ url: Api.list, params: { pageNo: 1, pageSize: 200 } }, { errorMessageMode: 'none' });
     const records = Array.isArray(res) ? res : res?.records || [];
-    const matched = records.find((u: any) => String(u.id) === String(params?.userid));
+    const matched = records.find((u: Record<string, unknown>) => String(u.id) === String(params?.userid));
     if (matched && Array.isArray(matched.roles)) {
-      return matched.roles.map((r: any) => r.id || r);
+      return matched.roles.map((r: string | { id?: string }) => (typeof r === 'object' && r !== null ? r.id : r));
     }
     return [];
   } catch {
@@ -121,7 +121,7 @@ export const duplicateCheck = async (params) => {
     const fieldVal = String(params?.fieldVal || '').trim();
     const dataId = params?.dataId ? String(params.dataId) : '';
     const exists = records.some(
-      (item: any) => String(item?.[fieldName] || '').toLowerCase() === fieldVal.toLowerCase() && String(item?.id || '') !== dataId
+      (item: Record<string, unknown>) => String(item?.[fieldName] || '').toLowerCase() === fieldVal.toLowerCase() && String(item?.id || '') !== dataId
     );
     return {
       success: !exists,
@@ -145,8 +145,8 @@ export const duplicateCheckDelay = (params) => {
     clearTimeout(timer);
     timer = setTimeout(() => {
       duplicateCheck(params)
-        .then((res: any) => {
-          resove(res as any);
+        .then((res: unknown) => {
+          resove(res);
         })
         .catch((error) => {
           rejected(error);
@@ -169,7 +169,6 @@ export const getUserDepartList = async (_params) => [];
 /**
  * 모든 직업을 얻으세요
  */
-export const getAllPostList = async (_params) => [];
 /**
  * 삭제목록
  * @param params

@@ -73,7 +73,7 @@
     let m = dayjs(date).format('MM');
     let d = dayjs(date).format('DD');
     let hour = dayjs(date).format('HH:mm:ss');
-    console.log('년 월 일', y + '-' + m + '-' + d);
+    console.log('Formatted date:', y + '-' + m + '-' + d);
     return dayjs(y + '-' + m + '-' + d + ' ' + hour).format('YYYY-MM-DD HH:mm:ss');
   }
 </script>

@@ -438,7 +438,7 @@ export function useMethods(props: JVxeTableProps, { emit }, data: JVxeDataProps,
    */
   function insertRows(rows: Recordable | Recordable[] = {}, index: number, options?: IAddRowsOptions) {
     if (index < 0) {
-      console.warn(`【JVxeTable】insertRows：인덱스는 숫자를 전달해야 하며 -1보다 큽니다.`);
+      console.warn(`[JVxeTable] insertRows: index must be a number greater than -1.`);
       return;
     }
     return addOrInsert(rows, index, 'inserted', options);
@@ -491,7 +491,7 @@ export function useMethods(props: JVxeTableProps, { emit }, data: JVxeDataProps,
     if (!row) {
       row = getNewRowById(id);
       if (!row) {
-        console.warn(`JVxeTable.getIfRowById：ID를 찾을 수 없습니다."${id}"행`);
+        console.warn(`[JVxeTable] getIfRowById: row not found for ID "${id}"`);
         return { row: null };
       }
       isNew = true;
@@ -566,7 +566,7 @@ export function useMethods(props: JVxeTableProps, { emit }, data: JVxeDataProps,
    */
   function setValues(values: setValuesParam[]): number {
     if (!isArray(values)) {
-      console.warn(`[JVxeTable] setValues는 배열을 전달해야 합니다`);
+      console.warn(`[JVxeTable] setValues requires an array argument.`);
       return 0;
     }
     let xTable = getXTable();
@@ -597,7 +597,7 @@ export function useMethods(props: JVxeTableProps, { emit }, data: JVxeDataProps,
             count++;
           }
         } else {
-          console.warn(`[JVxeTable] setValues에서 다음About 키를 찾지 못했습니다."${colKey}"칼럼`);
+          console.warn(`[JVxeTable] setValues: column key "${colKey}" not found.`);
         }
       });
     });
@@ -699,7 +699,7 @@ export function useMethods(props: JVxeTableProps, { emit }, data: JVxeDataProps,
         if (row) {
           return row;
         } else {
-          console.warn(`【JVxeTable】removeRowsById：${id}존재하지 않는다`);
+          console.warn(`[JVxeTable] removeRowsById: row "${id}" does not exist.`);
           return null;
         }
       })

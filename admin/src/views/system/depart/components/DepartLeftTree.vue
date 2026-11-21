@@ -34,7 +34,7 @@
         </template>
       </template>
     </a-alert>
-    <a-spin :spinning="loading">
+    <div v-loading="loading" class="relative">
       <a-input-search :placeholder="t('appUi.k63f5a573')" style="margin-bottom: 10px" @search="onSearch" />
       <!--조직도-->
       <template v-if="treeData.length > 0">
@@ -78,7 +78,7 @@
         </BasicTree>
       </template>
       <a-empty v-else :description="t('appUi.k09f4e4ae')" />
-    </a-spin>
+    </div>
     <DepartFormModal :rootTreeData="treeData" @register="registerModal" @success="loadRootTreeData" />
   </a-card>
 </template>
@@ -116,9 +116,9 @@
   // 아버지와 아들 나무는 서로 관련이 있나요?
   const checkStrictly = ref<boolean>(true);
   // 현재 선택학과
-  const currentDepart = ref<any>(null);
+  const currentDepart = ref<Record<string, unknown> | null>(null);
   // 삭제 확인 프롬프트 상자 표시 여부 제어
-  const visibleTreeKey = ref<any>(null);
+  const visibleTreeKey = ref<string | number | null>(null);
   // 키워드 검색
   const searchKeyword = ref('');
 
@@ -167,7 +167,7 @@
         treeNode.dataRef.children = result;
         if (expandedKeys.value.length > 0) {
           // 획득한 하위 항목이 현재 확장된 항목을 가지고 있는지 확인
-          let subKeys: any[] = [];
+          let subKeys: Array<string | number> = [];
           for (let key of expandedKeys.value) {
             if (result.findIndex((item) => item.id === key) !== -1) {
               subKeys.push(key);

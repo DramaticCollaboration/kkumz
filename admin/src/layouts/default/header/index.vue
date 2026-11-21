@@ -185,7 +185,7 @@
       }
 
       function loginSelectOk() {
-        console.log('성공.。。。。');
+        console.log('Success');
       }
 
       onMounted(() => {

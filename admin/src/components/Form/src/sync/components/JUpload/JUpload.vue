@@ -254,7 +254,7 @@
       return new Promise((resolve) => {
         createConfirm({
           title: t('appUi.kfc81e222'),
-          content: t('appUi.k2477bcf6', { p0: isImageMode.value ? '영화' : '파일' }),
+          content: t('appUi.k2477bcf6', { p0: isImageMode.value ? t('appUi.k302bae12') : t('appUi.k0c8354d0') }),
           iconType: 'warning',
           onOk: () => resolve(true),
           onCancel: () => resolve(false),
@@ -296,11 +296,11 @@
         successFileList = fileListTemp.filter(item=>{
           return item.uid!=info.file.uid;
         });
-        createMessage.error(`${info.file.name} 업로드에 실패했습니다.`);
+        createMessage.error(t('appUi.k10cd3177', { p0: info.file.name }));
       }
       fileListTemp = successFileList;
     } else if (info.file.status === 'error') {
-      createMessage.error(`${info.file.name} 업로드에 실패했습니다.`);
+      createMessage.error(t('appUi.k10cd3177', { p0: info.file.name }));
     }
     fileList.value = fileListTemp;
     if (info.file.status === 'done' || info.file.status === 'removed') {

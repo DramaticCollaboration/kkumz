@@ -72,7 +72,7 @@
 
       function handleImgOnLoad() {
         const { minDegree, maxDegree } = props;
-        const ranRotate = Math.floor(minDegree! + Math.random() * (maxDegree! - minDegree!)); // 임의의 각도 생성
+        const ranRotate = Math.floor(minDegree! + Math.random() * (maxDegree! - minDegree!)); // Generate random rotation angle
         state.randomRotate = ranRotate;
         state.imgStyle = hackCss('transform', `rotateZ(${ranRotate}deg)`);
       }

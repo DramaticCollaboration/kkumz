@@ -10,7 +10,7 @@
     @register="registerDrawer"
   >
     <div>
-      <a-spin :spinning="loading">
+      <div v-loading="loading" class="relative">
         <template v-if="treeData.length > 0">
           <BasicTree
             :title="t('appUi.k8a5cf60a')"
@@ -33,7 +33,7 @@
           </BasicTree>
         </template>
         <a-empty v-else :description="t('appUi.k1a0b2c2f')" />
-      </a-spin>
+      </div>
     </div>
 
     <template #centerFooter>
@@ -61,12 +61,12 @@
   const loading = ref(false);
   const departId = ref('');
   const roleId = ref('');
-  const treeData = ref<Array<any>>([]);
-  const checkedKeys = ref<Array<any>>([]);
-  const lastCheckedKeys = ref<Array<any>>([]);
-  const expandedKeys = ref<Array<any>>([]);
-  const selectedKeys = ref<Array<any>>([]);
-  const allTreeKeys = ref<Array<any>>([]);
+  const treeData = ref<Array<Record<string, unknown>>>([]);
+  const checkedKeys = ref<Array<string | number>>([]);
+  const lastCheckedKeys = ref<Array<string | number>>([]);
+  const expandedKeys = ref<Array<string | number>>([]);
+  const selectedKeys = ref<Array<string | number>>([]);
+  const allTreeKeys = ref<Array<string | number>>([]);
   const checkStrictly = ref(true);
 
   // 서랍 컴포넌트 등록

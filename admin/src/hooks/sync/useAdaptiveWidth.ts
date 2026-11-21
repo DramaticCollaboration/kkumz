@@ -53,7 +53,7 @@ export function useAdaptiveWidth(widthConfig = defWidthConfig, assign = true, de
     if (width) {
       adaptiveWidth.value = width;
     } else {
-      console.warn('일치하는 적응 너비가 없습니다.');
+      console.warn('No matching adaptive width found.');
     }
   }
 

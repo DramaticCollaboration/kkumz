@@ -153,7 +153,7 @@
       }
 
       async function setModalHeight(option?) {
-        console.log("---------성능 모니터링--------setModalHeight----------")
+        console.log("[ModalWrapper] setModalHeight")
         const options = option || {};
         const source = options.source;
         const callBack = options.callBack;

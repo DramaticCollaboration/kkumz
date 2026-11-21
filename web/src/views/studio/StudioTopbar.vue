@@ -75,15 +75,16 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { formatSiteTypeLabel } from './studioFormatters';
 
 defineProps<{
   busy: boolean;
   selectedIdeaId: string;
-  ideas: any[];
+  ideas: KkumzEntity[];
   easyMode: boolean;
   activeSiteSlug: string;
-  siteRuntime: any | null;
+  siteRuntime: KkumzEntity | null;
 }>();
 
 const emit = defineEmits<{

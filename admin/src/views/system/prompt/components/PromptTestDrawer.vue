@@ -9,17 +9,13 @@
     @ok="handleRunTest"
   >
     <div class="space-y-4">
-      <a-descriptions bordered size="small" :column="{ xs: 1, sm: 1, md: 2 }">
-        <a-descriptions-item :label="t('appUi.k5bef10a7')">
-          <span class="font-mono text-xs font-semibold">{{ currentRecord.promptCode }}</span>
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('appUi.kef80204d')">
-          {{ currentRecord.promptName }}
-        </a-descriptions-item>
-        <a-descriptions-item :label="t('appUi.k97b2edea')" :span="2">
-          <span class="font-mono text-xs">{{ currentRecord.callerClass || '-' }}</span>
-        </a-descriptions-item>
-      </a-descriptions>
+      <Description
+        :schema="promptDescSchema"
+        :data="currentRecord"
+        :column="{ xs: 1, sm: 1, md: 2 }"
+        size="small"
+        bordered
+      />
 
       <div class="p-3 bg-gray-50 rounded border border-gray-200">
         <div class="flex justify-between items-center mb-2">
@@ -77,8 +73,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref, reactive } from 'vue';
+  import { h, ref, reactive } from 'vue';
   import { BasicDrawer, useDrawerInner } from '/@/components/Drawer';
+  import { Description, DescItem } from '/@/components/Description';
   import { useMessage } from '/@/hooks/web/useMessage';
   import {
     previewPromptRender,
@@ -99,6 +96,24 @@
   const renderedSystem = ref('');
   const renderedUser = ref('');
   const testResult = ref<SysPromptTestRunResult | null>(null);
+
+  const promptDescSchema: DescItem[] = [
+    {
+      field: 'promptCode',
+      label: t('appUi.k5bef10a7'),
+      render: (val) => h('span', { class: 'font-mono text-xs font-semibold' }, val || ''),
+    },
+    {
+      field: 'promptName',
+      label: t('appUi.kef80204d'),
+    },
+    {
+      field: 'callerClass',
+      label: t('appUi.k97b2edea'),
+      span: 2,
+      render: (val) => h('span', { class: 'font-mono text-xs' }, val || '-'),
+    },
+  ];
 
   const [registerDrawer, { setDrawerProps }] = useDrawerInner(async (data) => {
     setDrawerProps({ confirmLoading: false });

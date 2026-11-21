@@ -182,7 +182,7 @@ export const searchFormSchema: FormSchema[] = [
   },
 ];
 
-export function parseJsonArray<T = any>(raw: any): T[] {
+export function parseJsonArray<T = Record<string, unknown>>(raw: unknown): T[] {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
   if (typeof raw === 'string') {
@@ -198,7 +198,7 @@ export function parseJsonArray<T = any>(raw: any): T[] {
 
 export function parseLineage(record?: Partial<SysPageHelpModel> | null): Required<DataLineageModel> {
   if (!record) return { sources: [], destinations: [] };
-  let obj: any = record.lineage;
+  let obj: Record<string, unknown> | undefined = record.lineage as Record<string, unknown> | undefined;
   if (!obj && record.lineageJson) {
     try {
       obj = typeof record.lineageJson === 'string' ? JSON.parse(record.lineageJson) : record.lineageJson;
@@ -209,16 +209,16 @@ export function parseLineage(record?: Partial<SysPageHelpModel> | null): Require
   const rawSources = Array.isArray(obj?.sources) ? obj.sources : [];
   const rawDestinations = Array.isArray(obj?.destinations) ? obj.destinations : [];
 
-  const sources: LineageSourceItem[] = rawSources.map((s: any) => ({
-    origin: s?.origin || s?.name || '',
-    cycle: s?.cycle || s?.type || '',
-    description: s?.description || s?.desc || '',
+  const sources: LineageSourceItem[] = (rawSources as Array<Record<string, unknown>>).map((s) => ({
+    origin: String(s?.origin || s?.name || ''),
+    cycle: String(s?.cycle || s?.type || ''),
+    description: String(s?.description || s?.desc || ''),
   }));
 
-  const destinations: LineageDestinationItem[] = rawDestinations.map((d: any) => ({
-    target: d?.target || d?.name || '',
-    timing: d?.timing || d?.type || '',
-    description: d?.description || d?.desc || '',
+  const destinations: LineageDestinationItem[] = (rawDestinations as Array<Record<string, unknown>>).map((d) => ({
+    target: String(d?.target || d?.name || ''),
+    timing: String(d?.timing || d?.type || ''),
+    description: String(d?.description || d?.desc || ''),
   }));
 
   return { sources, destinations };
@@ -226,24 +226,24 @@ export function parseLineage(record?: Partial<SysPageHelpModel> | null): Require
 
 export function parseHelpRecord(record?: Partial<SysPageHelpModel> | null) {
   const r = record || {};
-  const rawFeatures = parseJsonArray<any>(r.features ?? r.featuresJson);
-  const rawSteps = parseJsonArray<any>(r.steps ?? r.stepsJson);
-  const rawFormulas = parseJsonArray<any>(r.formulas ?? r.formulasJson);
-  const rawRelated = parseJsonArray<any>(r.relatedScreens ?? r.relatedScreensJson);
+  const rawFeatures = parseJsonArray<Record<string, unknown>>(r.features ?? r.featuresJson);
+  const rawSteps = parseJsonArray<Record<string, unknown>>(r.steps ?? r.stepsJson);
+  const rawFormulas = parseJsonArray<Record<string, unknown>>(r.formulas ?? r.formulasJson);
+  const rawRelated = parseJsonArray<Record<string, unknown>>(r.relatedScreens ?? r.relatedScreensJson);
 
-  const features: PageFeatureItem[] = rawFeatures.map((f: any) => ({
-    name: f?.name || f?.title || '',
-    description: f?.description || f?.detail || f?.desc || '',
-    badge: f?.badge || '',
+  const features: PageFeatureItem[] = rawFeatures.map((f) => ({
+    name: String(f?.name || f?.title || ''),
+    description: String(f?.description || f?.detail || f?.desc || ''),
+    badge: String(f?.badge || ''),
   }));
 
-  const steps: PageStepItem[] = rawSteps.map((s: any, idx: number) => {
+  const steps: PageStepItem[] = rawSteps.map((s, idx: number) => {
     const item: PageStepItem = {
       title:
         s?.step && s?.title && !String(s.title).startsWith(String(s.step))
           ? $t('appUi.kfa3c60ef', { p0: s.step, p1: s.title })
-          : s?.title || $t('appUi.k377dee54', { p0: idx + 1 }),
-      description: s?.description || s?.detail || '',
+          : String(s?.title || $t('appUi.k377dee54', { p0: idx + 1 })),
+      description: String(s?.description || s?.detail || ''),
     };
     if (s?.path) {
       item.path = String(s.path);
@@ -251,17 +251,17 @@ export function parseHelpRecord(record?: Partial<SysPageHelpModel> | null) {
     return item;
   });
 
-  const formulas: MetricFormulaItem[] = rawFormulas.map((fm: any) => ({
-    name: fm?.name || fm?.metric || '',
-    formula: fm?.formula || fm?.expression || '',
-    description: fm?.description || fm?.explanation || '',
+  const formulas: MetricFormulaItem[] = rawFormulas.map((fm) => ({
+    name: String(fm?.name || fm?.metric || ''),
+    formula: String(fm?.formula || fm?.expression || ''),
+    description: String(fm?.description || fm?.explanation || ''),
   }));
 
-  const relatedScreens: RelatedScreenItem[] = rawRelated.map((rel: any) => {
+  const relatedScreens: RelatedScreenItem[] = rawRelated.map((rel) => {
     const item: RelatedScreenItem = {
-      type: rel?.type || rel?.relation || $t('appUi.k6c837656'),
-      title: rel?.title || '',
-      description: rel?.description || rel?.relation || '',
+      type: String(rel?.type || rel?.relation || $t('appUi.k6c837656')),
+      title: String(rel?.title || ''),
+      description: String(rel?.description || rel?.relation || ''),
     };
     if (rel?.path) {
       item.path = String(rel.path);
@@ -349,9 +349,9 @@ export function formatFullGuideClipboardText(guide?: Partial<SysPageHelpModel> |
   const lines: string[] = [];
   lines.push(`${sys ? $t('appUi.k28584907') : $t('appUi.k4eb8b538')} ${guide.title || ''}`);
   if (sys) {
-    lines.push($t('appUi.kb73604d7', { p0: guide.appCode || DEFAULT_APP_CODE, p1: guide.category || '시스템 안내' }));
+    lines.push($t('appUi.kb73604d7', { p0: guide.appCode || DEFAULT_APP_CODE, p1: guide.category || $t('appUi.k368c6bad') }));
   } else {
-    lines.push($t('appUi.kd3178b08', { p0: guide.pageKey || '', p1: guide.category || '일반' }));
+    lines.push($t('appUi.kd3178b08', { p0: guide.pageKey || '', p1: guide.category || $t('appUi.kaef1a1e7') }));
   }
   if (guide.summary) lines.push($t('appUi.kdcd0353a', { p0: guide.summary }));
   if (guide.overview) {

@@ -176,7 +176,7 @@ export const useUserStore = defineStore('app-user', {
           try {
             redirect = decodeURIComponent(redirect);
           } catch (e) {
-            console.warn('[UserStore] URL 디코딩 실패(원본 유지):', e);
+            console.warn('[UserStore] URL decode failed (keeping raw value):', e);
           }
         }
 
@@ -252,7 +252,7 @@ export const useUserStore = defineStore('app-user', {
         try {
           await doLogout();
         } catch (error) {
-          console.warn('[UserStore] 토큰 로그아웃 실패:', error);
+          console.warn('[UserStore] Token logout failed:', error);
         }
       }
 

@@ -164,7 +164,7 @@
       /*
       2023-01-08
       liaozhiyang
-      전달된 함수에 약속의 레이어를 래핑합니다.
+      Wrap the passed callback in a Promise layer.
       */
       const handelConfirm = (fn) => {
         if (typeof fn !== 'function') return fn;

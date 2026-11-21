@@ -207,12 +207,13 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { formatDeployModeLabel } from '@/api/kkumzApi';
 import { formatSiteTypeLabel, renderLogoWithBrand } from './studioFormatters';
 
 defineProps<{
   busy: boolean;
-  siteRuntime: any | null;
+  siteRuntime: KkumzEntity | null;
   previewBrandName: string;
   previewProductsCount: number;
   previewArticlesCount: number;

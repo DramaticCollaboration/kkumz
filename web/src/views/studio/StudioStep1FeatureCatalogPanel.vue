@@ -45,7 +45,7 @@
           data-testid="feature-search-input"
           class="feature-search-input"
           placeholder="원하는 기능 검색: 요금표, 객실, 예약폼, 공간 소개, 자주 묻는 질문, 오시는 길, 쿠폰, 후기"
-          @input="(e: any) => emit('update:featureSearchQuery', e.target.value)"
+          @input="(e: Event) => emit('update:featureSearchQuery', (e.target as HTMLInputElement).value)"
         />
         <button
           v-if="featureSearchQuery"
@@ -130,7 +130,7 @@
             </span>
           </div>
           <span class="feat-toggle-pill" :class="{ on: isFeatureEnabled(feat.featureCode) }">
-            {{ isFeatureEnabled(feat.featureCode) ? '✓ 포함됨' : '+ 담기' }}
+            {{ isFeatureEnabled(feat.featureCode) ? '포함됨' : '+ 담기' }}
           </span>
         </div>
 
@@ -168,12 +168,13 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { engineFilterOptions, formatEngineBadge } from './studioFormatters';
 
 const props = defineProps<{
-  featureCatalog: any[];
+  featureCatalog: KkumzEntity[];
   featureCategories: Array<{ code: string; label: string; desc?: string }>;
-  filteredFeatureCatalog: any[];
+  filteredFeatureCatalog: KkumzEntity[];
   recommendedFeatureCodes: string[];
   enabledFeatures: string[];
   aiFeatureReasons: Record<string, string>;
@@ -194,7 +195,7 @@ const emit = defineEmits<{
 }>();
 
 function countFeaturesByCategory(catCode: string): number {
-  return props.featureCatalog.filter((f: any) => f.categoryCode === catCode).length;
+  return props.featureCatalog.filter((f: KkumzEntity) => f.categoryCode === catCode).length;
 }
 
 function isFeatureEnabled(code: string): boolean {

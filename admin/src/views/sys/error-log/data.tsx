@@ -28,7 +28,7 @@ export function getColumns(): BasicColumn[] {
   return [
     {
       dataIndex: 'type',
-      title: $t('sys.errorLog.tableColumnType', '오류 유형'),
+      title: $t('sys.errorLog.tableColumnType'),
       width: 90,
       customRender: ({ text }) => {
         const color = getTypeColor(text);
@@ -42,27 +42,27 @@ export function getColumns(): BasicColumn[] {
     },
     {
       dataIndex: 'time',
-      title: $t('sys.errorLog.tableColumnDate', '발생 시각'),
+      title: $t('sys.errorLog.tableColumnDate'),
       width: 160,
     },
     {
       dataIndex: 'file',
-      title: $t('sys.errorLog.tableColumnFile', '리소스/파일 경로'),
+      title: $t('sys.errorLog.tableColumnFile'),
       width: 200,
     },
     {
       dataIndex: 'name',
-      title: $t('sys.errorLog.tableColumnName', '오류명'),
+      title: $t('sys.errorLog.tableColumnName'),
       width: 160,
     },
     {
       dataIndex: 'message',
-      title: $t('sys.errorLog.tableColumnMsg', '오류 내용'),
+      title: $t('sys.errorLog.tableColumnMsg'),
       width: 280,
     },
     {
       dataIndex: 'stack',
-      title: $t('sys.errorLog.tableColumnStackMsg', '스택 상세'),
+      title: $t('sys.errorLog.tableColumnStackMsg'),
       customRender: ({ text }) => {
         if (!text) return '-';
         return String(text).replace(/~/g, ' → ');
@@ -75,21 +75,21 @@ export function getDescSchema(): DescItem[] {
   return [
     {
       field: 'type',
-      label: $t('sys.errorLog.tableColumnType', '오류 유형'),
+      label: $t('sys.errorLog.tableColumnType'),
       span: 1,
       labelMinWidth: 110,
       render: (val) => (val ? <Tag color={getTypeColor(val)}>{() => val}</Tag> : '-'),
     },
     {
       field: 'time',
-      label: $t('sys.errorLog.tableColumnDate', '발생 시각'),
+      label: $t('sys.errorLog.tableColumnDate'),
       span: 1,
       labelMinWidth: 110,
       render: (val) => <span class="font-mono text-xs">{val || '-'}</span>,
     },
     {
       field: 'name',
-      label: $t('sys.errorLog.tableColumnName', '오류명'),
+      label: $t('sys.errorLog.tableColumnName'),
       span: 1,
       labelMinWidth: 110,
       render: (val) => <span class="font-semibold text-slate-800 dark:text-zinc-100">{val || '-'}</span>,
@@ -103,14 +103,14 @@ export function getDescSchema(): DescItem[] {
     },
     {
       field: 'file',
-      label: $t('sys.errorLog.tableColumnFile', '리소스/파일 경로'),
+      label: $t('sys.errorLog.tableColumnFile'),
       span: 2,
       labelMinWidth: 110,
       render: (val) => <span class="font-mono text-xs break-all text-slate-600 dark:text-zinc-300">{val || '-'}</span>,
     },
     {
       field: 'message',
-      label: $t('sys.errorLog.tableColumnMsg', '오류 내용'),
+      label: $t('sys.errorLog.tableColumnMsg'),
       span: 2,
       labelMinWidth: 110,
       render: (val) => (
@@ -121,7 +121,7 @@ export function getDescSchema(): DescItem[] {
     },
     {
       field: 'stack',
-      label: $t('sys.errorLog.tableColumnStackMsg', '스택 상세'),
+      label: $t('sys.errorLog.tableColumnStackMsg'),
       span: 2,
       labelMinWidth: 110,
       render: (val) => (

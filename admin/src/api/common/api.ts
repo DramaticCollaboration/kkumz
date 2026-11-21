@@ -88,9 +88,6 @@ export const getTableList = (params) => {
 /**
  * 모든 분류 데이터 로드
  */
-export const loadCategoryData = (params) => {
-  return defHttp.get({ url: Api.getCategoryData, params });
-};
 /**
  * 파일 업로드
  */
@@ -120,8 +117,8 @@ export const downloadFile = (url, fileName?, parameter?) => {
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link); //전체 제거 요소 다운로드
-      window.URL.revokeObjectURL(url); //블롭 객체 해제
+      document.body.removeChild(link); // Remove temporary download anchor
+      window.URL.revokeObjectURL(url); // Release blob object URL
     }
   });
 };

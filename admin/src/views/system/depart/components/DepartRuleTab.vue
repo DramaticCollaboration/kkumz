@@ -1,5 +1,5 @@
 <template>
-  <a-spin :spinning="loading">
+  <div v-loading="loading" class="relative">
     <template v-if="treeData.length > 0">
       <BasicTree
         ref="basicTree"
@@ -42,7 +42,7 @@
         <a-button type="primary" preIcon="ant-design:save-filled" @click="onSubmit">{{ t('appUi.k1f1712ac') }}</a-button>
       </div>
     </div>
-  </a-spin>
+  </div>
   <DepartDataRuleDrawer @register="registerDataRuleDrawer" />
 </template>
 
@@ -67,10 +67,10 @@
   const basicTree = ref();
   const loading = ref<boolean>(false);
   const treeData = ref<any[]>([]);
-  const expandedKeys = ref<Array<any>>([]);
-  const selectedKeys = ref<Array<any>>([]);
-  const checkedKeys = ref<Array<any>>([]);
-  const lastCheckedKeys = ref<Array<any>>([]);
+  const expandedKeys = ref<Array<string | number>>([]);
+  const selectedKeys = ref<Array<string | number>>([]);
+  const checkedKeys = ref<Array<string | number>>([]);
+  const lastCheckedKeys = ref<Array<string | number>>([]);
   const checkStrictly = ref(true);
 
   // 등록 데이터 규칙 인증 Drawer

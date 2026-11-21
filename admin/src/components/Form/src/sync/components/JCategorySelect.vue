@@ -239,11 +239,11 @@
               if (typeof test == 'object' && test) {
                 resolve();
               } else {
-                createMessage.error('JTreeSelect-condition 컴포넌트가 잘못된 값을 전달하고 json 문자열이 필요합니다!');
+                createMessage.error($t('appUi.k838f1883'));
                 reject();
               }
             } catch (e) {
-              createMessage.error('JTreeSelect-condition 컴포넌트가 잘못된 값을 전달하고 json 문자열이 필요합니다!');
+              createMessage.error($t('appUi.k838f1883'));
               reject();
             }
           }

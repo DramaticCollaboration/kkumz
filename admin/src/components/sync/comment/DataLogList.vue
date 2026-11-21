@@ -100,7 +100,7 @@
       }
       
       function handleClickPerson() {
-        console.log('이 기능은 열려 있지 않습니다')
+        console.log('Feature is currently disabled')
       }
       
       return {

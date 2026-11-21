@@ -92,7 +92,7 @@
           listData.value[0].count = anntMsgTotal;
           listData.value[1].count = sysMsgTotal;
         } catch (e) {
-          console.warn('시스템 메시지 알림 예외：', e);
+          console.warn('System notification exception:', e);
         }
       }
 

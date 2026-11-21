@@ -8,7 +8,7 @@
           {{ guide.pageKey }}
         </code>
       </div>
-      <h2 class="content-title">{{ guide.title }}</h2>
+      <div class="content-title">{{ guide.title }}</div>
       <p class="content-summary">{{ guide.summary }}</p>
       <div v-if="guide.overview" class="content-overview">
         {{ guide.overview }}

@@ -47,7 +47,7 @@
   }
   //처리 페이지로 이동
   function jumpToHandlePage(){
-    let temp:any = content.value
+    let temp: Record<string, unknown> = content.value as Record<string, unknown>
     if(temp.busId){
       //이 버스 ID는 작업 ID입니다.
       let jsonStr = temp.msgAbstract;
@@ -62,7 +62,7 @@
           }
         }
       }catch(e){
-        console.log('매개변수 구문 분석 예외', e)
+        console.log('Parameter parse exception:', e)
       }
 
       console.log('query', query, jsonStr)

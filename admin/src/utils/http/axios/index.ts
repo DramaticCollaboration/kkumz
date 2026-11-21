@@ -1,3 +1,4 @@
+import { GENERIC_SUCCESS_MESSAGE_RE } from '/@/locales/koPatterns';
 import { $t } from '/@/locales';
 /**
  * @fileoverview Axios 인스턴스 팩토리 및 인터셉터 파이프라인 구성
@@ -65,7 +66,7 @@ const transform: AxiosTransform = {
           requestUrl
         );
       const rawMsg = typeof message === 'string' ? message.trim() : '';
-      const isGenericOk = /^(ok|success|성공|작업 성공|작업성공|쿼리 성공)$/i.test(rawMsg);
+      const isGenericOk = GENERIC_SUCCESS_MESSAGE_RE.test(rawMsg);
 
       if (!isGet && !isScreenTransitionOrSilentApi && success && options.successMessageMode === 'success') {
         if (rawMsg && !isGenericOk) {

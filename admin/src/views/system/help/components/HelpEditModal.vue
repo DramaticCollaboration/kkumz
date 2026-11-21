@@ -107,7 +107,7 @@
     faqJson: '[]',
   });
 
-  function filterMenuOption(input: string, option: any) {
+  function filterMenuOption(input: string, option: { label?: string; value?: string }) {
     return (option?.label || '').toLowerCase().includes(input.toLowerCase());
   }
 
@@ -288,7 +288,7 @@
     const current = getBaseFieldsValue();
     if (formState.helpType === 'SYSTEM') {
       const updates: Record<string, any> = {};
-      if (!current.category || current.category === '일반') {
+      if (!current.category || current.category === t('appUi.kaef1a1e7')) {
         updates.category = t('appUi.k368c6bad');
       }
       if (!current.pageKey) {
@@ -419,7 +419,7 @@
     const current = getBaseFieldsValue();
     const found = menuRouteOptions.value.find((item) => item.value === val);
     const nextTitle = current.title || found?.title || '';
-    const nextCategory = !current.category || current.category === '일반' ? found?.category || t('appUi.kaef1a1e7') : current.category;
+    const nextCategory = !current.category || current.category === t('appUi.kaef1a1e7') ? found?.category || t('appUi.kaef1a1e7') : current.category;
     setBaseFieldsValue({
       pageKey: val,
       title: nextTitle,

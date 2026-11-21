@@ -95,7 +95,7 @@ export function dispatchEvent(options: dispatchEventOptions) {
       }
     }, 10);
   } else {
-    console.warn('【JVxeTable】DispatchEvent가 셀을 가져오지 못했습니다.');
+    console.warn('[JVxeTable] dispatchEvent failed to resolve cell.');
   }
 }
 

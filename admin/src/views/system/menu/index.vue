@@ -1,10 +1,10 @@
 <!--
   @component SystemMenuManagement
-  @description 시스템 메뉴 계층 트리 및 기능 권한 관리 화면
+  @description System menu hierarchy tree and permission management view
   @features
-    - 디렉토리(1단계), 메뉴(2단계), 버튼 액션(3단계) 3차원 계층 구조 트리 관리
-    - Vue 라우트 컴포넌트 경로, 리다이렉트, 아이콘, 캐싱 유지 설정
-    - 데이터 권한 규칙(Data Rule) 연동을 통한 부서/개인별 행 단위 데이터 격리
+    - 3-level tree management: directory (L1), menu (L2), button action (L3)
+    - Vue route component path, redirect, icon, and keep-alive settings
+    - Row-level data isolation via Data Rule integration
 -->
 <template>
   <div class="p-4">

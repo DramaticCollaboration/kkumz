@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import type { AppRouteRecordRaw, AppRouteModule } from '/@/router/types';
 
 import { PAGE_NOT_FOUND_ROUTE, REDIRECT_ROUTE } from '/@/router/routes/basic';
@@ -36,7 +37,7 @@ export const TokenLoginRoute: AppRouteRecordRaw = {
   name: 'TokenLoginRoute',
   component: () => import('/@/views/sys/login/TokenLoginPage.vue'),
   meta: {
-    title: '자동 로그인',
+    title: $t('appUi.kdf7b2ba7'),
     ignoreAuth: true,
   },
 };

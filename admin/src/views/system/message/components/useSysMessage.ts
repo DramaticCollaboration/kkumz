@@ -67,7 +67,7 @@ export function useSysMessage() {
     }
     let params = getQueryParams();
     const data = await queryMessageList(params);
-    console.log('결과 얻기', data);
+    console.log('Fetched result:', data);
     if(!data || data.length<=0){
       loadEndStatus.value = true;
       return;
@@ -76,7 +76,7 @@ export function useSysMessage() {
       loadEndStatus.value = true;
     }
     pageNo.value = pageNo.value+1
-    let temp:any[] = messageList.value;
+    let temp: Array<Record<string, unknown>> = messageList.value as Array<Record<string, unknown>>;
     temp.push(...data);
     messageList.value = temp;
   }
@@ -99,7 +99,7 @@ export function useSysMessage() {
       starFlag,
       id: item.sendId
     }
-    const data:any = await defHttp.put({url, params}, {isTransformResponse: false});
+    const data = (await defHttp.put({ url, params }, { isTransformResponse: false })) as { success?: boolean; message?: string };
     if(data.success === true){
     }else{
       createMessage.warning(data.message)
@@ -158,7 +158,7 @@ export function useSysMessage() {
  * 메시지 점프에 사용됨
  */
 export function useMessageHref(emit, props){
-  const messageHrefArray: any[] = getDictItemsByCode('messageHref');
+  const messageHrefArray: Array<Record<string, unknown>> = (getDictItemsByCode('messageHref') || []) as Array<Record<string, unknown>>;
   const router = useRouter();
   const appStore = useAppStore();
   const rt = useRoute();
@@ -192,13 +192,13 @@ export function useMessageHref(emit, props){
     const { busType, busId, msgAbstract } = record;
     let temp = messageHrefArray.filter(item=>item.value === busType);
     if(!temp || temp.length==0){
-      console.error('현재 업종이 인식되지 않습니다.', busType);
+      console.error('Unrecognized business type:', busType);
       return;
     }
     let path = temp[0].text;
     path = path.replace('{DETAIL_ID}', busId)
     //고정 매개변수 DetailId는 Form 데이터를 쿼리하는 데 사용됩니다.
-    let query:any = {
+    let query: Record<string, unknown> = {
       detailId: busId
     };
     // 추가 매개변수 처리
@@ -209,7 +209,7 @@ export function useMessageHref(emit, props){
           query[k] = json[k]
         });
       }catch (e) {
-        console.error('msgAbstract 매개변수가 JSON 형식이 아닙니다.', msgAbstract)
+        console.error('msgAbstract is not valid JSON:', msgAbstract)
       }
     }
     // 점프 루트

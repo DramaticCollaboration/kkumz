@@ -58,10 +58,11 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity } from '@/types/kkumz';
 import { formatSiteTypeLabel, type StudioStepMeta } from './studioFormatters';
 
 const props = defineProps<{
-  currentIdea: any | null;
+  currentIdea: KkumzEntity | null;
   previewLogoSvg: string;
   previewBrandName: string;
   siteType: string;

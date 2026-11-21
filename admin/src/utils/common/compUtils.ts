@@ -35,7 +35,7 @@ export const getFileAccessHttpUrl = (fileUrl, prefix = 'http') => {
         }
       }
     }
-  } catch (err) { console.debug("작업 처리 중 예외 발생:", err); }
+  } catch (err) { console.debug("Exception during operation:", err); }
   return result;
 };
 
@@ -195,13 +195,13 @@ export function dateFormat(date, block) {
   let format = block || 'yyyy-MM-dd';
   date = new Date(date);
   const map = {
-    M: date.getMonth() + 1, // 월
-    d: date.getDate(), // 낮
-    h: date.getHours(), // 시간
-    m: date.getMinutes(), // 가리키다
-    s: date.getSeconds(), // 두번째
-    q: Math.floor((date.getMonth() + 3) / 3), // 4분의 1
-    S: date.getMilliseconds(), // 밀리초
+    M: date.getMonth() + 1, // Month
+    d: date.getDate(), // Day
+    h: date.getHours(), // Hour
+    m: date.getMinutes(), // Minute
+    s: date.getSeconds(), // Second
+    q: Math.floor((date.getMonth() + 3) / 3), // Quarter
+    S: date.getMilliseconds(), // Millisecond
   };
   format = format.replace(/([yMdhmsqS])+/g, (all, t) => {
     let v = map[t];

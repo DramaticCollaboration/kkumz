@@ -62,7 +62,7 @@
         toRaw({
           mobile: data.mobile,
           captcha: data.sms,
-          mode: 'none', //기본 오류 메시지 없음
+          mode: 'none', // Suppress default error message
         })
       );
       if (userInfo) {

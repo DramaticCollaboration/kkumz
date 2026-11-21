@@ -76,7 +76,7 @@
        */
       onMounted(() => {
         if (props.fieldConfig.length == 0) {
-          createMessage.error('팝업 매개변수가 올바르게 구성되지 않았습니다!');
+          createMessage.error($t('appUi.kce78400d'));
           avalid.value = false;
         }
       });

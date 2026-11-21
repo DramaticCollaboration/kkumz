@@ -70,5 +70,5 @@
     }
   };
 
-  usePolling(fetchTasks, 30000); // 30초 단위로 조회
+  usePolling(fetchTasks, 30000); // Poll every 30 seconds
 </script>

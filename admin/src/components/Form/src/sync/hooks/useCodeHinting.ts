@@ -32,7 +32,7 @@ export const useCodeHinting = (CodeMirror, keywords, language) => {
       const end = cur.ch;
       const str = token.string;
       let recordKeyword = null;
-      console.log('커서 위치：', cur, '단어 정보：', token, `start:${start},end:${end},str:${str}`);
+      console.log('Cursor:', cur, 'Token:', token, `start:${start},end:${end},str:${str}`);
 
       if (str.length) {
         if (str === '.') {

@@ -68,18 +68,6 @@ export const queryConfigList = (category?: string) => {
   });
 };
 
-export const queryConfigCategories = () => {
-  return defHttp.get<string[]>({
-    url: Api.categories,
-  });
-};
-
-export const queryPublicConfigs = (category?: string) => {
-  return defHttp.get<Record<string, string>>({
-    url: Api.publicList,
-    params: { category },
-  });
-};
 
 export const saveOrUpdateConfig = (data: Partial<SysConfigModel>) => {
   return defHttp.post<SysConfigModel>({
@@ -88,19 +76,6 @@ export const saveOrUpdateConfig = (data: Partial<SysConfigModel>) => {
   });
 };
 
-export const deleteConfigItem = (configKey: string) => {
-  return defHttp.delete({
-    url: Api.delete,
-    params: { configKey },
-  });
-};
-
-export const updateConfig = (data: ConfigUpdateRequest) => {
-  return defHttp.put({
-    url: Api.update,
-    data,
-  });
-};
 
 export const updateBatchConfig = (data: ConfigUpdateRequest[]) => {
   return defHttp.put({

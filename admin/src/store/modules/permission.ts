@@ -185,7 +185,7 @@ export const usePermissionStore = defineStore('app-permission', {
         throw new Error(`Unsupported permissionMode: ${permissionMode}. Only PermissionModeEnum.BACK is allowed.`);
       }
 
-      console.log(' --- 백그라운드 라우팅 메뉴 구축 --- ');
+      console.log('[Permission] Building backend routing menu');
 
       // 백그라운드에서 권한 코드 조회 (실패 시 Fail-Fast 예외 전파)
       let routeList: AppRouteRecordRaw[] = await this.changePermissionCode();

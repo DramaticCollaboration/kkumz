@@ -130,7 +130,7 @@ const vs = {
         this.ws.close();
       }
       this.ws = null;
-      console.info('【JVxeWebSocket】다시 연결해 보세요...');
+      console.info('[JVxeWebSocket] Attempting to reconnect...');
       this.initialWebSocket();
       this.lockReconnect = false;
     }, 5000);
@@ -138,11 +138,11 @@ const vs = {
 
   on: {
     open() {
-      console.info('【JVxeWebSocket】연결 성공');
+      console.info('[JVxeWebSocket] Connected');
       this.heartCheck.start();
     },
     error(e) {
-      console.warn('【JVxeWebSocket】연결 오류가 발생했습니다.:', e);
+      console.warn('[JVxeWebSocket] Connection error:', e);
       this.reconnect();
     },
     message(e) {
@@ -151,7 +151,7 @@ const vs = {
       try {
         json = JSON.parse(e.data);
       } catch (e: any) {
-        console.warn('【JVxeWebSocket】구문 분석할 수 없는 메시지를 받았습니다.:', e.data);
+        console.warn('[JVxeWebSocket] Received unparseable message:', e.data);
         return;
       }
       let type = json[this.constants.TYPE];
@@ -171,7 +171,7 @@ const vs = {
       }
     },
     close(e) {
-      console.info('【JVxeWebSocket】연결이 닫혔습니다:', e);
+      console.info('[JVxeWebSocket] Connection closed:', e);
       this.reconnect();
     },
   },

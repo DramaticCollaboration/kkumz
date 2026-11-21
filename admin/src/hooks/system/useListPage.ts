@@ -92,7 +92,7 @@ export function useListPage(options: ListPageOptions) {
       console.log()
       return handleExportXls(title as string, realUrl, filterObj(paramsForm));
     } else {
-      $message.createMessage.warn('내보내기Config.url 매개변수가 전달되지 않았습니다.');
+      $message.createMessage.warn($t('appUi.ka5f80eb1'));
       return Promise.reject();
     }
   }
@@ -104,7 +104,7 @@ export function useListPage(options: ListPageOptions) {
     if (realUrl) {
       return handleImportXls(file, realUrl, success || reload);
     } else {
-      $message.createMessage.warn('importConfig.url 매개변수가 전달되지 않았습니다.');
+      $message.createMessage.warn($t('appUi.k7d34f797'));
       return Promise.reject();
     }
   }

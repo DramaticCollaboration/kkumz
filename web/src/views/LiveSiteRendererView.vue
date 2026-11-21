@@ -99,6 +99,7 @@
 </template>
 
 <script setup lang="ts">
+import { extractErrorMessage, type KkumzEntity, type KkumzRecord } from '@/types/kkumz';
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { kkumzApi, kkumzAuth, openAuthModal } from '@/api/kkumzApi';
@@ -123,10 +124,10 @@ const formSubmitResult = ref<Record<string, any> | null>(null);
 const conciergeMessages = ref<ConciergeMessage[]>([]);
 const askingConcierge = ref(false);
 
-function normalizeRuntimePayload(raw: any): Record<string, any> | null {
+function normalizeRuntimePayload(raw: KkumzEntity | null | undefined): KkumzEntity | null {
   if (!raw) return null;
-  const site = raw.site || raw;
-  const rel = raw.release || {};
+  const site = (raw.site || raw) as KkumzEntity;
+  const rel = (raw.release || {}) as KkumzEntity;
   return {
     ...site,
     ...raw,
@@ -176,7 +177,7 @@ async function handleCheckout(payload: {
   if (!payload.items.length || placingOrder.value) return;
   placingOrder.value = true;
   try {
-    let lastResult: any = null;
+    let lastResult: KkumzEntity = null;
     let totalQty = 0;
     let totalAmount = 0;
     let remainingDiscount = Math.max(0, Number(payload.discountAmount || 0));
@@ -222,18 +223,18 @@ async function handleCheckout(payload: {
 }
 
 async function handleSubmitForm(payload: {
-  formId?: any;
+  formId?: string | number;
   applicantName: string;
   phone: string;
   optionValue: string;
   message: string;
-  extraFields: Record<string, any>;
+  extraFields: KkumzRecord;
 }) {
   if (!payload.applicantName.trim() || submittingForm.value) return;
   submittingForm.value = true;
   try {
     formSubmitResult.value = await kkumzApi.submitCmsForm(currentSlug.value, {
-      formId: payload.formId,
+      formId: payload.formId !== undefined ? Number(payload.formId) : undefined,
       applicantName: payload.applicantName,
       phone: payload.phone,
       optionValue: payload.optionValue,
@@ -257,10 +258,10 @@ async function handleAskConcierge(question: string) {
       role: 'assistant',
       text: String(res?.answer || '응답을 받지 못했습니다.'),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     conciergeMessages.value.push({
       role: 'assistant',
-      text: String(err?.message || '상담 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'),
+      text: extractErrorMessage(err, '상담 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'),
     });
   } finally {
     askingConcierge.value = false;

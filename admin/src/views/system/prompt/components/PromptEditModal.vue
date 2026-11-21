@@ -260,7 +260,7 @@
     if (addedCount > 0) {
       createMessage.success(t('appUi.k04a09241', { p0: addedCount }));
     } else {
-      createMessage.info('새로 추가할 변수가 없습니다.');
+      createMessage.info(t('appUi.k950601c3'));
     }
   }
 

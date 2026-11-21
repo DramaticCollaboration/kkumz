@@ -149,7 +149,7 @@ export const searchFormSchema: FormSchema[] = [
   },
 ];
 
-export function parseVariablesSchema(raw: any): SysPromptVariableItem[] {
+export function parseVariablesSchema(raw: unknown): SysPromptVariableItem[] {
   if (!raw) return [];
   if (Array.isArray(raw)) {
     return raw.map((item) => ({

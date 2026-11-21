@@ -184,9 +184,10 @@ async function handleSubmit() {
     message.success(unref(isUpdate) ? t('appUi.k5dd0a384') : t('appUi.k1ab088cf'));
     closeModal();
     emit('success');
-  } catch (e: any) {
-    if (e?.message) {
-      message.error(t('appUi.k05a6a93f') + e.message);
+  } catch (e: unknown) {
+    const errMsg = e instanceof Error ? e.message : (e as { message?: string })?.message;
+    if (errMsg) {
+      message.error(t('appUi.k05a6a93f') + errMsg);
     }
   } finally {
     setModalProps({ confirmLoading: false });

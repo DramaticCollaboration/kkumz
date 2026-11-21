@@ -85,15 +85,6 @@ export const getPromptList = (params?: Record<string, any>) =>
     params: { appCode: DEFAULT_APP_CODE, ...params },
   });
 
-export const getPromptDetail = (id: string) =>
-  defHttp.get<SysPromptModel>({
-    url: `${PROMPT_API_PREFIX}/${id}`,
-  });
-
-export const getPromptByCode = (promptCode: string) =>
-  defHttp.get<SysPromptModel>({
-    url: `${PROMPT_API_PREFIX}/code/${promptCode}`,
-  });
 
 export const saveOrUpdatePrompt = (params: SysPromptModel) =>
   defHttp.post<SysPromptModel>({

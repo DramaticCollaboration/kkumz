@@ -272,13 +272,13 @@
                   <template v-if="runtime.canEdit && (m.status === 'APPLIED' || m.status === 'INVITED' || m.status === 'PENDING')">
                     <button
                       class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500"
-                      @click="handleMemberStatus(m.id, 'ACTIVE', 'EDITOR')"
+                      @click="handleMemberStatus(String(m.id || ''), 'ACTIVE', 'EDITOR')"
                     >
                       승인(에디터)
                     </button>
                     <button
                       class="px-2.5 py-1 rounded-lg bg-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-300"
-                      @click="handleMemberStatus(m.id, 'REJECTED')"
+                      @click="handleMemberStatus(String(m.id || ''), 'REJECTED')"
                     >
                       거절
                     </button>
@@ -372,7 +372,7 @@
             {{ formatPositionRoleLabel(applyingRecruit.positionRole) }} 포지션 지원
           </h3>
           <button class="text-slate-400 hover:text-slate-700 font-bold" @click="applyingRecruit = null">
-            ✕
+            닫기
           </button>
         </div>
         <p class="text-xs text-slate-500">{{ applyingRecruit.title }}</p>
@@ -412,7 +412,7 @@
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-extrabold text-slate-900">프로젝트 모더레이션 신고</h3>
           <button class="text-slate-400 hover:text-slate-700 font-bold" @click="showReportModal = false">
-            ✕
+            닫기
           </button>
         </div>
         <div class="space-y-3">
@@ -450,6 +450,7 @@
 </template>
 
 <script setup lang="ts">
+import type { KkumzEntity, KkumzRecord } from '@/types/kkumz';
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
@@ -472,10 +473,10 @@ const currentSlug = computed(
 );
 
 const loading = ref(false);
-const runtime = ref<any>(null);
-const recruits = ref<any[]>([]);
-const members = ref<any[]>([]);
-const comments = ref<any[]>([]);
+const runtime = ref<KkumzEntity | null>(null);
+const recruits = ref<KkumzEntity[]>([]);
+const members = ref<KkumzEntity[]>([]);
+const comments = ref<KkumzEntity[]>([]);
 
 const showNewRecruitForm = ref(false);
 const newRecruit = ref({
@@ -492,7 +493,7 @@ const inviteForm = ref({
   memberRole: 'EDITOR',
 });
 
-const applyingRecruit = ref<any>(null);
+const applyingRecruit = ref<KkumzEntity | null>(null);
 const applyForm = ref({
   username: '',
   displayName: '',
@@ -550,7 +551,7 @@ function formatMemberStatusLabel(status?: string) {
 
 async function loadProjectDirectory() {
   const feed = await kkumzApi.getCommunityFeed({ sortBy: 'POPULAR' });
-  activeProjects.value = (feed || []).map((item: any) => ({
+  activeProjects.value = (feed || []).map((item: KkumzEntity) => ({
     slug: item.siteSlug,
     brandName: item.siteName || item.brandName || item.siteSlug,
   }));
@@ -568,7 +569,7 @@ async function loadLoungeData() {
     runtime.value = {
       ...siteInfo,
       ...data,
-      siteId: siteInfo.id || data.siteId || siteInfo.siteId,
+      siteId: String(siteInfo.id || data.siteId || siteInfo.siteId || ''),
       brandName: siteInfo.siteName || siteInfo.brandName,
       tagline: siteInfo.brandSlogan || siteInfo.tagline,
     };
@@ -599,7 +600,7 @@ async function handleCreateRecruit() {
   showNewRecruitForm.value = false;
 }
 
-function openApplyModal(rec: any) {
+function openApplyModal(rec: KkumzEntity) {
   if (!isAuthenticated.value) {
     openAuthModal(
       'login',
@@ -637,7 +638,7 @@ async function submitTeamApplication() {
     return;
   }
   members.value = await kkumzApi.applyToTeam(runtime.value.siteId, {
-    recruitId: applyingRecruit.value.id,
+    recruitId: String(applyingRecruit.value.id || ''),
     username: applicantUsername,
     displayName: applicantDisplayName,
     positionRole: applyingRecruit.value.positionRole,

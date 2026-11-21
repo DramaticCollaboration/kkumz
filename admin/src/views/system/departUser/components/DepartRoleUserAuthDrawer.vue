@@ -1,6 +1,6 @@
 <template>
   <BasicDrawer :title="t('appUi.k6648a00a')" :width="365" @close="onClose" @register="registerDrawer">
-    <a-spin :spinning="loading">
+    <div v-loading="loading" class="relative">
       <template v-if="desformList.length > 0">
         <a-checkbox-group v-model:value="designNameValue">
           <a-row>
@@ -16,7 +16,7 @@
         </div>
       </template>
       <a-empty v-else :description="t('appUi.kc395f1f1')" />
-    </a-spin>
+    </div>
   </BasicDrawer>
 </template>
 
@@ -33,8 +33,8 @@
   const userId = ref('');
   const departId = ref('');
   const oldRoleId = ref('');
-  const desformList = ref<Array<any>>([]);
-  const designNameValue = ref<Array<any>>([]);
+  const desformList = ref<Array<Record<string, unknown>>>([]);
+  const designNameValue = ref<Array<string | number>>([]);
 
   // 서랍 컴포넌트 등록
   const [registerDrawer, { closeDrawer }] = useDrawerInner((data) => {

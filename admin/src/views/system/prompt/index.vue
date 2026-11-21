@@ -81,10 +81,10 @@
   const [registerTable, { reload }] = useTable({
     title: t('appUi.k87cacb6b'),
     api: async (params) => {
-      const res: any = await getPromptList(params);
+      const res = (await getPromptList(params)) as SysPromptModel[] | { records?: SysPromptModel[] };
       const list: SysPromptModel[] = Array.isArray(res)
         ? res
-        : Array.isArray(res?.records)
+        : !Array.isArray(res) && Array.isArray(res?.records)
         ? res.records
         : [];
       return list;
