@@ -7,7 +7,6 @@
 
 * > .enter-x:nth-child(1),
 * > .-enter-x:nth-child(1) {
-  z-index: 9;
   opacity: 0;
   animation: enter-x-animation 0.4s ease-in-out 0.3s;
   animation-fill-mode: forwards;
@@ -22,7 +21,6 @@
 
 * > .enter-x:nth-child(2),
 * > .-enter-x:nth-child(2) {
-  z-index: 8;
   opacity: 0;
   animation: enter-x-animation 0.4s ease-in-out 0.3s;
   animation-fill-mode: forwards;
@@ -37,7 +35,6 @@
 
 * > .enter-x:nth-child(3),
 * > .-enter-x:nth-child(3) {
-  z-index: 7;
   opacity: 0;
   animation: enter-x-animation 0.4s ease-in-out 0.3s;
   animation-fill-mode: forwards;
@@ -53,7 +50,6 @@
 
 * > .enter-x:nth-child(4),
 * > .-enter-x:nth-child(4) {
-  z-index: 6;
   opacity: 0;
   animation: enter-x-animation 0.4s ease-in-out 0.3s;
   animation-fill-mode: forwards;
@@ -69,7 +65,6 @@
 
 * > .enter-x:nth-child(5),
 * > .-enter-x:nth-child(5) {
-  z-index: 5;
   opacity: 0;
   animation: enter-x-animation 0.4s ease-in-out 0.3s;
   animation-fill-mode: forwards;
@@ -85,7 +80,6 @@
 
 * > .enter-y:nth-child(1),
 * > .-enter-y:nth-child(1) {
-  z-index: 9;
   opacity: 0;
   animation: enter-y-animation 0.4s ease-in-out 0.3s;
   animation-fill-mode: forwards;
@@ -100,7 +94,6 @@
 
 * > .enter-y:nth-child(2),
 * > .-enter-y:nth-child(2) {
-  z-index: 8;
   opacity: 0;
   animation: enter-y-animation 0.4s ease-in-out 0.3s;
   animation-fill-mode: forwards;
@@ -115,7 +108,6 @@
 
 * > .enter-y:nth-child(3),
 * > .-enter-y:nth-child(3) {
-  z-index: 7;
   opacity: 0;
   animation: enter-y-animation 0.4s ease-in-out 0.3s;
   animation-fill-mode: forwards;
@@ -131,7 +123,6 @@
 
 * > .enter-y:nth-child(4),
 * > .-enter-y:nth-child(4) {
-  z-index: 6;
   opacity: 0;
   animation: enter-y-animation 0.4s ease-in-out 0.3s;
   animation-fill-mode: forwards;
@@ -147,7 +138,6 @@
 
 * > .enter-y:nth-child(5),
 * > .-enter-y:nth-child(5) {
-  z-index: 5;
   opacity: 0;
   animation: enter-y-animation 0.4s ease-in-out 0.3s;
   animation-fill-mode: forwards;

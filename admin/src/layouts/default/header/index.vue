@@ -9,7 +9,8 @@
         :theme="getHeaderTheme"
         :sider="false"
       />
-      <LayoutBreadcrumb v-if="getShowContent && getShowBread" :theme="getHeaderTheme" />
+      <LayoutBreadcrumb v-if="getShowContent && getShowBread && !getIsMobile" :theme="getHeaderTheme" />
+      <span v-if="getIsMobile" :class="`${prefixCls}-mobile-title`">{{ currentPageTitle }}</span>
       <!-- 환영 -->
       <span v-if="getShowContent && getShowBreadTitle && !getIsMobile" class="headerIntroductionClass"> {{ title }} </span>
     </div>
@@ -25,25 +26,26 @@
     <div :class="`${prefixCls}-action`">
       <AppSearch :class="`${prefixCls}-action__item `" v-if="getShowSearch" />
 
-      <ErrorAction v-if="getUseErrorHandle" :class="`${prefixCls}-action__item error-action`" />
+      <ErrorAction v-if="getUseErrorHandle && !getIsMobile" :class="`${prefixCls}-action__item error-action`" />
 
-      <PageHelp :class="`${prefixCls}-action__item`" />
+      <PageHelp v-if="!getIsMobile" :class="`${prefixCls}-action__item page-help-item`" />
 
-      <TaskProgress :class="`${prefixCls}-action__item`" />
+      <TaskProgress v-if="!getIsMobile" :class="`${prefixCls}-action__item task-progress-item`" />
 
-      <FullScreen v-if="getShowFullScreen" :class="`${prefixCls}-action__item fullscreen-item`" />
+      <FullScreen v-if="getShowFullScreen && !getIsMobile" :class="`${prefixCls}-action__item fullscreen-item`" />
 
-      <LockScreen v-if="getUseLockPage" :class="`${prefixCls}-action__item`" />
+      <LockScreen v-if="getUseLockPage && !getIsMobile" :class="`${prefixCls}-action__item lock-item`" />
 
       <UserDropDown :theme="getHeaderTheme" :class="`${prefixCls}-action__item`" />
 
-      <SettingDrawer v-if="getShowSetting" :class="`${prefixCls}-action__item`" />
+      <SettingDrawer v-if="getShowSetting && !getIsMobile" :class="`${prefixCls}-action__item setting-item`" />
     </div>
   </Header>
   <LoginSelect ref="loginSelectRef" @success="loginSelectOk"></LoginSelect>
 </template>
 <script lang="ts">
   import { defineComponent, unref, computed, ref, onMounted, toRaw } from 'vue';
+  import { useRoute } from 'vue-router';
   import { useGlobSetting } from '/@/hooks/setting';
   import { propTypes } from '/@/utils/propTypes';
 
@@ -124,6 +126,8 @@
       const { getShowLocalePicker } = useLocale();
 
       const { getIsMobile } = useAppInject();
+      const route = useRoute();
+      const currentPageTitle = computed(() => { const raw = (route.meta?.title as string) || title; return raw ? t(raw) : title; });
 
       const getHeaderClass = computed(() => {
         const theme = unref(getHeaderTheme);
@@ -193,6 +197,7 @@
         getHeaderTheme,
         getShowHeaderTrigger,
         getIsMobile,
+        currentPageTitle,
         getShowBreadTitle,
         getShowBread,
         getShowContent,

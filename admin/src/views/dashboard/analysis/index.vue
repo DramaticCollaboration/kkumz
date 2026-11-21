@@ -171,7 +171,7 @@
 
             <div v-if="deployModeItems.length" class="pt-2 border-t border-slate-100">
               <div class="text-[11px] font-semibold text-slate-500 mb-2">배포 아키텍처 트랙 현황</div>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div
                   v-for="mode in deployModeItems"
                   :key="mode.deployMode"

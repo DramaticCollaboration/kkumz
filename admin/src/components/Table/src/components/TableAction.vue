@@ -1,6 +1,6 @@
 <template>
   <div :class="[prefixCls, getAlign]" @click="onCellClick">
-    <template v-for="(action, index) in getActions" :key="`${index}-${action.label}`">
+    <template v-for="(action, index) in getDisplayActions" :key="`${index}-${action.label}`">
       <template v-if="action.slot">
         <slot name="customButton"></slot>
       </template>
@@ -17,14 +17,14 @@
         </PopConfirmButton>
       </template>
 
-      <Divider type="vertical" class="action-divider" v-if="divider && index < getActions.length - 1" />
+      <Divider type="vertical" class="action-divider" v-if="divider && index < getDisplayActions.length - 1" />
     </template>
     <Dropdown
       :overlayClassName="dropdownCls"
-      :trigger="['hover']"
+      :trigger="dropdownTrigger"
       :dropMenuList="getDropdownList"
       popconfirm
-      v-if="dropDownActions && getDropdownList.length > 0"
+      v-if="getDropdownList.length > 0"
     >
       <slot name="more"></slot>
       <!--  슬롯 설정   -->
@@ -45,6 +45,7 @@
   import { PopConfirmButton } from '/@/components/Button';
   import { Dropdown } from '/@/components/Dropdown';
   import { useDesign } from '/@/hooks/web/useDesign';
+  import { useAppInject } from '/@/hooks/web/useAppInject';
   import { useTableContext } from '../hooks/useTableContext';
   import { usePermission } from '/@/hooks/web/usePermission';
   import { isBoolean, isFunction, isString } from '/@/utils/is';
@@ -76,6 +77,8 @@
       }
 
       const { hasPermission } = usePermission();
+      const { getIsMobile } = useAppInject();
+      const dropdownTrigger = computed(() => (unref(getIsMobile) ? ['click'] : ['hover']));
       function isIfShow(action: ActionItem): boolean {
         const ifShow = action.ifShow;
 
@@ -115,9 +118,26 @@
           });
       });
 
+      const getDisplayActions = computed(() => {
+        const list = unref(getActions);
+        if (unref(getIsMobile) && list.length > 2) {
+          return list.slice(0, 2);
+        }
+        return list;
+      });
+
+      const getOverflowMobileActions = computed(() => {
+        const list = unref(getActions);
+        if (unref(getIsMobile) && list.length > 2) {
+          return list.slice(2);
+        }
+        return [];
+      });
+
       const getDropdownList = computed((): any[] => {
         //중복된 구분선을 피하기 위해 숨겨진 드롭다운을 필터링합니다.
-        const list = (toRaw(props.dropDownActions) || []).filter((action) => {
+        const mergedRaw = [...unref(getOverflowMobileActions), ...(toRaw(props.dropDownActions) || [])];
+        const list = mergedRaw.filter((action) => {
           return hasPermission(action.auth) && isIfShow(action);
         });
         return list.map((action, index) => {
@@ -190,7 +210,9 @@
         isInButton && e.stopPropagation();
       }
      
-      return { prefixCls, getActions, getDropdownList, getDropdownSlotList, getAlign, onCellClick, getTooltip, dropdownCls };
+      return { prefixCls, getActions,
+        getDisplayActions,
+        dropdownTrigger, getDropdownList, getDropdownSlotList, getAlign, onCellClick, getTooltip, dropdownCls };
     },
   });
 </script>

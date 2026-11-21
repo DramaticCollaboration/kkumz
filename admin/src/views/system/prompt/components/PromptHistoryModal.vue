@@ -8,7 +8,7 @@
     cancelText="닫기"
   >
     <div class="space-y-4">
-      <a-descriptions bordered size="small" :column="3">
+      <a-descriptions bordered size="small" :column="{ xs: 1, sm: 1, md: 2, lg: 3 }">
         <a-descriptions-item label="프롬프트 코드">
           <span class="font-mono text-xs font-semibold">{{ currentRecord.promptCode }}</span>
         </a-descriptions-item>

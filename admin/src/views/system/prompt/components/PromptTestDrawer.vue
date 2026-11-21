@@ -9,7 +9,7 @@
     @ok="handleRunTest"
   >
     <div class="space-y-4">
-      <a-descriptions bordered size="small" :column="2">
+      <a-descriptions bordered size="small" :column="{ xs: 1, sm: 1, md: 2 }">
         <a-descriptions-item label="프롬프트 코드">
           <span class="font-mono text-xs font-semibold">{{ currentRecord.promptCode }}</span>
         </a-descriptions-item>
@@ -33,7 +33,7 @@
           <a-col
             v-for="item in variableInputs"
             :key="item.name"
-            :span="12"
+            :xs="24" :md="12"
             class="mb-2"
           >
             <div class="text-xs text-gray-600 mb-1">

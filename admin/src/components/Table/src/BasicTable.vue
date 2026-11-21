@@ -1,6 +1,48 @@
 <template>
   <div ref="wrapRef" :class="getWrapperClass">
+    <div
+      v-if="getIsMobile && getBindValues.useSearchForm && getBindValues.formConfig?.schemas?.length"
+      class="flex items-center justify-between gap-2 px-2 py-1.5 mb-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+    >
+      <a-button size="small" type="default" @click="mobileFilterOpen = !mobileFilterOpen">
+        {{ mobileFilterOpen ? '필터 닫기' : '검색 필터' }}
+      </a-button>
+      <div v-if="canUseMobileCardView" class="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden text-xs">
+        <button
+          type="button"
+          class="px-2.5 py-1 border-0 cursor-pointer"
+          :class="mobileViewMode === 'card' ? 'bg-sky-600 text-white font-semibold' : 'bg-transparent text-slate-600 dark:text-slate-300'"
+          @click="mobileViewMode = 'card'"
+        >카드</button>
+        <button
+          type="button"
+          class="px-2.5 py-1 border-0 cursor-pointer"
+          :class="mobileViewMode === 'table' ? 'bg-sky-600 text-white font-semibold' : 'bg-transparent text-slate-600 dark:text-slate-300'"
+          @click="mobileViewMode = 'table'"
+        >표</button>
+      </div>
+    </div>
+    <div
+      v-else-if="getIsMobile && canUseMobileCardView"
+      class="flex items-center justify-end px-1 pb-1.5"
+    >
+      <div class="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden text-xs">
+        <button
+          type="button"
+          class="px-2.5 py-1 border-0 cursor-pointer"
+          :class="mobileViewMode === 'card' ? 'bg-sky-600 text-white font-semibold' : 'bg-transparent text-slate-600 dark:text-slate-300'"
+          @click="mobileViewMode = 'card'"
+        >카드</button>
+        <button
+          type="button"
+          class="px-2.5 py-1 border-0 cursor-pointer"
+          :class="mobileViewMode === 'table' ? 'bg-sky-600 text-white font-semibold' : 'bg-transparent text-slate-600 dark:text-slate-300'"
+          @click="mobileViewMode = 'table'"
+        >표</button>
+      </div>
+    </div>
     <BasicForm
+      v-show="!getIsMobile || mobileFilterOpen"
       :class="{ 'table-search-area-hidden': !getBindValues.formConfig?.schemas?.length }"
       submitOnReset
       v-bind="getFormProps"
@@ -20,7 +62,30 @@
     <a-form-item-rest>
       <!-- 【TV360X-377】관련 레코드가 필요하며, 이는 테이블의 입력 상자 및 페이지 번호 스타일에 영향을 미칩니다. -->
       <a-form-item>
-        <Table ref="tableElRef" v-bind="getBindValues" :rowClassName="getRowClassName" v-show="getEmptyDataIsShowTable" @resizeColumn="handleResizeColumn" @change="handleTableChange">
+        <MobileCardList
+          v-if="showMobileCardView"
+          :dataSource="getBindValues.dataSource"
+          :columns="columns"
+          :loading="getLoading"
+          :pagination="getBindValues.pagination"
+          :rowKey="getBindValues.rowKey"
+          :headerRender="typeof getBindValues.title === 'function' ? getBindValues.title : undefined"
+          @change="handleTableChange"
+          @row-click="(record, idx) => $emit('row-click', record, idx)"
+        >
+          <template #bodyCell="data">
+            <template v-if="data.column?.slotsBak?.customRender">
+              <slot :name="data.column.slotsBak.customRender" v-bind="data || {}"></slot>
+            </template>
+            <template v-else>
+              <slot name="bodyCell" v-bind="data || {}"></slot>
+            </template>
+          </template>
+          <template #[name]="data" v-for="name in slotNamesGroup.custom" :key="name">
+            <slot :name="name" v-bind="data || {}"></slot>
+          </template>
+        </MobileCardList>
+        <Table v-else ref="tableElRef" v-bind="getBindValues" :rowClassName="getRowClassName" v-show="getEmptyDataIsShowTable" @resizeColumn="handleResizeColumn" @change="handleTableChange">
           <!-- antd의 기본 슬롯은 직접 전달됩니다. -->
           <template #[item]="data" v-for="item in slotNamesGroup.native" :key="item">
             <template v-if="item === 'headerCell'">
@@ -78,6 +143,8 @@
   import { useTableFooter } from './hooks/useTableFooter';
   import { useTableForm } from './hooks/useTableForm';
   import { useDesign } from '/@/hooks/web/useDesign';
+  import { useAppInject } from '/@/hooks/web/useAppInject';
+  import MobileCardList from './components/MobileCardList.vue';
   import { useCustomSelection } from "./hooks/useCustomSelection";
 
   import { omit, pick } from 'lodash-es';
@@ -92,6 +159,7 @@
       HeaderCell,
       TableSummary,
       CustomSelectHeader,
+      MobileCardList,
     },
     props: basicProps,
     emits: [
@@ -121,6 +189,9 @@
       const innerPropsRef = ref<Partial<BasicTableProps>>();
 
       const { prefixCls } = useDesign('basic-table');
+      const { getIsMobile } = useAppInject();
+      const mobileFilterOpen = ref(false);
+      const mobileViewMode = ref<'card' | 'table'>('card');
       const [registerForm, formActions] = useForm();
 
       const getProps = computed(() => {
@@ -380,6 +451,14 @@
       nextTick(() => {
         getProps.value.defaultExpandAllRows && expandAll();
       })
+      const canUseMobileCardView = computed(() => {
+        const vals = unref(getBindValues);
+        const cols = unref(getViewColumns) || [];
+        return !vals.isTreeTable && !vals.expandedRowRender && cols.length >= 4;
+      });
+      const showMobileCardView = computed(() => {
+        return unref(getIsMobile) && unref(canUseMobileCardView) && mobileViewMode.value === 'card' && unref(getEmptyDataIsShowTable);
+      });
       expose(tableAction);
 
       emit('register', tableAction, formActions);
@@ -413,6 +492,11 @@
         slotNamesGroup,
         getSummaryProps,
         showSummaryRef,
+        getIsMobile,
+        mobileFilterOpen,
+        mobileViewMode,
+        canUseMobileCardView,
+        showMobileCardView,
       };
     },
   });

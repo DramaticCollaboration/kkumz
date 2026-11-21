@@ -1,6 +1,6 @@
 <template>
   <span>
-    <Dropdown placement="bottomLeft" :overlayClassName="`${prefixCls}-dropdown-overlay`">
+    <Dropdown placement="bottomRight" :overlayClassName="`${prefixCls}-dropdown-overlay`">
       <span :class="[prefixCls, `${prefixCls}--${theme}`]" class="flex">
         <img :class="`${prefixCls}__header`" :src="getAvatarUrl" />
         <span :class="`${prefixCls}__info hidden md:block`">
@@ -14,6 +14,8 @@
         <Menu @click="handleMenuClick">
           <MenuItem key="password" :text="t('layout.header.dropdownItemSwitchPassword')" icon="ant-design:key-outlined" />
           <MenuItem key="cache" :text="t('layout.header.dropdownItemRefreshCache')" icon="ion:sync-outline" />
+          <MenuItem v-if="getIsMobile" key="mobileTheme" :text="isDarkMode ? '라이트 모드' : '다크 모드'" icon="ant-design:bg-colors-outlined" />
+          <MenuItem v-if="getIsMobile" key="mobileLocale" :text="currentLocale === 'en' ? '한국어 전환' : 'English'" icon="ant-design:global-outlined" />
           <MenuItem key="logout" :text="t('layout.header.dropdownItemLoginOut')" icon="ion:power-outline" />
         </Menu>
       </template>
@@ -35,6 +37,12 @@
   import { useHeaderSetting } from '/@/hooks/setting/useHeaderSetting';
   import { useI18n } from '/@/hooks/web/useI18n';
   import { useDesign } from '/@/hooks/web/useDesign';
+  import { useAppInject } from '/@/hooks/web/useAppInject';
+  import { useRootSetting } from '/@/hooks/setting/useRootSetting';
+  import { useLocale } from '/@/locales/useLocale';
+  import { ThemeEnum } from '/@/enums/appEnum';
+  import { updateDarkTheme } from '/@/logics/theme/dark';
+  import { updateHeaderBgColor, updateSidebarBgColor } from '/@/logics/theme/updateBackground';
   import { useModal } from '/@/components/Modal';
   import { useMessage } from '/src/hooks/web/useMessage';
   import { useGo } from '/@/hooks/web/usePage';
@@ -50,7 +58,7 @@
   import { getFileAccessHttpUrl } from '/@/utils/common/compUtils';
   import { getRefPromise } from '/@/utils/index';
 
-  type MenuEvent = 'logout' | 'doc' | 'lock' | 'cache' | 'depart';
+  type MenuEvent = 'mobileTheme' | 'mobileLocale' | 'logout' | 'doc' | 'lock' | 'cache' | 'depart';
   const { createMessage } = useMessage();
   export default defineComponent({
     name: 'UserDropdown',
@@ -68,6 +76,23 @@
     },
     setup() {
       const { prefixCls } = useDesign('header-user-dropdown');
+      const { getIsMobile } = useAppInject();
+      const { getDarkMode, setDarkMode } = useRootSetting();
+      const { getLocale, changeLocale } = useLocale();
+      const isDarkMode = computed(() => getDarkMode.value === ThemeEnum.DARK);
+      const currentLocale = computed(() => (getLocale.value === 'en' ? 'en' : 'ko'));
+
+      function toggleMobileTheme() {
+        const nextMode = getDarkMode.value === ThemeEnum.DARK ? ThemeEnum.LIGHT : ThemeEnum.DARK;
+        setDarkMode(nextMode);
+        updateDarkTheme(nextMode);
+        updateHeaderBgColor();
+        updateSidebarBgColor();
+      }
+
+      async function toggleMobileLocale() {
+        await changeLocale((currentLocale.value === 'en' ? 'ko_KR' : 'en') as any);
+      }
       const { t } = useI18n();
       const { getShowDoc, getUseLockPage } = useHeaderSetting();
       const userStore = useUserStore();
@@ -135,6 +160,12 @@
       }
       function handleMenuClick(e: { key: MenuEvent }) {
         switch (e.key) {
+          case 'mobileTheme':
+            toggleMobileTheme();
+            break;
+          case 'mobileLocale':
+            toggleMobileLocale();
+            break;
           case 'logout':
             handleLoginOut();
             break;
@@ -161,6 +192,9 @@
 
       return {
         prefixCls,
+        getIsMobile,
+        isDarkMode,
+        currentLocale,
         t,
         getUserInfo,
         getAvatarUrl,

@@ -59,7 +59,8 @@
   .@{prefix-cls} {
     .ant-drawer-body {
       height: 100vh;
-      padding: 0;
+      height: 100dvh;
+      padding: 0 0 env(safe-area-inset-bottom) 0;
     }
 
     .ant-drawer-header-no-title {

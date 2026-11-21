@@ -11,7 +11,7 @@
         <template #formHeader>
           <div class="w-full">
             <a-row :gutter="16">
-              <a-col :span="9">
+              <a-col :xs="24" :md="9">
                 <a-form-item label="프롬프트 코드" required>
                   <a-input
                     v-model:value="formState.promptCode"
@@ -20,7 +20,7 @@
                   />
                 </a-form-item>
               </a-col>
-              <a-col :span="9">
+              <a-col :xs="24" :md="9">
                 <a-form-item label="프롬프트 명칭" required>
                   <a-input
                     v-model:value="formState.promptName"
@@ -28,7 +28,7 @@
                   />
                 </a-form-item>
               </a-col>
-              <a-col :span="6">
+              <a-col :xs="24" :md="6">
                 <a-form-item label="분류" required>
                   <a-select v-model:value="formState.category" :options="CATEGORY_OPTIONS" />
                 </a-form-item>
@@ -36,7 +36,7 @@
             </a-row>
 
             <a-row :gutter="16">
-              <a-col :span="9">
+              <a-col :xs="24" :md="9">
                 <a-form-item label="호출 클래스 및 메서드">
                   <a-input
                     v-model:value="formState.callerClass"
@@ -44,7 +44,7 @@
                   />
                 </a-form-item>
               </a-col>
-              <a-col :span="6">
+              <a-col :xs="24" :md="6">
                 <a-form-item label="지정 모델">
                   <a-input
                     v-model:value="formState.modelOverride"
@@ -52,7 +52,7 @@
                   />
                 </a-form-item>
               </a-col>
-              <a-col :span="4">
+              <a-col :xs="24" :md="4">
                 <a-form-item label="생성 온도값">
                   <a-input-number
                     v-model:value="formState.temperature"
@@ -63,7 +63,7 @@
                   />
                 </a-form-item>
               </a-col>
-              <a-col :span="5">
+              <a-col :xs="24" :md="5">
                 <a-form-item label="상태">
                   <a-select v-model:value="formState.status">
                     <a-select-option value="ACTIVE">활성</a-select-option>
@@ -99,7 +99,7 @@
             </a-form-item>
 
             <a-row :gutter="16">
-              <a-col :span="14">
+              <a-col :xs="24" :md="14">
                 <div class="flex justify-between items-center mb-2">
                   <span class="font-semibold text-xs text-gray-700">
                     바인딩 변수 스키마 ({{ formState.variables.length }})
@@ -153,7 +153,7 @@
                   </div>
                 </div>
               </a-col>
-              <a-col :span="10">
+              <a-col :xs="24" :md="10">
                 <a-form-item label="출력 JSON 스키마 규격">
                   <a-textarea
                     v-model:value="formState.outputSchema"

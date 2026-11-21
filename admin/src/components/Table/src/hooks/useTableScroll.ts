@@ -7,6 +7,7 @@ import { useModalContext } from '/@/components/Modal';
 import { onMountedOrActivated } from '/@/hooks/core/onMountedOrActivated';
 import { useDebounceFn } from '@vueuse/core';
 import componentSetting from '/@/settings/componentSetting';
+import { useAppInject } from '/@/hooks/web/useAppInject';
 
 export function useTableScroll(
   propsRef: ComputedRef<BasicTableProps>,
@@ -16,6 +17,7 @@ export function useTableScroll(
   getDataSourceRef: ComputedRef<Recordable[]>
 ) {
   const tableHeightRef: Ref<Nullable<number>> = ref(null);
+  const { getIsMobile } = useAppInject();
 
   const modalFn = useModalContext();
 
@@ -123,7 +125,7 @@ export function useTableScroll(
       !tableEl.classList.contains('hide-scrollbar-x') && tableEl.classList.add('hide-scrollbar-x');
     }
 
-    if (!unref(getCanResize) || !tableData || tableData.length === 0) {
+    if (unref(getIsMobile) || !unref(getCanResize) || !tableData || tableData.length === 0) {
       setHeight(null);
       !tableEl.classList.contains('hide-scrollbar-y') && tableEl.classList.add('hide-scrollbar-y');
       return;
@@ -305,7 +307,7 @@ export function useTableScroll(
     const { table } = componentSetting;
     return {
       x: unref(getScrollX),
-      y: canResize && tableHeight ? tableHeight : undefined,
+      y: !unref(getIsMobile) && canResize && tableHeight ? tableHeight : undefined,
       scrollToFirstRowOnChange: table.scrollToFirstRowOnChange,
       ...scroll,
     };

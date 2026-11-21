@@ -57,6 +57,7 @@
   import componentSetting from '/@/settings/componentSetting';
 
   import { useDesign } from '/@/hooks/web/useDesign';
+  import { useAppInject } from '/@/hooks/web/useAppInject';
   import dayjs from 'dayjs';
   import { useDebounceFn } from '@vueuse/core';
 
@@ -85,10 +86,17 @@
       const formElRef = ref<Nullable<FormActionType>>(null);
 
       const { prefixCls } = useDesign('basic-form');
+      const { getIsMobile } = useAppInject();
 
       // Get the basic configuration of the form
       const getProps = computed((): FormProps => {
         let mergeProps = { ...props, ...unref(propsRef) } as FormProps;
+        if (unref(getIsMobile) && mergeProps.layout !== 'inline') {
+          mergeProps.layout = 'vertical';
+          mergeProps.labelCol = undefined;
+          mergeProps.wrapperCol = undefined;
+          mergeProps.labelWidth = undefined;
+        }
         if (mergeProps.labelWidth) {
           mergeProps.labelCol = undefined;
         }

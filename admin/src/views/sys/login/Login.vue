@@ -1,13 +1,13 @@
 <template>
-  <div :class="prefixCls" class="relative w-full min-h-screen px-3 sm:px-4 flex flex-col justify-start xl:justify-between overflow-x-hidden">
+  <div :class="prefixCls" class="relative w-full min-h-screen min-h-dvh px-3 sm:px-4 flex flex-col justify-start xl:justify-between overflow-x-hidden">
     <!-- 모바일 전용 상단 헤더 바 (로고 + 다크모드/언어) -->
     <header v-if="!isDesktop" class="flex items-center justify-between w-full pt-3 pb-2 px-2 z-20 shrink-0 mb-1">
       <div class="mobile-logo-wrap">
         <AppLogo :alwaysShowTitle="true" theme="dark" />
       </div>
       <div class="flex items-center gap-2.5">
-        <AppDarkModeToggle v-if="!sessionTimeout" class="enter-x" />
-        <AppLocalePicker class="enter-x text-slate-300 hover:text-white" :showText="false" v-if="!sessionTimeout && showLocale" />
+        <AppDarkModeToggle v-if="!sessionTimeout" />
+        <AppLocalePicker class="text-slate-300 hover:text-white" :showText="false" v-if="!sessionTimeout && showLocale" />
       </div>
     </header>
 

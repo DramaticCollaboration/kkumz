@@ -41,7 +41,7 @@
       const { getShowMultipleTab, getTabsTheme } = useMultipleTabSetting();
 
       const getShowTabs = computed(() => {
-        return unref(getShowMultipleTab) && !unref(getFullContent);
+        return unref(getShowMultipleTab) && !unref(getFullContent) && !unref(getIsMobile);
       });
 
       const getIsShowPlaceholderDom = computed(() => {
@@ -79,7 +79,7 @@
         if ((unref(getShowFullHeaderRef) || !unref(getSplit)) && unref(getShowHeader) && !unref(getFullContent)) {
           height += HEADER_HEIGHT;
         }
-        if (unref(getShowMultipleTab) && !unref(getFullContent)) {
+        if (unref(getShowTabs)) {
           height += unref(getTabsThemeHeight);
         }
         setHeaderHeight(height);

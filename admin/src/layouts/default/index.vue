@@ -8,6 +8,7 @@
         <LayoutMultipleHeader />
         <LayoutContent />
         <LayoutFooter />
+        <MobileTabBar v-if="getIsMobile" />
       </Layout>
     </Layout>
   </Layout>
@@ -20,6 +21,7 @@
 
   import LayoutHeader from './header/index.vue';
   import LayoutContent from './content/index.vue';
+  import MobileTabBar from './mobile/MobileTabBar.vue';
   import LayoutSideBar from './sider/index.vue';
   import LayoutMultipleHeader from './header/MultipleHeader.vue';
 
@@ -37,6 +39,7 @@
       LayoutFooter: createAsyncComponent(() => import('/@/layouts/default/footer/index.vue')),
       LayoutHeader,
       LayoutContent,
+      MobileTabBar,
       LayoutSideBar,
       LayoutMultipleHeader,
       Layout,
@@ -76,7 +79,10 @@
   .@{prefix-cls} {
     display: flex;
     width: 100%;
+    max-width: 100vw;
     min-height: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
     background-color: @content-bg;
     flex-direction: column;
 
@@ -87,6 +93,10 @@
     &-main {
       width: 100%;
       margin-left: 1px;
+      min-width: 0;
+      @media (max-width: 991.98px) {
+        margin-left: 0;
+      }
     }
   }
 </style>
