@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { defHttp } from '/@/utils/http/axios';
 import { Modal } from 'ant-design-vue';
 
@@ -54,10 +55,10 @@ export const deleteRole = (params, handleSuccess) => {
  */
 export const batchDeleteRole = (params, handleSuccess) => {
   Modal.confirm({
-    title: '삭제 확인',
-    content: '선택한 데이터 삭제 여부',
-    okText: '확인',
-    cancelText: '취소',
+    title: $t('appUi.k20fdea4d'),
+    content: $t('appUi.kec2cff67'),
+    okText: $t('appUi.k468266d6'),
+    cancelText: $t('appUi.k19b2d19b'),
     onOk: async () => {
       const ids = String(params?.ids || '')
         .split(',')
@@ -100,7 +101,7 @@ export const isRoleExist = (params) => {
         resolve({
           success: !exists,
           code: exists ? 500 : 200,
-          message: exists ? '이미 사용 중인 역할 코드입니다.' : '',
+          message: exists ? $t('appUi.kad23fb0c') : '',
         });
       } catch {
         resolve({ success: true, code: 200, message: '' });
@@ -200,10 +201,10 @@ export const deleteUserRole = (params, handleSuccess) => {
  */
 export const batchDeleteUserRole = (params, handleSuccess) => {
   Modal.confirm({
-    title: '삭제 확인',
-    content: '선택한 데이터 삭제 여부',
-    okText: '확인',
-    cancelText: '취소',
+    title: $t('appUi.k20fdea4d'),
+    content: $t('appUi.kec2cff67'),
+    okText: $t('appUi.k468266d6'),
+    cancelText: $t('appUi.k19b2d19b'),
     onOk: () => {
       return defHttp.delete({ url: Api.batchDeleteUserRole, params }, { joinParamsToUrl: true }).then(() => {
         handleSuccess();

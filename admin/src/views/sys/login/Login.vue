@@ -24,13 +24,13 @@
           <div class="max-w-[420px] pr-10">
             <AppLogo theme="dark" class="-enter-x mb-6" />
             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-blue-100 text-xs font-medium mb-5 -enter-x">
-              꿈즈 Kkumz 브랜드·커뮤니티 통합 운영 콘솔
+              {{ t('appUi.k9ca7cec3') }}
             </div>
             <h1 class="text-2xl 2xl:text-3xl font-bold text-white tracking-tight leading-snug break-keep -enter-x">
-              AI 스튜디오 · 멀티사이트 배포 ·<br />커뮤니티까지 한곳에서 운영
+              {{ t('appUi.k6ab314e0') }}<br />{{ t('appUi.kb98fb626') }}
             </h1>
             <p class="mt-4 text-blue-100/90 text-sm font-normal leading-relaxed break-keep -enter-x">
-              AI 브랜드 이름·로고 AI 생성 품질 관리부터 사이트 자동 발행 흐름, 버전 관리, 팀빌딩 라운지 및 커뮤니티 심사까지 실시간으로 운영합니다.
+              {{ t('appUi.k8b7d8bf6') }}
             </p>
           </div>
         </div>
@@ -51,7 +51,7 @@
                 rel="noopener noreferrer"
                 class="hover:text-blue-600 dark:hover:text-blue-400"
               >
-                이용약관
+                {{ t('appUi.k3b9e30dd') }}
               </a>
               <span>·</span>
               <a
@@ -60,11 +60,11 @@
                 rel="noopener noreferrer"
                 class="hover:text-blue-600 dark:hover:text-blue-400 font-medium"
               >
-                개인정보 처리방침
+                {{ t('appUi.k532136c0') }}
               </a>
             </div>
             <div class="mt-1.5 text-center text-[11px] text-slate-400 dark:text-slate-500">
-              &copy; 2026 주식회사 엠파시 (Empasy Inc.). All rights reserved.
+              {{ t('appUi.k09e93668') }}
             </div>
           </div>
         </div>

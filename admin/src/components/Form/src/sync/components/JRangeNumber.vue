@@ -1,12 +1,13 @@
 <template>
   <a-input-group>
-    <a-input-number v-bind="attrs" :value="beginValue" style="width: calc(50% - 15px)" placeholder="최소값" @change="handleChangeBegin" />
+    <a-input-number v-bind="attrs" :value="beginValue" style="width: calc(50% - 15px)" :placeholder="t('appUi.ke4f481a8')" @change="handleChangeBegin" />
     <a-input style="width: 30px; border-left: 0; pointer-events: none; background-color: #fff" placeholder="~" disabled />
-    <a-input-number v-bind="attrs" :value="endValue" style="width: calc(50% - 15px); border-left: 0" placeholder="최대값" @change="handleChangeEnd" />
+    <a-input-number v-bind="attrs" :value="endValue" style="width: calc(50% - 15px); border-left: 0" :placeholder="t('appUi.keeb8d1ae')" @change="handleChangeEnd" />
   </a-input-group>
 </template>
 
 <script>
+  import { useI18n } from '/@/hooks/web/useI18n';
   /**
    * -숫자 범위 쿼리를 사용한 쿼리 조건
    */
@@ -22,6 +23,7 @@
     },
     emits: ['change', 'update:value', 'blur'],
     setup(props, { emit }) {
+      const { t } = useI18n();
       const beginValue = ref('');
       const endValue = ref('');
       const attrs = useAttrs();
@@ -62,6 +64,7 @@
       );
       
       return {
+        t,
         beginValue,
         endValue,
         handleChangeBegin,

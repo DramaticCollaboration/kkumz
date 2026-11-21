@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import type { Component } from 'vue';
 import { h } from 'vue';
 import VXETable from 'vxe-table';
@@ -90,7 +91,7 @@ export function registerOneComponent(type: JVxeTypes) {
       createCellRender(type, component);
     }
   } else {
-    throw new Error(`【registerOneComponent】"${type}"컴포넌트맵에 존재하지 않습니다`);
+    throw new Error($t('appUi.k278676ac', { p0: type }));
   }
 }
 

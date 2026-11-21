@@ -2,6 +2,9 @@
 import { computed } from 'vue';
 import { IconifyIcon } from '@vben/icons';
 import { Tooltip } from 'ant-design-vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
+  const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
@@ -17,8 +20,8 @@ const props = withDefaults(
     selectedCount: 0,
     showCreate: true,
     showDelete: true,
-    createText: '등록',
-    deleteText: '선택 삭제',
+    createText: (() => $t('appUi.k1ac11e9b')) as unknown as string,
+    deleteText: (() => $t('appUi.k23d54f50')) as unknown as string,
     createIcon: 'lucide:plus',
     deleteIcon: 'lucide:trash-2',
   },
@@ -56,7 +59,7 @@ const hasSelected = computed(() => (props.selectedCount ?? 0) > 0);
 
     <div class="toolbar-right">
       <slot name="extra-tools"></slot>
-      <Tooltip title="새로고침">
+      <Tooltip :title="t('appUi.kdeb94acf')">
         <button type="button" class="btn-ghost-icon" @click="emit('refresh')">
           <IconifyIcon icon="lucide:refresh-cw" class="size-4" />
         </button>

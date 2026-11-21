@@ -10,6 +10,8 @@
   import { BasicTree, TreeItem } from '/src/components/Tree';
   import { formSchema } from '../role.data';
   import { saveOrUpdateRole } from '../role.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
   const attrs = useAttrs();
@@ -34,7 +36,7 @@
   /**
    * 제목
    */
-  const getTitle = computed(() => (!unref(isUpdate) ? '새 역할 추가' : '역할 수정'));
+  const getTitle = computed(() => (!unref(isUpdate) ? t('appUi.kb1467f3f') : t('appUi.k37e03b1c')));
   /**
    * 제출하다
    */

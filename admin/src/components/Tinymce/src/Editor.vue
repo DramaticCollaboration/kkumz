@@ -9,6 +9,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import tinymce from 'tinymce/tinymce';
   import Editor from '@tinymce/tinymce-vue';
   import 'tinymce/themes/silver';
@@ -82,6 +83,7 @@
     props: tinymceProps,
     emits: ['change', 'update:modelValue', 'inited', 'init-error'],
     setup(props, { emit, attrs }) {
+      const { t } = useI18n();
       console.log('---Tinymce---초기화---');
 
       const editorRef = ref<Nullable<any>>(null);
@@ -157,7 +159,7 @@
                     resolve(img);
                   }
                 } else {
-                  reject('업로드 실패!');
+                  reject(t('appUi.k1abbb542'));
                 }
               };
               uploadFile(params, uploadSuccess);

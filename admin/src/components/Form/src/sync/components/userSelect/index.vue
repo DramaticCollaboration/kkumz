@@ -4,7 +4,7 @@
       <template v-if="selectedUserList.length > 0">
         <SelectedUserItem v-for="item in showUserList" :info="item" @unSelect="unSelectUser" query />
       </template>
-      <span v-else style="height: 30px;line-height: 30px;display: inline-block;margin-left: 7px;color: #bfbfbf;">사용자를 선택해 주세요</span>
+      <span v-else style="height: 30px;line-height: 30px;display: inline-block;margin-left: 7px;color: #bfbfbf;">{{ t('appUi.kafd0568b') }}</span>
       <div v-if="ellipsisInfo.status" class="user-selected-item">
         <div class="user-select-ellipsis">
           <span style="color: red">+{{ellipsisInfo.count}}...</span>
@@ -24,6 +24,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, watch, ref, computed, toRaw } from 'vue';
   import { Form } from 'ant-design-vue';
   import { PlusOutlined } from '@ant-design/icons-vue';
@@ -84,6 +85,7 @@
     },
     emits: ['update:value', 'change'],
     setup(props, { emit }) {
+      const { t } = useI18n();
       const formItemContext = Form.useInjectFormItemContext();
       const loading = ref(true);
       const selectedUserList = ref<any[]>([]);
@@ -239,6 +241,7 @@
       });
       
       return {
+        t,
         registerModal,
         onShowModal,
         isSearchFormComp,

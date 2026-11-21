@@ -2,7 +2,7 @@
   <BasicModal
     v-bind="$attrs"
     @register="registerModal"
-    :title="isUpdate ? '서비스 연동 API 액세스 키 설정 수정' : '신규 API 액세스 키 발급 / 연동 등록'"
+    :title="isUpdate ? t('appUi.k21274bfd') : t('appUi.kc6549889')"
     :width="720"
     @ok="handleSubmit"
   >
@@ -15,6 +15,8 @@
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { BasicForm, useForm } from '/@/components/Form';
   import { saveAdminApiKey } from '/@/api/kkumz';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const emit = defineEmits(['success', 'register']);
   const isUpdate = ref(false);
@@ -26,17 +28,17 @@
     schemas: [
       {
         field: 'keyName',
-        label: '액세스키 명칭',
+        label: t('appUi.k6fb40084'),
         component: 'Input',
         required: true,
         componentProps: {
-          placeholder: '예: SyncCMS 멀티사이트 연동 키 / 외부 파트너 API 키',
+          placeholder: t('appUi.k695cbad2'),
         },
         colProps: { span: 16 },
       },
       {
         field: 'direction',
-        label: '연동 방향',
+        label: t('appUi.kb553f730'),
         component: 'JDictSelectTag',
         required: true,
         defaultValue: 'OUTBOUND',
@@ -48,7 +50,7 @@
       },
       {
         field: 'serviceCode',
-        label: '대상 서비스',
+        label: t('appUi.k484829ad'),
         component: 'JDictSelectTag',
         required: true,
         defaultValue: 'SYNC_CMS',
@@ -60,12 +62,12 @@
       },
       {
         field: 'baseUrl',
-        label: '원격 Base URL',
+        label: t('appUi.kaaa0d53f'),
         component: 'Input',
         componentProps: {
-          placeholder: '예: https://cms.empasy.com 또는 https://shop.empasy.com',
+          placeholder: t('appUi.k2fd49056'),
         },
-        helpMessage: 'OUTBOUND 연동 시 호출할 대상 서비스의 기본 URL',
+        helpMessage: t('appUi.k1f599278'),
         colProps: { span: 12 },
       },
       {
@@ -73,7 +75,7 @@
         label: 'Access Key',
         component: 'Input',
         componentProps: {
-          placeholder: '비워두면 표준 규격(ak_...)으로 자동 생성됩니다',
+          placeholder: t('appUi.k228b1cd5'),
         },
         colProps: { span: 12 },
       },
@@ -82,15 +84,15 @@
         label: 'Secret Key',
         component: 'InputPassword',
         componentProps: {
-          placeholder: '비워두면 고강도 시크릿(sk_...)이 자동 발급됩니다',
+          placeholder: t('appUi.kca7db537'),
         },
         colProps: { span: 12 },
       },
       {
         field: 'scopesText',
-        label: '허용 권한 스코프',
+        label: t('appUi.kf1fb0ae6'),
         component: 'Input',
-        helpMessage: '쉼표(,) 구분 입력 (예: cms:site:read, cms:site:provision, cms:content:write, cms:form:submit)',
+        helpMessage: t('appUi.k7b675ee3'),
         componentProps: {
           placeholder: 'cms:site:read, cms:site:provision, cms:content:write, cms:form:submit',
         },
@@ -98,7 +100,7 @@
       },
       {
         field: 'rateLimitPerMin',
-        label: '분당 호출 제한(RPM)',
+        label: t('appUi.kb263664e'),
         component: 'InputNumber',
         defaultValue: 1000,
         componentProps: {
@@ -111,7 +113,7 @@
       },
       {
         field: 'status',
-        label: '키 상태',
+        label: t('appUi.k26b4eee5'),
         component: 'JDictSelectTag',
         defaultValue: 'ACTIVE',
         componentProps: {
@@ -122,11 +124,11 @@
       },
       {
         field: 'description',
-        label: '용도 및 비고',
+        label: t('appUi.k55542f4b'),
         component: 'InputTextArea',
         componentProps: {
           rows: 3,
-          placeholder: '해당 API 액세스 키의 연동 목적 및 호출 범위를 기록하세요.',
+          placeholder: t('appUi.k0dbe9d3b'),
         },
         colProps: { span: 16 },
       },

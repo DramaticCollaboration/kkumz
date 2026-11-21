@@ -6,13 +6,13 @@
         <template #label>
           <a-tooltip placement="topLeft">
             <template #title>
-              <span>귀하는 여러 부서에 속해 있습니다. 현재 부서를 선택하세요.</span>
+              <span>{{ t('appUi.ke3cfd95a') }}</span>
             </template>
-            <a-avatar style="background-color: rgb(104, 208, 203)" :size="30"> 부서 </a-avatar>
+            <a-avatar style="background-color: rgb(104, 208, 203)" :size="30"> {{ t('appUi.ke5b530d6') }} </a-avatar>
           </a-tooltip>
         </template>
         <!--부서 드롭다운 콘텐츠-->
-        <a-select v-model:value="departSelected" placeholder="로그인 부서를 선택해주세요" :class="{ 'valid-error': validate_status1 == 'error' }">
+        <a-select v-model:value="departSelected" :placeholder="t('appUi.k21eedb85')" :class="{ 'valid-error': validate_status1 == 'error' }">
           <template #suffixIcon>
             <Icon icon="ant-design:gold-outline" />
           </template>
@@ -24,8 +24,8 @@
     </a-form>
 
     <template #footer>
-      <a-button @click="close">취소</a-button>
-      <a-button @click="handleSubmit" type="primary">확인</a-button>
+      <a-button @click="close">{{ t('appUi.k19b2d19b') }}</a-button>
+      <a-button @click="handleSubmit" type="primary">{{ t('appUi.k468266d6') }}</a-button>
     </template>
   </BasicModal>
 </template>
@@ -36,11 +36,14 @@
   import { getUserDeparts, selectDepart } from '/@/views/system/depart/depart.api';
   import { useMessage } from '/@/hooks/web/useMessage';
   import { useUserStore } from '/@/store/modules/user';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
+  const { t } = useI18n();
 
   const userStore = useUserStore();
   const { createMessage, notification } = useMessage();
   const props = defineProps({
-    title: { type: String, default: '학과선택' },
+    title: { type: String, default: () => $t('appUi.k66d71b07') },
     closable: { type: Boolean, default: false },
     username: { type: String, default: '' },
   });
@@ -76,7 +79,7 @@
     //타이틀 구성
     if (unref(isMultiDepart)) {
       currTitle.value =
-        unref(currentDepartName) && unref(currentDepartName).length > 0 ? `부서 변경（현재 부서:${unref(currentDepartName)}）` : props.title;
+        unref(currentDepartName) && unref(currentDepartName).length > 0 ? t('appUi.k61c07078', { p0: unref(currentDepartName) }) : props.title;
     }
     //모델 표시 및 숨김
     if (unref(isMultiDepart)) {
@@ -108,7 +111,7 @@
     }
     departResolve()
       .then(() => {
-        createMessage.success('전환 성공');
+        createMessage.success(t('appUi.k76c08714'));
         
         //테넌트 전환 후 홈페이지 새로 고침
         window.location.reload();
@@ -149,8 +152,8 @@
    */
   function requestFailed(err) {
     notification.error({
-      message: '로그인 실패',
-      description: ((err.response || {}).data || {}).message || err.message || '요청에 오류가 발생했습니다. 나중에 다시 시도해 주세요.',
+      message: t('appUi.k56efcfd5'),
+      description: ((err.response || {}).data || {}).message || err.message || t('appUi.kdeee49cc'),
       duration: 4,
     });
   }

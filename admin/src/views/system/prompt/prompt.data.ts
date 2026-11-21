@@ -1,14 +1,15 @@
+import { $t } from '/@/locales';
 import { BasicColumn, FormSchema } from '/@/components/Table';
 import { h } from 'vue';
 import { Tag } from 'ant-design-vue';
 import { SysPromptVariableItem } from './prompt.api';
 
 export const CATEGORY_OPTIONS = [
-  { label: '에이전트 페르소나', value: 'AGENT' },
-  { label: '도메인 분석 및 생성', value: 'ANALYSIS' },
-  { label: '고객 응대 및 요약', value: 'CS_AUTOMATION' },
-  { label: '자율 도구 라우팅', value: 'MCP_REACT' },
-  { label: '콘텐츠 및 카피라이팅', value: 'CONTENT' },
+  { label: $t('appUi.k9f778842'), value: 'AGENT' },
+  { label: $t('appUi.kb6c8656e'), value: 'ANALYSIS' },
+  { label: $t('appUi.ke9300105'), value: 'CS_AUTOMATION' },
+  { label: $t('appUi.k7c7881d5'), value: 'MCP_REACT' },
+  { label: $t('appUi.k5de84edf'), value: 'CONTENT' },
 ];
 
 const CATEGORY_COLOR_MAP: Record<string, string> = {
@@ -20,16 +21,16 @@ const CATEGORY_COLOR_MAP: Record<string, string> = {
 };
 
 const CATEGORY_LABEL_MAP: Record<string, string> = {
-  AGENT: '에이전트 페르소나',
-  ANALYSIS: '도메인 분석 및 생성',
-  CS_AUTOMATION: '고객 응대 및 요약',
-  MCP_REACT: '자율 도구 라우팅',
-  CONTENT: '콘텐츠 및 카피라이팅',
+  AGENT: $t('appUi.k9f778842'),
+  ANALYSIS: $t('appUi.kb6c8656e'),
+  CS_AUTOMATION: $t('appUi.ke9300105'),
+  MCP_REACT: $t('appUi.k7c7881d5'),
+  CONTENT: $t('appUi.k5de84edf'),
 };
 
 export const columns: BasicColumn[] = [
   {
-    title: '프롬프트 코드',
+    title: $t('appUi.k5bef10a7'),
     dataIndex: 'promptCode',
     width: 230,
     align: 'left',
@@ -37,23 +38,23 @@ export const columns: BasicColumn[] = [
       h('span', { class: 'font-mono text-xs font-semibold text-blue-700' }, text),
   },
   {
-    title: '프롬프트 명칭',
+    title: $t('appUi.kef80204d'),
     dataIndex: 'promptName',
     width: 220,
     align: 'left',
   },
   {
-    title: '분류',
+    title: $t('appUi.k8b1d74f0'),
     dataIndex: 'category',
     width: 140,
     customRender: ({ text }) => {
       const color = CATEGORY_COLOR_MAP[text] || 'default';
-      const label = CATEGORY_LABEL_MAP[text] || text || '일반';
+      const label = CATEGORY_LABEL_MAP[text] || text || $t('appUi.kaef1a1e7');
       return h(Tag, { color }, () => label);
     },
   },
   {
-    title: '호출 클래스',
+    title: $t('appUi.k97b2edea'),
     dataIndex: 'callerClass',
     width: 220,
     align: 'left',
@@ -61,14 +62,14 @@ export const columns: BasicColumn[] = [
       h('span', { class: 'font-mono text-xs text-gray-600' }, text || '-'),
   },
   {
-    title: '바인딩 변수',
+    title: $t('appUi.kdc3bdceb'),
     dataIndex: 'variablesSchema',
     width: 190,
     align: 'left',
     customRender: ({ record }) => {
       const vars = parseVariablesSchema(record.variablesSchema || record.variables);
       if (!vars.length) {
-        return h('span', { class: 'text-xs text-gray-400' }, '변수 없음');
+        return h('span', { class: 'text-xs text-gray-400' }, $t('appUi.kfa7a7b1b'));
       }
       return h(
         'div',
@@ -84,28 +85,28 @@ export const columns: BasicColumn[] = [
     },
   },
   {
-    title: '버전',
+    title: $t('appUi.k593f8a81'),
     dataIndex: 'version',
     width: 80,
     customRender: ({ text }) => h(Tag, { color: 'blue' }, () => `v${text || 1}`),
   },
   {
-    title: '온도값',
+    title: $t('appUi.k83b47117'),
     dataIndex: 'temperature',
     width: 85,
     customRender: ({ text }) => (text !== undefined && text !== null ? Number(text).toFixed(2) : '0.20'),
   },
   {
-    title: '상태',
+    title: $t('appUi.k2926977b'),
     dataIndex: 'status',
     width: 90,
     customRender: ({ text }) => {
       const active = text === 'ACTIVE';
-      return h(Tag, { color: active ? 'success' : 'default' }, () => (active ? '활성' : '비활성'));
+      return h(Tag, { color: active ? 'success' : 'default' }, () => (active ? $t('appUi.k6a2123a3') : $t('appUi.kfae2014b')));
     },
   },
   {
-    title: '최종 수정일시',
+    title: $t('appUi.kdf300f61'),
     dataIndex: 'updateTime',
     width: 165,
   },
@@ -114,19 +115,19 @@ export const columns: BasicColumn[] = [
 export const searchFormSchema: FormSchema[] = [
   {
     field: 'keyword',
-    label: '통합 검색',
+    label: $t('appUi.kbbf7693c'),
     component: 'Input',
     componentProps: {
-      placeholder: '프롬프트 코드, 명칭, 호출 클래스 검색',
+      placeholder: $t('appUi.k02aad434'),
     },
     colProps: { span: 8 },
   },
   {
     field: 'category',
-    label: '분류',
+    label: $t('appUi.k8b1d74f0'),
     component: 'Select',
     componentProps: {
-      placeholder: '전체 분류',
+      placeholder: $t('appUi.k0bfe6f2c'),
       allowClear: true,
       options: CATEGORY_OPTIONS,
     },
@@ -134,14 +135,14 @@ export const searchFormSchema: FormSchema[] = [
   },
   {
     field: 'status',
-    label: '상태',
+    label: $t('appUi.k2926977b'),
     component: 'Select',
     componentProps: {
-      placeholder: '전체 상태',
+      placeholder: $t('appUi.k21caa442'),
       allowClear: true,
       options: [
-        { label: '활성', value: 'ACTIVE' },
-        { label: '비활성', value: 'INACTIVE' },
+        { label: $t('appUi.k6a2123a3'), value: 'ACTIVE' },
+        { label: $t('appUi.kfae2014b'), value: 'INACTIVE' },
       ],
     },
     colProps: { span: 5 },

@@ -1,5 +1,6 @@
 package com.empasy.sync.kkumz.system;
 
+import com.empasy.sync.core.i18n.SyncMessageResolver;
 import com.empasy.sync.kkumz.common.Result;
 import com.empasy.sync.kkumz.system.KkumzSystemOpsDTO.*;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class KkumzSystemOpsController {
             @RequestParam String component,
             @RequestParam(required = false, defaultValue = "true") Boolean isRoute
     ) {
-        return Result.OK("기본 홈페이지 구성이 저장되었습니다.", opsService.updateDefIndex(url, component, isRoute));
+        return Result.OK(SyncMessageResolver.resolve("common.save.success"), opsService.updateDefIndex(url, component, isRoute));
     }
 
     @GetMapping("/sysDepart/queryDepartTreeSync")
@@ -59,24 +60,24 @@ public class KkumzSystemOpsController {
 
     @PostMapping("/sysDepart/add")
     public Result<Map<String, Object>> addDepart(@RequestBody SaveDepartRequest request) {
-        return Result.OK("부서가 등록되었습니다.", opsService.saveDepart(request, false));
+        return Result.OK(SyncMessageResolver.resolve("common.save.success"), opsService.saveDepart(request, false));
     }
 
     @PutMapping("/sysDepart/edit")
     public Result<Map<String, Object>> editDepart(@RequestBody SaveDepartRequest request) {
-        return Result.OK("부서 정보가 수정되었습니다.", opsService.saveDepart(request, true));
+        return Result.OK(SyncMessageResolver.resolve("common.update.success"), opsService.saveDepart(request, true));
     }
 
     @DeleteMapping("/sysDepart/delete")
     public Result<String> deleteDepart(@RequestParam String id) {
         opsService.deleteDepart(id);
-        return Result.OK("부서가 삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.success"), null);
     }
 
     @DeleteMapping("/sysDepart/deleteBatch")
     public Result<String> deleteDepartBatch(@RequestParam String ids) {
         opsService.deleteDepartBatch(ids);
-        return Result.OK("선택한 부서가 삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.batch.success"), null);
     }
 
     @GetMapping("/permission/queryTreeList")
@@ -92,7 +93,7 @@ public class KkumzSystemOpsController {
     @PostMapping("/permission/saveDepartPermission")
     public Result<String> saveDepartPermission(@RequestBody SaveDepartPermissionRequest request) {
         opsService.saveDepartPermission(request);
-        return Result.OK("부서 권한이 저장되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.save.success"), null);
     }
 
     @GetMapping("/message/sysMessageTemplate/list")
@@ -108,29 +109,29 @@ public class KkumzSystemOpsController {
 
     @PostMapping("/message/sysMessageTemplate/add")
     public Result<Map<String, Object>> addMessageTemplate(@RequestBody SaveMessageTemplateRequest request) {
-        return Result.OK("알림 템플릿이 등록되었습니다.", opsService.saveMessageTemplate(request, false));
+        return Result.OK(SyncMessageResolver.resolve("common.save.success"), opsService.saveMessageTemplate(request, false));
     }
 
     @PutMapping("/message/sysMessageTemplate/edit")
     public Result<Map<String, Object>> editMessageTemplate(@RequestBody SaveMessageTemplateRequest request) {
-        return Result.OK("알림 템플릿이 수정되었습니다.", opsService.saveMessageTemplate(request, true));
+        return Result.OK(SyncMessageResolver.resolve("common.update.success"), opsService.saveMessageTemplate(request, true));
     }
 
     @DeleteMapping("/message/sysMessageTemplate/delete")
     public Result<String> deleteMessageTemplate(@RequestParam String id) {
         opsService.deleteMessageTemplate(id);
-        return Result.OK("알림 템플릿이 삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.success"), null);
     }
 
     @DeleteMapping("/message/sysMessageTemplate/deleteBatch")
     public Result<String> deleteMessageTemplateBatch(@RequestParam String ids) {
         opsService.deleteMessageTemplateBatch(ids);
-        return Result.OK("선택한 알림 템플릿이 삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.batch.success"), null);
     }
 
     @PostMapping("/message/sysMessageTemplate/sendMsg")
     public Result<Map<String, Object>> sendMessageTest(@RequestBody SendMessageTestRequest request) {
-        return Result.OK("테스트 알림 발송이 기록되었습니다.", opsService.sendTestMessage(request));
+        return Result.OK(SyncMessageResolver.resolve("common.success"), opsService.sendTestMessage(request));
     }
 
     @GetMapping("/log/list")

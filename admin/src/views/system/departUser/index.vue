@@ -8,13 +8,13 @@
     <a-col :xl="18" :lg="16" :md="14" :sm="24" style="flex: 1">
       <a-card :bordered="false" style="height: 100%">
         <a-tabs defaultActiveKey="user-info">
-          <a-tab-pane tab="기본정보" key="base-info" forceRender>
+          <a-tab-pane :tab="t('appUi.kd9b2c885')" key="base-info" forceRender>
             <DepartBaseInfoTab :data="departData" />
           </a-tab-pane>
-          <a-tab-pane tab="사용자 정보" key="user-info">
+          <a-tab-pane :tab="t('appUi.k09e1dc15')" key="user-info">
             <DepartUserInfoTab :data="departData" />
           </a-tab-pane>
-          <a-tab-pane tab="부서 역할" key="role-info">
+          <a-tab-pane :tab="t('appUi.k640052a3')" key="role-info">
             <DepartRoleInfoTab :data="departData" />
           </a-tab-pane>
         </a-tabs>
@@ -31,6 +31,8 @@
   import DepartBaseInfoTab from './components/DepartBaseInfoTab.vue';
   import DepartUserInfoTab from './components/DepartUserInfoTab.vue';
   import DepartRoleInfoTab from './components/DepartRoleInfoTab.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { prefixCls } = useDesign('depart-user');
   provide('prefixCls', prefixCls);

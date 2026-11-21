@@ -11,23 +11,23 @@
   <BasicTable @register="registerTable" :rowSelection="rowSelection">
     <!--슬롯: 테이블 제목-->
     <template #tableTitle>
-      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate">코드 그룹 등록</a-button>
-      <a-button type="primary" preIcon="ant-design:export-outlined" @click="onExportXls">내보내기</a-button>
-      <j-upload-button type="primary" preIcon="ant-design:import-outlined" @click="onImportXls">가져오기</j-upload-button>
-      <a-button type="primary" @click="handlerRefreshCache" preIcon="ant-design:sync-outlined">코드 캐시 갱신</a-button>
-      <a-button type="primary" @click="openRecycleModal(true)" preIcon="ant-design:hdd-outlined">휴지통</a-button>
+      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate">{{ t('appUi.k46135abd') }}</a-button>
+      <a-button type="primary" preIcon="ant-design:export-outlined" @click="onExportXls">{{ t('appUi.kc3a6ac35') }}</a-button>
+      <j-upload-button type="primary" preIcon="ant-design:import-outlined" @click="onImportXls">{{ t('appUi.k7cf2b30a') }}</j-upload-button>
+      <a-button type="primary" @click="handlerRefreshCache" preIcon="ant-design:sync-outlined">{{ t('appUi.kd46cfdae') }}</a-button>
+      <a-button type="primary" @click="openRecycleModal(true)" preIcon="ant-design:hdd-outlined">{{ t('appUi.k5b601a30') }}</a-button>
 
       <a-dropdown v-if="selectedRowKeys.length > 0">
         <template #overlay>
           <a-menu>
             <a-menu-item key="1" @click="batchHandleDelete">
               <Icon icon="ant-design:delete-outlined"></Icon>
-              삭제
+              {{ t('appUi.kfc81e222') }}
             </a-menu-item>
           </a-menu>
         </template>
         <a-button
-          >일괄 작업
+          >{{ t('appUi.k39eb4aed') }}
           <Icon icon="ant-design:down-outlined"></Icon>
         </a-button>
       </a-dropdown>
@@ -67,6 +67,8 @@
   //사전 구성 서랍
   const [registerDrawer, { openDrawer }] = useDrawer();
   import { useListPage } from '/@/hooks/system/useListPage';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   //삭제 모델
   const [registerModal1, { openModal: openRecycleModal }] = useModal();
@@ -75,7 +77,7 @@
   const { prefixCls, tableContext, onExportXls, onImportXls } = useListPage({
     designScope: 'dict-template',
     tableProps: {
-      title: '데이터 사전',
+      title: t('appUi.kba99b30b'),
       api: list,
       columns: columns,
       formConfig: {
@@ -86,7 +88,7 @@
       },
     },
     exportConfig: {
-      name: '데이터 사전 목록',
+      name: t('appUi.k7aa65826'),
       url: getExportUrl,
     },
     importConfig: {
@@ -155,7 +157,7 @@
       removeAuthCache(DB_DICT_DATA_KEY);
       const userStore = useUserStore();
       userStore.setAllDictItems(res.result);
-      createMessage.success('캐시 갱신이 완료되었습니다!');
+      createMessage.success(t('appUi.kd5b58e07'));
     } else {
       createMessage.error('캐시를 새로 고치지 못했습니다!');
     }
@@ -174,17 +176,17 @@
   function getTableAction(record) {
     return [
       {
-        label: '편집',
+        label: t('appUi.kd482e14b'),
         onClick: handleEdit.bind(null, record),
       },
       {
-        label: '사전 구성',
+        label: t('appUi.k3a4c63cd'),
         onClick: handleItem.bind(null, record),
       },
       {
-        label: '삭제',
+        label: t('appUi.kfc81e222'),
         popConfirm: {
-          title: '삭제하시겠습니까?',
+          title: t('appUi.k5da9b401'),
           confirm: handleDelete.bind(null, record),
         },
       },

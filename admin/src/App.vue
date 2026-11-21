@@ -20,9 +20,12 @@
 
   const appStore = useAppStore();
   // 날짜 및 시간 국제화 문제 해결
+  import dayjs from 'dayjs';
   import 'dayjs/locale/ko';
+  import 'dayjs/locale/en';
   // support Multi-language
-  const { getAntdLocale } = useLocale();
+  const { getAntdLocale, getLocale } = useLocale();
+  watch(() => getLocale.value, (loc) => { dayjs.locale(loc === 'en-US' ? 'en' : 'ko'); }, { immediate: true });
 
   useTitle();
   /**
@@ -77,8 +80,7 @@
             sizeUnit: 4,
             colorWarning: '#EFBD47',
             colorError: '#ED6F6F',
-            fontFamily:
-              '-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Hiragino Sans GB,Microsoft YaHei,Helvetica Neue,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol',
+            fontFamily: "'Inter', 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
           },
         },
       };

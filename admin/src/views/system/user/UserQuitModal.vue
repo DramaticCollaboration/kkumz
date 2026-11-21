@@ -1,5 +1,5 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" title="퇴직자 정보" :showOkBtn="false" width="1000px" destroyOnClose>
+  <BasicModal v-bind="$attrs" @register="registerModal" :title="t('appUi.ke624aff7')" :showOkBtn="false" width="1000px" destroyOnClose>
     <BasicTable @register="registerTable" :rowSelection="rowSelection">
       <!--슬롯: 테이블 제목-->
       <template #tableTitle>
@@ -8,12 +8,12 @@
             <a-menu>
               <a-menu-item key="1" @click="batchHandleRevert">
                 <Icon icon="ant-design:redo-outlined"></Icon>
-                일괄 취소
+                {{ t('appUi.k27fb23da') }}
               </a-menu-item>
             </a-menu>
           </template>
           <a-button
-            >일괄 작업
+            >{{ t('appUi.k39eb4aed') }}
             <Icon icon="ant-design:down-outlined"></Icon>
           </a-button>
         </a-dropdown>
@@ -34,6 +34,8 @@
   import { getQuitList, putCancelQuit, deleteRecycleBin } from './user.api';
   import { useMessage } from '/@/hooks/web/useMessage';
   import { useListPage } from '/@/hooks/system/useListPage';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   
   const { createConfirm } = useMessage();
   // 방출 선언
@@ -71,10 +73,10 @@
    */
   function batchHandleRevert() {
     createConfirm({
-      title: '퇴사 취소',
-      content: '선택한 사용자의 퇴사 처리를 취소하고 정상 계정으로 복원하시겠습니까?',
-      okText: '확인',
-      cancelText: '취소',
+      title: t('appUi.k1d1b5292'),
+      content: t('appUi.k9955246a'),
+      okText: t('appUi.k468266d6'),
+      cancelText: t('appUi.k19b2d19b'),
       onOk: () => {
         let rowValue = selectedRows.value;
         let rowData: any = [];
@@ -90,10 +92,10 @@
   function getTableAction(record) {
     return [
       {
-        label: '퇴사 취소',
+        label: t('appUi.k1d1b5292'),
         icon: 'ant-design:redo-outlined',
         popConfirm: {
-          title: '선택한 사용자의 퇴사 처리를 취소하고\n정상 계정으로 복원하시겠습니까?',
+          title: t('appUi.kb57f63a3'),
           confirm: handleCancelQuit.bind(null, record),
         },
       },

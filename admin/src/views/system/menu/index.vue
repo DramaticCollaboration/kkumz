@@ -10,21 +10,21 @@
   <div class="p-4">
     <BasicTable @register="registerTable" :rowSelection="rowSelection">
       <template #tableTitle>
-        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate"> 메뉴 추가</a-button>
-        <a-button type="primary" preIcon="ic:round-expand" @click="expandAll">모두 펼치기</a-button>
-        <a-button type="primary" preIcon="ic:round-compress" @click="collapseAll">모두 접기</a-button>
+        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate"> {{ t('appUi.kb6386fc3') }}</a-button>
+        <a-button type="primary" preIcon="ic:round-expand" @click="expandAll">{{ t('appUi.k2225f1f1') }}</a-button>
+        <a-button type="primary" preIcon="ic:round-compress" @click="collapseAll">{{ t('appUi.k4274646a') }}</a-button>
 
         <a-dropdown v-if="checkedKeys.length > 0">
           <template #overlay>
             <a-menu>
               <a-menu-item key="1" @click="batchHandleDelete">
                 <Icon icon="ant-design:delete-outlined" />
-                삭제
+                {{ t('appUi.kfc81e222') }}
               </a-menu-item>
             </a-menu>
           </template>
           <a-button
-            >일괄 작업
+            >{{ t('appUi.k39eb4aed') }}
             <Icon icon="ant-design:down-outlined" />
           </a-button>
         </a-dropdown>
@@ -59,7 +59,7 @@
   columns[0].customRender = function ({text, record}) {
     const isDefIndex = checkDefIndex(record)
     if (isDefIndex) {
-      text += '（기본 홈페이지）'
+      text += t('appUi.keac5eb1d')
     }
     if (text.includes("t('") && t) {
       return new Function('t', `return ${text}`)(t);
@@ -70,7 +70,7 @@
   // 목록 페이지 공개 매개변수 및 메소드
   const { prefixCls, tableContext } = useListPage({
     tableProps: {
-      title: '메뉴 목록',
+      title: t('appUi.k6e33ff52'),
       api: list,
       columns: columns,
       size: 'small',
@@ -222,7 +222,7 @@
   function getTableAction(record) {
     return [
       {
-        label: '편집',
+        label: t('appUi.kd482e14b'),
         onClick: handleEdit.bind(null, record),
       },
     ];
@@ -238,7 +238,7 @@
       //   onClick: handleDetail.bind(null, record),
       // },
       {
-        label: '하위 추가',
+        label: t('appUi.k3e38935f'),
         onClick: handleAddSub.bind(null, record),
       },
       // {
@@ -247,10 +247,10 @@
       //   ifShow: () => !record.internalOrExternal && record.component && !checkDefIndex(record),
       // },
       {
-        label: '삭제',
+        label: t('appUi.kfc81e222'),
         color: 'error',
         popConfirm: {
-          title: '삭제 하시겠습니까?',
+          title: t('appUi.ka6e94ce1'),
           confirm: handleDelete.bind(null, record),
         },
       },

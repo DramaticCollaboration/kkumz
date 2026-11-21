@@ -31,7 +31,7 @@
             </div>
             <div class="buttons">
               <div class="opt-icon">
-                <Tooltip title="다운로드">
+                <Tooltip :title="t('appUi.k5c5095ab')">
                   <download-outlined @click="downLoad(item)" />
                 </Tooltip>
               </div>
@@ -45,6 +45,7 @@
 </template>
 
 <script>
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { Tooltip } from 'ant-design-vue';
   import { UploadOutlined, FolderOutlined, DownloadOutlined, PaperClipOutlined, DeleteOutlined } from '@ant-design/icons-vue';
   import { useFileList } from './useComment';
@@ -70,8 +71,10 @@
       Tooltip,
     },
     setup() {
+      const { t } = useI18n();
       const { getBackground, getFileSize, downLoad, isImage, getImageAsBackground, viewImage } = useFileList();
       return {
+        t,
         getBackground,
         downLoad,
         getFileSize,

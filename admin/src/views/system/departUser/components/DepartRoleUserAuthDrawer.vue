@@ -1,5 +1,5 @@
 <template>
-  <BasicDrawer title="부서 역할 할당" :width="365" @close="onClose" @register="registerDrawer">
+  <BasicDrawer :title="t('appUi.k6648a00a')" :width="365" @close="onClose" @register="registerDrawer">
     <a-spin :spinning="loading">
       <template v-if="desformList.length > 0">
         <a-checkbox-group v-model:value="designNameValue">
@@ -11,11 +11,11 @@
         </a-checkbox-group>
         <div style="width: 100%; margin-top: 15px">
           <a-button type="primary" :loading="loading" :size="'small'" preIcon="ant-design:save-filled" @click="onSubmit">
-            <span>저장을 클릭하세요</span>
+            <span>{{ t('appUi.k656bc9de') }}</span>
           </a-button>
         </div>
       </template>
-      <a-empty v-else description="구성 정보가 없습니다." />
+      <a-empty v-else :description="t('appUi.kc395f1f1')" />
     </a-spin>
   </BasicDrawer>
 </template>
@@ -25,6 +25,8 @@
   import { BasicDrawer, useDrawerInner } from '/@/components/Drawer';
 
   import { queryDepartRoleByUserId, queryDepartRoleUserList, saveDepartRoleUser } from '../depart.user.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   defineEmits(['register']);
   const loading = ref<boolean>(false);

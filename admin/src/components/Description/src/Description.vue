@@ -11,6 +11,7 @@
   import { isFunction } from '/@/utils/is';
   import { getSlot } from '/@/utils/helper/tsxHelper';
   import { useAttrs } from '/@/hooks/core/useAttrs';
+  import { translateIfKey } from '/@/hooks/web/useI18n';
 
   const props = {
     useCollapse: { type: Boolean, default: true },
@@ -100,7 +101,7 @@
           ...labelStyle,
           ...(labelMinWidth ? { minWidth: `${labelMinWidth}px` } : {}),
         };
-        return <div style={labelStyles}>{label}</div>;
+        return <div style={labelStyles}>{typeof label === 'string' ? translateIfKey(label) : label}</div>;
       }
 
       function renderItem() {

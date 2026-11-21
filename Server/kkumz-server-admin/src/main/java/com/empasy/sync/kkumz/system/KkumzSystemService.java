@@ -1,6 +1,9 @@
 package com.empasy.sync.kkumz.system;
 
 import cn.hutool.crypto.digest.BCrypt;
+import com.empasy.sync.core.i18n.I18nJsonResolver;
+import com.empasy.sync.core.i18n.SyncLocaleConstants;
+import com.empasy.sync.core.i18n.SyncMessageResolver;
 import com.empasy.sync.kkumz.system.KkumzSystemDTO.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +30,7 @@ public class KkumzSystemService {
 
     private String normalizeUsername(String raw) {
         if (raw == null || raw.isBlank()) {
-            throw new IllegalArgumentException("사용자 계정 식별자(username)가 누락되었습니다.");
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("common.param.missing"));
         }
         return raw.trim();
     }
@@ -115,24 +118,24 @@ public class KkumzSystemService {
 
     public Map<String, Object> login(LoginRequest req) {
         if (req == null || req.getUsername() == null || req.getUsername().isBlank()) {
-            throw new IllegalArgumentException("로그인 아이디(username)는 필수입니다.");
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("common.param.missing"));
         }
         if (req.getPassword() == null || req.getPassword().isBlank()) {
-            throw new IllegalArgumentException("로그인 비밀번호(password)는 필수입니다.");
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("common.param.missing"));
         }
         String username = normalizeUsername(req.getUsername());
         List<Map<String, Object>> users = jdbcTemplate.queryForList(
-                "SELECT id, username, realname, password, avatar, email, phone, org_code AS \"orgCode\", status " +
+                "SELECT id, username, realname, password, avatar, email, phone, org_code AS \"orgCode\", status, preferred_locale AS \"preferredLocale\" " +
                 "FROM sys_user WHERE username = ? AND del_flag = 0 LIMIT 1",
                 username
         );
         if (users.isEmpty()) {
-            throw new IllegalArgumentException("존재하지 않는 사용자 계정입니다: " + username);
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("auth.invalid.credentials"));
         }
         Map<String, Object> user = new LinkedHashMap<>(users.get(0));
         String storedHash = user.remove("password") != null ? String.valueOf(users.get(0).get("password")) : "";
         if (!storedHash.startsWith("$2") || !BCrypt.checkpw(req.getPassword(), storedHash)) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("auth.invalid.credentials"));
         }
 
         return buildAuthSessionPayload(String.valueOf(user.get("id")), String.valueOf(user.get("username")));
@@ -140,14 +143,15 @@ public class KkumzSystemService {
 
     private Map<String, Object> buildAuthSessionPayload(String userId, String username) {
         List<Map<String, Object>> users = jdbcTemplate.queryForList(
-                "SELECT id, username, realname, avatar, email, phone, org_code AS \"orgCode\", status " +
+                "SELECT id, username, realname, avatar, email, phone, org_code AS \"orgCode\", status, preferred_locale AS \"preferredLocale\" " +
                 "FROM sys_user WHERE id = ? AND del_flag = 0 LIMIT 1",
                 userId
         );
         if (users.isEmpty()) {
-            throw new IllegalArgumentException("존재하지 않는 사용자 계정입니다: " + username);
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("user.not.found"));
         }
         Map<String, Object> user = new LinkedHashMap<>(users.get(0));
+        user.put("preferredLocale", SyncLocaleConstants.normalizeLocaleTag(toStr(user.get("preferredLocale"))));
         List<Map<String, Object>> firstMenu = jdbcTemplate.queryForList("""
                 SELECT p.url
                 FROM sys_permission p
@@ -174,20 +178,45 @@ public class KkumzSystemService {
     public Map<String, Object> getUserInfo(String usernameHint) {
         String username = normalizeUsername(usernameHint);
         List<Map<String, Object>> users = jdbcTemplate.queryForList(
-                "SELECT id, username, realname, avatar, email, phone, org_code AS \"orgCode\", status " +
+                "SELECT id, username, realname, avatar, email, phone, org_code AS \"orgCode\", status, preferred_locale AS \"preferredLocale\" " +
                 "FROM sys_user WHERE username = ? AND del_flag = 0 LIMIT 1",
                 username
         );
         if (users.isEmpty()) {
-            throw new IllegalArgumentException("존재하지 않는 사용자 계정입니다: " + username);
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("user.not.found"));
         }
         Map<String, Object> user = new LinkedHashMap<>(users.get(0));
         user.put("userId", user.get("id"));
+        user.put("preferredLocale", SyncLocaleConstants.normalizeLocaleTag(toStr(user.get("preferredLocale"))));
         user.put("roles", getUserRoles(String.valueOf(user.get("id"))));
 
         Map<String, Object> res = new LinkedHashMap<>(user);
         res.put("userInfo", user);
-        res.put("sysAllDictItems", Map.of());
+        res.put("sysAllDictItems", queryAllDictItems());
+        return res;
+    }
+
+    @Transactional
+    public Map<String, Object> updateUserLocale(String usernameHint, String rawLocale) {
+        String username = normalizeUsername(usernameHint);
+        String normalized = SyncLocaleConstants.normalizeLocaleTag(rawLocale);
+        List<Map<String, Object>> users = jdbcTemplate.queryForList(
+                "SELECT id, username FROM sys_user WHERE username = ? AND del_flag = 0 LIMIT 1",
+                username
+        );
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("user.not.found"));
+        }
+        String userId = String.valueOf(users.get(0).get("id"));
+        jdbcTemplate.update(
+                "UPDATE sys_user SET preferred_locale = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
+                normalized, userId
+        );
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("userId", userId);
+        res.put("username", username);
+        res.put("preferredLocale", normalized);
+        res.put("locale", normalized);
         return res;
     }
 
@@ -205,7 +234,8 @@ public class KkumzSystemService {
     public Map<String, Object> getUserPermissionByToken(String usernameHint) {
         String username = normalizeUsername(usernameHint);
         List<Map<String, Object>> allPerms = jdbcTemplate.queryForList(
-                "SELECT DISTINCT p.id, p.parent_id AS \"parentId\", p.name, p.url, p.component, p.component_name AS \"componentName\", " +
+                "SELECT DISTINCT p.id, p.parent_id AS \"parentId\", p.name, p.name_i18n AS \"nameI18n\", p.description_i18n AS \"descriptionI18n\", " +
+                "p.url, p.component, p.component_name AS \"componentName\", " +
                 "p.redirect, p.menu_type AS \"menuType\", p.perms, p.sort_no AS \"sortNo\", p.icon, " +
                 "p.is_route AS \"isRoute\", p.is_leaf AS \"isLeaf\", p.keep_alive AS \"keepAlive\", " +
                 "p.hidden, p.status " +
@@ -226,10 +256,11 @@ public class KkumzSystemService {
             int menuType = row.get("menuType") != null ? ((Number) row.get("menuType")).intValue() : 1;
             String perms = row.get("perms") != null ? String.valueOf(row.get("perms")) : null;
             if (perms != null && !perms.isBlank()) {
+                String localizedName = I18nJsonResolver.resolveCurrent(toStr(row.get("nameI18n")), toStr(row.get("name")));
                 codeList.add(perms);
                 Map<String, Object> auth = new LinkedHashMap<>();
                 auth.put("action", perms);
-                auth.put("describe", row.get("name"));
+                auth.put("describe", localizedName);
                 auth.put("type", "1");
                 auth.put("status", "1");
                 auth.put("isAuth", true);
@@ -262,10 +293,16 @@ public class KkumzSystemService {
             }
 
             String id = String.valueOf(row.get("id"));
+            String nameI18n = toStr(row.get("nameI18n"));
+            String descriptionI18n = toStr(row.get("descriptionI18n"));
+            String localizedTitle = I18nJsonResolver.resolveCurrent(nameI18n, toStr(row.get("name")));
+
             Map<String, Object> node = new LinkedHashMap<>();
             node.put("id", id);
             node.put("path", row.get("url"));
             node.put("name", row.get("componentName") != null ? row.get("componentName") : id);
+            node.put("nameI18n", nameI18n);
+            node.put("descriptionI18n", descriptionI18n);
             node.put("component", row.get("component"));
             if (row.get("redirect") != null && !String.valueOf(row.get("redirect")).isBlank()) {
                 node.put("redirect", row.get("redirect"));
@@ -273,7 +310,7 @@ public class KkumzSystemService {
             node.put("route", row.get("isRoute") != null ? row.get("isRoute") : true);
 
             Map<String, Object> meta = new LinkedHashMap<>();
-            meta.put("title", row.get("name"));
+            meta.put("title", localizedTitle);
             meta.put("icon", row.get("icon"));
             meta.put("keepAlive", Boolean.TRUE.equals(row.get("keepAlive")));
             meta.put("hideMenu", Boolean.TRUE.equals(row.get("hidden")));
@@ -296,7 +333,7 @@ public class KkumzSystemService {
     public Map<String, Object> listUsers(String keyword, Integer status, int pageNo, int pageSize) {
         StringBuilder sql = new StringBuilder(
                 "SELECT u.id, u.username, u.realname, u.avatar, u.email, u.phone, u.org_code AS \"orgCode\", " +
-                "u.status, u.create_time AS \"createTime\" FROM sys_user u WHERE u.del_flag = 0 "
+                "u.status, u.preferred_locale AS \"preferredLocale\", u.create_time AS \"createTime\" FROM sys_user u WHERE u.del_flag = 0 "
         );
         List<Object> params = new ArrayList<>();
         if (keyword != null && !keyword.isBlank()) {
@@ -313,6 +350,7 @@ public class KkumzSystemService {
         sql.append(" ORDER BY u.create_time DESC ");
         List<Map<String, Object>> records = jdbcTemplate.queryForList(sql.toString(), params.toArray());
         for (Map<String, Object> rec : records) {
+            rec.put("preferredLocale", SyncLocaleConstants.normalizeLocaleTag(toStr(rec.get("preferredLocale"))));
             rec.put("roles", getUserRoles(String.valueOf(rec.get("id"))));
         }
         return toPageResult(records, pageNo, pageSize);
@@ -321,7 +359,7 @@ public class KkumzSystemService {
     @Transactional
     public Map<String, Object> saveUser(SaveUserRequest req) {
         if (req.getUsername() == null || req.getUsername().isBlank()) {
-            throw new IllegalArgumentException("사용자 아이디(username)는 필수입니다.");
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("common.param.missing"));
         }
         String userId = (req.getId() != null && !req.getId().isBlank())
                 ? req.getId().trim()
@@ -329,26 +367,38 @@ public class KkumzSystemService {
         Integer exists = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM sys_user WHERE id = ?", Integer.class, userId);
 
         if (exists != null && exists > 0) {
-            jdbcTemplate.update(
-                    "UPDATE sys_user SET realname = ?, email = ?, phone = ?, org_code = ?, status = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
-                    req.getRealname(), req.getEmail(), req.getPhone(),
-                    req.getOrgCode() != null ? req.getOrgCode() : "KKUMZ",
-                    req.getStatus() != null ? req.getStatus() : 1,
-                    userId
-            );
+            if (req.getPreferredLocale() != null && !req.getPreferredLocale().isBlank()) {
+                jdbcTemplate.update(
+                        "UPDATE sys_user SET realname = ?, email = ?, phone = ?, org_code = ?, status = ?, preferred_locale = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
+                        req.getRealname(), req.getEmail(), req.getPhone(),
+                        req.getOrgCode() != null ? req.getOrgCode() : "KKUMZ",
+                        req.getStatus() != null ? req.getStatus() : 1,
+                        SyncLocaleConstants.normalizeLocaleTag(req.getPreferredLocale()),
+                        userId
+                );
+            } else {
+                jdbcTemplate.update(
+                        "UPDATE sys_user SET realname = ?, email = ?, phone = ?, org_code = ?, status = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
+                        req.getRealname(), req.getEmail(), req.getPhone(),
+                        req.getOrgCode() != null ? req.getOrgCode() : "KKUMZ",
+                        req.getStatus() != null ? req.getStatus() : 1,
+                        userId
+                );
+            }
         } else {
             String rawPw = (req.getPassword() != null && !req.getPassword().isBlank()) ? req.getPassword().trim() : UUID.randomUUID().toString();
             String hashedPw = BCrypt.hashpw(rawPw, BCrypt.gensalt(10));
             String salt = UUID.randomUUID().toString().substring(0, 8);
             jdbcTemplate.update(
-                    "INSERT INTO sys_user (id, username, realname, password, salt, email, phone, org_code, status, del_flag, create_by, create_time) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'admin', CURRENT_TIMESTAMP)",
+                    "INSERT INTO sys_user (id, username, realname, password, salt, email, phone, org_code, status, preferred_locale, del_flag, create_by, create_time) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'admin', CURRENT_TIMESTAMP)",
                     userId, req.getUsername().trim(),
                     req.getRealname() != null ? req.getRealname().trim() : req.getUsername().trim(),
                     hashedPw, salt,
                     req.getEmail(), req.getPhone(),
                     req.getOrgCode() != null ? req.getOrgCode() : "KKUMZ",
-                    req.getStatus() != null ? req.getStatus() : 1
+                    req.getStatus() != null ? req.getStatus() : 1,
+                    SyncLocaleConstants.normalizeLocaleTag(req.getPreferredLocale())
             );
         }
 
@@ -445,7 +495,8 @@ public class KkumzSystemService {
 
     public List<Map<String, Object>> listPermissions() {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT id, parent_id AS \"parentId\", name, url, component, component_name AS \"componentName\", " +
+                "SELECT id, parent_id AS \"parentId\", name, name_i18n AS \"nameI18n\", description_i18n AS \"descriptionI18n\", " +
+                "url, component, component_name AS \"componentName\", " +
                 "redirect, menu_type AS \"menuType\", perms, sort_no AS \"sortNo\", icon, " +
                 "is_route AS \"isRoute\", is_leaf AS \"isLeaf\", hidden, status, create_time AS \"createTime\" " +
                 "FROM sys_permission WHERE del_flag = 0 ORDER BY sort_no ASC, id ASC"
@@ -463,6 +514,13 @@ public class KkumzSystemService {
                 continue;
             }
             Map<String, Object> item = new LinkedHashMap<>(row);
+            String nameI18n = toStr(row.get("nameI18n"));
+            String descriptionI18n = toStr(row.get("descriptionI18n"));
+            String localizedName = I18nJsonResolver.resolveCurrent(nameI18n, toStr(row.get("name")));
+            item.put("name", localizedName);
+            item.put("title", localizedName);
+            item.put("nameI18n", nameI18n);
+            item.put("descriptionI18n", descriptionI18n);
             String id = String.valueOf(row.get("id"));
             List<Map<String, Object>> children = buildPermissionManageTree(rows, id);
             if (!children.isEmpty()) {
@@ -476,32 +534,56 @@ public class KkumzSystemService {
     @Transactional
     public Map<String, Object> savePermission(SavePermissionRequest req) {
         if (req.getName() == null || req.getName().isBlank()) {
-            throw new IllegalArgumentException("메뉴명(name)은 필수입니다.");
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("common.param.missing"));
         }
         String permId = (req.getId() != null && !req.getId().isBlank())
                 ? req.getId().trim()
                 : "perm-kkumz-" + UUID.randomUUID().toString().substring(0, 6);
+        String nameI18n = (req.getNameI18n() != null && !req.getNameI18n().isBlank())
+                ? req.getNameI18n().trim()
+                : I18nJsonResolver.toJson(req.getName().trim(), null);
+        String descriptionI18n = (req.getDescriptionI18n() != null && !req.getDescriptionI18n().isBlank())
+                ? req.getDescriptionI18n().trim()
+                : "{}";
         Integer exists = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM sys_permission WHERE id = ?", Integer.class, permId);
         if (exists != null && exists > 0) {
-            jdbcTemplate.update(
-                    "UPDATE sys_permission SET parent_id = ?, name = ?, url = ?, component = ?, component_name = ?, " +
-                    "redirect = ?, menu_type = ?, perms = ?, sort_no = ?, icon = ?, is_route = ?, is_leaf = ?, " +
-                    "hidden = ?, status = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
-                    req.getParentId(), req.getName().trim(), req.getUrl(), req.getComponent(), req.getComponentName(),
-                    req.getRedirect(), req.getMenuType() != null ? req.getMenuType() : 1, req.getPerms(),
-                    req.getSortNo() != null ? req.getSortNo() : 10.0, req.getIcon(),
-                    req.getIsRoute() != null ? req.getIsRoute() : true,
-                    req.getIsLeaf() != null ? req.getIsLeaf() : true,
-                    req.getHidden() != null ? req.getHidden() : false,
-                    req.getStatus() != null ? req.getStatus() : 1,
-                    permId
-            );
+            if (req.getNameI18n() != null || req.getDescriptionI18n() != null) {
+                jdbcTemplate.update(
+                        "UPDATE sys_permission SET parent_id = ?, name = ?, name_i18n = CAST(? AS jsonb), description_i18n = CAST(? AS jsonb), " +
+                        "url = ?, component = ?, component_name = ?, " +
+                        "redirect = ?, menu_type = ?, perms = ?, sort_no = ?, icon = ?, is_route = ?, is_leaf = ?, " +
+                        "hidden = ?, status = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
+                        req.getParentId(), req.getName().trim(), nameI18n, descriptionI18n,
+                        req.getUrl(), req.getComponent(), req.getComponentName(),
+                        req.getRedirect(), req.getMenuType() != null ? req.getMenuType() : 1, req.getPerms(),
+                        req.getSortNo() != null ? req.getSortNo() : 10.0, req.getIcon(),
+                        req.getIsRoute() != null ? req.getIsRoute() : true,
+                        req.getIsLeaf() != null ? req.getIsLeaf() : true,
+                        req.getHidden() != null ? req.getHidden() : false,
+                        req.getStatus() != null ? req.getStatus() : 1,
+                        permId
+                );
+            } else {
+                jdbcTemplate.update(
+                        "UPDATE sys_permission SET parent_id = ?, name = ?, url = ?, component = ?, component_name = ?, " +
+                        "redirect = ?, menu_type = ?, perms = ?, sort_no = ?, icon = ?, is_route = ?, is_leaf = ?, " +
+                        "hidden = ?, status = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
+                        req.getParentId(), req.getName().trim(), req.getUrl(), req.getComponent(), req.getComponentName(),
+                        req.getRedirect(), req.getMenuType() != null ? req.getMenuType() : 1, req.getPerms(),
+                        req.getSortNo() != null ? req.getSortNo() : 10.0, req.getIcon(),
+                        req.getIsRoute() != null ? req.getIsRoute() : true,
+                        req.getIsLeaf() != null ? req.getIsLeaf() : true,
+                        req.getHidden() != null ? req.getHidden() : false,
+                        req.getStatus() != null ? req.getStatus() : 1,
+                        permId
+                );
+            }
         } else {
             jdbcTemplate.update(
-                    "INSERT INTO sys_permission (id, parent_id, name, url, component, component_name, redirect, " +
+                    "INSERT INTO sys_permission (id, parent_id, name, name_i18n, description_i18n, url, component, component_name, redirect, " +
                     "menu_type, perms, sort_no, icon, is_route, is_leaf, keep_alive, hidden, status, del_flag, create_by, create_time) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?, ?, 0, 'admin', CURRENT_TIMESTAMP)",
-                    permId, req.getParentId(), req.getName().trim(), req.getUrl(),
+                    "VALUES (?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?, ?, 0, 'admin', CURRENT_TIMESTAMP)",
+                    permId, req.getParentId(), req.getName().trim(), nameI18n, descriptionI18n, req.getUrl(),
                     req.getComponent() != null ? req.getComponent() : "layouts/default/index",
                     req.getComponentName() != null ? req.getComponentName() : permId,
                     req.getRedirect(),
@@ -519,7 +601,7 @@ public class KkumzSystemService {
                     "srp_" + UUID.randomUUID().toString().substring(0, 8), permId
             );
         }
-        return Map.of("id", permId, "name", req.getName());
+        return Map.of("id", permId, "name", req.getName(), "nameI18n", nameI18n);
     }
 
     @Transactional
@@ -533,7 +615,7 @@ public class KkumzSystemService {
 
     public Map<String, Object> listDicts(String keyword, int pageNo, int pageSize) {
         StringBuilder sql = new StringBuilder(
-                "SELECT id, dict_name AS \"dictName\", dict_code AS \"dictCode\", description, type, create_time AS \"createTime\" " +
+                "SELECT id, dict_name AS \"dictName\", dict_name_i18n AS \"dictNameI18n\", dict_code AS \"dictCode\", description, type, create_time AS \"createTime\" " +
                 "FROM sys_dict WHERE del_flag = 0 "
         );
         List<Object> params = new ArrayList<>();
@@ -546,28 +628,41 @@ public class KkumzSystemService {
         sql.append(" ORDER BY create_time ASC ");
         List<Map<String, Object>> dicts = jdbcTemplate.queryForList(sql.toString(), params.toArray());
         for (Map<String, Object> d : dicts) {
+            String dictNameI18n = toStr(d.get("dictNameI18n"));
+            d.put("dictName", I18nJsonResolver.resolveCurrent(dictNameI18n, toStr(d.get("dictName"))));
+            d.put("dictNameI18n", dictNameI18n);
             d.put("items", listDictItems(String.valueOf(d.get("id")), null));
         }
         return toPageResult(dicts, pageNo, pageSize);
     }
 
     public List<Map<String, Object>> listDictItems(String dictId, String dictCode) {
+        List<Map<String, Object>> rows;
         if (dictId != null && !dictId.isBlank()) {
-            return jdbcTemplate.queryForList(
-                    "SELECT id, dict_id AS \"dictId\", item_text AS \"itemText\", item_value AS \"itemValue\", " +
+            rows = jdbcTemplate.queryForList(
+                    "SELECT id, dict_id AS \"dictId\", item_text AS \"itemText\", item_text_i18n AS \"itemTextI18n\", item_value AS \"itemValue\", " +
                     "description, sort_order AS \"sortOrder\", status FROM sys_dict_item WHERE dict_id = ? ORDER BY sort_order ASC",
                     dictId
             );
-        }
-        if (dictCode != null && !dictCode.isBlank()) {
-            return jdbcTemplate.queryForList(
-                    "SELECT i.id, i.dict_id AS \"dictId\", i.item_text AS \"itemText\", i.item_value AS \"itemValue\", " +
+        } else if (dictCode != null && !dictCode.isBlank()) {
+            rows = jdbcTemplate.queryForList(
+                    "SELECT i.id, i.dict_id AS \"dictId\", i.item_text AS \"itemText\", i.item_text_i18n AS \"itemTextI18n\", i.item_value AS \"itemValue\", " +
                     "i.description, i.sort_order AS \"sortOrder\", i.status " +
                     "FROM sys_dict_item i JOIN sys_dict d ON d.id = i.dict_id WHERE d.dict_code = ? ORDER BY i.sort_order ASC",
                     dictCode
             );
+        } else {
+            return List.of();
         }
-        return List.of();
+        List<Map<String, Object>> localized = new ArrayList<>();
+        for (Map<String, Object> row : rows) {
+            Map<String, Object> m = new LinkedHashMap<>(row);
+            String textI18n = toStr(row.get("itemTextI18n"));
+            m.put("itemText", I18nJsonResolver.resolveCurrent(textI18n, toStr(row.get("itemText"))));
+            m.put("itemTextI18n", textI18n);
+            localized.add(m);
+        }
+        return localized;
     }
 
     public List<Map<String, Object>> getDictItemsByCode(String dictCode) {
@@ -592,6 +687,7 @@ public class KkumzSystemService {
             item.put("label", text);
             item.put("itemValue", val);
             item.put("itemText", text);
+            item.put("itemTextI18n", row.get("itemTextI18n"));
             item.put("description", row.get("description"));
             item.put("sortOrder", row.get("sortOrder"));
             item.put("status", status);
@@ -600,29 +696,66 @@ public class KkumzSystemService {
         return items;
     }
 
+    public Map<String, List<Map<String, Object>>> queryAllDictItems() {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT d.dict_code AS \"dictCode\", i.id, i.dict_id AS \"dictId\", i.item_text AS \"itemText\", " +
+                "i.item_text_i18n AS \"itemTextI18n\", i.item_value AS \"itemValue\", i.description, " +
+                "i.sort_order AS \"sortOrder\", i.status " +
+                "FROM sys_dict d JOIN sys_dict_item i ON d.id = i.dict_id " +
+                "WHERE d.del_flag = 0 AND i.status = 1 ORDER BY d.dict_code ASC, i.sort_order ASC"
+        );
+        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
+        for (Map<String, Object> row : rows) {
+            String code = toStr(row.get("dictCode"));
+            if (code == null || code.isBlank()) {
+                continue;
+            }
+            String textI18n = toStr(row.get("itemTextI18n"));
+            String resolvedText = I18nJsonResolver.resolveCurrent(textI18n, toStr(row.get("itemText")));
+            String val = toStr(row.get("itemValue"));
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("value", val != null ? val : "");
+            item.put("text", resolvedText != null ? resolvedText : "");
+            item.put("title", resolvedText != null ? resolvedText : "");
+            item.put("label", resolvedText != null ? resolvedText : "");
+            result.computeIfAbsent(code, k -> new ArrayList<>()).add(item);
+        }
+        return result;
+    }
+
     @Transactional
     public Map<String, Object> saveDict(SaveDictRequest req) {
         if (req.getDictCode() == null || req.getDictCode().isBlank()) {
-            throw new IllegalArgumentException("사전 코드(dictCode)는 필수입니다.");
+            throw new IllegalArgumentException(SyncMessageResolver.resolve("common.param.missing"));
         }
         String dictId = (req.getId() != null && !req.getId().isBlank())
                 ? req.getId().trim()
                 : "dict_" + UUID.randomUUID().toString().substring(0, 8);
+        String dictNameI18n = (req.getDictNameI18n() != null && !req.getDictNameI18n().isBlank())
+                ? req.getDictNameI18n().trim()
+                : I18nJsonResolver.toJson(req.getDictName(), null);
         Integer exists = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM sys_dict WHERE id = ?", Integer.class, dictId);
         if (exists != null && exists > 0) {
-            jdbcTemplate.update(
-                    "UPDATE sys_dict SET dict_name = ?, dict_code = ?, description = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
-                    req.getDictName(), req.getDictCode().trim(), req.getDescription(), dictId
-            );
+            if (req.getDictNameI18n() != null && !req.getDictNameI18n().isBlank()) {
+                jdbcTemplate.update(
+                        "UPDATE sys_dict SET dict_name = ?, dict_name_i18n = CAST(? AS jsonb), dict_code = ?, description = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
+                        req.getDictName(), dictNameI18n, req.getDictCode().trim(), req.getDescription(), dictId
+                );
+            } else {
+                jdbcTemplate.update(
+                        "UPDATE sys_dict SET dict_name = ?, dict_code = ?, description = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
+                        req.getDictName(), req.getDictCode().trim(), req.getDescription(), dictId
+                );
+            }
         } else {
             jdbcTemplate.update(
-                    "INSERT INTO sys_dict (id, dict_name, dict_code, description, del_flag, type, create_by, create_time) " +
-                    "VALUES (?, ?, ?, ?, 0, ?, 'admin', CURRENT_TIMESTAMP)",
-                    dictId, req.getDictName(), req.getDictCode().trim(), req.getDescription(),
+                    "INSERT INTO sys_dict (id, dict_name, dict_name_i18n, dict_code, description, del_flag, type, create_by, create_time) " +
+                    "VALUES (?, ?, CAST(? AS jsonb), ?, ?, 0, ?, 'admin', CURRENT_TIMESTAMP)",
+                    dictId, req.getDictName(), dictNameI18n, req.getDictCode().trim(), req.getDescription(),
                     req.getType() != null ? req.getType() : 0
             );
         }
-        return Map.of("id", dictId, "dictCode", req.getDictCode());
+        return Map.of("id", dictId, "dictCode", req.getDictCode(), "dictNameI18n", dictNameI18n);
     }
 
     @Transactional
@@ -630,25 +763,42 @@ public class KkumzSystemService {
         String itemId = (req.getId() != null && !req.getId().isBlank())
                 ? req.getId().trim()
                 : "ditem_" + UUID.randomUUID().toString().substring(0, 8);
+        String itemTextI18n = (req.getItemTextI18n() != null && !req.getItemTextI18n().isBlank())
+                ? req.getItemTextI18n().trim()
+                : I18nJsonResolver.toJson(req.getItemText(), null);
         Integer exists = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM sys_dict_item WHERE id = ?", Integer.class, itemId);
         if (exists != null && exists > 0) {
-            jdbcTemplate.update(
-                    "UPDATE sys_dict_item SET item_text = ?, item_value = ?, description = ?, sort_order = ?, status = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
-                    req.getItemText(), req.getItemValue(), req.getDescription(),
-                    req.getSortOrder() != null ? req.getSortOrder() : 1,
-                    req.getStatus() != null ? req.getStatus() : 1,
-                    itemId
-            );
+            if (req.getItemTextI18n() != null && !req.getItemTextI18n().isBlank()) {
+                jdbcTemplate.update(
+                        "UPDATE sys_dict_item SET item_text = ?, item_text_i18n = CAST(? AS jsonb), item_value = ?, description = ?, sort_order = ?, status = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
+                        req.getItemText(), itemTextI18n, req.getItemValue(), req.getDescription(),
+                        req.getSortOrder() != null ? req.getSortOrder() : 1,
+                        req.getStatus() != null ? req.getStatus() : 1,
+                        itemId
+                );
+            } else {
+                jdbcTemplate.update(
+                        "UPDATE sys_dict_item SET item_text = ?, item_value = ?, description = ?, sort_order = ?, status = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?",
+                        req.getItemText(), req.getItemValue(), req.getDescription(),
+                        req.getSortOrder() != null ? req.getSortOrder() : 1,
+                        req.getStatus() != null ? req.getStatus() : 1,
+                        itemId
+                );
+            }
         } else {
             jdbcTemplate.update(
-                    "INSERT INTO sys_dict_item (id, dict_id, item_text, item_value, description, sort_order, status, create_by, create_time) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, 'admin', CURRENT_TIMESTAMP)",
-                    itemId, req.getDictId(), req.getItemText(), req.getItemValue(), req.getDescription(),
+                    "INSERT INTO sys_dict_item (id, dict_id, item_text, item_text_i18n, item_value, description, sort_order, status, create_by, create_time) " +
+                    "VALUES (?, ?, ?, CAST(? AS jsonb), ?, ?, ?, ?, 'admin', CURRENT_TIMESTAMP)",
+                    itemId, req.getDictId(), req.getItemText(), itemTextI18n, req.getItemValue(), req.getDescription(),
                     req.getSortOrder() != null ? req.getSortOrder() : 1,
                     req.getStatus() != null ? req.getStatus() : 1
             );
         }
-        return Map.of("id", itemId, "itemText", req.getItemText());
+        return Map.of("id", itemId, "itemText", req.getItemText(), "itemTextI18n", itemTextI18n);
+    }
+
+    private String toStr(Object obj) {
+        return obj != null ? obj.toString() : null;
     }
 
     @Transactional

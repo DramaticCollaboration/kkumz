@@ -1,7 +1,7 @@
 <template>
   <BasicModal
     v-bind="$attrs"
-    :title="isUpdate ? '환경설정 항목 편집' : '신규 환경설정 항목 등록'"
+    :title="isUpdate ? t('appUi.k42bbaeaf') : t('appUi.ke06703c7')"
     :width="640"
     @register="registerModal"
     @ok="handleSubmit"
@@ -18,6 +18,8 @@ import { message } from 'ant-design-vue';
 import { BasicModal, useModalInner } from '/@/components/Modal';
 import { BasicForm, FormSchema, useForm } from '/@/components/Form';
 import { saveOrUpdateConfig } from '../config.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
 const emit = defineEmits(['success', 'register']);
 const isUpdate = ref<boolean>(false);
@@ -28,18 +30,18 @@ const VALUE_TYPE_CODES = ['STRING', 'NUMBER', 'BOOLEAN', 'JSON', 'SECRET'];
 const formSchemas: FormSchema[] = [
   {
     field: 'configCategory',
-    label: '설정 카테고리 코드',
+    label: t('appUi.kc88cf5e0'),
     component: 'AutoComplete',
     required: true,
     colProps: { span: 12 },
     componentProps: {
-      placeholder: '예: INTEGRATION, AI_LLM, SECURITY, STORAGE, BIZ_POLICY',
+      placeholder: t('appUi.k9d1056ad'),
       options: [],
     },
   },
   {
     field: 'valueType',
-    label: '데이터 타입',
+    label: t('appUi.k9b7bb0ee'),
     component: 'Select',
     required: true,
     defaultValue: 'STRING',
@@ -50,49 +52,49 @@ const formSchemas: FormSchema[] = [
   },
   {
     field: 'configKey',
-    label: '설정 고유 키 (Key)',
+    label: t('appUi.kca77ff42'),
     component: 'Input',
     required: true,
     colProps: { span: 24 },
     componentProps: {
-      placeholder: '예: kkumz.integration.cms.base-url',
+      placeholder: t('appUi.kd1338da1'),
     },
   },
   {
     field: 'configName',
-    label: '설정 표시 명칭',
+    label: t('appUi.k60fd0c71'),
     component: 'Input',
     required: true,
     colProps: { span: 24 },
     componentProps: {
-      placeholder: '관리화면에 표시할 한글 명칭',
+      placeholder: t('appUi.ka10b5ee9'),
     },
   },
   {
     field: 'configValue',
-    label: '현재 설정값',
+    label: t('appUi.k9e477027'),
     component: 'InputTextArea',
     required: true,
     colProps: { span: 12 },
     componentProps: {
       rows: 2,
-      placeholder: '적용할 설정값 입력',
+      placeholder: t('appUi.ke43f2aff'),
     },
   },
   {
     field: 'defaultValue',
-    label: '초기 기본값 (Default)',
+    label: t('appUi.kecfec860'),
     component: 'InputTextArea',
     required: true,
     colProps: { span: 12 },
     componentProps: {
       rows: 2,
-      placeholder: '기본값 복원 시 사용될 값',
+      placeholder: t('appUi.keabc03a3'),
     },
   },
   {
     field: 'sortOrder',
-    label: '정렬 순서',
+    label: t('appUi.k11c67410'),
     component: 'InputNumber',
     defaultValue: 10,
     colProps: { span: 8 },
@@ -104,26 +106,26 @@ const formSchemas: FormSchema[] = [
   },
   {
     field: 'isSecret',
-    label: '민감정보 암호화 (AES-GCM)',
+    label: t('appUi.k734e1a28'),
     component: 'Switch',
     defaultValue: false,
     colProps: { span: 8 },
   },
   {
     field: 'isDynamic',
-    label: '런타임 핫 리로드',
+    label: t('appUi.ka616a5c0'),
     component: 'Switch',
     defaultValue: true,
     colProps: { span: 8 },
   },
   {
     field: 'description',
-    label: '상세 설명 및 운영 가이드',
+    label: t('appUi.k3949eb2a'),
     component: 'InputTextArea',
     colProps: { span: 24 },
     componentProps: {
       rows: 2,
-      placeholder: '해당 설정이 제어하는 비즈니스 로직 및 단위 설명',
+      placeholder: t('appUi.kfed074d4'),
     },
   },
 ];
@@ -179,12 +181,12 @@ async function handleSubmit() {
       id: unref(recordId),
       status: 1,
     });
-    message.success(unref(isUpdate) ? '환경설정 항목이 수정되었습니다.' : '신규 환경설정 항목이 등록되었습니다.');
+    message.success(unref(isUpdate) ? t('appUi.k5dd0a384') : t('appUi.k1ab088cf'));
     closeModal();
     emit('success');
   } catch (e: any) {
     if (e?.message) {
-      message.error('설정 저장 실패: ' + e.message);
+      message.error(t('appUi.k05a6a93f') + e.message);
     }
   } finally {
     setModalProps({ confirmLoading: false });

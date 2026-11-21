@@ -1,7 +1,7 @@
 <template>
   <div class="slide-wrap">
     <div class="createArea">
-      <a-button type="dashed" @click="handleCreate">새 채팅 만들기</a-button>
+      <a-button type="dashed" @click="handleCreate">{{ t('appUi.kef761bc9') }}</a-button>
     </div>
     <div class="historyArea">
       <ul>
@@ -34,7 +34,7 @@
             ref="inputRef"
             v-if="item.isEdit"
             :defaultValue="item.title"
-            placeholder="제목을 입력하세요"
+            :placeholder="t('appUi.ke84a95fd')"
             @change="handleInputChange"
             @blur="inputBlur(item)"
           />
@@ -57,7 +57,7 @@
             </svg>
           </span>
           <span class="icon del" v-if="!item.isEdit">
-            <a-popconfirm title="이 기록을 삭제하시겠습니까?" placement="bottom" ok-text="확인" cancel-text="취소" @confirm="handleDel(item)">
+            <a-popconfirm :title="t('appUi.k05ae841a')" placement="bottom" :ok-text="t('appUi.k468266d6')" :cancel-text="t('appUi.k19b2d19b')" @confirm="handleDel(item)">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -101,13 +101,15 @@
 
 <script setup lang="ts">
   import { ref, watch } from 'vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   const props = defineProps(['dataSource']);
   const inputRef = ref(null);
   let inputValue = '';
   //새 채팅 만들기
   const handleCreate = () => {
     const uuid = getUuid();
-    props.dataSource.history.unshift({ title: '새 채팅 만들기', uuid, isEdit: false });
+    props.dataSource.history.unshift({ title: t('appUi.kef761bc9'), uuid, isEdit: false });
     props.dataSource.chat.unshift({ uuid, data: [] });
     // 첫 번째 항목 만들기(강조할 필요가 있음)
     if (props.dataSource.history.length == 1) {

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { defHttp } from '/@/utils/http/axios';
 import { Modal } from 'ant-design-vue';
 
@@ -31,10 +32,10 @@ export const editCementSend = (params) => {
  */
 export const readAllMsg = (params, handleSuccess) => {
   Modal.confirm({
-    title: '조치 확인',
-    content: '모두 읽음으로 표시되어 있습니까?',
-    okText: '확인',
-    cancelText: '취소',
+    title: $t('appUi.kf3aa24bb'),
+    content: $t('appUi.kcfcb554a'),
+    okText: $t('appUi.k468266d6'),
+    cancelText: $t('appUi.k19b2d19b'),
     onOk: () => {
       return defHttp.put({ url: Api.readAllMsg, data: params }, { joinParamsToUrl: true }).then(() => {
         handleSuccess();

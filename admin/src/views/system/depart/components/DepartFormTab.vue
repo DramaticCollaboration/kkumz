@@ -3,8 +3,8 @@
     <BasicForm @register="registerForm" />
     <div class="j-box-bottom-button offset-20" style="margin-top: 30px">
       <div class="j-box-bottom-button-float" :class="[`${prefixCls}`]">
-        <a-button class="rounded-md" preIcon="ant-design:sync-outlined" @click="onReset">초기화</a-button>
-        <a-button type="primary" class="rounded-md" preIcon="ant-design:save-filled" @click="onSubmit">저장</a-button>
+        <a-button class="rounded-md" preIcon="ant-design:sync-outlined" @click="onReset">{{ t('appUi.kff75b4ff') }}</a-button>
+        <a-button type="primary" class="rounded-md" preIcon="ant-design:save-filled" @click="onSubmit">{{ t('appUi.k1f1712ac') }}</a-button>
       </div>
     </div>
   </a-spin>
@@ -16,6 +16,8 @@
   import { saveOrUpdateDepart } from '../depart.api';
   import { useBasicFormSchema, orgCategoryOptions } from '../depart.data';
   import { useDesign } from '/@/hooks/web/useDesign';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { prefixCls } = useDesign('j-depart-form-content');
 

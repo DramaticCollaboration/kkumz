@@ -3,7 +3,7 @@
     @register="register"
     :getContainer="getContainer"
     :canFullscreen="false"
-    title="사용자 선택"
+    :title="t('appUi.kf1e1572f')"
     :width="600"
     wrapClassName="j-user-select-modal2"
   >
@@ -19,12 +19,12 @@
           ><SearchOutlined style="color: #c0c0c0" @click="showSearchInput"
         /></span>
         <div style="width: 100%" :class="searchInputStatus ? '' : 'hidden'">
-          <a-input v-model:value="searchText" @pressEnter="onSearchUser" style="width: 100%" placeholder="사용자 이름을 입력하고 Enter를 눌러 검색하세요.">
+          <a-input v-model:value="searchText" @pressEnter="onSearchUser" style="width: 100%" :placeholder="t('appUi.kd87b3d34')">
             <template #prefix>
               <SearchOutlined style="color: #c0c0c0" />
             </template>
             <template #suffix>
-              <CloseOutlined title="검색 종료" @click="clearSearch" />
+              <CloseOutlined :title="t('appUi.k6f33f551')" @click="clearSearch" />
             </template>
           </a-input>
         </div>
@@ -34,12 +34,12 @@
       <div class="my-tabs">
         <a-tabs v-model:activeKey="myActiveKey" :centered="true" @change="onChangeTab">
           <!-- 모든 사용자 -->
-          <a-tab-pane key="1" tab="모두" forceRender>
+          <a-tab-pane key="1" :tab="t('appUi.k3efcb4f1')" forceRender>
             <user-list :multi="multi" :excludeUserIdList="excludeUserIdList" :dataList="userDataList" :selectedIdList="selectedIdList" depart @selected="onSelectUser" @unSelect="unSelectUser" />
           </a-tab-pane>
 
           <!-- 부서 사용자 -->
-          <a-tab-pane key="2" tab="부서별" forceRender>
+          <a-tab-pane key="2" :tab="t('appUi.k405d5e71')" forceRender>
             <depart-user-list
               :searchText="searchText"
               :selectedIdList="selectedIdList"
@@ -51,7 +51,7 @@
           </a-tab-pane>
 
           <!-- 역할 사용자 -->
-          <a-tab-pane key="3" tab="역할별" forceRender>
+          <a-tab-pane key="3" :tab="t('appUi.kedd910b9')" forceRender>
             <role-user-list :excludeUserIdList="excludeUserIdList" :searchText="searchText" :selectedIdList="selectedIdList" @selected="onSelectUser" @unSelect="unSelectUser" />
           </a-tab-pane>
         </a-tabs>
@@ -75,13 +75,14 @@
             @change="onPageChange"
           />
         </div>
-        <a-button type="primary" @click="handleOk">확인</a-button>
+        <a-button type="primary" @click="handleOk">{{ t('appUi.k468266d6') }}</a-button>
       </div>
     </template>
   </BasicModal>
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { SearchOutlined, CloseOutlined } from '@ant-design/icons-vue';
   import UserList from './UserList.vue';
@@ -130,6 +131,7 @@
     },
     emits: ['selected', 'register'],
     setup(props, { emit }) {
+      const { t } = useI18n();
       const myActiveKey = ref('1');
       const selectedUserList = ref<any[]>([]);
       const userStore = useUserStore();
@@ -175,7 +177,7 @@
       const selectedDepart = ref('');
       const departOptions = ref<any[]>([]);
       function initDepartOptions(options) {
-        departOptions.value = [{ value: '', label: '모든 사용자' }, ...options];
+        departOptions.value = [{ value: '', label: t('appUi.kca92dc7a') }, ...options];
         selectedDepart.value = '';
       }
       function onDepartChange() {
@@ -294,6 +296,7 @@
       loadUserList();
 
       return {
+        t,
         selectedDepart,
         departOptions,
         initDepartOptions,

@@ -1,5 +1,5 @@
 <template>
-  <BasicModal @register="registerModal" title="테스트 보내기" :width="800" v-bind="$attrs" @ok="onSubmit">
+  <BasicModal @register="registerModal" :title="t('appUi.kb0465814')" :width="800" v-bind="$attrs" @ok="onSubmit">
     <BasicForm @register="registerForm" />
   </BasicModal>
 </template>
@@ -10,6 +10,8 @@
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { sendTestFormSchemas } from './template.data';
   import { sendMessageTest } from './template.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   // 선언하다
   const emit = defineEmits(['register']);

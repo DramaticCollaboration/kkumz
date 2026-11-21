@@ -7,7 +7,7 @@
         </template>
         <template v-else-if="column.key === 'siteType'">
           <Tag :color="record.siteType === 'COMMERCE' ? 'blue' : record.siteType === 'HYBRID' ? 'default' : 'green'">
-            {{ record.siteType === 'COMMERCE' ? '쇼핑몰 스토어' : record.siteType === 'HYBRID' ? '매거진+스토어 복합' : '브랜드·커뮤니티 웹' }}
+            {{ record.siteType === 'COMMERCE' ? t('appUi.kfe990b2f') : record.siteType === 'HYBRID' ? t('appUi.k55479f2f') : t('appUi.k59d1dd90') }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'recruits'">
@@ -15,7 +15,7 @@
             <Tag v-for="rec in record.openRecruits || []" :key="rec.id" color="indigo">
               {{ rec.positionRole }} ({{ rec.currentCount }}/{{ rec.headcount }})
             </Tag>
-            <span v-if="!record.openRecruits?.length" class="text-xs text-slate-400">모집 마감</span>
+            <span v-if="!record.openRecruits?.length" class="text-xs text-slate-400">{{ t('appUi.k006b2b95') }}</span>
           </div>
         </template>
       </template>
@@ -27,9 +27,11 @@
   import { Tag } from 'ant-design-vue';
   import { BasicTable, useTable } from '/@/components/Table';
   import { getAdminProjectList } from '/@/api/kkumz';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const [registerTable] = useTable({
-    title: '쇼케이스·팀빌딩 목록',
+    title: t('appUi.k24455e49'),
     api: getAdminProjectList,
     rowKey: 'siteId',
     useSearchForm: true,
@@ -40,33 +42,33 @@
       schemas: [
         {
           field: 'keyword',
-          label: '검색어',
+          label: t('appUi.kd64280cb'),
           component: 'Input',
-          componentProps: { placeholder: '브랜드명, 슬로건 검색' },
+          componentProps: { placeholder: t('appUi.kdf8a83ae') },
           colProps: { span: 8 },
         },
         {
           field: 'siteType',
-          label: '사이트 유형',
+          label: t('appUi.k73456d62'),
           component: 'JDictSelectTag',
           componentProps: {
             dictCode: 'kkumz_site_type',
-            placeholder: '전체',
+            placeholder: t('appUi.k934dd25e'),
           },
           colProps: { span: 8 },
         },
       ],
     },
     columns: [
-      { title: '로고', dataIndex: 'logoSvg', key: 'logoSvg', width: 120 },
-      { title: '브랜드명', dataIndex: 'brandName', width: 160 },
-      { title: '슬로건', dataIndex: 'tagline', width: 260 },
-      { title: '사이트 유형', dataIndex: 'siteType', key: 'siteType', width: 140 },
-      { title: '모집 중 포지션', dataIndex: 'openRecruits', key: 'recruits', width: 220 },
-      { title: '좋아요', dataIndex: 'likeCount', width: 85 },
-      { title: '피드백수', dataIndex: 'commentCount', width: 85 },
-      { title: '조회수', dataIndex: 'viewCount', width: 90 },
-      { title: '오너', dataIndex: 'authorDisplayName', width: 110 },
+      { title: t('appUi.kd2ba3ac7'), dataIndex: 'logoSvg', key: 'logoSvg', width: 120 },
+      { title: t('appUi.ke4171b02'), dataIndex: 'brandName', width: 160 },
+      { title: t('appUi.ke5fbbf15'), dataIndex: 'tagline', width: 260 },
+      { title: t('appUi.k73456d62'), dataIndex: 'siteType', key: 'siteType', width: 140 },
+      { title: t('appUi.k2d08c7fe'), dataIndex: 'openRecruits', key: 'recruits', width: 220 },
+      { title: t('appUi.k224a2886'), dataIndex: 'likeCount', width: 85 },
+      { title: t('appUi.kbf9193c0'), dataIndex: 'commentCount', width: 85 },
+      { title: t('appUi.k274b7b80'), dataIndex: 'viewCount', width: 90 },
+      { title: t('appUi.kd987beed'), dataIndex: 'authorDisplayName', width: 110 },
     ],
   });
 </script>

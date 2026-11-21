@@ -32,11 +32,12 @@
         <slot :name="item.slot"></slot>
       </template>
 
-      <a-button type="link" size="small" v-if="!$slots.more"> 더보기 <Icon icon="mdi-light:chevron-down"></Icon> </a-button>
+      <a-button type="link" size="small" v-if="!$slots.more"> {{ t('appUi.k0b680789') }} <Icon icon="mdi-light:chevron-down"></Icon> </a-button>
     </Dropdown>
   </div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, PropType, computed, toRaw, unref } from 'vue';
   import { MoreOutlined } from '@ant-design/icons-vue';
   import { Divider, Tooltip, TooltipProps } from 'ant-design-vue';
@@ -69,6 +70,7 @@
       stopButtonPropagation: propTypes.bool.def(false),
     },
     setup(props) {
+      const { t } = useI18n();
       const { prefixCls } = useDesign('basic-table-action');
       const dropdownCls = `${prefixCls}-dropdown`;
       let table: Partial<TableActionType> = {};
@@ -210,7 +212,8 @@
         isInButton && e.stopPropagation();
       }
      
-      return { prefixCls, getActions,
+      return {
+        t, prefixCls, getActions,
         getDisplayActions,
         dropdownTrigger, getDropdownList, getDropdownSlotList, getAlign, onCellClick, getTooltip, dropdownCls };
     },

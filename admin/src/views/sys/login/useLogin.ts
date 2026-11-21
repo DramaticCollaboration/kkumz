@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import type { ValidationRule } from 'ant-design-vue/lib/form/Form';
 import type { RuleObject } from 'ant-design-vue/lib/form/interface';
 import { ref, computed, unref, Ref } from 'vue';
@@ -146,7 +147,7 @@ function checkUsername(rule, value, callback) {
   } else {
     return new Promise((resolve, reject) => {
       checkOnlyUser({ username: value }).then((res) => {
-        res.success ? resolve() : reject('사용자 이름이 이미 존재합니다!');
+        res.success ? resolve() : reject($t('appUi.kd473ac9d'));
       });
     });
   }
@@ -155,11 +156,11 @@ async function checkPhone(rule, value, callback) {
   const { t } = useI18n();
   var reg = /^010([-\s]?)([0-9]{4})([-\s]?)([0-9]{4})$/;
   if (!reg.test(value)) {
-    return Promise.reject(new Error('정확한 휴대폰번호를 입력해주세요'));
+    return Promise.reject(new Error($t('appUi.kc48957b1')));
   } else {
     return new Promise((resolve, reject) => {
       checkOnlyUser({ phone: value }).then((res) => {
-        res.success ? resolve() : reject('휴대폰 번호가 이미 존재합니다!');
+        res.success ? resolve() : reject($t('appUi.k453b1fc9'));
       });
     });
   }

@@ -2,7 +2,7 @@
   <a-popover :open="visible" :placement="placement" overlayClassName="j-vxe-popover-overlay" :overlayStyle="overlayStyle">
     <template #title>
       <div class="j-vxe-popover-title">
-        <div>하위 표</div>
+        <div>{{ t('appUi.kee1aef39') }}</div>
         <div class="j-vxe-popover-title-close" @click="close">
           <a-icon type="close" />
         </div>
@@ -19,6 +19,7 @@
   </a-popover>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { ref, reactive, nextTick, defineComponent } from 'vue';
   import domAlign from 'dom-align';
   import { getParentNodeByTagName } from '../utils/vxeUtils';
@@ -30,6 +31,7 @@
   export default defineComponent({
     name: 'JVxeSubPopover',
     setup() {
+      const { t } = useI18n();
       const visible = ref(false);
       const row = ref<any>(null);
       const column = ref<any>(null);
@@ -125,7 +127,7 @@
           });
         } else {
           let num = ++level;
-          console.warn('【JVxeSubPopover】테이블 또는 tr을 가져오지 못했습니다. 프로세스가 진행 중입니다. ' + num + '재시도', {
+          console.warn(t('appUi.k049d53e4') + num + t('appUi.k548fe005'), {
             event,
             table: parentElem,
             tr,
@@ -146,6 +148,7 @@
       }
 
       return {
+        t,
         divRef,
         row,
         column,

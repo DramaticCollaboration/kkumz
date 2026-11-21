@@ -12,62 +12,91 @@
       </a-button>
     </div>
 
-    <!-- 탭 1: 주요 기능 -->
     <div v-if="activeTab === 'features'" class="space-y-2">
       <div
         v-for="(item, idx) in formState.features"
         :key="'f-' + idx"
         class="flex items-center gap-2"
       >
-        <a-input v-model:value="item.name" placeholder="기능명" class="w-1/4" />
-        <a-input v-model:value="item.badge" placeholder="배지" class="w-1/6" />
-        <a-input v-model:value="item.description" placeholder="상세 기능 설명" class="flex-1" />
-        <a-button danger type="text" @click="formState.features.splice(idx, 1)">삭제</a-button>
+        <a-input
+          v-model:value="item.name"
+          :placeholder="isSystem ? t('appUi.k9e4dc8a3') : t('appUi.k46ea34d7')"
+          class="w-1/4"
+        />
+        <a-input v-model:value="item.badge" :placeholder="t('appUi.ka2a9b53f')" class="w-1/6" />
+        <a-input
+          v-model:value="item.description"
+          :placeholder="isSystem ? t('appUi.k3df5b001') : t('appUi.kd5ca775f')"
+          class="flex-1"
+        />
+        <a-button danger type="text" @click="formState.features.splice(idx, 1)">{{ t('appUi.kfc81e222') }}</a-button>
       </div>
       <a-button
         type="dashed"
         block
         @click="formState.features.push({ name: '', description: '', badge: '' })"
       >
-        + 주요 기능 항목 추가
+        {{ isSystem ? t('appUi.k45eb9a31') : t('appUi.kb001b610') }}
       </a-button>
     </div>
 
-    <!-- 탭 2: 단계별 조작 절차 -->
     <div v-else-if="activeTab === 'steps'" class="space-y-2">
       <div
         v-for="(step, idx) in formState.steps"
         :key="'st-' + idx"
         class="flex items-center gap-2"
       >
-        <a-input v-model:value="step.title" placeholder="단계 제목" class="w-1/3" />
+        <a-input
+          v-model:value="step.title"
+          :placeholder="isSystem ? t('appUi.kc3520add') : t('appUi.k90f34a7f')"
+          class="w-1/4"
+        />
         <a-input
           v-model:value="step.description"
-          placeholder="단계별 상세 수행 방법"
+          :placeholder="isSystem ? t('appUi.kdd8c0936') : t('appUi.k71c3a901')"
           class="flex-1"
         />
-        <a-button danger type="text" @click="formState.steps.splice(idx, 1)">삭제</a-button>
+        <a-input
+          v-if="isSystem"
+          v-model:value="step.path"
+          :placeholder="t('appUi.k5635a701')"
+          class="w-1/5"
+        />
+        <a-button danger type="text" @click="formState.steps.splice(idx, 1)">{{ t('appUi.kfc81e222') }}</a-button>
       </div>
-      <a-button type="dashed" block @click="formState.steps.push({ title: '', description: '' })">
-        + 업무 수행 단계 추가
+      <a-button
+        type="dashed"
+        block
+        @click="formState.steps.push(isSystem ? { title: '', description: '', path: '' } : { title: '', description: '' })"
+      >
+        {{ isSystem ? t('appUi.k4934772b') : t('appUi.k2a4ed7dd') }}
       </a-button>
     </div>
 
-    <!-- 탭 3: 연관 화면 및 데이터 계보 -->
     <div v-else-if="activeTab === 'lineage'" class="space-y-4">
       <div v-if="Array.isArray(formState.relatedScreens)">
-        <div class="font-semibold text-xs text-gray-700 mb-2">연관 화면 및 후속 업무 이동</div>
+        <div class="font-semibold text-xs text-gray-700 mb-2">
+          {{ isSystem ? t('appUi.kbec9633e') : t('appUi.k6e6d4fc9') }}
+        </div>
         <div
           v-for="(rel, idx) in formState.relatedScreens"
           :key="'r-' + idx"
           class="flex items-center gap-2 mb-2"
         >
-          <a-input v-model:value="rel.type" placeholder="유형 (예: 선행 화면)" class="w-1/5" />
-          <a-input v-model:value="rel.title" placeholder="화면명" class="w-1/4" />
-          <a-input v-model:value="rel.path" placeholder="라우트 경로" class="w-1/5" />
-          <a-input v-model:value="rel.description" placeholder="연관 업무 설명" class="flex-1" />
+          <a-input
+            v-model:value="rel.type"
+            :placeholder="isSystem ? t('appUi.kad6d8397') : t('appUi.ke7ed13fc')"
+            class="w-1/5"
+          />
+          <a-input v-model:value="rel.title" :placeholder="t('appUi.k7c5c420f')" class="w-1/4" />
+          <a-input v-model:value="rel.path" :placeholder="t('appUi.k5227cc3c')" class="w-1/5" />
+          <a-input
+            v-model:value="rel.description"
+            :placeholder="isSystem ? t('appUi.kd67664e6') : t('appUi.k4dd57d87')"
+            class="flex-1"
+          />
           <a-button danger type="text" @click="formState.relatedScreens.splice(idx, 1)">
-            삭제
+            {{ t('appUi.kfc81e222') }}
           </a-button>
         </div>
         <a-button
@@ -75,29 +104,31 @@
           size="small"
           @click="
             formState.relatedScreens.push({
-              type: '연관 화면',
+              type: isSystem ? '담당 역할' : '연관 화면',
               title: '',
               path: '',
               description: '',
             })
           "
         >
-          + 연관 화면 추가
+          {{ isSystem ? t('appUi.k79845a42') : t('appUi.kc9dccb5b') }}
         </a-button>
       </div>
 
       <div>
-        <div class="font-semibold text-xs text-gray-700 mb-2">데이터 입력 원천</div>
+        <div class="font-semibold text-xs text-gray-700 mb-2">
+          {{ isSystem ? t('appUi.kd58536eb') : t('appUi.k6c418325') }}
+        </div>
         <div
           v-for="(src, idx) in formState.lineageSources"
           :key="'s-' + idx"
           class="flex items-center gap-2 mb-2"
         >
-          <a-input v-model:value="src.origin" placeholder="원천 테이블/시스템" class="w-1/4" />
-          <a-input v-model:value="src.cycle" placeholder="수집/반영 주기" class="w-1/5" />
-          <a-input v-model:value="src.description" placeholder="원천 데이터 설명" class="flex-1" />
+          <a-input v-model:value="src.origin" :placeholder="t('appUi.k1868cee0')" class="w-1/4" />
+          <a-input v-model:value="src.cycle" :placeholder="t('appUi.kb74816d8')" class="w-1/5" />
+          <a-input v-model:value="src.description" :placeholder="t('appUi.k4c074603')" class="flex-1" />
           <a-button danger type="text" @click="formState.lineageSources.splice(idx, 1)">
-            삭제
+            {{ t('appUi.kfc81e222') }}
           </a-button>
         </div>
         <a-button
@@ -105,22 +136,24 @@
           size="small"
           @click="formState.lineageSources.push({ origin: '', cycle: '실시간', description: '' })"
         >
-          + 데이터 원천 추가
+          {{ t('appUi.kb1dcec43') }}
         </a-button>
       </div>
 
       <div>
-        <div class="font-semibold text-xs text-gray-700 mb-2">데이터 반영 및 연계 대상</div>
+        <div class="font-semibold text-xs text-gray-700 mb-2">
+          {{ isSystem ? t('appUi.k48d522ce') : t('appUi.k5d1583ee') }}
+        </div>
         <div
           v-for="(dst, idx) in formState.lineageDestinations"
           :key="'d-' + idx"
           class="flex items-center gap-2 mb-2"
         >
-          <a-input v-model:value="dst.target" placeholder="반영 대상 시스템/모듈" class="w-1/4" />
-          <a-input v-model:value="dst.timing" placeholder="반영 시점" class="w-1/5" />
-          <a-input v-model:value="dst.description" placeholder="연계 처리 설명" class="flex-1" />
+          <a-input v-model:value="dst.target" :placeholder="t('appUi.k33bd1b0a')" class="w-1/4" />
+          <a-input v-model:value="dst.timing" :placeholder="t('appUi.k0cd07c0c')" class="w-1/5" />
+          <a-input v-model:value="dst.description" :placeholder="t('appUi.k6f40aeae')" class="flex-1" />
           <a-button danger type="text" @click="formState.lineageDestinations.splice(idx, 1)">
-            삭제
+            {{ t('appUi.kfc81e222') }}
           </a-button>
         </div>
         <a-button
@@ -134,51 +167,54 @@
             })
           "
         >
-          + 연계 대상 추가
+          {{ t('appUi.k8e0e778b') }}
         </a-button>
       </div>
 
-      <div>
-        <div class="font-semibold text-xs text-gray-700 mb-2">핵심 지표 산출 공식</div>
+      <div v-if="!isSystem">
+        <div class="font-semibold text-xs text-gray-700 mb-2">{{ t('appUi.k99b9eaa8') }}</div>
         <div
           v-for="(fm, idx) in formState.formulas"
           :key="'fm-' + idx"
           class="flex items-center gap-2 mb-2"
         >
-          <a-input v-model:value="fm.name" placeholder="지표/공식명" class="w-1/4" />
-          <a-input v-model:value="fm.formula" placeholder="산출 수식" class="w-1/3" />
-          <a-input v-model:value="fm.description" placeholder="설명" class="flex-1" />
-          <a-button danger type="text" @click="formState.formulas.splice(idx, 1)">삭제</a-button>
+          <a-input v-model:value="fm.name" :placeholder="t('appUi.k3c1f5d85')" class="w-1/4" />
+          <a-input v-model:value="fm.formula" :placeholder="t('appUi.kd4a441e5')" class="w-1/3" />
+          <a-input v-model:value="fm.description" :placeholder="t('appUi.k84196436')" class="flex-1" />
+          <a-button danger type="text" @click="formState.formulas.splice(idx, 1)">{{ t('appUi.kfc81e222') }}</a-button>
         </div>
         <a-button
           type="dashed"
           size="small"
           @click="formState.formulas.push({ name: '', formula: '', description: '' })"
         >
-          + 산출 공식 추가
+          {{ t('appUi.ke3d92bb1') }}
         </a-button>
       </div>
     </div>
 
-    <!-- 탭 4: 운영 팁, 주의사항, FAQ -->
     <div v-else-if="activeTab === 'tips'" class="space-y-4">
       <div>
-        <div class="font-semibold text-xs text-blue-700 mb-2">실무 운영 팁</div>
+        <div class="font-semibold text-xs text-blue-700 mb-2">
+          {{ isSystem ? t('appUi.k610a0246') : t('appUi.k44876234') }}
+        </div>
         <div
           v-for="(_, idx) in formState.tips"
           :key="'t-' + idx"
           class="flex items-center gap-2 mb-2"
         >
-          <a-input v-model:value="formState.tips[idx]" placeholder="운영 팁 문구 입력" class="flex-1" />
-          <a-button danger type="text" @click="formState.tips.splice(idx, 1)">삭제</a-button>
+          <a-input v-model:value="formState.tips[idx]" :placeholder="t('appUi.k827757ea')" class="flex-1" />
+          <a-button danger type="text" @click="formState.tips.splice(idx, 1)">{{ t('appUi.kfc81e222') }}</a-button>
         </div>
         <a-button type="dashed" size="small" @click="formState.tips.push('')">
-          + 운영 팁 추가
+          {{ t('appUi.k6aaea8af') }}
         </a-button>
       </div>
 
       <div>
-        <div class="font-semibold text-xs text-red-600 mb-2">업무 주의사항</div>
+        <div class="font-semibold text-xs text-red-600 mb-2">
+          {{ isSystem ? t('appUi.k28feece3') : t('appUi.k4b5cd029') }}
+        </div>
         <div
           v-for="(_, idx) in formState.warnings"
           :key="'w-' + idx"
@@ -186,29 +222,29 @@
         >
           <a-input
             v-model:value="formState.warnings[idx]"
-            placeholder="주의사항 및 제약 조건 입력"
+            :placeholder="t('appUi.k32afe8ea')"
             class="flex-1"
           />
-          <a-button danger type="text" @click="formState.warnings.splice(idx, 1)">삭제</a-button>
+          <a-button danger type="text" @click="formState.warnings.splice(idx, 1)">{{ t('appUi.kfc81e222') }}</a-button>
         </div>
         <a-button type="dashed" size="small" @click="formState.warnings.push('')">
-          + 주의사항 추가
+          {{ t('appUi.k0faedc11') }}
         </a-button>
       </div>
 
       <div>
-        <div class="font-semibold text-xs text-gray-700 mb-2">자주 묻는 질문</div>
+        <div class="font-semibold text-xs text-gray-700 mb-2">{{ t('appUi.kae2ce921') }}</div>
         <div
           v-for="(fq, idx) in formState.faq"
           :key="'q-' + idx"
           class="flex items-center gap-2 mb-2"
         >
-          <a-input v-model:value="fq.q" placeholder="질문 내용" class="w-2/5" />
-          <a-input v-model:value="fq.a" placeholder="답변 내용" class="flex-1" />
-          <a-button danger type="text" @click="formState.faq.splice(idx, 1)">삭제</a-button>
+          <a-input v-model:value="fq.q" :placeholder="t('appUi.ke1aca374')" class="w-2/5" />
+          <a-input v-model:value="fq.a" :placeholder="t('appUi.k3655d2fc')" class="flex-1" />
+          <a-button danger type="text" @click="formState.faq.splice(idx, 1)">{{ t('appUi.kfc81e222') }}</a-button>
         </div>
         <a-button type="dashed" size="small" @click="formState.faq.push({ q: '', a: '' })">
-          + 질문 항목 추가
+          {{ t('appUi.k3d353fcc') }}
         </a-button>
       </div>
     </div>
@@ -217,17 +253,33 @@
 
 <script lang="ts" setup>
   import { computed, ref } from 'vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const props = defineProps<{
     formState: Record<string, any>;
+    helpType?: string;
   }>();
 
   const activeTab = ref<'features' | 'steps' | 'lineage' | 'tips'>('features');
+  const isSystem = computed(() => String(props.helpType || props.formState.helpType || '').toUpperCase() === 'SYSTEM');
 
   const builderTabs = computed(() => [
-    { key: 'features' as const, label: `주요 제공 기능 (${props.formState.features?.length || 0})` },
-    { key: 'steps' as const, label: `업무 수행 절차 (${props.formState.steps?.length || 0})` },
-    { key: 'lineage' as const, label: '연관 화면 / 데이터 계보 / 공식' },
-    { key: 'tips' as const, label: '운영 팁 / 주의사항 / 자주 묻는 질문' },
+    {
+      key: 'features' as const,
+      label: `${isSystem.value ? t('appUi.kf64aaffd') : t('appUi.k5c1f3414')} (${props.formState.features?.length || 0})`,
+    },
+    {
+      key: 'steps' as const,
+      label: `${isSystem.value ? t('appUi.k3d39ef19') : t('appUi.k0fc371eb')} (${props.formState.steps?.length || 0})`,
+    },
+    {
+      key: 'lineage' as const,
+      label: isSystem.value ? t('appUi.kd5027593') : t('appUi.k07570959'),
+    },
+    {
+      key: 'tips' as const,
+      label: isSystem.value ? t('appUi.kf54b19a6') : t('appUi.kcf9c5a47'),
+    },
   ]);
 </script>

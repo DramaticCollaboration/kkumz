@@ -1,5 +1,7 @@
 package com.empasy.sync.kkumz.system;
 
+import com.empasy.sync.core.i18n.SyncLocaleConstants;
+import com.empasy.sync.core.i18n.SyncMessageResolver;
 import com.empasy.sync.kkumz.common.Result;
 import com.empasy.sync.kkumz.system.KkumzSystemDTO.*;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -41,7 +44,8 @@ public class KkumzSystemController {
         log.info("Kkumz Web 셀프 회원가입 요청: username={}, roleCode={}",
                 request != null ? request.getUsername() : null,
                 request != null ? request.getRoleCode() : null);
-        return Result.OK("회원가입이 완료되었습니다.", systemService.register(request));
+        return Result.OK(SyncMessageResolver.localized("회원가입이 완료되었습니다.", "Registration completed successfully."),
+                systemService.register(request));
     }
 
     @GetMapping("/logout")
@@ -56,6 +60,28 @@ public class KkumzSystemController {
             @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
         return Result.OK(systemService.getUserInfo(resolveUsername(username, xAccessToken, authorization)));
+    }
+
+    @PutMapping("/user/locale")
+    public Result<Map<String, Object>> updateUserLocale(
+            @RequestBody(required = false) Map<String, Object> body,
+            @RequestParam(required = false) String locale,
+            @RequestParam(required = false) String username,
+            @RequestHeader(value = "X-Access-Token", required = false) String xAccessToken,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        String resolvedUsername = resolveUsername(username, xAccessToken, authorization);
+        String rawLocale = locale;
+        if ((rawLocale == null || rawLocale.isBlank()) && body != null) {
+            Object locObj = body.get("locale") != null ? body.get("locale") : body.get("preferredLocale");
+            if (locObj != null) {
+                rawLocale = String.valueOf(locObj);
+            }
+        }
+        Map<String, Object> updated = systemService.updateUserLocale(resolvedUsername, rawLocale);
+        String normalized = String.valueOf(updated.get("preferredLocale"));
+        Locale targetLocale = SyncLocaleConstants.toLocale(normalized);
+        return Result.OK(SyncMessageResolver.resolve("user.locale.updated", targetLocale), updated);
     }
 
     @GetMapping("/permission/getUserPermissionByToken")
@@ -75,7 +101,7 @@ public class KkumzSystemController {
         if (extracted != null && !extracted.isBlank()) {
             return extracted;
         }
-        throw new IllegalArgumentException("인증 토큰(X-Access-Token 또는 Authorization)이 필요합니다.");
+        throw new IllegalArgumentException(SyncMessageResolver.resolve("auth.login.required"));
     }
 
     @GetMapping("/user/list")
@@ -90,18 +116,18 @@ public class KkumzSystemController {
 
     @PostMapping("/user")
     public Result<Map<String, Object>> createUser(@RequestBody SaveUserRequest request) {
-        return Result.OK("등록되었습니다.", systemService.saveUser(request));
+        return Result.OK(SyncMessageResolver.resolve("common.save.success"), systemService.saveUser(request));
     }
 
     @PutMapping("/user")
     public Result<Map<String, Object>> updateUser(@RequestBody SaveUserRequest request) {
-        return Result.OK("수정되었습니다.", systemService.saveUser(request));
+        return Result.OK(SyncMessageResolver.resolve("common.update.success"), systemService.saveUser(request));
     }
 
     @DeleteMapping("/user/{id}")
     public Result<String> deleteUser(@PathVariable String id) {
         systemService.deleteUser(id);
-        return Result.OK("삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.success"), null);
     }
 
     @GetMapping("/role/list")
@@ -115,18 +141,18 @@ public class KkumzSystemController {
 
     @PostMapping("/role")
     public Result<Map<String, Object>> createRole(@RequestBody SaveRoleRequest request) {
-        return Result.OK("등록되었습니다.", systemService.saveRole(request));
+        return Result.OK(SyncMessageResolver.resolve("common.save.success"), systemService.saveRole(request));
     }
 
     @PutMapping("/role")
     public Result<Map<String, Object>> updateRole(@RequestBody SaveRoleRequest request) {
-        return Result.OK("수정되었습니다.", systemService.saveRole(request));
+        return Result.OK(SyncMessageResolver.resolve("common.update.success"), systemService.saveRole(request));
     }
 
     @DeleteMapping("/role/{id}")
     public Result<String> deleteRole(@PathVariable String id) {
         systemService.deleteRole(id);
-        return Result.OK("삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.success"), null);
     }
 
     @GetMapping("/permission/list")
@@ -136,17 +162,17 @@ public class KkumzSystemController {
 
     @PostMapping("/permission")
     public Result<Map<String, Object>> createPermission(@RequestBody SavePermissionRequest request) {
-        return Result.OK("등록되었습니다.", systemService.savePermission(request));
+        return Result.OK(SyncMessageResolver.resolve("common.save.success"), systemService.savePermission(request));
     }
 
     @PutMapping("/permission")
     public Result<Map<String, Object>> updatePermission(@RequestBody SavePermissionRequest request) {
-        return Result.OK("수정되었습니다.", systemService.savePermission(request));
+        return Result.OK(SyncMessageResolver.resolve("common.update.success"), systemService.savePermission(request));
     }
 
     @DeleteMapping("/permission/{id}")
     public Result<String> deletePermission(@PathVariable String id) {
         systemService.deletePermission(id);
-        return Result.OK("삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.success"), null);
     }
 }

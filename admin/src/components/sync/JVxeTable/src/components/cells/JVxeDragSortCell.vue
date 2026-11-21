@@ -8,10 +8,10 @@
       ></span>
       <template #overlay >
         <a-menu>
-          <a-menu-item key="0" :disabled="disabledMoveUp" @click="handleRowMoveUp">위로 이동</a-menu-item>
-          <a-menu-item key="1" :disabled="disabledMoveDown" @click="handleRowMoveDown">아래로 이동</a-menu-item>
+          <a-menu-item key="0" :disabled="disabledMoveUp" @click="handleRowMoveUp">{{ t('appUi.k0de1511a') }}</a-menu-item>
+          <a-menu-item key="1" :disabled="disabledMoveDown" @click="handleRowMoveDown">{{ t('appUi.k763e79ee') }}</a-menu-item>
           <a-menu-divider />
-          <a-menu-item key="3" @click="handleRowInsertDown">행 삽입</a-menu-item>
+          <a-menu-item key="3" @click="handleRowInsertDown">{{ t('appUi.kfa871180') }}</a-menu-item>
         </a-menu>
       </template>
     </a-dropdown>
@@ -19,6 +19,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { computed, defineComponent } from 'vue';
   import { Icon } from '/@/components/Icon';
   import { JVxeComponent } from '/@/components/sync/JVxeTable/types';
@@ -29,6 +30,7 @@
     components: { Icon },
     props: useJVxeCompProps(),
     setup(props: JVxeComponent.Props) {
+      const { t } = useI18n();
       const { rowIndex, originColumn, fullDataLength, trigger } = useJVxeComponent(props);
       const isAllowDrag = computed(() => {
         const notAllowDrag = originColumn.value.notAllowDrag;
@@ -72,6 +74,7 @@
       }
 
       return {
+        t,
         disabledMoveUp,
         disabledMoveDown,
         handleRowMoveUp,

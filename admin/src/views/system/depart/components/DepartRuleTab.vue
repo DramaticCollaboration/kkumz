@@ -21,25 +21,25 @@
         </template>
       </BasicTree>
     </template>
-    <a-empty v-else description="부서 권한을 구성할 수 없습니다." />
+    <a-empty v-else :description="t('appUi.k1a0b2c2f')" />
 
     <div class="j-box-bottom-button offset-20" style="margin-top: 30px">
       <div class="j-box-bottom-button-float" :class="[`${prefixCls}`]">
         <a-dropdown :trigger="['click']" placement="top">
           <template #overlay>
             <a-menu>
-              <a-menu-item key="3" @click="toggleCheckALL(true)">모두 확인</a-menu-item>
-              <a-menu-item key="4" @click="toggleCheckALL(false)">모두 선택 취소</a-menu-item>
-              <a-menu-item key="5" @click="toggleExpandAll(true)">모두 펼치기</a-menu-item>
-              <a-menu-item key="6" @click="toggleExpandAll(false)">모두 숨기기</a-menu-item>
+              <a-menu-item key="3" @click="toggleCheckALL(true)">{{ t('appUi.k43c1a81d') }}</a-menu-item>
+              <a-menu-item key="4" @click="toggleCheckALL(false)">{{ t('appUi.k153923e9') }}</a-menu-item>
+              <a-menu-item key="5" @click="toggleExpandAll(true)">{{ t('appUi.k2225f1f1') }}</a-menu-item>
+              <a-menu-item key="6" @click="toggleExpandAll(false)">{{ t('appUi.k136bac5a') }}</a-menu-item>
             </a-menu>
           </template>
           <a-button style="float: left">
-            트리 작업
+            {{ t('appUi.k6861bc2f') }}
             <Icon icon="ant-design:up-outlined" />
           </a-button>
         </a-dropdown>
-        <a-button type="primary" preIcon="ant-design:save-filled" @click="onSubmit">저장</a-button>
+        <a-button type="primary" preIcon="ant-design:save-filled" @click="onSubmit">{{ t('appUi.k1f1712ac') }}</a-button>
       </div>
     </div>
   </a-spin>
@@ -54,6 +54,8 @@
   import { queryRoleTreeList, queryDepartPermission, saveDepartPermission } from '../depart.api';
   import { useDesign } from '/@/hooks/web/useDesign';
   import { translateTitle } from '/@/utils/common/compUtils';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { prefixCls } = useDesign('j-depart-form-content');
   const props = defineProps({

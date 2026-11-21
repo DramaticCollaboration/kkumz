@@ -7,7 +7,7 @@
       <a-date-picker
         :showTime="false"
         valueFormat="YYYY-MM-DD"
-        :placeholder="'선택하세요' + item.label"
+        :placeholder="t('appUi.kc2255771') + item.label"
         v-model:value="queryParam[item.field]"
       ></a-date-picker>
     </template>
@@ -15,7 +15,7 @@
       <a-date-picker
         :showTime="false"
         valueFormat="YYYY-MM-DD"
-        placeholder="시작일"
+        :placeholder="t('appUi.k453c56f5')"
         v-model:value="queryParam[item.field + '_begin']"
         style="width: calc(50% - 15px)"
       ></a-date-picker>
@@ -23,7 +23,7 @@
       <a-date-picker
         :showTime="false"
         valueFormat="YYYY-MM-DD"
-        placeholder="종료일"
+        :placeholder="t('appUi.kcad7c84c')"
         v-model:value="queryParam[item.field + '_end']"
         style="width: calc(50% - 15px)"
       ></a-date-picker>
@@ -36,7 +36,7 @@
     </template>
     <template v-if="single_mode === item.mode">
       <a-date-picker
-        :placeholder="'선택하세요' + item.label"
+        :placeholder="t('appUi.kc2255771') + item.label"
         :show-time="true"
         valueFormat="YYYY-MM-DD HH:mm:ss"
         v-model:value="queryParam[item.field]"
@@ -44,7 +44,7 @@
     </template>
     <template v-else>
       <a-date-picker
-        placeholder="시작 시간 선택"
+        :placeholder="t('appUi.k01d66baf')"
         :show-time="true"
         valueFormat="YYYY-MM-DD HH:mm:ss"
         v-model:value="queryParam[item.field + '_begin']"
@@ -52,7 +52,7 @@
       ></a-date-picker>
       <span class="group-query-strig" style="width: auto; padding: 0 4px">~</span>
       <a-date-picker
-        placeholder="종료 시간 선택"
+        :placeholder="t('appUi.kecce9ef3')"
         :show-time="true"
         valueFormat="YYYY-MM-DD HH:mm:ss"
         v-model:value="queryParam[item.field + '_end']"
@@ -66,11 +66,11 @@
       <span :title="item.label" class="label-text">{{ item.label }}</span>
     </template>
     <template v-if="single_mode === item.mode">
-      <a-date-picker :placeholder="'선택하세요' + item.label" mode="time" valueFormat="HH:mm:ss" v-model:value="queryParam[item.field]"></a-date-picker>
+      <a-date-picker :placeholder="t('appUi.kc2255771') + item.label" mode="time" valueFormat="HH:mm:ss" v-model:value="queryParam[item.field]"></a-date-picker>
     </template>
     <template v-else>
       <a-date-picker
-        placeholder="시작 시간을 선택하세요."
+        :placeholder="t('appUi.k42be3c29')"
         mode="time"
         valueFormat="HH:mm:ss"
         v-model:value="queryParam[item.field + '_begin']"
@@ -78,7 +78,7 @@
       ></a-date-picker>
       <span class="group-query-strig">~</span>
       <a-date-picker
-        placeholder="종료 시간을 선택하세요."
+        :placeholder="t('appUi.kf0681d54')"
         mode="time"
         valueFormat="HH:mm:ss"
         v-model:value="queryParam[item.field + '_end']"
@@ -95,9 +95,9 @@
     <template #label>
       <span :title="item.label" class="label-text">{{ item.label }}</span>
     </template>
-    <JDictSelectTag v-if="item.config === '1'" :placeholder="'선택하세요' + item.label" v-model="queryParam[item.field]" :dictCode="getDictCode(item)">
+    <JDictSelectTag v-if="item.config === '1'" :placeholder="t('appUi.kc2255771') + item.label" v-model="queryParam[item.field]" :dictCode="getDictCode(item)">
     </JDictSelectTag>
-    <a-select v-else :placeholder="'선택하세요' + item.label" v-model:value="queryParam[item.field]">
+    <a-select v-else :placeholder="t('appUi.kc2255771') + item.label" v-model:value="queryParam[item.field]">
       <template v-for="(obj, index) in dictOptions[getDictOptionKey(item)]" :key="index">
         <a-select-option :value="obj.value"> {{ obj.text }}</a-select-option>
       </template>
@@ -109,7 +109,7 @@
       <span :title="item.label" class="label-text">{{ item.label }}</span>
     </template>
     <JTreeSelect
-      :placeholder="'선택하세요' + item.label"
+      :placeholder="t('appUi.kc2255771') + item.label"
       v-model:value="queryParam[item.field]"
       :dict="item.dict"
       :pidField="item.pidField"
@@ -124,28 +124,28 @@
     <template #label>
       <span :title="item.label" class="label-text">{{ item.label }}</span>
     </template>
-    <JCategorySelect :pcode="item.pcode" v-model:value="queryParam[item.field]" :placeholder="'선택하세요' + item.label" />
+    <JCategorySelect :pcode="item.pcode" v-model:value="queryParam[item.field]" :placeholder="t('appUi.kc2255771') + item.label" />
   </a-form-item>
 
   <a-form-item v-else-if="item.view === CompTypeEnum.SelSearch" :labelCol="labelCol" :class="'sync-online-search'">
     <template #label>
       <span :title="item.label" class="label-text">{{ item.label }}</span>
     </template>
-    <JOnlineSearchSelect v-model:value="queryParam[item.field]" :placeholder="'선택하세요'+item.label" :fieldId="item.fieldId"/>
+    <JOnlineSearchSelect v-model:value="queryParam[item.field]" :placeholder="t('appUi.kc2255771')+item.label" :fieldId="item.fieldId"/>
   </a-form-item>
 
   <a-form-item v-else-if="item.view === CompTypeEnum.SelUser" :labelCol="labelCol" :class="'sync-online-search'">
     <template #label>
       <span :title="item.label" class="label-text">{{ item.label }}</span>
     </template>
-    <JSelectUserByDept v-model:value="queryParam[item.field]" :placeholder="'선택하세요' + item.label"></JSelectUserByDept>
+    <JSelectUserByDept v-model:value="queryParam[item.field]" :placeholder="t('appUi.kc2255771') + item.label"></JSelectUserByDept>
   </a-form-item>
 
   <a-form-item v-else-if="item.view == CompTypeEnum.SelDepart" :labelCol="labelCol" :class="'sync-online-search'">
     <template #label>
       <span :title="item.label" class="label-text">{{ item.label }}</span>
     </template>
-    <JSelectDept v-model:value="queryParam[item.field]" :placeholder="'선택하세요' + item.label" />
+    <JSelectDept v-model:value="queryParam[item.field]" :placeholder="t('appUi.kc2255771') + item.label" />
   </a-form-item>
 
   <a-form-item v-else-if="item.view === CompTypeEnum.Popup" :labelCol="labelCol" :class="'sync-online-search'">
@@ -153,7 +153,7 @@
       <span :title="item.label" class="label-text">{{ item.label }}</span>
     </template>
     <JPopup
-      :placeholder="'선택하세요' + item.label"
+      :placeholder="t('appUi.kc2255771') + item.label"
       v-model:value="queryParam[item.field]"
       :formElRef="formElRef"
       :code="item.dictTable"
@@ -166,7 +166,7 @@
     <template #label>
       <span :title="item.label" class="label-text">{{ item.label }}</span>
     </template>
-    <JAreaLinkage :placeholder="'선택하세요' + item.label" v-model:value="queryParam[item.field]" />
+    <JAreaLinkage :placeholder="t('appUi.kc2255771') + item.label" v-model:value="queryParam[item.field]" />
   </a-form-item>
   <a-form-item
     v-else-if="item.view === CompTypeEnum.Checkbox || item.view === CompTypeEnum.ListMulti"
@@ -176,7 +176,7 @@
   >
     <a-select
       mode="multiple"
-      :placeholder="'선택하세요' + item.label"
+      :placeholder="t('appUi.kc2255771') + item.label"
       v-model:value="queryParam[item.field]"
       allowClear
     >
@@ -191,20 +191,21 @@
       <span :title="item.label" class="label-text">{{ item.label }}</span>
     </template>
     <template v-if="single_mode === item.mode && 'string'== item.view">
-      <j-input :placeholder="'입력해주세요' + item.label" v-model:value="queryParam[item.field]"></j-input>
+      <j-input :placeholder="t('appUi.k7d453794') + item.label" v-model:value="queryParam[item.field]"></j-input>
     </template>
     <template v-else-if="single_mode === item.mode">
-      <a-input :placeholder="'입력해주세요' + item.label" v-model:value="queryParam[item.field]"></a-input>
+      <a-input :placeholder="t('appUi.k7d453794') + item.label" v-model:value="queryParam[item.field]"></a-input>
     </template>
     <template v-else>
-      <a-input :placeholder="'시작하려면 입력하세요.' + item.label" v-model:value="queryParam[item.field + '_begin']" style="width: calc(50% - 15px)"></a-input>
+      <a-input :placeholder="t('appUi.k9c4ddca1') + item.label" v-model:value="queryParam[item.field + '_begin']" style="width: calc(50% - 15px)"></a-input>
       <span class="group-query-strig">~</span>
-      <a-input :placeholder="'끝까지 입력해주세요' + item.label" v-model:value="queryParam[item.field + '_end']" style="width: calc(50% - 15px)"></a-input>
+      <a-input :placeholder="t('appUi.ka5732895') + item.label" v-model:value="queryParam[item.field + '_end']" style="width: calc(50% - 15px)"></a-input>
     </template>
   </a-form-item>
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   //import JOnlineSearchSelect from '@/components/online/autoform/comp/JOnlineSearchSelect'
   import { defineComponent, ref } from 'vue';
   import { DateTypeEnum } from '/@/enums/DateTypeEnum.ts';
@@ -245,6 +246,7 @@
       },
     },
     setup(props) {
+      const { t } = useI18n();
       const single_mode = ref('single');
       console.log('dictOptions===>', props.dictOptions);
       function getDictCode(item) {
@@ -284,6 +286,7 @@
         },
       };
       return {
+        t,
         labelTextMaxWidth,
         labelCol,
         single_mode,

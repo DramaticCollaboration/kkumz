@@ -1,5 +1,6 @@
 package com.empasy.sync.kkumz.system;
 
+import com.empasy.sync.core.i18n.SyncMessageResolver;
 import com.empasy.sync.kkumz.common.Result;
 import com.empasy.sync.kkumz.system.KkumzSystemDTO.SaveDictItemRequest;
 import com.empasy.sync.kkumz.system.KkumzSystemDTO.SaveDictRequest;
@@ -45,34 +46,34 @@ public class SysDictController {
 
     @PostMapping
     public Result<Map<String, Object>> createDict(@RequestBody SaveDictRequest request) {
-        return Result.OK("등록되었습니다.", systemService.saveDict(request));
+        return Result.OK(SyncMessageResolver.resolve("common.save.success"), systemService.saveDict(request));
     }
 
     @PostMapping("/add")
     public Result<Map<String, Object>> addDict(@RequestBody SaveDictRequest request) {
-        return Result.OK("등록되었습니다.", systemService.saveDict(request));
+        return Result.OK(SyncMessageResolver.resolve("common.save.success"), systemService.saveDict(request));
     }
 
     @PutMapping
     public Result<Map<String, Object>> updateDict(@RequestBody SaveDictRequest request) {
-        return Result.OK("수정되었습니다.", systemService.saveDict(request));
+        return Result.OK(SyncMessageResolver.resolve("common.update.success"), systemService.saveDict(request));
     }
 
     @PutMapping("/edit")
     public Result<Map<String, Object>> editDict(@RequestBody SaveDictRequest request) {
-        return Result.OK("수정되었습니다.", systemService.saveDict(request));
+        return Result.OK(SyncMessageResolver.resolve("common.update.success"), systemService.saveDict(request));
     }
 
     @DeleteMapping("/{id}")
     public Result<String> deleteDictByPath(@PathVariable String id) {
         systemService.deleteDict(id);
-        return Result.OK("삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.success"), null);
     }
 
     @DeleteMapping("/delete")
     public Result<String> deleteDictByParam(@RequestParam String id) {
         systemService.deleteDict(id);
-        return Result.OK("삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.success"), null);
     }
 
     @GetMapping("/items")
@@ -94,29 +95,30 @@ public class SysDictController {
     @PostMapping("/item")
     public Result<Map<String, Object>> saveDictItem(@RequestBody SaveDictItemRequest request) {
         boolean isUpdate = request != null && request.getId() != null && !request.getId().isBlank();
-        return Result.OK(isUpdate ? "수정되었습니다." : "등록되었습니다.", systemService.saveDictItem(request));
+        return Result.OK(SyncMessageResolver.resolve(isUpdate ? "common.update.success" : "common.save.success"),
+                systemService.saveDictItem(request));
     }
 
     @PostMapping("/addItem")
     public Result<Map<String, Object>> addDictItem(@RequestBody SaveDictItemRequest request) {
-        return Result.OK("등록되었습니다.", systemService.saveDictItem(request));
+        return Result.OK(SyncMessageResolver.resolve("common.save.success"), systemService.saveDictItem(request));
     }
 
     @PutMapping("/editItem")
     public Result<Map<String, Object>> editDictItem(@RequestBody SaveDictItemRequest request) {
-        return Result.OK("수정되었습니다.", systemService.saveDictItem(request));
+        return Result.OK(SyncMessageResolver.resolve("common.update.success"), systemService.saveDictItem(request));
     }
 
     @DeleteMapping("/item/{id}")
     public Result<String> deleteDictItemByPath(@PathVariable String id) {
         systemService.deleteDictItem(id);
-        return Result.OK("삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.success"), null);
     }
 
     @DeleteMapping("/deleteItem")
     public Result<String> deleteDictItemByParam(@RequestParam String id) {
         systemService.deleteDictItem(id);
-        return Result.OK("삭제되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("common.delete.success"), null);
     }
 
     @GetMapping("/getDictItems/{dictCode}")
@@ -124,8 +126,13 @@ public class SysDictController {
         return Result.OK(systemService.getDictItemsByCode(dictCode));
     }
 
+    @GetMapping("/queryAllDictItems")
+    public Result<Map<String, List<Map<String, Object>>>> queryAllDictItems() {
+        return Result.OK(systemService.queryAllDictItems());
+    }
+
     @GetMapping("/refreshCache")
     public Result<String> refreshCache() {
-        return Result.OK("사전 캐시가 갱신되었습니다.", null);
+        return Result.OK(SyncMessageResolver.resolve("dict.cache.refresh.success"), null);
     }
 }

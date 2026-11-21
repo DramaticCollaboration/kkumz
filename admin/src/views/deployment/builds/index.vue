@@ -14,12 +14,12 @@
           <TableAction
             :actions="[
               {
-                label: '빌드 로그',
+                label: t('appUi.kb1640e60'),
                 icon: 'ant-design:code-outlined',
                 onClick: handleOpenLog.bind(null, record),
               },
               {
-                label: 'AI 빌드 패치',
+                label: t('appUi.k83862f6d'),
                 icon: 'ant-design:robot-outlined',
                 ifShow: () => record.status === 'FAILED',
                 onClick: handleAiFix.bind(null, record),
@@ -40,12 +40,14 @@
   import { useMessage } from '/@/hooks/web/useMessage';
   import { getAdminBuildList, triggerAdminAiFixBuild } from '/@/api/kkumz';
   import BuildLogModal from './components/BuildLogModal.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createMessage } = useMessage();
   const [registerLogModal, { openModal: openLogModal }] = useModal();
 
   const [registerTable, { reload }] = useTable({
-    title: '빌드·배포 로그',
+    title: t('appUi.ke7e9ecc9'),
     api: getAdminBuildList,
     rowKey: 'id',
     useSearchForm: true,
@@ -56,30 +58,30 @@
       schemas: [
         {
           field: 'status',
-          label: '빌드 상태',
+          label: t('appUi.k2ed6100c'),
           component: 'JDictSelectTag',
           componentProps: {
             dictCode: 'kkumz_build_status',
-            placeholder: '전체',
+            placeholder: t('appUi.k934dd25e'),
           },
           colProps: { span: 8 },
         },
       ],
     },
     columns: [
-      { title: '빌드 ID', dataIndex: 'id', width: 130 },
-      { title: '브랜드명', dataIndex: 'brandName', width: 160 },
-      { title: '사이트 슬러그', dataIndex: 'siteSlug', width: 140 },
-      { title: '버전', dataIndex: 'versionNo', width: 70 },
-      { title: '트리거 유형', dataIndex: 'triggerType', key: 'triggerType', width: 150 },
-      { title: '상태', dataIndex: 'status', key: 'status', width: 100 },
-      { title: '소요시간(ms)', dataIndex: 'durationMs', width: 110 },
-      { title: '에러 요약', dataIndex: 'errorSummary', width: 240 },
-      { title: '실행일시', dataIndex: 'createdAt', width: 160 },
+      { title: t('appUi.ka87af073'), dataIndex: 'id', width: 130 },
+      { title: t('appUi.ke4171b02'), dataIndex: 'brandName', width: 160 },
+      { title: t('appUi.k6b6d08bf'), dataIndex: 'siteSlug', width: 140 },
+      { title: t('appUi.k593f8a81'), dataIndex: 'versionNo', width: 70 },
+      { title: t('appUi.k05bb91f8'), dataIndex: 'triggerType', key: 'triggerType', width: 150 },
+      { title: t('appUi.k2926977b'), dataIndex: 'status', key: 'status', width: 100 },
+      { title: t('appUi.k6eceb048'), dataIndex: 'durationMs', width: 110 },
+      { title: t('appUi.k87bc82e6'), dataIndex: 'errorSummary', width: 240 },
+      { title: t('appUi.k87ff2218'), dataIndex: 'createdAt', width: 160 },
     ],
     actionColumn: {
       width: 190,
-      title: '관리',
+      title: t('appUi.kc29fba5a'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
     },
@@ -91,7 +93,7 @@
 
   async function handleAiFix(record: Recordable) {
     await triggerAdminAiFixBuild(record.siteSlug, record.errorSummary);
-    createMessage.success('AI 자동 빌드 오류 패치 및 재빌드가 완료되었습니다.');
+    createMessage.success(t('appUi.kb91d5b97'));
     reload();
   }
 </script>

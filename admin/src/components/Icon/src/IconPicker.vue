@@ -25,7 +25,7 @@
     :cancel-text="t('common.cancelText')"
   >
     <a-tabs style="padding-left: 15px; padding-right: 15px">
-      <a-tab-pane tab="화살표" key="1">
+      <a-tab-pane :tab="t('appUi.k1255527f')" key="1">
         <a-form-item-rest>
           <icon-list
             ref="iconListRef"
@@ -37,7 +37,7 @@
           />
         </a-form-item-rest>
       </a-tab-pane>
-      <a-tab-pane tab="표지" key="2">
+      <a-tab-pane :tab="t('appUi.kc84f6ff3')" key="2">
         <a-form-item-rest>
           <icon-list
             ref="iconListRef"
@@ -49,7 +49,7 @@
           />
         </a-form-item-rest>
       </a-tab-pane>
-      <a-tab-pane tab="편집" key="3">
+      <a-tab-pane :tab="t('appUi.kd482e14b')" key="3">
         <a-form-item-rest>
           <icon-list
             ref="iconListRef"
@@ -61,7 +61,7 @@
           />
         </a-form-item-rest>
       </a-tab-pane>
-      <a-tab-pane tab="그래프" key="4">
+      <a-tab-pane :tab="t('appUi.kdde8c315')" key="4">
         <a-form-item-rest>
           <icon-list
             ref="iconListRef"
@@ -73,7 +73,7 @@
           />
         </a-form-item-rest>
       </a-tab-pane>
-      <a-tab-pane tab="웹" key="5">
+      <a-tab-pane :tab="t('appUi.k9f451a49')" key="5">
         <a-form-item-rest>
           <icon-list
             ref="iconListRef"
@@ -85,7 +85,7 @@
           />
         </a-form-item-rest>
       </a-tab-pane>
-      <a-tab-pane tab="로고" key="6">
+      <a-tab-pane :tab="t('appUi.kd2ba3ac7')" key="6">
         <a-form-item-rest>
           <icon-list
             ref="iconListRef"
@@ -97,7 +97,7 @@
           />
         </a-form-item-rest>
       </a-tab-pane>
-      <a-tab-pane tab="기타" key="7">
+      <a-tab-pane :tab="t('appUi.k44650a96')" key="7">
         <a-form-item-rest>
           <icon-list
             ref="iconListRef"

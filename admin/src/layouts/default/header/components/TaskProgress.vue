@@ -1,11 +1,11 @@
 <template>
   <div class="px-3 flex items-center cursor-pointer" @click="togglePopover">
-    <a-popover v-model:open="visible" title="백그라운드 작업 현황" trigger="click" placement="bottomRight">
+    <a-popover v-model:open="visible" :title="t('appUi.k3f192e3b')" trigger="click" placement="bottomRight">
       <template #content>
         <div class="w-80 p-2">
           <!-- 백그라운드 비동기 작업 진행률 및 상태 렌더링 -->
           <div v-if="tasks.length === 0" class="text-center text-gray-500 py-4">
-            진행 중인 작업이 없습니다.
+            {{ t('appUi.k879bfcca') }}
           </div>
           <div v-else>
             <div v-for="task in tasks" :key="task.id" class="mb-4 last:mb-0">
@@ -50,6 +50,8 @@
   };
 
   import { defHttp } from '/@/utils/http/axios';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   // 백그라운드 활성 태스크 주기적 갱신
   const fetchTasks = async () => {
@@ -61,7 +63,7 @@
         name: `${b.siteName || b.siteSlug} (v${b.versionNo || 1})`,
         progress: b.buildStatus === 'SUCCESS' ? 100 : (b.buildStatus === 'FAILED' ? 100 : 60),
         status: b.buildStatus === 'FAILED' ? 'ERROR' : 'SUCCESS',
-        description: b.commitMessage || b.buildMode || 'WebIDE 샌드박스 빌드',
+        description: b.commitMessage || b.buildMode || t('appUi.kf08d5fd5'),
       }));
     } catch (e) {
       tasks.value = [];

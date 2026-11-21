@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import type { RouteLocationNormalized, RouteRecordNormalized } from 'vue-router';
 import type { App, Plugin } from 'vue';
 
@@ -207,29 +208,29 @@ export function showDealBtn(bpmStatus) {
  */
 export function numToUpper(value) {
   if (value != '') {
-    let unit = new Array('천', '백', '찾다', '', '천', '백', '찾다', '', '뿔', '가리키다');
+    let unit = new Array($t('appUi.ka037409a'), $t('appUi.k89d5348b'), $t('appUi.k46b3eeee'), '', $t('appUi.ka037409a'), $t('appUi.k89d5348b'), $t('appUi.k46b3eeee'), '', $t('appUi.k99465850'), $t('appUi.kd1f78278'));
     const toDx = (n) => {
       switch (n) {
         case '0':
-          return '영';
+          return $t('appUi.k2bc634a4');
         case '1':
-          return '하나';
+          return $t('appUi.ke78498f9');
         case '2':
-          return '둘';
+          return $t('appUi.kf8bf7a93');
         case '3':
-          return '삼';
+          return $t('appUi.k59463e84');
         case '4':
-          return '4개';
+          return $t('appUi.kcd70943f');
         case '5':
-          return '우';
+          return $t('appUi.k4118d67c');
         case '6':
-          return '땅';
+          return $t('appUi.k910259ce');
         case '7':
-          return '일곱';
+          return $t('appUi.kc0ee2d76');
         case '8':
-          return '여덟';
+          return $t('appUi.k796c92df');
         case '9':
-          return '지우';
+          return $t('appUi.kd9f8747b');
       }
     };
     let lth = value.toString().length;
@@ -240,21 +241,21 @@ export function numToUpper(value) {
       let result = '';
       for (let i = 0; i < length; i++) {
         if (i == 2) {
-          result = '원' + result;
+          result = $t('appUi.k21ba070b') + result;
         } else if (i == 6) {
-          result = '만' + result;
+          result = $t('appUi.k63948d05') + result;
         }
         if (value.charAt(length - i - 1) == 0) {
           if (i != 0 && i != 1) {
             if (result.charAt(0) != '영' && result.charAt(0) != '원' && result.charAt(0) != '만') {
-              result = '영' + result;
+              result = $t('appUi.k2bc634a4') + result;
             }
           }
           continue;
         }
         result = toDx(value.charAt(length - i - 1)) + unit[unit.length - i - 1] + result;
       }
-      result += result.charAt(result.length - 1) == '원' ? '모두' : '';
+      result += result.charAt(result.length - 1) == '원' ? $t('appUi.k3efcb4f1') : '';
       return result;
     } else {
       return null;
@@ -286,7 +287,7 @@ export function importViewsFile(path): Promise<any> {
       }
     }
     if (flag) {
-      reject('파일이 존재하지 않습니다:' + page);
+      reject($t('appUi.k85bfd66c') + page);
     }
   });
 }
@@ -390,7 +391,7 @@ export function getWeekMonthQuarterYear(date) {
   return {
     year: `${year}`,
     month: `${year}-${month.toString().padStart(2, '0')}`,
-    week: `${year}-${week}주`,
+    week: $t('appUi.ke852bbad', { p0: year, p1: week }),
     quarter: `${year}-Q${quarter}`,
   };
 }

@@ -5,7 +5,7 @@
         <!--조직도-->
         <BasicTree
           v-if="!treeReloading"
-          title="부서 목록"
+          :title="t('appUi.k1cfa18bc')"
           toolbar
           search
           showLine
@@ -20,7 +20,7 @@
           @search="onSearch"
         />
       </template>
-      <a-empty v-else description="일반 직원에게는 이러한 권한이 없습니다." />
+      <a-empty v-else :description="t('appUi.kc7e3403c')" />
     </a-spin>
   </div>
 </template>
@@ -30,6 +30,8 @@
   import { useMessage } from '/@/hooks/web/useMessage';
   import { BasicTree } from '/@/components/Tree';
   import { queryMyDepartTreeList, searchByKeywords } from '../depart.user.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const prefixCls = inject('prefixCls');
   const emit = defineEmits(['select']);
@@ -115,7 +117,7 @@
           if (Array.isArray(result)) {
             treeData.value = result;
           } else {
-            createMessage.warning('부서 정보를 찾을 수 없습니다');
+            createMessage.warning(t('appUi.k2e0b814d'));
             treeData.value = [];
           }
         })

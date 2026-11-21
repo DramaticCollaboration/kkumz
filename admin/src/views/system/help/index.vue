@@ -1,75 +1,127 @@
 <template>
-  <PageWrapper>
-    <BasicTable @register="registerTable" :rowSelection="rowSelection">
-      <template #tableTitle>
-        <a-space>
-          <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate">
-            신규 가이드 등록
-          </a-button>
-          <a-button
-            v-if="selectedRowKeys.length > 0"
-            danger
-            preIcon="ant-design:delete-outlined"
-            @click="handleBatchDelete"
-          >
-            선택 일괄 삭제 ({{ selectedRowKeys.length }})
-          </a-button>
-        </a-space>
-      </template>
+  <div>
+    <HelpViewer v-if="viewMode === 'viewer'" @switch-manage="viewMode = 'manage'" />
 
-      <template #action="{ record }">
-        <TableAction
-          :actions="[
-            {
-              label: '미리보기',
-              onClick: handlePreview.bind(null, record),
-            },
-            {
-              label: '편집',
-              onClick: handleEdit.bind(null, record),
-            },
-            {
-              label: '삭제',
-              color: 'error',
-              popConfirm: {
-                title: '해당 화면 가이드를 삭제하시겠습니까?',
-                confirm: handleDelete.bind(null, record),
+    <PageWrapper v-else>
+      <BasicTable @register="registerTable" :rowSelection="rowSelection">
+        <template #tableTitle>
+          <a-space wrap>
+            <a-radio-group
+              v-model:value="helpTypeFilter"
+              button-style="solid"
+              size="small"
+              @change="handleTypeFilterChange"
+            >
+              <a-radio-button value="ALL">{{ t('appUi.k934dd25e') }}</a-radio-button>
+              <a-radio-button value="SYSTEM">{{ t('appUi.k368c6bad') }}</a-radio-button>
+              <a-radio-button value="SCREEN">{{ t('appUi.ka3a0501d') }}</a-radio-button>
+            </a-radio-group>
+            <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate">
+              {{ t('appUi.k4b507cd4') }}
+            </a-button>
+            <a-button preIcon="ant-design:read-outlined" @click="handleSwitchToViewer">
+              {{ t('appUi.k09facaca') }}
+            </a-button>
+            <a-button
+              v-if="selectedRowKeys.length > 0"
+              danger
+              preIcon="ant-design:delete-outlined"
+              @click="handleBatchDelete"
+            >
+              {{ t('appUi.k308cf507') }}{{ selectedRowKeys.length }})
+            </a-button>
+          </a-space>
+        </template>
+
+        <template #action="{ record }">
+          <TableAction
+            :actions="[
+              {
+                label: t('appUi.kd482e14b'),
+                onClick: handleEdit.bind(null, record),
               },
-            },
-          ]"
-        />
-      </template>
-    </BasicTable>
+              {
+                label: t('appUi.k2f1c9d7b'),
+                onClick: handlePreview.bind(null, record),
+              },
+            ]"
+            :dropDownActions="[
+              {
+                label: t('appUi.kfc81e222'),
+                color: 'error',
+                popConfirm: {
+                  title: t('appUi.kcd28522b'),
+                  confirm: handleDelete.bind(null, record),
+                },
+              },
+            ]"
+          />
+        </template>
+      </BasicTable>
 
-    <HelpEditModal @register="registerEditModal" @success="handleSuccess" />
-    <HelpPreviewModal @register="registerPreviewModal" />
-  </PageWrapper>
+      <HelpEditModal @register="registerEditModal" @success="handleSuccess" />
+      <HelpPreviewModal @register="registerPreviewModal" />
+    </PageWrapper>
+  </div>
 </template>
 
 <script lang="ts" setup>
-  import { ref, computed } from 'vue';
+  import { ref, computed, watch } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
   import { PageWrapper } from '/@/components/Page';
   import { BasicTable, useTable, TableAction } from '/@/components/Table';
   import { useModal } from '/@/components/Modal';
   import { useMessage } from '/@/hooks/web/useMessage';
-  import { columns, searchFormSchema } from './help.data';
-  import { getHelpList, deleteHelpById, deleteBatchHelp, SysPageHelpModel } from './help.api';
+  import { columns, isSystemGuide, searchFormSchema } from './help.data';
+  import {
+    deleteBatchHelp,
+    deleteHelpById,
+    getHelpList,
+    HELP_MANAGE_PATH,
+    SysPageHelpModel,
+  } from './help.api';
   import HelpEditModal from './components/HelpEditModal.vue';
   import HelpPreviewModal from './components/HelpPreviewModal.vue';
+  import HelpViewer from './HelpViewer.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
+  const route = useRoute();
+  const router = useRouter();
   const { createMessage, createConfirm } = useMessage();
   const selectedRowKeys = ref<string[]>([]);
+  const helpTypeFilter = ref<'ALL' | 'SYSTEM' | 'SCREEN'>('ALL');
+
+  const viewMode = ref<'viewer' | 'manage'>(
+    route.query.route || route.query.mode === 'viewer' ? 'viewer' : 'manage',
+  );
+
+  watch(
+    () => [route.query.route, route.query.mode],
+    ([qRoute, qMode]) => {
+      if (qMode === 'manage') {
+        viewMode.value = 'manage';
+      } else if (qRoute || qMode === 'viewer') {
+        viewMode.value = 'viewer';
+      }
+    },
+  );
 
   const [registerEditModal, { openModal: openEditModal }] = useModal();
   const [registerPreviewModal, { openModal: openPreviewModal }] = useModal();
 
   const [registerTable, { reload }] = useTable({
-    title: '화면별 도움말 가이드 목록',
+    title: t('appUi.k4b62d0f9'),
     api: async (params) => {
       const res: any = await getHelpList(params);
       const list: SysPageHelpModel[] = Array.isArray(res) ? res : Array.isArray(res?.records) ? res.records : [];
 
       let filtered = list;
+      if (helpTypeFilter.value === 'SYSTEM') {
+        filtered = filtered.filter((i) => isSystemGuide(i));
+      } else if (helpTypeFilter.value === 'SCREEN') {
+        filtered = filtered.filter((i) => !isSystemGuide(i));
+      }
       if (params?.title) {
         const kw = String(params.title).toLowerCase();
         filtered = filtered.filter(
@@ -102,7 +154,7 @@
     showIndexColumn: false,
     actionColumn: {
       width: 180,
-      title: '관리',
+      title: t('appUi.kc29fba5a'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
       fixed: 'right',
@@ -117,8 +169,21 @@
     },
   }));
 
+  function handleTypeFilterChange() {
+    reload();
+  }
+
+  function handleSwitchToViewer() {
+    viewMode.value = 'viewer';
+    router.replace({ path: HELP_MANAGE_PATH, query: { mode: 'viewer' } });
+  }
+
   function handleCreate() {
-    openEditModal(true, { isUpdate: false });
+    const defaultType = helpTypeFilter.value === 'SYSTEM' ? 'SYSTEM' : 'SCREEN';
+    openEditModal(true, {
+      isUpdate: false,
+      record: { helpType: defaultType },
+    });
   }
 
   function handleEdit(record: SysPageHelpModel) {
@@ -132,7 +197,7 @@
   async function handleDelete(record: SysPageHelpModel) {
     if (!record.id) return;
     await deleteHelpById(record.id);
-    createMessage.success('가이드가 삭제되었습니다.');
+    createMessage.success(t('appUi.kbcdb0e7c'));
     reload();
   }
 
@@ -140,11 +205,11 @@
     if (selectedRowKeys.value.length === 0) return;
     createConfirm({
       iconType: 'warning',
-      title: '일괄 삭제 확인',
-      content: `선택한 ${selectedRowKeys.value.length}건의 도움말 가이드를 삭제하시겠습니까?`,
+      title: t('appUi.k28b1f14e'),
+      content: t('appUi.k53bc8f40', { p0: selectedRowKeys.value.length }),
       onOk: async () => {
         await deleteBatchHelp(selectedRowKeys.value);
-        createMessage.success('선택한 가이드가 일괄 삭제되었습니다.');
+        createMessage.success(t('appUi.k7a491ebf'));
         selectedRowKeys.value = [];
         reload();
       },

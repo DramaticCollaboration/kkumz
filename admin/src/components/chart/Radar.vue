@@ -2,6 +2,7 @@
   <div ref="chartRef" :style="{ height, width }"></div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, PropType, ref, Ref, reactive, watchEffect } from 'vue';
   import { useECharts } from '/@/hooks/web/useECharts';
   import { cloneDeep } from 'lodash-es';
@@ -26,17 +27,18 @@
       },
     },
     setup(props) {
+      const { t } = useI18n();
       const chartRef = ref<HTMLDivElement | null>(null);
       const { setOptions } = useECharts(chartRef as Ref<HTMLDivElement>);
       const option = reactive({
         title: {
-          text: '기본 레이더 차트',
+          text: t('appUi.k9745b355'),
         },
         legend: {
-          data: ['웬종'],
+          data: [t('appUi.ka64d3c0d')],
         },
         radar: {
-          indicator: [{ name: '역사' }, { name: '지리학' }, { name: '생물학' }, { name: '화학적인' }, { name: '물리학' }, { name: '정치' }],
+          indicator: [{ name: t('appUi.keb62b8f9') }, { name: t('appUi.kc795eca5') }, { name: t('appUi.k59c9dbcf') }, { name: t('appUi.ka0fceb1f') }, { name: t('appUi.k95d65a88') }, { name: t('appUi.k36c79575') }],
         },
         series: [
           {
@@ -44,7 +46,7 @@
             data: [
               {
                 value: [82, 70, 60, 55, 90, 66],
-                name: '웬종',
+                name: t('appUi.ka64d3c0d'),
               },
             ],
           },

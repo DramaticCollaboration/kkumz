@@ -1,10 +1,10 @@
 <template>
   <BasicModal
     v-model:open="visible"
-    title="주소 및 지도 위치 검색"
+    :title="t('appUi.kb1237856')"
     width="960px"
-    ok-text="선택 주소 적용"
-    cancel-text="취소"
+    :ok-text="t('appUi.kccde098b')"
+    :cancel-text="t('appUi.k19b2d19b')"
     @ok="handleConfirm"
     @cancel="handleCancel"
   >
@@ -15,10 +15,10 @@
           <div class="search-mode-header">
             <a-radio-group v-model:value="activeMode" button-style="solid" size="middle" style="width: 100%; display: flex;">
               <a-radio-button value="postcode" style="flex: 1; text-align: center;">
-                도로명 · 우편번호 검색
+                {{ t('appUi.k25367d12') }}
               </a-radio-button>
               <a-radio-button value="keyword" style="flex: 1; text-align: center;">
-                장소 · 키워드 지도 검색
+                {{ t('appUi.kde5301a0') }}
               </a-radio-button>
             </a-radio-group>
           </div>
@@ -26,13 +26,13 @@
           <!-- 모드 1: 다음(카카오) 우편번호 서비스 임베드 -->
           <div v-show="activeMode === 'postcode'" class="postcode-embed-box">
             <div v-if="postcodeLoading" class="postcode-loading">
-              <a-spin tip="우편번호 검색창을 불러오는 중입니다..." />
+              <a-spin :tip="t('appUi.kee8d8ac6')" />
             </div>
             <div v-else-if="postcodeError" class="postcode-error">
               <div style="margin-bottom: 8px; color: #cf1322;">{{ postcodeError }}</div>
               <a-space>
-                <a-button size="small" type="primary" @click="mountDaumPostcode">다시 시도</a-button>
-                <a-button size="small" @click="activeMode = 'keyword'">지도 키워드 검색으로 전환</a-button>
+                <a-button size="small" type="primary" @click="mountDaumPostcode">{{ t('appUi.k0c767cec') }}</a-button>
+                <a-button size="small" @click="activeMode = 'keyword'">{{ t('appUi.k2bd644b7') }}</a-button>
               </a-space>
             </div>
             <div ref="postcodeContainerRef" class="postcode-embed-container"></div>
@@ -42,8 +42,8 @@
           <div v-show="activeMode === 'keyword'" class="keyword-search-box">
             <a-input-search
               v-model:value="keywordQuery"
-              placeholder="건물명, 기관명, 도로명 또는 지번 입력 (예: 한빛은행 본점, 도움6로 42)"
-              enter-button="지도 검색"
+              :placeholder="t('appUi.kb559b78a')"
+              :enter-button="t('appUi.kd567b853')"
               :loading="keywordSearching"
               allow-clear
               @search="handleKeywordSearch"
@@ -51,12 +51,12 @@
 
             <div class="keyword-results-list">
               <div v-if="keywordSearching" class="keyword-empty">
-                <a-spin tip="장소 및 주소 좌표를 검색하고 있습니다..." />
+                <a-spin :tip="t('appUi.k50ebb3b0')" />
               </div>
               <div v-else-if="keywordResults.length === 0" class="keyword-empty">
                 <CompassOutlined style="font-size: 28px; color: #bfbfbf; margin-bottom: 8px;" />
-                <div>건물명, 도로명, 행정동으로 검색하거나</div>
-                <div>우측 지도를 직접 클릭하여 위치를 선택하세요.</div>
+                <div>{{ t('appUi.k593cbb95') }}</div>
+                <div>{{ t('appUi.k10134783') }}</div>
               </div>
               <div
                 v-for="item in keywordResults"
@@ -79,8 +79,8 @@
         <!-- 우측: 실시간 인터랙티브 지도 확인 및 선택 주소 편집 -->
         <a-col :span="12">
           <div class="map-section-title">
-            <span>실시간 지도 위치 확인 및 핀 지정</span>
-            <span class="map-section-sub">지도 클릭 또는 마커 드래그 가능</span>
+            <span>{{ t('appUi.k3d13822b') }}</span>
+            <span class="map-section-sub">{{ t('appUi.kbdd4ec58') }}</span>
           </div>
 
           <AddressMapView
@@ -97,26 +97,26 @@
           <!-- 선택된 주소 확인 카드 -->
           <div class="selected-address-card">
             <div class="selected-card-header">
-              <span class="selected-card-title">선택된 주소 정보</span>
-              <a-tag v-if="selectedAddress" color="green">위치 선택됨</a-tag>
-              <a-tag v-else color="default">미선택</a-tag>
+              <span class="selected-card-title">{{ t('appUi.k16b00ed6') }}</span>
+              <a-tag v-if="selectedAddress" color="green">{{ t('appUi.k50c2cd55') }}</a-tag>
+              <a-tag v-else color="default">{{ t('appUi.kf9e611a1') }}</a-tag>
             </div>
 
             <a-row :gutter="[8, 8]" align="middle">
               <a-col :span="6">
-                <div class="field-caption">우편번호</div>
-                <a-input v-model:value="selectedPostCode" placeholder="5자리" maxlength="6" />
+                <div class="field-caption">{{ t('appUi.kcd21379e') }}</div>
+                <a-input v-model:value="selectedPostCode" :placeholder="t('appUi.kfb7d189f')" maxlength="6" />
               </a-col>
               <a-col :span="18">
-                <div class="field-caption">기본 주소</div>
-                <a-input v-model:value="selectedAddress" placeholder="좌측 검색 또는 지도 클릭 시 자동 입력됩니다" />
+                <div class="field-caption">{{ t('appUi.kf1f2b596') }}</div>
+                <a-input v-model:value="selectedAddress" :placeholder="t('appUi.kfadde51a')" />
               </a-col>
               <a-col :span="24">
-                <div class="field-caption">상세 주소</div>
+                <div class="field-caption">{{ t('appUi.kdad291cb') }}</div>
                 <a-input
                   ref="detailInputRef"
                   v-model:value="selectedAddressDetail"
-                  placeholder="동, 층, 호수 및 부서 위치 입력"
+                  :placeholder="t('appUi.k9e9022b1')"
                   @pressEnter="handleConfirm"
                 />
               </a-col>
@@ -140,6 +140,8 @@ import {
   searchAddressGeocode,
   type GeocodeResultItem,
 } from '/@/utils/addressMap';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
 const emit = defineEmits<{
   (
@@ -201,7 +203,7 @@ async function mountDaumPostcode() {
   try {
     await ensureDaumPostcodeLoaded();
     if (!window.daum?.Postcode || !postcodeContainerRef.value) {
-      throw new Error('우편번호 검색 모듈을 초기화할 수 없습니다.');
+      throw new Error(t('appUi.k81c6a3df'));
     }
     postcodeContainerRef.value.innerHTML = '';
     const postcode = new window.daum.Postcode({
@@ -228,7 +230,7 @@ async function mountDaumPostcode() {
       autoClose: false,
     });
   } catch (err: any) {
-    postcodeError.value = err?.message || '우편번호 검색 서비스를 불러오지 못했습니다.';
+    postcodeError.value = err?.message || t('appUi.k9e8b016f');
     activeMode.value = 'keyword';
   } finally {
     postcodeLoading.value = false;
@@ -238,7 +240,7 @@ async function mountDaumPostcode() {
 async function handleKeywordSearch() {
   const q = keywordQuery.value.trim();
   if (!q) {
-    message.warning('검색할 주소나 건물명을 입력해 주세요.');
+    message.warning(t('appUi.k0fd5153c'));
     return;
   }
   keywordSearching.value = true;
@@ -286,7 +288,7 @@ function handleMapPick(payload: {
 
 function handleConfirm() {
   if (!selectedAddress.value.trim()) {
-    message.warning('적용할 기본 주소를 먼저 검색하거나 지도에서 선택해 주세요.');
+    message.warning(t('appUi.k90388f4a'));
     return;
   }
   emit('select', {

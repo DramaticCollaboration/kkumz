@@ -2,6 +2,7 @@
   <div ref="chartRef" :style="{ height, width }"></div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, PropType, ref, Ref, reactive, watchEffect } from 'vue';
   import { useECharts } from '/@/hooks/web/useECharts';
   import { GaugeChart } from 'echarts/charts';
@@ -31,6 +32,7 @@
       },
     },
     setup(props) {
+      const { t } = useI18n();
       const chartRef = ref<HTMLDivElement | null>(null);
       const { setOptions, echarts } = useECharts(chartRef as Ref<HTMLDivElement>);
       const option = reactive({
@@ -79,7 +81,7 @@
             data: [
               {
                 value: 70,
-                name: '로컬 디스크',
+                name: t('appUi.k64db9dc1'),
               },
             ],
           },

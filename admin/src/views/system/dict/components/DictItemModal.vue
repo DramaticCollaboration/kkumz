@@ -24,6 +24,8 @@
   import { itemFormSchema } from '../dict.data';
   import { saveOrUpdateDictItem } from '../dict.api';
   import { Colors } from '/@/utils/dict/DictColors.js'
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
@@ -58,7 +60,7 @@
   });
 
   //제목 설정
-  const getTitle = computed(() => (!unref(isUpdate) ? '등록' : '편집'));
+  const getTitle = computed(() => (!unref(isUpdate) ? t('appUi.k1ac11e9b') : t('appUi.kd482e14b')));
 
   //Form 제출 이벤트
   async function handleSubmit() {

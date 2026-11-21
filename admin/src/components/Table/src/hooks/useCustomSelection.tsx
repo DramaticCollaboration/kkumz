@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import type { BasicColumn } from '/@/components/Table';
 import type { Ref, ComputedRef } from 'vue';
 import type { BasicTableProps, PaginationProps, TableRowSelection } from '/@/components/Table';
@@ -212,7 +213,7 @@ export function useCustomSelection(
     const checkAll = () => {
       if (modal != null) {
         modal.update({
-          content: '전체 선택을 처리 중입니다. 잠시만 기다려 주세요.',
+          content: $t('appUi.kee1028fb'),
           cancelButtonProps: { disabled: true },
         });
       }
@@ -240,8 +241,8 @@ export function useCustomSelection(
 
     if (flattedData.value.length > 120) {
       modal = createConfirm({
-        title: '모두 선택',
-        content: '데이터 양이 많아 전체 선택 시 화면이 느려질 수 있습니다. 계속하시겠습니까?',
+        title: $t('appUi.kc764a797'),
+        content: $t('appUi.k868300cb'),
         iconType: 'warning',
         onOk: () => checkAll(),
       });
@@ -407,7 +408,7 @@ export function useCustomSelection(
     }
     const isFixedLeft = rowSelection.fixed || columns.some((item) => item.fixed === 'left');
     columns.unshift({
-      title: '열 선택',
+      title: $t('appUi.kd200f8d3'),
       flag: 'CHECKBOX',
       key: CUS_SEL_COLUMN_KEY,
       width: 50,

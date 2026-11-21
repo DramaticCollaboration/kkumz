@@ -13,7 +13,7 @@
                 <span>{{ item.fromUserId_dictText }}</span>
 
                 <template v-if="item.toUserId">
-                  <span>회신하다</span>
+                  <span>{{ t('appUi.kf8f1c525') }}</span>
                   <span>{{ item.toUserId_dictText }}</span>
                   <Tooltip class="comment-last-content" @openChange="(v)=>visibleChange(v, item)">
                     <template #title>
@@ -34,10 +34,10 @@
             </template>
 
             <template #actions>
-              <span @click="showReply(item)">회신하다</span>
+              <span @click="showReply(item)">{{ t('appUi.kf8f1c525') }}</span>
 
-              <Popconfirm title="삭제하시겠습니까?" @confirm="deleteComment(item)">
-                <span>삭제</span>
+              <Popconfirm :title="t('appUi.k5da9b401')" @confirm="deleteComment(item)">
+                <span>{{ t('appUi.kfc81e222') }}</span>
               </Popconfirm>
             </template>
 
@@ -72,6 +72,7 @@
 </template>
 
 <script>
+  import { useI18n } from '/@/hooks/web/useI18n';
   /**
    *댓글 목록
    */
@@ -112,6 +113,7 @@
       otherHeight: propTypes.number.def(0),
     },
     setup(props) {
+      const { t } = useI18n();
       const { createMessage } = useMessage();
       const dataList = ref([]);
       const { userInfo } = useUserStore();
@@ -144,12 +146,12 @@
         if (item.fromUserId_dictText) {
           return item.fromUserId_dictText.substr(0, 2);
         }
-        return '알려지지 않은';
+        return t('appUi.k0d56603e');
       }
 
       function getAuthor(item) {
         if (item.toUser) {
-          return item.fromUserId_dictText + ' 회신하다 ' + item.fromUserId_dictText;
+          return item.fromUserId_dictText + t('appUi.k18169d1a') + item.fromUserId_dictText;
         } else {
           return item.fromUserId_dictText;
         }
@@ -274,13 +276,14 @@
               item.commentId_dictText = data.result.commentContent
             }else{
               console.error(data.message)
-              item.commentId_dictText='댓글이 삭제되었습니다';
+              item.commentId_dictText=t('appUi.k32b89593');
             }
           }
         }
       }
 
       return {
+        t,
         dataList,
         getAvatar,
         getAvatarText,

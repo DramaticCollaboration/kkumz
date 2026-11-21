@@ -1,5 +1,5 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" title="사용자 삭제" :showOkBtn="false" width="1000px" destroyOnClose>
+  <BasicModal v-bind="$attrs" @register="registerModal" :title="t('appUi.ka991eb6b')" :showOkBtn="false" width="1000px" destroyOnClose>
     <BasicTable @register="registerTable" :rowSelection="rowSelection">
       <!--슬롯: 테이블 제목-->
       <template #tableTitle>
@@ -8,16 +8,16 @@
             <a-menu>
               <a-menu-item key="1" @click="batchHandleDelete">
                 <Icon icon="ant-design:delete-outlined"></Icon>
-                일괄 삭제
+                {{ t('appUi.k37f61848') }}
               </a-menu-item>
               <a-menu-item key="1" @click="batchHandleRevert">
                 <Icon icon="ant-design:redo-outlined"></Icon>
-                일괄 복원
+                {{ t('appUi.kfd0ac3e2') }}
               </a-menu-item>
             </a-menu>
           </template>
           <a-button
-            >일괄 작업
+            >{{ t('appUi.k39eb4aed') }}
             <Icon icon="ant-design:down-outlined"></Icon>
           </a-button>
         </a-dropdown>
@@ -38,6 +38,8 @@
   import { recycleColumns } from './user.data';
   import { getRecycleBinList, putRecycleBin, deleteRecycleBin } from './user.api';
   import { useMessage } from '/@/hooks/web/useMessage';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createConfirm } = useMessage();
   // 방출 선언
@@ -62,7 +64,7 @@
     canResize: false,
     actionColumn: {
       width: 150,
-      title: '작업',
+      title: t('appUi.k9d9bf438'),
       dataIndex: 'action',
       // slots: { customRender: 'action' },
       fixed: undefined,
@@ -108,8 +110,8 @@
   function batchHandleDelete() {
     createConfirm({
       iconType: 'warning',
-      title: '영구 삭제',
-      content: '선택한 사용자를 영구 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.',
+      title: t('appUi.k36ed4635'),
+      content: t('appUi.k34c3986e'),
       onOk: () => handleDelete({ id: toRaw(unref(checkedKeys)).join(',') }),
       onCancel() {},
     });
@@ -118,18 +120,18 @@
   function getTableAction(record) {
     return [
       {
-        label: '복원',
+        label: t('appUi.kcc598771'),
         icon: 'ant-design:redo-outlined',
         popConfirm: {
-          title: '선택한 사용자를 복원하시겠습니까?',
+          title: t('appUi.kf29a88ee'),
           confirm: handleRevert.bind(null, record),
         },
       },
       {
-        label: '영구 삭제',
+        label: t('appUi.k36ed4635'),
         icon: 'ant-design:scissor-outlined',
         popConfirm: {
-          title: '선택한 사용자를 영구 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.',
+          title: t('appUi.kdd2d10a8'),
           confirm: handleDelete.bind(null, record),
         },
       },

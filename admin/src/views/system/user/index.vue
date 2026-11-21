@@ -12,29 +12,29 @@
     <BasicTable @register="registerTable" :rowSelection="rowSelection">
       <!--슬롯: 테이블 제목-->
       <template #tableTitle>
-        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate"> 등록</a-button>
+        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate"> {{ t('appUi.k1ac11e9b') }}</a-button>
         <a-button type="primary" preIcon="ant-design:export-outlined" @click="onExportXls" :disabled="isDisabledAuth('system:user:export')"> Export</a-button>
         <j-upload-button type="primary" preIcon="ant-design:import-outlined" @click="onImportXls">Import</j-upload-button>
-        <a-button type="primary" @click="openModal(true, {})" preIcon="ant-design:hdd-outlined"> 삭제</a-button>
+        <a-button type="primary" @click="openModal(true, {})" preIcon="ant-design:hdd-outlined"> {{ t('appUi.kfc81e222') }}</a-button>
         <a-dropdown v-if="selectedRowKeys.length > 0">
           <template #overlay>
             <a-menu>
               <a-menu-item key="1" @click="batchHandleDelete">
                 <Icon icon="ant-design:delete-outlined"></Icon>
-                삭제
+                {{ t('appUi.kfc81e222') }}
               </a-menu-item>
               <a-menu-item key="2" @click="batchFrozen(2)">
                 <Icon icon="ant-design:lock-outlined"></Icon>
-                비활성화
+                {{ t('appUi.k8ff58636') }}
               </a-menu-item>
               <a-menu-item key="3" @click="batchFrozen(1)">
                 <Icon icon="ant-design:unlock-outlined"></Icon>
-                활성화
+                {{ t('appUi.kbbf831ad') }}
               </a-menu-item>
             </a-menu>
           </template>
           <a-button
-            >일괄 작업
+            >{{ t('appUi.k39eb4aed') }}
             <Icon icon="mdi:chevron-down"></Icon>
           </a-button>
         </a-dropdown>
@@ -76,6 +76,8 @@
   import { columns, searchFormSchema } from './user.data';
   import { list, deleteUser, batchDeleteUser, getImportUrl, getExportUrl, frozenBatch } from './user.api';
   import {usePermission} from "/@/hooks/web/usePermission";
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createMessage, createConfirm } = useMessage();
   const { isDisabledAuth } = usePermission();
@@ -96,7 +98,7 @@
   const { prefixCls, tableContext, onExportXls, onImportXls } = useListPage({
     designScope: 'user-list',
     tableProps: {
-      title: '사용자 목록',
+      title: t('appUi.k874f9343'),
       api: list,
       columns: columns,
       size: 'small',
@@ -112,7 +114,7 @@
       },
     },
     exportConfig: {
-      name: '사용자 목록',
+      name: t('appUi.k874f9343'),
       url: getExportUrl,
     },
     importConfig: {
@@ -157,7 +159,7 @@
    */
   async function handleDelete(record) {
     if ('admin' == record.username) {
-      createMessage.warning('관리자 계정에서는 이 작업을 허용하지 않습니다!');
+      createMessage.warning(t('appUi.k3606bf41'));
       return;
     }
     await deleteUser({ id: record.id }, reload);
@@ -168,7 +170,7 @@
   async function batchHandleDelete() {
     let hasAdmin = unref(selectedRows).filter((item) => item.username == 'admin');
     if (unref(hasAdmin).length > 0) {
-      createMessage.warning('관리자 계정에서는 이 작업을 허용하지 않습니다!');
+      createMessage.warning(t('appUi.k3606bf41'));
       return;
     }
     await batchDeleteUser({ ids: selectedRowKeys.value }, () => {
@@ -200,7 +202,7 @@
    */
   async function handleFrozen(record, status) {
     if ('admin' == record.username) {
-      createMessage.warning('관리자 계정에서는 이 작업을 허용하지 않습니다!');
+      createMessage.warning(t('appUi.k3606bf41'));
       return;
     }
     await frozenBatch({ ids: record.id, status: status }, reload);
@@ -211,13 +213,13 @@
   function batchFrozen(status) {
     let hasAdmin = selectedRows.value.filter((item) => item.username == 'admin');
     if (unref(hasAdmin).length > 0) {
-      createMessage.warning('관리자 계정에서는 이 작업을 허용하지 않습니다!');
+      createMessage.warning(t('appUi.k3606bf41'));
       return;
     }
     createConfirm({
       iconType: 'warning',
-      title: '조치 확인',
-      content: (status == 1 ? '활성화' : '비활성화') + ' 계정을 선택하시겠습니까?',
+      title: t('appUi.kf3aa24bb'),
+      content: (status == 1 ? t('appUi.kbbf831ad') : t('appUi.k8ff58636')) + t('appUi.k6996dcaf'),
       onOk: async () => {
         await frozenBatch({ ids: unref(selectedRowKeys).join(','), status: status }, reload);
       },
@@ -231,7 +233,7 @@
   function getTableAction(record): ActionItem[] {
     return [
       {
-        label: '편집',
+        label: t('appUi.kd482e14b'),
         onClick: handleEdit.bind(null, record),
         // ifShow: () => hasPermission('system:user:edit'),
       },
@@ -243,34 +245,34 @@
   function getDropDownAction(record): ActionItem[] {
     return [
       {
-        label: '상세',
+        label: t('appUi.kbb446431'),
         onClick: handleDetail.bind(null, record),
       },
       {
-        label: '비밀번호',
+        label: t('appUi.k81973897'),
         //auth: 'user:changepwd',
         onClick: handleChangePassword.bind(null, record.username),
       },
       {
-        label: '삭제',
+        label: t('appUi.kfc81e222'),
         popConfirm: {
-          title: '삭제 하시겠습니까?',
+          title: t('appUi.ka6e94ce1'),
           confirm: handleDelete.bind(null, record),
         },
       },
       {
-        label: '비활성화',
+        label: t('appUi.k8ff58636'),
         ifShow: record.status == 1,
         popConfirm: {
-          title: '정말 비활성화하시겠습니까?',
+          title: t('appUi.k612febf2'),
           confirm: handleFrozen.bind(null, record, 2),
         },
       },
       {
-        label: '활성화',
+        label: t('appUi.kbbf831ad'),
         ifShow: record.status == 2,
         popConfirm: {
-          title: '정말로 활성화하시겠습니까?',
+          title: t('appUi.kb81bca0a'),
           confirm: handleFrozen.bind(null, record, 1),
         },
       },

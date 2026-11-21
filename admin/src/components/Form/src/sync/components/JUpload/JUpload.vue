@@ -38,6 +38,9 @@
   import { UploadTypeEnum } from './upload.data';
   import { getFileAccessHttpUrl, getHeaders } from '/@/utils/common/compUtils';
   import UploadItemActions from './components/UploadItemActions.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
+  const { t } = useI18n();
 
   const { createMessage, createConfirm } = useMessage();
   const { prefixCls } = useDesign('j-upload');
@@ -45,7 +48,7 @@
   const emit = defineEmits(['change', 'update:value']);
   const props = defineProps({
     value: propTypes.oneOfType([propTypes.string, propTypes.array]),
-    text: propTypes.string.def('업로드'),
+    text: propTypes.string.def(() => $t('appUi.k51672ccd')),
     fileType: propTypes.string.def(UploadTypeEnum.all),
     /*이 속성은 파일 업로드의 비즈니스 경로를 제어하는 ​​데 사용됩니다.*/
     bizPath: propTypes.string.def('temp'),
@@ -233,7 +236,7 @@
     uploadGoOn.value = true;
     if (isImageMode.value) {
       if (file.type.indexOf('image') < 0) {
-        createMessage.warning('사진을 올려주세요');
+        createMessage.warning(t('appUi.k03ae2439'));
         uploadGoOn.value = false;
         return false;
       }
@@ -250,8 +253,8 @@
     if (props.removeConfirm) {
       return new Promise((resolve) => {
         createConfirm({
-          title: '삭제',
-          content: `정말로 이을 삭제하시겠습니까?${isImageMode.value ? '영화' : '파일'}?`,
+          title: t('appUi.kfc81e222'),
+          content: t('appUi.k2477bcf6', { p0: isImageMode.value ? '영화' : '파일' }),
           iconType: 'warning',
           onOk: () => resolve(true),
           onCancel: () => resolve(false),

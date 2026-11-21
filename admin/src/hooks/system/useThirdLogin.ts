@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { ref, unref } from 'vue';
 import { defHttp } from '/@/utils/http/axios';
 import { useGlobSetting } from '/@/hooks/setting';
@@ -66,7 +67,7 @@ export function useThirdLogin() {
           thirdLoginInfo.value = { ...token };
         }
       } else {
-        createMessage.warning('미확인 정보 전송');
+        createMessage.warning($t('appUi.kbe8b7957'));
       }
       window.removeEventListener('message', unref(receiveMessage),false);
     };
@@ -93,8 +94,8 @@ export function useThirdLogin() {
 
   function requestFailed(err) {
     notification.error({
-      message: '로그인 실패',
-      description: ((err.response || {}).data || {}).message || err.message || '요청에 오류가 발생했습니다. 나중에 다시 시도해 주세요.',
+      message: $t('appUi.k56efcfd5'),
+      description: ((err.response || {}).data || {}).message || err.message || $t('appUi.kdeee49cc'),
       duration: 4,
     });
   }
@@ -152,10 +153,10 @@ export function useThirdLogin() {
   //휴대폰 번호를 바인딩하고 확인 버튼을 클릭하세요.
   function thirdHandleOk() {
     if (!unref(thirdPhone)) {
-      cmsFailed('휴대폰번호를 입력해주세요');
+      cmsFailed($t('appUi.k572ac647'));
     }
     if (!unref(thirdCaptcha)) {
-      cmsFailed('인증코드를 입력해주세요');
+      cmsFailed($t('appUi.k7f78207f'));
     }
     let params = {
       mobile: unref(thirdPhone),
@@ -173,7 +174,7 @@ export function useThirdLogin() {
   }
   function cmsFailed(err) {
     notification.error({
-      message: '로그인 실패',
+      message: $t('appUi.k56efcfd5'),
       description: err,
       duration: 4,
     });

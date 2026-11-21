@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 /*
  *
  * 여기에 사용자 정의 표현식을 입력하세요.
@@ -16,15 +17,15 @@
 /** 필드 기본값의 공식 예：주소 얻기 */
 export function demoFieldDefVal_getAddress(arg) {
   if (!arg) {
-    arg = '조양구';
+    arg = $t('appUi.k66801387');
   }
-  반환`서울 ${arg}`;
+  반환$t('appUi.k6e47475a', { p0: arg });
 }
 
 /** 사용자 정의 JS 함수 예 */
 export function sayHi(name) {
   if (!name) {
-    name = '홍길동';
+    name = $t('appUi.k8413234f');
   }
-  return `안녕하세요, 내 이름은： ${name}`;
+  return $t('appUi.k58390a01', { p0: name });
 }

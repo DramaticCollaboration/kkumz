@@ -52,6 +52,7 @@ public class KkumzSystemDTO {
         private String phone;
         private String orgCode;
         private Integer status;
+        private String preferredLocale;
         private List<String> roleIds;
     }
 
@@ -77,6 +78,8 @@ public class KkumzSystemDTO {
         private String id;
         private String parentId;
         private String name;
+        private String nameI18n;
+        private String descriptionI18n;
         private String url;
         private String component;
         private String componentName;
@@ -99,6 +102,7 @@ public class KkumzSystemDTO {
     public static class SaveDictRequest {
         private String id;
         private String dictName;
+        private String dictNameI18n;
         private String dictCode;
         private String description;
         private Integer type;
@@ -113,6 +117,7 @@ public class KkumzSystemDTO {
         private String id;
         private String dictId;
         private String itemText;
+        private String itemTextI18n;
         private String itemValue;
         private String description;
         private Integer sortOrder;

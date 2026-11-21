@@ -1,18 +1,19 @@
+import { $t } from '/@/locales';
 import { FormSchema } from '/@/components/Table';
 import { isRoleExist } from './role.api';
 export const columns = [
   {
-    title: '역할 이름',
+    title: $t('appUi.k27cbee4e'),
     dataIndex: 'roleName',
     width: 100,
   },
   {
-    title: '역할 코드',
+    title: $t('appUi.k859a72b1'),
     dataIndex: 'roleCode',
     width: 100,
   },
   {
-    title: '등록일',
+    title: $t('appUi.k6f80446e'),
     dataIndex: 'createTime',
     width: 100,
   },
@@ -22,15 +23,15 @@ export const columns = [
  */
 export const userColumns = [
   {
-    title: '아이디',
+    title: $t('appUi.k8dd085d9'),
     dataIndex: 'username',
   },
   {
-    title: '사용자 이름',
+    title: $t('appUi.k2cc04d4c'),
     dataIndex: 'realname',
   },
   {
-    title: '상태',
+    title: $t('appUi.k2926977b'),
     dataIndex: 'status_dictText',
     width: 80,
   },
@@ -38,13 +39,13 @@ export const userColumns = [
 export const searchFormSchema: FormSchema[] = [
   {
     field: 'roleName',
-    label: '역할 이름',
+    label: $t('appUi.k27cbee4e'),
     component: 'Input',
     colProps: { span: 6 },
   },
   {
     field: 'roleCode',
-    label: '역할 코드',
+    label: $t('appUi.k859a72b1'),
     component: 'Input',
     colProps: { span: 6 },
   },
@@ -55,7 +56,7 @@ export const searchFormSchema: FormSchema[] = [
 export const searchUserFormSchema: FormSchema[] = [
   {
     field: 'username',
-    label: '아이디',
+    label: $t('appUi.k8dd085d9'),
     component: 'Input',
     colProps: { span: 12 },
   },
@@ -70,13 +71,13 @@ export const formSchema: FormSchema[] = [
   },
   {
     field: 'roleName',
-    label: '역할 이름',
+    label: $t('appUi.k27cbee4e'),
     required: true,
     component: 'Input',
   },
   {
     field: 'roleCode',
-    label: '역할 코드',
+    label: $t('appUi.k859a72b1'),
     required: true,
     component: 'Input',
     dynamicDisabled: ({ values }) => {
@@ -89,16 +90,16 @@ export const formSchema: FormSchema[] = [
           required: true,
           validator: (_, value) => {
             if (!value) {
-              return Promise.reject('역할코드를 입력해주세요');
+              return Promise.reject($t('appUi.kf62ef49e'));
             }
             if (values) {
               return new Promise((resolve, reject) => {
                 isRoleExist({ id: model.id, roleCode: value })
                   .then((res) => {
-                    res.success ? resolve() : reject(res.message || '확인 실패');
+                    res.success ? resolve() : reject(res.message || $t('appUi.kae6c001b'));
                   })
                   .catch((err) => {
-                    reject(err.message || '인증 실패');
+                    reject(err.message || $t('appUi.k7790958f'));
                   });
               });
             }
@@ -109,7 +110,7 @@ export const formSchema: FormSchema[] = [
     },
   },
   {
-    label: '비고',
+    label: $t('appUi.k75cffa41'),
     field: 'description',
     component: 'InputTextArea',
   },
@@ -118,14 +119,14 @@ export const formSchema: FormSchema[] = [
 export const formDescSchema = [
   {
     field: 'roleName',
-    label: '역할 이름',
+    label: $t('appUi.k27cbee4e'),
   },
   {
     field: 'roleCode',
-    label: '역할 코드',
+    label: $t('appUi.k859a72b1'),
   },
   {
-    label: '비고',
+    label: $t('appUi.k75cffa41'),
     field: 'description',
   },
 ];
@@ -138,42 +139,42 @@ export const roleIndexFormSchema: FormSchema[] = [
     show: false,
   },
   {
-    label: '역할 코드',
+    label: $t('appUi.k859a72b1'),
     field: 'roleCode',
     component: 'Input',
     dynamicDisabled: true,
   },
   {
-    label: '홈페이지 라우팅',
+    label: $t('appUi.k48c2fd4c'),
     field: 'url',
     component: 'Input',
     required: true,
-    helpMessage: '홈페이지 라우팅 접속 주소',
+    helpMessage: $t('appUi.k1c98c731'),
   },
   {
-    label: '구성요소 주소',
+    label: $t('appUi.k103b1b22'),
     field: 'component',
     component: 'Input',
-    helpMessage: '홈페이지 라우팅의 구성요소 주소',
+    helpMessage: $t('appUi.k9ff84802'),
     componentProps: {
-      placeholder: '프런트엔드 구성요소를 입력하세요.',
+      placeholder: $t('appUi.k888b1cd4'),
     },
     required: true,
   },
   {
     field: 'route',
-    label: '라우팅',
-    helpMessage: '비라우팅 메뉴는 홈페이지에 설정되어 있으며 활성화가 필요합니다',
+    label: $t('appUi.k06b03319'),
+    helpMessage: $t('appUi.kd35ecb18'),
     component: 'Switch',
     defaultValue: true
   },
   {
-    label: '우선순위',
+    label: $t('appUi.ka0914b4d'),
     field: 'priority',
     component: 'InputNumber',
   },
   {
-    label: '활성화 여부',
+    label: $t('appUi.ke91e52ad'),
     field: 'status',
     component: 'JSwitch',
     componentProps: {

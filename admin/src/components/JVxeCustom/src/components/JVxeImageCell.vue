@@ -3,16 +3,16 @@
     <template v-if="hasFile" v-for="(file, fileKey) of [innerFile || {}]" :key="fileKey">
       <div class="j-vxe-image-list">
         <template v-if="!file || !(file['url'] || file['path'] || file['message'])">
-          <a-tooltip :title="'기다리세요.: ' + JSON.stringify(file) + (file['url'] || file['path'] || file['message'])">
+          <a-tooltip :title="t('appUi.k4c2a8ac7') + JSON.stringify(file) + (file['url'] || file['path'] || file['message'])">
             <LoadingOutlined />
           </a-tooltip>
         </template>
         <template v-else-if="file['path']">
           <template v-for="src of imgList">
-            <img class="j-vxe-image" :src="src" alt="그림 오류" @[clickEvent]="handleMoreOperation" @click="handlePreview" />
+            <img class="j-vxe-image" :src="src" :alt="t('appUi.k7c444d7d')" @[clickEvent]="handleMoreOperation" @click="handlePreview" />
           </template>
         </template>
-        <a-tooltip v-else :title="file.message || '업로드 실패'" @[clickEvent]="handleClickShowImageError">
+        <a-tooltip v-else :title="file.message || t('appUi.ka40a0075')" @[clickEvent]="handleClickShowImageError">
           <Icon icon="ant-design:exclamation-circle" style="color: red" />
         </a-tooltip>
       </div>
@@ -29,7 +29,7 @@
         v-bind="cellProps"
         @change="handleChangeUpload"
       >
-        <a-button v-if="!hasFile" preIcon="ant-design:upload">{{ originColumn.btnText || '사진 업로드' }}</a-button>
+        <a-button v-if="!hasFile" preIcon="ant-design:upload">{{ originColumn.btnText || t('appUi.k78ef23f1') }}</a-button>
         <div v-if="hasFile && imgList.length < maxCount" class="j-vxe-plus" @click="">
           <Icon icon="ant-design:plus" />
         </div>
@@ -39,6 +39,7 @@
   </div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { computed, defineComponent ,unref } from 'vue';
   import { useMessage } from '/@/hooks/web/useMessage';
   import { JVxeComponent } from '/@/components/sync/JVxeTable/types';
@@ -53,6 +54,7 @@
     components: components,
     props: useJVxeCompProps(),
     setup(props: JVxeComponent.Props) {
+      const { t } = useI18n();
 
       const { createErrorModal } = useMessage();
       const setup = useFileCell(props, UploadTypeEnum.image, { multiple: true });
@@ -79,8 +81,8 @@
         let file = innerFile.value || null;
         if (file && file['message']) {
           createErrorModal({
-            title: '업로드 오류',
-            content: '오류 메시지：' + file['message'],
+            title: t('appUi.ke329e5b3'),
+            content: t('appUi.k84e4c01b') + file['message'],
             maskClosable: true,
           });
         }
@@ -91,6 +93,7 @@
         }
       };
       return {
+        t,
         ...setup,
         imgList,
         maxCount,

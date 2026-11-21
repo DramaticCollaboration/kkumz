@@ -25,7 +25,7 @@
 
   <template v-else-if="compType === CompTypeEnum.Select">
     <!-- 로딩 효과 표시 -->
-    <a-input v-if="loadingEcho" readOnly placeholder="로드 중…">
+    <a-input v-if="loadingEcho" readOnly :placeholder="t('appUi.ke34887fa')">
       <template #prefix>
         <LoadingOutlined />
       </template>
@@ -40,7 +40,7 @@
       :style="style"
       @change="handleChange"
     >
-      <a-select-option v-if="showChooseOption" :value="null">선택하세요…</a-select-option>
+      <a-select-option v-if="showChooseOption" :value="null">{{ t('appUi.kdf572cc8') }}</a-select-option>
       <template v-for="item in dictOptions" :key="`${item.value}`">
         <a-select-option :value="item.value">
           <span
@@ -56,6 +56,7 @@
   </template>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, PropType, ref, reactive, watchEffect, computed, unref, watch, onMounted, nextTick } from 'vue';
   import { propTypes } from '/@/utils/propTypes';
   import { useAttrs } from '/@/hooks/core/useAttrs';
@@ -92,6 +93,7 @@
     },
     emits: ['options-change', 'change','update:value'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       const dictOptions = ref<any[]>([]);
       const attrs = useAttrs();
       const [state, , , formItemContext] = useRuleFormItem(props, 'value', 'change');
@@ -195,6 +197,7 @@
       }
 
       return {
+        t,
         state,
         compType,
         attrs,

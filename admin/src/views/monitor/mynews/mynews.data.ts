@@ -1,40 +1,41 @@
+import { $t } from '/@/locales';
 import { BasicColumn, FormSchema } from '/@/components/Table';
 import { render } from '/@/utils/common/renderUtils';
 
 export const columns: BasicColumn[] = [
   {
-    title: '제목',
+    title: $t('appUi.k078b3a1b'),
     dataIndex: 'titile',
     width: 100,
     align: 'left',
   },
   {
-    title: '메시지 유형',
+    title: $t('appUi.kb2d237a7'),
     dataIndex: 'msgCategory',
     width: 80,
     customRender: ({ text }) => {
       return render.renderDictNative(
         text,
         [
-          { label: '공지사항', value: '1', color: 'blue' },
-          { label: '시스템 메시지', value: '2' },
+          { label: $t('appUi.k15d236a4'), value: '1', color: 'blue' },
+          { label: $t('appUi.k6017b3b9'), value: '2' },
         ],
         true
       );
     },
   },
   {
-    title: '등록자',
+    title: $t('appUi.k17bd7c06'),
     dataIndex: 'sender',
     width: 80,
   },
   {
-    title: '출시 시간',
+    title: $t('appUi.kbdd3b0a6'),
     dataIndex: 'sendTime',
     width: 80,
   },
   {
-    title: '우선순위',
+    title: $t('appUi.ka0914b4d'),
     dataIndex: 'priority',
     width: 80,
     customRender: ({ text }) => {
@@ -43,15 +44,15 @@ export const columns: BasicColumn[] = [
     },
   },
   {
-    title: '읽음 여부',
+    title: $t('appUi.k0389fb62'),
     dataIndex: 'readFlag',
     width: 80,
     customRender: ({ text }) => {
       return render.renderDictNative(
         text,
         [
-          { label: '읽히지 않는', value: '0', color: 'red' },
-          { label: '읽음', value: '1' },
+          { label: $t('appUi.k587bed98'), value: '0', color: 'red' },
+          { label: $t('appUi.kbe4f86a9'), value: '1' },
         ],
         true
       );
@@ -62,13 +63,13 @@ export const columns: BasicColumn[] = [
 export const searchFormSchema: FormSchema[] = [
   {
     field: 'titile',
-    label: '제목',
+    label: $t('appUi.k078b3a1b'),
     component: 'Input',
     colProps: { span: 8 },
   },
   {
     field: 'sender',
-    label: '등록자',
+    label: $t('appUi.k17bd7c06'),
     component: 'Input',
     colProps: { span: 8 },
   },

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { computed, nextTick, unref, watchEffect } from 'vue';
 import { router } from '/@/router';
 import { useRoute } from 'vue-router';
@@ -108,7 +109,7 @@ export function useColumnsCache(opt, setColumns, handleColumnFixed) {
       // 고정 컬럼
       fixedColumns: getFixedColumns(),
     });
-    $message.success('성공적으로 저장되었습니다');
+    $message.success($t('appUi.ke428910a'));
     // 저장 후 바로 닫기
     opt.popoverVisible.value = false;
   }
@@ -118,7 +119,7 @@ export function useColumnsCache(opt, setColumns, handleColumnFixed) {
     // 고정 열 재설정
     await resetFixedColumn();
     $ls.remove(cacheKey.value);
-    $message.success('재설정 성공');
+    $message.success($t('appUi.kaea3840b'));
   }
 
   async function resetFixedColumn() {

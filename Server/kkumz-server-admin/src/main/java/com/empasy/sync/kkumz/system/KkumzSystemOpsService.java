@@ -1,5 +1,7 @@
 package com.empasy.sync.kkumz.system;
 
+import com.empasy.sync.core.i18n.I18nJsonResolver;
+import com.empasy.sync.core.i18n.SyncLocaleContext;
 import com.empasy.sync.kkumz.system.KkumzSystemOpsDTO.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +43,21 @@ public class KkumzSystemOpsService {
             "WEB", "PC 웹",
             "APP", "모바일 앱",
             "API", "외부 API"
+    );
+
+    private static final Map<Integer, String> OPERATE_TYPE_LABELS_EN = Map.of(
+            1, "Query",
+            2, "Create",
+            3, "Update",
+            4, "Delete",
+            5, "Import",
+            6, "Export"
+    );
+
+    private static final Map<String, String> CLIENT_TYPE_LABELS_EN = Map.of(
+            "WEB", "Web Browser",
+            "APP", "Mobile App",
+            "API", "External API"
     );
 
     private final JdbcTemplate jdbcTemplate;
@@ -281,20 +298,24 @@ public class KkumzSystemOpsService {
 
     public Map<String, Object> queryPermissionTreeList() {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT id, parent_id, name, icon, menu_type, rule_flag, sort_no " +
+                "SELECT id, parent_id, name, name_i18n, icon, menu_type, rule_flag, sort_no " +
                 "FROM sys_permission WHERE del_flag = 0 ORDER BY sort_no ASC, id ASC"
         );
         Map<String, Map<String, Object>> nodeMap = new LinkedHashMap<>();
         List<String> allIds = new ArrayList<>();
         for (Map<String, Object> row : rows) {
             String id = String.valueOf(row.get("id"));
+            String nameI18n = row.get("name_i18n") != null ? row.get("name_i18n").toString() : null;
+            String baseName = row.get("name") != null ? row.get("name").toString() : id;
+            String localizedTitle = I18nJsonResolver.resolveCurrent(nameI18n, baseName);
             allIds.add(id);
             Map<String, Object> node = new LinkedHashMap<>();
             node.put("id", id);
             node.put("key", id);
             node.put("value", id);
-            node.put("title", row.get("name"));
-            node.put("slotTitle", row.get("name"));
+            node.put("title", localizedTitle);
+            node.put("slotTitle", localizedTitle);
+            node.put("nameI18n", nameI18n);
             node.put("parentId", row.get("parent_id"));
             node.put("icon", row.get("icon"));
             node.put("ruleFlag", row.get("rule_flag"));
@@ -521,8 +542,11 @@ public class KkumzSystemOpsService {
             item.put("id", row.get("id"));
             item.put("logType", row.get("log_type"));
             item.put("logContent", row.get("log_content"));
+            boolean isEnglish = SyncLocaleContext.isEnglish();
+            Map<Integer, String> opLabels = isEnglish ? OPERATE_TYPE_LABELS_EN : OPERATE_TYPE_LABELS;
+            Map<String, String> clientLabels = isEnglish ? CLIENT_TYPE_LABELS_EN : CLIENT_TYPE_LABELS;
             item.put("operateType", opType);
-            item.put("operateType_dictText", opType != null ? OPERATE_TYPE_LABELS.getOrDefault(opType, String.valueOf(opType)) : "");
+            item.put("operateType_dictText", opType != null ? opLabels.getOrDefault(opType, String.valueOf(opType)) : "");
             item.put("userid", row.get("userid"));
             item.put("username", row.get("username"));
             item.put("ip", row.get("ip"));
@@ -530,7 +554,7 @@ public class KkumzSystemOpsService {
             item.put("requestUrl", row.get("request_url"));
             item.put("requestParam", row.get("request_param"));
             item.put("clientType", clientType);
-            item.put("clientType_dictText", CLIENT_TYPE_LABELS.getOrDefault(clientType, clientType));
+            item.put("clientType_dictText", clientLabels.getOrDefault(clientType, clientType));
             item.put("costTime", row.get("cost_time"));
             item.put("createTime", formatTimestamp(row.get("create_time")));
             return item;
@@ -540,9 +564,11 @@ public class KkumzSystemOpsService {
 
     public Map<String, Object> getHelpGuide(String appCode, String path, String routeName) {
         String resolvedApp = (appCode != null && !appCode.isBlank()) ? appCode.trim() : "KKUMZ";
+        String currentLocale = SyncLocaleContext.currentLocaleTag();
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT * FROM sys_page_help WHERE del_flag = 0 AND app_code = ? AND (page_key = ? OR route_name = ?) ORDER BY sort_order ASC LIMIT 1",
-                resolvedApp, path != null ? path.trim() : "", routeName != null ? routeName.trim() : ""
+                "SELECT * FROM sys_page_help WHERE del_flag = 0 AND app_code = ? AND (page_key = ? OR route_name = ?) " +
+                "ORDER BY CASE WHEN locale = ? THEN 0 WHEN locale = 'ko-KR' THEN 1 ELSE 2 END, sort_order ASC LIMIT 1",
+                resolvedApp, path != null ? path.trim() : "", routeName != null ? routeName.trim() : "", currentLocale
         );
         if (rows.isEmpty()) {
             return null;
@@ -572,7 +598,7 @@ public class KkumzSystemOpsService {
             params.add(pattern);
             params.add(pattern);
         }
-        sql.append(" ORDER BY sort_order ASC, update_time DESC");
+        sql.append(" ORDER BY CASE WHEN help_type = 'SYSTEM' THEN 0 ELSE 1 END, sort_order ASC, update_time DESC");
         return jdbcTemplate.queryForList(sql.toString(), params.toArray())
                 .stream()
                 .map(this::mapPageHelp)
@@ -602,6 +628,9 @@ public class KkumzSystemOpsService {
                 ? req.getId().trim()
                 : "help_kkumz_" + UUID.randomUUID().toString().substring(0, 8);
         String appCode = (req.getAppCode() != null && !req.getAppCode().isBlank()) ? req.getAppCode().trim() : "KKUMZ";
+        String helpType = (req.getHelpType() != null && "SYSTEM".equalsIgnoreCase(req.getHelpType().trim()))
+                ? "SYSTEM"
+                : "SCREEN";
         String category = (req.getCategory() != null && !req.getCategory().isBlank()) ? req.getCategory().trim() : "시스템 관리";
         String summary = req.getSummary() != null ? req.getSummary() : "";
         String overview = req.getOverview() != null ? req.getOverview() : "";
@@ -620,23 +649,23 @@ public class KkumzSystemOpsService {
         Integer exists = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM sys_page_help WHERE id = ?", Integer.class, id);
         if (exists != null && exists > 0) {
             jdbcTemplate.update(
-                    "UPDATE sys_page_help SET app_code = ?, page_key = ?, route_name = ?, title = ?, category = ?, icon = ?, " +
+                    "UPDATE sys_page_help SET app_code = ?, help_type = ?, page_key = ?, route_name = ?, title = ?, category = ?, icon = ?, " +
                     "summary = ?, overview = ?, features_json = CAST(? AS jsonb), lineage_json = CAST(? AS jsonb), " +
                     "formulas_json = CAST(? AS jsonb), steps_json = CAST(? AS jsonb), related_screens_json = CAST(? AS jsonb), " +
                     "tips_json = CAST(? AS jsonb), warnings_json = CAST(? AS jsonb), faq_json = CAST(? AS jsonb), " +
                     "ai_prompt_hint = ?, status = ?, sort_order = ?, del_flag = 0, update_by = 'admin', update_time = CURRENT_TIMESTAMP WHERE id = ?",
-                    appCode, req.getPageKey().trim(), req.getRouteName(), req.getTitle().trim(), category, req.getIcon(),
+                    appCode, helpType, req.getPageKey().trim(), req.getRouteName(), req.getTitle().trim(), category, req.getIcon(),
                     summary, overview, featuresJson, lineageJson, formulasJson, stepsJson, relatedJson,
                     tipsJson, warningsJson, faqJson, req.getAiPromptHint(), status, sortOrder, id
             );
         } else {
             jdbcTemplate.update(
-                    "INSERT INTO sys_page_help (id, app_code, page_key, route_name, title, category, icon, summary, overview, " +
+                    "INSERT INTO sys_page_help (id, app_code, help_type, page_key, route_name, title, category, icon, summary, overview, " +
                     "features_json, lineage_json, formulas_json, steps_json, related_screens_json, tips_json, warnings_json, faq_json, " +
                     "ai_prompt_hint, status, sort_order, del_flag, create_by) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), CAST(? AS jsonb), CAST(? AS jsonb), " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), CAST(? AS jsonb), CAST(? AS jsonb), " +
                     "CAST(? AS jsonb), CAST(? AS jsonb), CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, 0, 'admin')",
-                    id, appCode, req.getPageKey().trim(), req.getRouteName(), req.getTitle().trim(), category, req.getIcon(),
+                    id, appCode, helpType, req.getPageKey().trim(), req.getRouteName(), req.getTitle().trim(), category, req.getIcon(),
                     summary, overview, featuresJson, lineageJson, formulasJson, stepsJson, relatedJson,
                     tipsJson, warningsJson, faqJson, req.getAiPromptHint(), status, sortOrder
             );
@@ -667,14 +696,16 @@ public class KkumzSystemOpsService {
     private Map<String, Object> mapDepartNode(Map<String, Object> row) {
         String id = String.valueOf(row.get("id"));
         String name = String.valueOf(row.get("depart_name"));
+        String nameEn = row.get("depart_name_en") != null ? String.valueOf(row.get("depart_name_en")) : null;
+        String displayTitle = (SyncLocaleContext.isEnglish() && nameEn != null && !nameEn.isBlank()) ? nameEn : name;
         long childCount = row.get("child_count") instanceof Number n ? n.longValue() : 0L;
         Map<String, Object> node = new LinkedHashMap<>();
         node.put("id", id);
         node.put("key", id);
         node.put("value", id);
-        node.put("title", name);
-        node.put("departName", name);
-        node.put("departNameEn", row.get("depart_name_en"));
+        node.put("title", displayTitle);
+        node.put("departName", displayTitle);
+        node.put("departNameEn", nameEn);
         node.put("parentId", row.get("parent_id"));
         node.put("orgCode", row.get("org_code"));
         node.put("orgCategory", row.get("org_category"));
@@ -694,6 +725,8 @@ public class KkumzSystemOpsService {
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", row.get("id"));
         item.put("appCode", row.get("app_code"));
+        Object rawHelpType = row.get("help_type");
+        item.put("helpType", rawHelpType != null && "SYSTEM".equalsIgnoreCase(rawHelpType.toString().trim()) ? "SYSTEM" : "SCREEN");
         item.put("pageKey", row.get("page_key"));
         item.put("routeName", row.get("route_name"));
         item.put("title", row.get("title"));

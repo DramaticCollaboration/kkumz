@@ -14,8 +14,8 @@
         <Menu @click="handleMenuClick">
           <MenuItem key="password" :text="t('layout.header.dropdownItemSwitchPassword')" icon="ant-design:key-outlined" />
           <MenuItem key="cache" :text="t('layout.header.dropdownItemRefreshCache')" icon="ion:sync-outline" />
-          <MenuItem v-if="getIsMobile" key="mobileTheme" :text="isDarkMode ? '라이트 모드' : '다크 모드'" icon="ant-design:bg-colors-outlined" />
-          <MenuItem v-if="getIsMobile" key="mobileLocale" :text="currentLocale === 'en' ? '한국어 전환' : 'English'" icon="ant-design:global-outlined" />
+          <MenuItem v-if="getIsMobile" key="mobileTheme" :text="isDarkMode ? t('appUi.kc08604b6') : t('appUi.k86749a2e')" icon="ant-design:bg-colors-outlined" />
+          <MenuItem v-if="getIsMobile" key="mobileLocale" :text="currentLocale === 'en' ? t('appUi.k08679049') : 'English'" icon="ant-design:global-outlined" />
           <MenuItem key="logout" :text="t('layout.header.dropdownItemLoginOut')" icon="ion:power-outline" />
         </Menu>
       </template>

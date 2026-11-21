@@ -34,8 +34,8 @@
       <!-- 점진적 보안 캡차 (로그인 실패 시 노출) -->
       <div v-if="showCaptcha" class="mb-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 transition-all">
         <div class="text-[11px] text-slate-600 dark:text-slate-300 font-medium mb-1.5 flex items-center justify-between">
-          <span>보안 인증코드 입력</span>
-          <span class="text-slate-400 dark:text-slate-400 cursor-pointer hover:underline" @click="handleChangeCheckCode">새로고침</span>
+          <span>{{ t('appUi.keb275383') }}</span>
+          <span class="text-slate-400 dark:text-slate-400 cursor-pointer hover:underline" @click="handleChangeCheckCode">{{ t('appUi.kdeb94acf') }}</span>
         </div>
         <ARow :gutter="8">
           <ACol :span="14">
@@ -52,15 +52,15 @@
             <div
               class="h-10 flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer overflow-hidden shadow-2xs"
               @click="handleChangeCheckCode"
-              title="클릭하여 새로고침"
+              :title="t('appUi.k29e1f046')"
             >
               <img
                 v-if="randCodeData.requestCodeSuccess && randCodeData.randCodeImage"
                 :src="randCodeData.randCodeImage"
-                alt="보안 인증코드"
+                :alt="t('appUi.k542a6563')"
                 class="h-full object-contain"
               />
-              <span v-else class="text-xs text-slate-400">인증코드 불러오는 중</span>
+              <span v-else class="text-xs text-slate-400">{{ t('appUi.k3717dffb') }}</span>
             </div>
           </ACol>
         </ARow>
@@ -186,9 +186,9 @@
 
   function handleForgotPassword() {
     Modal.info({
-      title: '관리자 계정 비밀번호 초기화 안내',
-      content: '보안 정책상 백오피스 운영 계정의 비밀번호 초기화는 시스템 총괄 관리자 권한으로만 가능합니다. 사내 보안 담당자에게 초기화를 요청해 주세요.',
-      okText: '확인',
+      title: t('appUi.k457e3931'),
+      content: t('appUi.k6659868d'),
+      okText: t('appUi.k468266d6'),
       centered: true,
     });
   }

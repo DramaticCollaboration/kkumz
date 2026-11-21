@@ -29,6 +29,9 @@
   import { useAttrs } from '/@/hooks/core/useAttrs';
   import { TreeSelect } from 'ant-design-vue';
   import { useMessage } from '/@/hooks/web/useMessage';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
+  const { t } = useI18n();
 
   enum Api {
     url = '/api/v1/kkumz/sys/dict/loadTreeData',
@@ -37,7 +40,7 @@
 
   const props = defineProps({
     value: propTypes.string.def(''),
-    placeholder: propTypes.string.def('선택하세요'),
+    placeholder: propTypes.string.def(() => $t('appUi.kc2255771')),
     dict: propTypes.string.def('id'),
     parentCode: propTypes.string.def(''),
     pidField: propTypes.string.def('pid'),

@@ -1,5 +1,5 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" title="사전 삭제" :showOkBtn="false" width="1000px" destroyOnClose>
+  <BasicModal v-bind="$attrs" @register="registerModal" :title="t('appUi.k296368a8')" :showOkBtn="false" width="1000px" destroyOnClose>
     <BasicTable @register="registerTable">
       <!--액션바-->
       <template #action="{ record }">
@@ -14,6 +14,8 @@
   import { BasicTable, useTable, TableAction } from '/src/components/Table';
   import { recycleBincolumns } from '../dict.data';
   import { getRecycleBinList, putRecycleBin, deleteRecycleBin } from '../dict.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
   const checkedKeys = ref<Array<string | number>>([]);
@@ -33,7 +35,7 @@
     canResize: false,
     actionColumn: {
       width: 100,
-      title: '작업',
+      title: t('appUi.k9d9bf438'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
       fixed: undefined,
@@ -69,19 +71,19 @@
   function getTableAction(record) {
     return [
       {
-        label: '복원',
+        label: t('appUi.kcc598771'),
         icon: 'ant-design:redo-outlined',
         popConfirm: {
-          title: '선택한 항목을 복원하시겠습니까?',
+          title: t('appUi.ka41d694f'),
           confirm: handleRevert.bind(null, record),
         },
       },
       {
-        label: '영구 삭제',
+        label: t('appUi.k36ed4635'),
         icon: 'ant-design:scissor-outlined',
         color: 'error',
         popConfirm: {
-          title: '삭제 하시겠습니까?',
+          title: t('appUi.ka6e94ce1'),
           confirm: handleDelete.bind(null, record),
         },
       },

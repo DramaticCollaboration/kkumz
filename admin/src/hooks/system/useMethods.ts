@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { defHttp } from '/@/utils/http/axios';
 import { useMessage } from '/@/hooks/web/useMessage';
 import { useGlobSetting } from '/@/hooks/setting';
@@ -23,7 +24,7 @@ export function useMethods() {
   async function exportXls(name, url, params, isXlsx = false) {
     const data = await defHttp.get({ url: url, params: params, responseType: 'blob', timeout: 60000 }, { isTransformResponse: false });
     if (!data) {
-      createMessage.warning('파일 다운로드 실패');
+      createMessage.warning($t('appUi.k3c495513'));
       return;
     }
     let reader = new FileReader()
@@ -33,7 +34,7 @@ export function useMethods() {
         if(reader.result.toString().indexOf("success") !=-1){
           const { success, message } = JSON.parse(reader.result.toString());
           if (!success) {
-            createMessage.warning("내보내기 실패, 실패 이유："+ message);
+            createMessage.warning($t('appUi.k08069875')+ message);
           }else{
             exportExcel(name, isXlsx, data);
           }
@@ -68,9 +69,9 @@ export function useMethods() {
                               </div>`,
           });
         } else if (fileInfo.code === 500 || fileInfo.code === 510) {
-          createMessage.error(fileInfo.message || `${data.file.name} 가져오기 실패`);
+          createMessage.error(fileInfo.message || $t('appUi.kbca4c975', { p0: data.file.name }));
         } else {
-          createMessage.success(fileInfo.message || `${data.file.name} 파일이 성공적으로 업로드되었습니다`);
+          createMessage.success(fileInfo.message || $t('appUi.k94e1977a', { p0: data.file.name }));
         }
       } catch (error) {
         console.log('가져온 데이터가 비정상입니다.', error);
@@ -95,7 +96,7 @@ export function useMethods() {
    */
   function exportExcel(name, isXlsx, data) {
     if (!name || typeof name != 'string') {
-      name = '파일 내보내기';
+      name = $t('appUi.k8093066d');
     }
     let blobOptions = { type: 'application/vnd.ms-excel' };
     let fileSuffix = '.xls';

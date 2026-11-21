@@ -1,21 +1,22 @@
 <template>
   <div class="comment-tabs-warp" v-if="showStatus">
     <a-tabs v-if="show" @change="handleChange" :animated="false">
-      <a-tab-pane v-if="showComment" tab="커멘트" key="comment" class="comment-list-tab">
+      <a-tab-pane v-if="showComment" :tab="t('appUi.k277cc080')" key="comment" class="comment-list-tab">
         <comment-list :tableName="tableName" :dataId="dataId" :datetime="datetime1" :otherHeight="otherHeight"></comment-list>
       </a-tab-pane>
-      <a-tab-pane v-if="showFiles" tab="문서" key="file">
+      <a-tab-pane v-if="showFiles" :tab="t('appUi.k19e4eb25')" key="file">
         <comment-files :tableName="tableName" :dataId="dataId" :datetime="datetime2"></comment-files>
       </a-tab-pane>
-      <a-tab-pane v-if="showDataLog" tab="통나무" key="log">
+      <a-tab-pane v-if="showDataLog" :tab="t('appUi.k89478847')" key="log">
         <data-log-list :tableName="tableName" :dataId="dataId" :datetime="datetime3"></data-log-list>
       </a-tab-pane>
     </a-tabs>
   </div>
-  <a-empty v-else description="새 페이지에서는 댓글을 지원하지 않습니다." />
+  <a-empty v-else :description="t('appUi.kefaec82d')" />
 </template>
 
 <script>
+  import { useI18n } from '/@/hooks/web/useI18n';
   /**
    *댓글 영역
    */
@@ -45,6 +46,7 @@
       otherHeight: propTypes.number.def(0),
     },
     setup(props) {
+      const { t } = useI18n();
       const showStatus = computed(() => {
         if (props.dataId && props.tableName) {
           return true;
@@ -81,6 +83,7 @@
       }
 
       return {
+        t,
         showStatus,
         handleChange,
         datetime1,

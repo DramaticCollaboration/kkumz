@@ -1,8 +1,8 @@
 <template>
-  <BasicDrawer v-bind="$attrs" @register="registerDrawer" title="데이터 권한 규칙" :width="adaptiveWidth">
+  <BasicDrawer v-bind="$attrs" @register="registerDrawer" :title="t('appUi.k6c2f6c87')" :width="adaptiveWidth">
     <BasicTable @register="registerTable">
       <template #tableTitle>
-        <a-button type="primary" @click="handleCreate"> 등록</a-button>
+        <a-button type="primary" @click="handleCreate"> {{ t('appUi.k1ac11e9b') }}</a-button>
       </template>
       <template #action="{ record }">
         <TableAction :actions="getTableAction(record)" />
@@ -21,6 +21,8 @@
   import { dataRuleList, deleteRule } from './menu.api';
   import { ColEx } from '/@/components/Form/src/types';
   import { useDrawerAdaptiveWidth } from '/@/hooks/sync/useAdaptiveWidth';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   const permissionId = ref('');
   const { adaptiveWidth } = useDrawerAdaptiveWidth();
   //권한 규칙 모델
@@ -68,7 +70,7 @@
     immediate: false,
     actionColumn: {
       width: 100,
-      title: '작업',
+      title: t('appUi.k9d9bf438'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
       fixed: undefined,
@@ -107,13 +109,13 @@
   function getTableAction(record) {
     return [
       {
-        label: '편집',
+        label: t('appUi.kd482e14b'),
         onClick: handleEdit.bind(null, record),
       },
       {
-        label: '삭제',
+        label: t('appUi.kfc81e222'),
         popConfirm: {
-          title: '삭제 하시겠습니까?',
+          title: t('appUi.ka6e94ce1'),
           confirm: handleDelete.bind(null, record),
         },
       },

@@ -2,13 +2,13 @@
   <div>
     <BasicTable @register="registerTable">
       <template #toolbar>
-        <a-button type="primary" @click="handleCreate('INBOUND')">+ 인바운드 API 키 신규 발급</a-button>
-        <a-button @click="handleCreate('OUTBOUND')">+ 외부 백엔드(SyncCMS/SyncShop) 연동 키 등록</a-button>
+        <a-button type="primary" @click="handleCreate('INBOUND')">{{ t('appUi.k88d1fedc') }}</a-button>
+        <a-button @click="handleCreate('OUTBOUND')">{{ t('appUi.kfc2775be') }}</a-button>
       </template>
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'direction'">
           <Tag :color="record.direction === 'OUTBOUND' ? 'indigo' : 'default'">
-            {{ record.direction === 'OUTBOUND' ? 'OUTBOUND (백엔드 호출)' : 'INBOUND (외부 유입)' }}
+            {{ record.direction === 'OUTBOUND' ? t('appUi.k10bffc65') : t('appUi.k903fdd13') }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'serviceCode'">
@@ -24,7 +24,7 @@
             <div class="flex items-center gap-1">
               <span class="text-gray-400">AK:</span>
               <span class="font-semibold text-blue-600">{{ record.accessKey }}</span>
-              <a-button type="link" size="small" @click="copyText(record.accessKey, 'Access Key')">복사</a-button>
+              <a-button type="link" size="small" @click="copyText(record.accessKey, 'Access Key')">{{ t('appUi.ka55b1ecb') }}</a-button>
             </div>
             <div class="flex items-center gap-1">
               <span class="text-gray-400">SK:</span>
@@ -32,9 +32,9 @@
                 {{ visibleSecrets[record.id] ? record.secretKey : maskSecret(record.secretKey) }}
               </span>
               <a-button type="link" size="small" @click="toggleSecret(record.id)">
-                {{ visibleSecrets[record.id] ? '숨김' : '표시' }}
+                {{ visibleSecrets[record.id] ? t('appUi.k093ff103') : t('appUi.ka61d568e') }}
               </a-button>
-              <a-button type="link" size="small" @click="copyText(record.secretKey, 'Secret Key')">복사</a-button>
+              <a-button type="link" size="small" @click="copyText(record.secretKey, 'Secret Key')">{{ t('appUi.ka55b1ecb') }}</a-button>
             </div>
           </div>
         </template>
@@ -47,44 +47,44 @@
         </template>
         <template v-else-if="column.key === 'status'">
           <Tag :color="record.status === 'ACTIVE' ? 'success' : 'error'">
-            {{ record.status === 'ACTIVE' ? '정상 활성' : '폐기/중지' }}
+            {{ record.status === 'ACTIVE' ? t('appUi.k7964be1a') : t('appUi.kd73ce22f') }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'action'">
           <TableAction
             :actions="[
               {
-                label: '연동 검증',
+                label: t('appUi.kb7a09430'),
                 icon: 'ant-design:api-outlined',
                 onClick: handleVerify.bind(null, record),
               },
               {
-                label: 'Secret 재발급',
+                label: t('appUi.kb0678b3d'),
                 icon: 'ant-design:sync-outlined',
                 popConfirm: {
-                  title: 'Secret Key를 즉시 회전(재발급)하시겠습니까? OUTBOUND 키는 대상 서비스에도 즉시 동기화됩니다.',
+                  title: t('appUi.k97591ea5'),
                   confirm: handleRotate.bind(null, record),
                 },
               },
               {
-                label: '편집',
+                label: t('appUi.kd482e14b'),
                 icon: 'ant-design:edit-outlined',
                 onClick: handleEdit.bind(null, record),
               },
               {
-                label: record.status === 'ACTIVE' ? '중지' : '활성화',
+                label: record.status === 'ACTIVE' ? t('appUi.k9cb606b2') : t('appUi.kbbf831ad'),
                 color: record.status === 'ACTIVE' ? 'warning' : 'success',
                 popConfirm: {
-                  title: record.status === 'ACTIVE' ? '이 API 키를 일시 중지하시겠습니까?' : '이 API 키를 다시 활성화하시겠습니까?',
+                  title: record.status === 'ACTIVE' ? t('appUi.ke1afc124') : t('appUi.k4ad5c539'),
                   confirm: handleToggleStatus.bind(null, record),
                 },
               },
               {
-                label: '삭제',
+                label: t('appUi.kfc81e222'),
                 icon: 'ant-design:delete-outlined',
                 color: 'error',
                 popConfirm: {
-                  title: '이 API 액세스 키를 영구 삭제하시겠습니까?',
+                  title: t('appUi.k5cd8a8b2'),
                   confirm: handleDelete.bind(null, record),
                 },
               },
@@ -111,13 +111,15 @@
     deleteAdminApiKey,
   } from '/@/api/kkumz';
   import ApiKeyModal from './components/ApiKeyModal.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createMessage, createSuccessModal, createErrorModal } = useMessage();
   const [registerModal, { openModal }] = useModal();
   const visibleSecrets = reactive<Record<string, boolean>>({});
 
   const [registerTable, { reload }] = useTable({
-    title: '서비스 연동 API 인증키 관리',
+    title: t('appUi.k219ee1e6'),
     api: getAdminApiKeyList,
     rowKey: 'id',
     useSearchForm: true,
@@ -128,56 +130,56 @@
       schemas: [
         {
           field: 'direction',
-          label: '연동 방향',
+          label: t('appUi.kb553f730'),
           component: 'JDictSelectTag',
           componentProps: {
             dictCode: 'kkumz_api_direction',
-            placeholder: '전체',
+            placeholder: t('appUi.k934dd25e'),
           },
           colProps: { span: 6 },
         },
         {
           field: 'serviceCode',
-          label: '대상 서비스',
+          label: t('appUi.k484829ad'),
           component: 'JDictSelectTag',
           componentProps: {
             dictCode: 'kkumz_api_service_code',
-            placeholder: '전체',
+            placeholder: t('appUi.k934dd25e'),
           },
           colProps: { span: 6 },
         },
         {
           field: 'status',
-          label: '상태',
+          label: t('appUi.k2926977b'),
           component: 'JDictSelectTag',
           componentProps: {
             dictCode: 'kkumz_api_key_status',
-            placeholder: '전체',
+            placeholder: t('appUi.k934dd25e'),
           },
           colProps: { span: 5 },
         },
         {
           field: 'keyword',
-          label: '검색어',
+          label: t('appUi.kd64280cb'),
           component: 'Input',
-          componentProps: { placeholder: '키 명칭, Access Key 검색' },
+          componentProps: { placeholder: t('appUi.ke850cbd0') },
           colProps: { span: 7 },
         },
       ],
     },
     columns: [
-      { title: '연동 방향', dataIndex: 'direction', key: 'direction', width: 170 },
-      { title: '대상 서비스 / 엔드포인트', dataIndex: 'serviceCode', key: 'serviceCode', width: 210 },
-      { title: '액세스키 명칭', dataIndex: 'keyName', width: 220 },
+      { title: t('appUi.kb553f730'), dataIndex: 'direction', key: 'direction', width: 170 },
+      { title: t('appUi.k0a69e043'), dataIndex: 'serviceCode', key: 'serviceCode', width: 210 },
+      { title: t('appUi.k6fb40084'), dataIndex: 'keyName', width: 220 },
       { title: 'Access Key / Secret Key', dataIndex: 'accessKey', key: 'credentials', width: 320 },
-      { title: '권한 스코프 (Scopes)', dataIndex: 'scopes', key: 'scopes', width: 240 },
-      { title: '호출수 / RPM', dataIndex: 'callCount', width: 110, customRender: ({ record }) => `${record.callCount || 0}회 (${record.rateLimitPerMin}/m)` },
-      { title: '최근 호출 시각', dataIndex: 'lastUsedAt', width: 155 },
-      { title: '상태', dataIndex: 'status', key: 'status', width: 105 },
+      { title: t('appUi.ke3a01397'), dataIndex: 'scopes', key: 'scopes', width: 240 },
+      { title: t('appUi.kf2caa8d8'), dataIndex: 'callCount', width: 110, customRender: ({ record }) => t('appUi.kf93445e7', { p0: record.callCount || 0, p1: record.rateLimitPerMin }) },
+      { title: t('appUi.k7147a142'), dataIndex: 'lastUsedAt', width: 155 },
+      { title: t('appUi.k2926977b'), dataIndex: 'status', key: 'status', width: 105 },
     ],
     actionColumn: {
       width: 310,
-      title: '관리 및 연동 테스트',
+      title: t('appUi.k7ed11b5a'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
     },
@@ -203,7 +205,7 @@
   function copyText(text: string, label: string) {
     if (!text) return;
     navigator.clipboard?.writeText(text);
-    createMessage.success(`${label}가 클립보드에 복사되었습니다.`);
+    createMessage.success(t('appUi.kb48740f6', { p0: label }));
   }
 
   function handleCreate(defaultDirection: string) {
@@ -219,13 +221,13 @@
     reload();
     if (res?.verified) {
       createSuccessModal({
-        title: `${record.serviceCode} API 연동 인증 성공`,
-        content: `[${res.keyName}] ${res.message} (응답 지연: ${res.latencyMs ?? 1}ms, 엔드포인트: ${res.endpoint || 'INBOUND'})`,
+        title: t('appUi.k881c1cde', { p0: record.serviceCode }),
+        content: t('appUi.k6f3c99c2', { p0: res.keyName, p1: res.message, p2: res.latencyMs ?? 1, p3: res.endpoint || 'INBOUND' }),
       });
     } else {
       createErrorModal({
-        title: `${record.serviceCode} API 연동 인증 실패`,
-        content: res?.message || '원격 서비스 연결 또는 Access Key 검증에 실패했습니다.',
+        title: t('appUi.kab86ea27', { p0: record.serviceCode }),
+        content: res?.message || t('appUi.kdee2b726'),
       });
     }
   }
@@ -233,20 +235,20 @@
   async function handleRotate(record: Recordable) {
     const updated = await rotateAdminApiKey(record.id);
     visibleSecrets[record.id] = true;
-    createMessage.success(`새 Secret Key(${updated?.secretKey?.slice(0, 10)}...)가 발급 및 동기화되었습니다.`);
+    createMessage.success(t('appUi.kf2d302a4', { p0: updated?.secretKey?.slice(0, 10) }));
     reload();
   }
 
   async function handleToggleStatus(record: Recordable) {
     const nextStatus = record.status === 'ACTIVE' ? 'REVOKED' : 'ACTIVE';
     await updateAdminApiKeyStatus(record.id, nextStatus);
-    createMessage.success(`키 상태가 ${nextStatus}(으)로 변경되었습니다.`);
+    createMessage.success(t('appUi.k58d3c2ea', { p0: nextStatus }));
     reload();
   }
 
   async function handleDelete(record: Recordable) {
     await deleteAdminApiKey(record.id);
-    createMessage.success('API 액세스 키가 삭제되었습니다.');
+    createMessage.success(t('appUi.kfff77ba4'));
     reload();
   }
 </script>

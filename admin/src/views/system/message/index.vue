@@ -8,11 +8,14 @@
   import { computed } from 'vue';
   import { useDesign } from '/@/hooks/web/useDesign';
   import MessageTemplate from './template/index.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
+  const { t } = useI18n();
 
   const props = defineProps({
     pageTitle: {
       type: String,
-      default: '시스템 메시지 템플릿 관리',
+      default: () => $t('appUi.kc1fd19d2'),
     },
   });
 

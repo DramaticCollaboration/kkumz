@@ -2,26 +2,26 @@
   <div :class="`${prefixCls}-config-list`">
     <a-radio-group v-model:value="type">
       <div class="item">
-        <a-radio :value="TypeEnum.unset" v-bind="beforeRadioAttrs">설정되지 않음</a-radio>
-        <span class="tip-info">요일과 요일 중 하나만 설정할 수 있습니다.</span>
+        <a-radio :value="TypeEnum.unset" v-bind="beforeRadioAttrs">{{ t('appUi.k8437fcce') }}</a-radio>
+        <span class="tip-info">{{ t('appUi.k1f200ef5') }}</span>
       </div>
       <div class="item">
-        <a-radio :value="TypeEnum.range" v-bind="beforeRadioAttrs">간격</a-radio>
-        <span> ~에서 </span>
+        <a-radio :value="TypeEnum.range" v-bind="beforeRadioAttrs">{{ t('appUi.k38ed2036') }}</a-radio>
+        <span> {{ t('appUi.k915f36de') }} </span>
         <a-select v-model:value="valueRange.start" :options="weekOptions" v-bind="typeRangeSelectAttrs" />
-        <span> 에게 </span>
+        <span> {{ t('appUi.kf45acf8f') }} </span>
         <a-select v-model:value="valueRange.end" :options="weekOptions" v-bind="typeRangeSelectAttrs" />
       </div>
       <div class="item">
-        <a-radio :value="TypeEnum.loop" v-bind="beforeRadioAttrs">주기</a-radio>
-        <span> ~에서 </span>
+        <a-radio :value="TypeEnum.loop" v-bind="beforeRadioAttrs">{{ t('appUi.k1cd385d7') }}</a-radio>
+        <span> {{ t('appUi.k915f36de') }} </span>
         <a-select v-model:value="valueLoop.start" :options="weekOptions" v-bind="typeLoopSelectAttrs" />
-        <span> 시작, 간격 </span>
+        <span> {{ t('appUi.k15040dd3') }} </span>
         <InputNumber v-model:value="valueLoop.interval" v-bind="typeLoopAttrs" />
-        <span> 하늘 </span>
+        <span> {{ t('appUi.kc3d78839') }} </span>
       </div>
       <div class="item">
-        <a-radio :value="TypeEnum.specify" v-bind="beforeRadioAttrs">지정하다</a-radio>
+        <a-radio :value="TypeEnum.specify" v-bind="beforeRadioAttrs">{{ t('appUi.k7d4473c2') }}</a-radio>
         <div class="list list-cn">
           <a-checkbox-group v-model:value="valueList">
             <template v-for="opt in weekOptions" :key="i">
@@ -35,6 +35,8 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
   import { computed, watch, defineComponent } from 'vue';
   import { InputNumber } from 'ant-design-vue';
   import { useTabProps, useTabEmits, useTabSetup, TypeEnum } from './useTabMixin';
@@ -50,13 +52,13 @@
   };
 
   const WEEK_MAP_CN = {
-    '1': '일요일',
-    '2': '월요일에',
-    '3': '화요일',
-    '4': '수요일',
-    '5': '목요일',
-    '6': '금요일',
-    '7': '토요일',
+    '1': $t('appUi.k4a7e4be4'),
+    '2': $t('appUi.k1e443e8c'),
+    '3': $t('appUi.k85674ecb'),
+    '4': $t('appUi.k66dadc9b'),
+    '5': $t('appUi.k73259471'),
+    '6': $t('appUi.k5054e8b8'),
+    '7': $t('appUi.k618ad44e'),
   };
 
   export default defineComponent({
@@ -70,6 +72,7 @@
     }),
     emits: useTabEmits(),
     setup(props, context) {
+      const { t } = useI18n();
       const disabledChoice = computed(() => {
         return (props.day && props.day !== '?') || props.disabled;
       });
@@ -113,6 +116,7 @@
       );
 
       return {
+        t,
         ...setup,
         weekOptions,
         typeLoopSelectAttrs,

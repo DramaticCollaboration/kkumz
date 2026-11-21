@@ -5021,7 +5021,7 @@ public class KkumzService {
         );
 
         boolean shouldSuspend = Boolean.TRUE.equals(req.getSuspendSite())
-                || ("RESOLVED".equals(status) && actionTaken.contains("정지"));
+                || ("RESOLVED".equals(status) && (actionTaken.toUpperCase(Locale.ROOT).contains("SUSPEND") || actionTaken.contains("정지")));
         if (shouldSuspend) {
             jdbcTemplate.update("""
                     UPDATE kkumz_site SET status = 'SUSPENDED', updated_at = CURRENT_TIMESTAMP

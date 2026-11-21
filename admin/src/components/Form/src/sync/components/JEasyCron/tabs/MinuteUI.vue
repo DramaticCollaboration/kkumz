@@ -2,26 +2,26 @@
   <div :class="`${prefixCls}-config-list`">
     <a-radio-group v-model:value="type">
       <div class="item">
-        <a-radio :value="TypeEnum.every" v-bind="beforeRadioAttrs">모든 지점</a-radio>
+        <a-radio :value="TypeEnum.every" v-bind="beforeRadioAttrs">{{ t('appUi.k1f122d66') }}</a-radio>
       </div>
       <div class="item">
-        <a-radio :value="TypeEnum.range" v-bind="beforeRadioAttrs">간격</a-radio>
-        <span> ~에서 </span>
+        <a-radio :value="TypeEnum.range" v-bind="beforeRadioAttrs">{{ t('appUi.k38ed2036') }}</a-radio>
+        <span> {{ t('appUi.k915f36de') }} </span>
         <InputNumber v-model:value="valueRange.start" v-bind="typeRangeAttrs" />
-        <span> 로 나누어 </span>
+        <span> {{ t('appUi.k0e179a4f') }} </span>
         <InputNumber v-model:value="valueRange.end" v-bind="typeRangeAttrs" />
-        <span> 가리키다 </span>
+        <span> {{ t('appUi.kd1f78278') }} </span>
       </div>
       <div class="item">
-        <a-radio :value="TypeEnum.loop" v-bind="beforeRadioAttrs">주기</a-radio>
-        <span> ~에서 </span>
+        <a-radio :value="TypeEnum.loop" v-bind="beforeRadioAttrs">{{ t('appUi.k1cd385d7') }}</a-radio>
+        <span> {{ t('appUi.k915f36de') }} </span>
         <InputNumber v-model:value="valueLoop.start" v-bind="typeLoopAttrs" />
-        <span> 분, 간격으로 시작 </span>
+        <span> {{ t('appUi.kade54542') }} </span>
         <InputNumber v-model:value="valueLoop.interval" v-bind="typeLoopAttrs" />
-        <span> 가리키다 </span>
+        <span> {{ t('appUi.kd1f78278') }} </span>
       </div>
       <div class="item">
-        <a-radio :value="TypeEnum.specify" v-bind="beforeRadioAttrs">지정하다</a-radio>
+        <a-radio :value="TypeEnum.specify" v-bind="beforeRadioAttrs">{{ t('appUi.k7d4473c2') }}</a-radio>
         <div class="list">
           <a-checkbox-group v-model:value="valueList">
             <template v-for="i in specifyRange" :key="i">
@@ -35,6 +35,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent } from 'vue';
   import { InputNumber } from 'ant-design-vue';
   import { useTabProps, useTabEmits, useTabSetup } from './useTabMixin';
@@ -47,13 +48,14 @@
     }),
     emits: useTabEmits(),
     setup(props, context) {
-      return useTabSetup(props, context, {
+      const { t } = useI18n();
+      return { t, ...useTabSetup(props, context, {
         defaultValue: '*',
         minValue: 0,
         maxValue: 59,
         valueRange: { start: 0, end: 59 },
         valueLoop: { start: 0, interval: 1 },
-      });
+      }) };
     },
   });
 </script>

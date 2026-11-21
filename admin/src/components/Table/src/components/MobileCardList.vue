@@ -5,7 +5,7 @@
     </div>
     <a-spin :spinning="Boolean(loading)">
       <div v-if="!dataSource || dataSource.length === 0" class="py-10 text-center">
-        <a-empty description="표시할 데이터가 없습니다." />
+        <a-empty :description="t('appUi.kc2f5b1c9')" />
       </div>
 
       <div v-else class="flex flex-col gap-2.5">
@@ -97,6 +97,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, computed, h, Comment, Text, Fragment, PropType, VNode } from 'vue';
   import { Spin, Empty, Pagination } from 'ant-design-vue';
   import { ACTION_COLUMN_FLAG, INDEX_COLUMN_FLAG } from '../const';
@@ -198,6 +199,7 @@
     },
     emits: ['change', 'row-click'],
     setup(props, { emit }) {
+      const { t } = useI18n();
       const actionColumn = computed(() =>
         props.columns.find((c) => c.flag === ACTION_COLUMN_FLAG || c.key === 'action' || c.dataIndex === 'action')
       );
@@ -248,6 +250,7 @@
       }
 
       return {
+        t,
         actionColumn,
         badgeColumn,
         titleColumn,

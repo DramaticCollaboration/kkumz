@@ -19,6 +19,9 @@
   import { useAttrs } from '/@/hooks/core/useAttrs';
   import { useDesign } from '/@/hooks/web/useDesign';
   import { useRuleFormItem } from '/@/hooks/component/useFormItem';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
+  const { t } = useI18n();
   const { prefixCls } = useDesign('j-switch');
   const props = defineProps({
     // v-model:value
@@ -26,7 +29,7 @@
     // 가치 옵션
     options: propTypes.array.def(() => ['Y', 'N']),
     // 텍스트 옵션
-    labelOptions: propTypes.array.def(() => ['예', '아니요']),
+    labelOptions: propTypes.array.def(() => [$t('appUi.ka842629a'), $t('appUi.kccf0c3a2')]),
     // 드롭다운 사용 여부
     query: propTypes.bool.def(false),
     // 비활성화 여부

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import type { JVxeVueComponent } from './types';
 import { JVxeTypes } from './types/JVxeTypes';
 
@@ -44,10 +45,10 @@ export const excludeKeywords: Array<JVxeTypes> = [
  */
 export function addComponent(type: JVxeTypes, component: JVxeVueComponent, spanComponent?: JVxeVueComponent) {
   if (excludeKeywords.includes(type)) {
-    throw new Error(`【addComponent】사용할 수 없습니다"${type}"컴포넌트의 이름으로, 이것이 키워드이기 때문입니다.`);
+    throw new Error($t('appUi.k63730031', { p0: type }));
   }
   if (componentMap.has(type)) {
-    throw new Error(`【addComponent】컴포넌트"${type}"이미 존재합니다`);
+    throw new Error($t('appUi.k930b77fd', { p0: type }));
   }
   componentMap.set(type, component);
   if (spanComponent) {

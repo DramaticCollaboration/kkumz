@@ -1,5 +1,5 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" title="홈페이지 구성" @ok="handleSubmit" width="40%">
+  <BasicModal v-bind="$attrs" @register="registerModal" :title="t('appUi.kddd89b73')" @ok="handleSubmit" width="40%">
     <BasicForm @register="registerForm" />
   </BasicModal>
 </template>
@@ -10,6 +10,8 @@
   import { BasicForm, useForm } from '/@/components/Form/index';
   import { roleIndexFormSchema } from '../role.data';
   import { saveOrUpdateRoleIndex, queryIndexByCode } from '../role.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   // 방출문
   const emit = defineEmits(['register', 'success']);
   const isUpdate = ref(true);

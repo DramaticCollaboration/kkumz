@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { dateUtil } from '/@/utils/dateUtil';
 import { reactive, toRefs } from 'vue';
 import { tryOnMounted, tryOnUnmounted } from '@vueuse/core';
@@ -25,7 +26,7 @@ export function useNow(immediate = true) {
 
     state.year = now.get('y');
     state.month = now.get('M') + 1;
-    state.week = '주' + ['낮', '1.0', '2.0', '3.0', '4개', '5.0', '6.0'][now.day()];
+    state.week = $t('appUi.k752244cf') + [$t('appUi.k582cb057'), '1.0', '2.0', '3.0', $t('appUi.kcd70943f'), '5.0', '6.0'][now.day()];
     state.day = now.get('date');
     state.hour = h;
     state.minute = m;

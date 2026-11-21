@@ -30,6 +30,8 @@
 
       <PageHelp v-if="!getIsMobile" :class="`${prefixCls}-action__item page-help-item`" />
 
+      <AppLocalePicker v-if="getShowLocalePicker" :reload="true" :showText="false" :class="`${prefixCls}-action__item`" />
+
       <TaskProgress v-if="!getIsMobile" :class="`${prefixCls}-action__item task-progress-item`" />
 
       <FullScreen v-if="getShowFullScreen && !getIsMobile" :class="`${prefixCls}-action__item fullscreen-item`" />

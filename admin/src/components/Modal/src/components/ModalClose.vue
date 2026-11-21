@@ -11,10 +11,10 @@
 
     <!-- 댓글 영역 활성화 여부 -->
     <template v-if="enableComment">
-      <Tooltip title="닫기" placement="bottom" v-if="commentSpan>0">
+      <Tooltip :title="t('appUi.k94b7dba1')" placement="bottom" v-if="commentSpan>0">
         <RightSquareOutlined @click="handleCloseComment" style="font-size: 16px"/>
       </Tooltip>
-      <Tooltip title="확장" placement="bottom" v-else>
+      <Tooltip :title="t('appUi.k64139068')" placement="bottom" v-else>
         <LeftSquareOutlined @click="handleOpenComment" style="font-size: 16px"/>
       </Tooltip>
     </template>

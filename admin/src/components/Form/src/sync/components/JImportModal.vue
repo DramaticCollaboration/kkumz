@@ -1,22 +1,22 @@
 <template>
   <div>
-    <BasicModal v-bind="$attrs" @register="register" title="엑셀 가져오기" :width="600" @cancel="handleClose" :confirmLoading="uploading" destroyOnClose>
+    <BasicModal v-bind="$attrs" @register="register" :title="t('appUi.k806856a1')" :width="600" @cancel="handleClose" :confirmLoading="uploading" destroyOnClose>
       <!--검증 여부-->
       <div style="margin: 0 5px 5px" v-if="online">
-        <span style="display: inline-block; height: 32px; line-height: 32px; vertical-align: middle">확인 활성화 여부:</span>
+        <span style="display: inline-block; height: 32px; line-height: 32px; vertical-align: middle">{{ t('appUi.ka2a5c292') }}</span>
         <span style="margin-left: 6px">
-          <a-switch :checked="validateStatus == 1" @change="handleChangeValidateStatus" checked-children="예" un-checked-children="아니요" />
+          <a-switch :checked="validateStatus == 1" @change="handleChangeValidateStatus" :checked-children="t('appUi.ka842629a')" :un-checked-children="t('appUi.kccf0c3a2')" />
         </span>
       </div>
       <!--업로드-->
       <a-upload name="file" accept=".xls,.xlsx" :multiple="true" :fileList="fileList" @remove="handleRemove" :beforeUpload="beforeUpload">
-        <a-button preIcon="ant-design:upload-outlined">가져오기 파일 선택</a-button>
+        <a-button preIcon="ant-design:upload-outlined">{{ t('appUi.k9825bdca') }}</a-button>
       </a-upload>
       <!--보행인-->
       <template #footer>
-        <a-button @click="handleClose">취소</a-button>
+        <a-button @click="handleClose">{{ t('appUi.k19b2d19b') }}</a-button>
         <a-button type="primary" @click="handleImport" :disabled="uploadDisabled" :loading="uploading">{{
-          uploading ? '업로드 중...' : '업로드 시작'
+          uploading ? t('appUi.k1e5a8213') : t('appUi.k616caeb9')
         }}</a-button>
       </template>
     </BasicModal>
@@ -24,6 +24,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, ref, unref, watchEffect, computed } from 'vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { useAttrs } from '/@/hooks/core/useAttrs';
@@ -57,6 +58,7 @@
     },
     emits: ['ok', 'register'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       const { createMessage, createWarningModal } = useMessage();
       //등록 팝업 상자
       const [register, { closeModal }] = useModalInner((data) => {
@@ -153,7 +155,7 @@
       function errorTip(tipMessage, fileUrl) {
         let href = glob.uploadUrl + fileUrl;
         createWarningModal({
-          title: '일부 데이터에 오류가 있어 제외하고 가져왔습니다.',
+          title: t('appUi.k8df19189'),
           centered: false,
           content: `<div>
                         <span>${tipMessage}</span><br/>
@@ -171,6 +173,7 @@
       }
 
       return {
+        t,
         register,
         getBindValue,
         uploadDisabled,

@@ -13,12 +13,13 @@
         />
       </a-col>
       <a-col v-if="showButton" class="right">
-        <a-button type="primary" @click="openModal">선택</a-button>
+        <a-button type="primary" @click="openModal">{{ t('appUi.k08109e41') }}</a-button>
       </a-col>
     </a-row>
   </div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, ref, inject, reactive } from 'vue';
   import { propTypes } from '/@/utils/propTypes';
   import { useAttrs } from '/@/hooks/core/useAttrs';
@@ -37,6 +38,7 @@
     },
     emits: ['btnOk'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       //드롭다운 상자 옵션 수신
       const options = inject('selectOptions') || ref([]);
       //선택한 값 받기
@@ -59,6 +61,7 @@
       }
 
       return {
+        t,
         attrs,
         selectValues,
         options,

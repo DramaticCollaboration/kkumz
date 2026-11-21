@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { unref } from 'vue';
 import { defHttp } from '/@/utils/http/axios';
 import { useMessage } from '/@/hooks/web/useMessage';
@@ -53,8 +54,8 @@ export const deleteBatchDepart = (params, confirm = false) => {
     if (confirm) {
       createConfirm({
         iconType: 'warning',
-        title: '삭제',
-        content: '삭제하시겠습니까?',
+        title: $t('appUi.kfc81e222'),
+        content: $t('appUi.k5da9b401'),
         onOk: () => doDelete(),
         onCancel: () => reject(),
       });

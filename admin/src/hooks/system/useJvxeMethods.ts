@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { defHttp } from '/@/utils/http/axios';
 import { ref, unref } from 'vue';
 import { VALIDATE_FAILED, validateFormModelAndTables } from '/@/utils/common/vxeUtils';
@@ -81,12 +82,12 @@ export function useJvxeMethod(requestAddOrEdit, classifyIntoFormData, tableRefs,
 
   /** not a function */
   function throwNotFunction(name) {
-    return `${name} 정의되지 않았거나 함수가 아닙니다`;
+    return $t('appUi.keb39c7ee', { p0: name });
   }
 
   /** not a array */
   function throwNotArray(name) {
-    return `${name} 정의되지 않았거나 배열이 아닙니다`;
+    return $t('appUi.k40c8405d', { p0: name });
   }
   return [handleChangeTabs, handleSubmit, requestSubTableData, formRef];
 }

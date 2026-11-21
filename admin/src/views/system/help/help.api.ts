@@ -1,8 +1,12 @@
-﻿import { defHttp } from '/@/utils/http/axios';
+import { $t } from '/@/locales';
+import { defHttp } from '/@/utils/http/axios';
 
 export const HELP_API_PREFIX = '/api/v1/kkumz';
 export const DEFAULT_APP_CODE = 'KKUMZ';
 export const HELP_VIEWER_PATH = '/help';
+export const HELP_MANAGE_PATH = '/system/help-guide';
+
+export type HelpGuideType = 'SYSTEM' | 'SCREEN';
 
 const Api = {
   GuideByPath: `${HELP_API_PREFIX}/sys/help/guide`,
@@ -46,6 +50,7 @@ export interface MetricFormulaItem {
 export interface PageStepItem {
   title: string;
   description: string;
+  path?: string;
 }
 
 export interface RelatedScreenItem {
@@ -60,9 +65,56 @@ export interface PageFaqItem {
   a: string;
 }
 
+export interface HelpFeatureItem {
+  name?: string;
+  description?: string;
+  badge?: string;
+  title?: string;
+  desc?: string;
+}
+
+export interface HelpLineageNode {
+  type: 'TABLE' | 'API' | 'EVENT' | 'AGENT' | 'CACHE' | string;
+  name: string;
+  desc: string;
+}
+
+export interface HelpLineageInfo {
+  sources?: HelpLineageNode[];
+  transforms?: string[];
+  destinations?: HelpLineageNode[];
+  sourceTables?: string[];
+  apiEndpoint?: string;
+}
+
+export interface HelpFormulaItem {
+  metric: string;
+  expression: string;
+  explanation: string;
+}
+
+export interface HelpStepItem {
+  step: number;
+  title: string;
+  detail: string;
+  path?: string;
+}
+
+export interface HelpRelatedScreen {
+  title: string;
+  path: string;
+  relation: '선행 설정' | '후속 작업' | '연관 분석' | string;
+}
+
+export interface HelpFaqItem {
+  q: string;
+  a: string;
+}
+
 export interface SysPageHelpModel {
   id?: string;
   appCode?: string;
+  helpType?: HelpGuideType | string;
   pageKey: string;
   routeName?: string;
   title: string;
@@ -92,9 +144,16 @@ export interface SysPageHelpModel {
   updateTime?: string;
 }
 
-/**
- * ?꾩옱 ?붾㈃ 寃쎈줈(pageKey) 湲곗? ?꾩?留??④굔 議고쉶
- */
+export const getHelpByPageKey = (pageKey: string, appCode = DEFAULT_APP_CODE) => {
+  return defHttp.get<SysPageHelpModel>(
+    {
+      url: Api.GuideByPath,
+      params: { path: pageKey, appCode },
+    },
+    { errorMessageMode: 'none' },
+  );
+};
+
 export const getHelpGuideByPath = (params: { path: string; appCode?: string; routeName?: string }) =>
   defHttp.get<SysPageHelpModel>(
     {
@@ -108,23 +167,15 @@ export const getHelpGuideByPath = (params: { path: string; appCode?: string; rou
     { errorMessageMode: 'none' },
   );
 
-/**
- * ?꾩?留??꾩껜 紐⑸줉 議고쉶
- */
 export const getHelpList = (params?: Record<string, any>) =>
   defHttp.get<SysPageHelpModel[]>({
     url: Api.List,
     params: { appCode: DEFAULT_APP_CODE, ...params },
   });
 
-/**
- * ?꾩?留??④굔 ?곸꽭 議고쉶
- */
 export const getHelpById = (id: string) =>
   defHttp.get<SysPageHelpModel>({ url: `${Api.Detail}/${id}` });
 
-/**
- * ?꾩?留??좉퇋 ?깅줉 諛??섏젙 ??? */
 export const saveOrUpdateHelp = (params: SysPageHelpModel) =>
   defHttp.post({
     url: Api.Save,
@@ -134,21 +185,32 @@ export const saveOrUpdateHelp = (params: SysPageHelpModel) =>
     },
   });
 
-/**
- * ?꾩?留??④굔 ??젣
- */
+export const savePageHelp = (data: Partial<SysPageHelpModel>, _isUpdate = false) => {
+  return defHttp.post({
+    url: Api.Save,
+    data: { appCode: DEFAULT_APP_CODE, ...data },
+  });
+};
+
 export const deleteHelpById = (id: string) =>
   defHttp.delete({ url: `${Api.Delete}/${id}` });
 
-/**
- * ?꾩?留??쇨큵 ??젣
- */
+export const deletePageHelp = (id: string) => {
+  return defHttp.delete({
+    url: `${Api.Delete}/${encodeURIComponent(id)}`,
+  });
+};
+
 export const deleteBatchHelp = (ids: string[]) =>
   defHttp.delete({ url: Api.DeleteBatch, params: { ids: ids.join(',') } }, { joinParamsToUrl: true });
 
-/**
- * DB ?깅줉 硫붾돱 ?몃━ 議고쉶 (?쇱슦??寃쎈줈 ?좏깮湲곗슜)
- */
+export const batchDeletePageHelp = (ids: string) => {
+  return defHttp.delete({
+    url: Api.DeleteBatch,
+    params: { ids },
+  });
+};
+
 export const getRegisteredMenuRoutes = async (): Promise<
   Array<{ label: string; value: string; title: string; category?: string }>
 > => {
@@ -168,8 +230,8 @@ export const getRegisteredMenuRoutes = async (): Promise<
           options.push({
             value: path,
             title: String(title),
-            category: parentTitle || '?쇰컲',
-            label: parentTitle ? `[${parentTitle}] ${title} (${path})` : `${title} (${path})`,
+            category: parentTitle || $t('appUi.kaef1a1e7'),
+            label: parentTitle ? `[${parentTitle}] ${title} - ${path}` : `${title} - ${path}`,
           });
         }
         if (Array.isArray(node.children) && node.children.length > 0) {

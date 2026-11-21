@@ -34,7 +34,7 @@
                   ></path>
                   <path d="M341.333333 341.333333h341.333334v341.333334H341.333333z" fill="currentColor" p-id="5216"></path>
                 </svg>
-                <span>응답을 멈췄다</span>
+                <span>{{ t('appUi.k63a349d8') }}</span>
               </a-button>
             </div>
           </template>
@@ -55,7 +55,7 @@
                   d="M16 16a3 3 0 1 1 0 6a3 3 0 0 1 0-6M6 12a4 4 0 1 1 0 8a4 4 0 0 1 0-8m8.5-10a5.5 5.5 0 1 1 0 11a5.5 5.5 0 0 1 0-11"
                 ></path>
               </svg>
-              <span>새 채팅 만들기</span>
+              <span>{{ t('appUi.kef761bc9') }}</span>
             </div>
           </template>
         </div>
@@ -156,6 +156,8 @@
   import '../style/github-markdown.less';
   import '../style/highlight.less';
   import '../style/style.less';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const props = defineProps(['chatData', 'uuid', 'dataSource']);
   const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll();
@@ -176,7 +178,7 @@
 
   const conversationList = computed(() => props.chatData.filter((item) => !item.inversion && !!item.conversationOptions));
   const placeholder = computed(() => {
-    return '말 좀 해보자...（Shift + Enter = 새 줄）';
+    return t('appUi.kd0ceb582');
   });
 
   function handleEnter(event: KeyboardEvent) {
@@ -220,7 +222,7 @@
 
     addChat(uuid.value, {
       dateTime: new Date().toLocaleString(),
-      text: '생각...',
+      text: t('appUi.kdc603f47'),
       loading: true,
       inversion: false,
       error: false,
@@ -325,12 +327,12 @@
   // 세션 지우기
   const handleDelSession = () => {
     Modal.confirm({
-      title: '세션 지우기',
+      title: t('appUi.k0d0cbcd8'),
       icon: createVNode(ExclamationCircleOutlined),
-      content: '세션을 삭제하시겠습니까?',
+      content: t('appUi.k55fbba7c'),
       closable: true,
-      okText: '확인',
-      cancelText: '취소',
+      okText: t('appUi.k468266d6'),
+      cancelText: t('appUi.k19b2d19b'),
       async onOk() {
         try {
           return await new Promise<void>((resolve) => {
@@ -357,9 +359,9 @@
   const handleUsingContext = () => {
     usingContext.value = !usingContext.value;
     if (usingContext.value) {
-      message.success('현재 모드에서 메시지를 보내면 이전 채팅 기록이 그대로 유지됩니다.');
+      message.success(t('appUi.k5acaa4bc'));
     } else {
-      message.warning('현재 모드에서는 보내는 메시지에 이전 채팅 기록이 포함되지 않습니다.');
+      message.warning(t('appUi.k7d6958f4'));
     }
   };
   onMounted(() => {

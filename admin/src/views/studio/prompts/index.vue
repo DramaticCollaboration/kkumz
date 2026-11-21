@@ -2,7 +2,7 @@
   <div>
     <BasicTable @register="registerTable">
       <template #toolbar>
-        <a-button type="primary" @click="handleCreate">+ 신규 프롬프트 템플릿 등록</a-button>
+        <a-button type="primary" @click="handleCreate">{{ t('appUi.kceb6d3c6') }}</a-button>
       </template>
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'stageType'">
@@ -22,16 +22,16 @@
           <TableAction
             :actions="[
               {
-                label: '편집',
+                label: t('appUi.kd482e14b'),
                 icon: 'ant-design:edit-outlined',
                 onClick: handleEdit.bind(null, record),
               },
               {
-                label: '삭제',
+                label: t('appUi.kfc81e222'),
                 icon: 'ant-design:delete-outlined',
                 color: 'error',
                 popConfirm: {
-                  title: '해당 AI 프롬프트 템플릿을 삭제하시겠습니까?',
+                  title: t('appUi.kab691740'),
                   confirm: handleDelete.bind(null, record),
                 },
               },
@@ -51,12 +51,14 @@
   import { useMessage } from '/@/hooks/web/useMessage';
   import { getAdminPromptList, deleteAdminPrompt } from '/@/api/kkumz';
   import PromptModal from './components/PromptModal.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createMessage } = useMessage();
   const [registerModal, { openModal }] = useModal();
 
   const [registerTable, { reload }] = useTable({
-    title: '프롬프트·금지어 설정',
+    title: t('appUi.k55dd4d33'),
     api: getAdminPromptList,
     rowKey: 'id',
     useSearchForm: true,
@@ -67,28 +69,28 @@
       schemas: [
         {
           field: 'stageType',
-          label: '스튜디오 단계',
+          label: t('appUi.k5e5da1b7'),
           component: 'JDictSelectTag',
           componentProps: {
             dictCode: 'kkumz_stage_type',
-            placeholder: '전체',
+            placeholder: t('appUi.k934dd25e'),
           },
           colProps: { span: 8 },
         },
       ],
     },
     columns: [
-      { title: '템플릿 코드', dataIndex: 'templateCode', width: 170 },
-      { title: '단계', dataIndex: 'stageType', key: 'stageType', width: 130 },
-      { title: '템플릿 명칭', dataIndex: 'templateName', width: 220 },
-      { title: 'AI 모델', dataIndex: 'modelName', width: 160 },
-      { title: '브랜드 금지어 필터', dataIndex: 'forbiddenKeywords', key: 'forbiddenKeywords', width: 240 },
-      { title: '누적 호출수', dataIndex: 'totalCalls', width: 110 },
-      { title: '상태', dataIndex: 'status', key: 'status', width: 100 },
+      { title: t('appUi.kc071d7b0'), dataIndex: 'templateCode', width: 170 },
+      { title: t('appUi.k0e685c7c'), dataIndex: 'stageType', key: 'stageType', width: 130 },
+      { title: t('appUi.k513fec17'), dataIndex: 'templateName', width: 220 },
+      { title: t('appUi.k6866b6f6'), dataIndex: 'modelName', width: 160 },
+      { title: t('appUi.k8ea3e128'), dataIndex: 'forbiddenKeywords', key: 'forbiddenKeywords', width: 240 },
+      { title: t('appUi.k8687560a'), dataIndex: 'totalCalls', width: 110 },
+      { title: t('appUi.k2926977b'), dataIndex: 'status', key: 'status', width: 100 },
     ],
     actionColumn: {
       width: 150,
-      title: '관리',
+      title: t('appUi.kc29fba5a'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
     },
@@ -104,7 +106,7 @@
 
   async function handleDelete(record: Recordable) {
     await deleteAdminPrompt(record.id);
-    createMessage.success('프롬프트 템플릿이 삭제되었습니다.');
+    createMessage.success(t('appUi.k12515c11'));
     reload();
   }
 </script>

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { computed, reactive, h } from 'vue';
 import { JVxeTableMethods, JVxeTableProps } from '/@/components/sync/JVxeTable/src/types';
 import { isEmpty } from '/@/utils/is';
@@ -9,7 +10,7 @@ export function usePagination(props: JVxeTableProps, methods: JVxeTableMethods) 
     pageSize: 10,
     pageSizeOptions: ['10', '20', '30'],
     showTotal: (total, range) => {
-      return range[0] + '-' + range[1] + ' 총  ' + total + ' 건';
+      return range[0] + '-' + range[1] + $t('appUi.k425f46af') + total + $t('appUi.kbc7ab81c');
     },
     showQuickJumper: true,
     showSizeChanger: true,

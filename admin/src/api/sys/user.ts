@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { defHttp } from '/@/utils/http/axios';
 import { LoginParams, LoginResultModel, GetUserInfoModel } from './model/userModel';
 
@@ -121,13 +122,13 @@ export function getCaptcha(params) {
         resolve(true);
       } else {
         if(res.code != ExceptionEnum.PHONE_SMS_FAIL_CODE){
-          createErrorModal({ title: '오류 메시지', content: res.message || '알 수 없는 문제' });
+          createErrorModal({ title: $t('appUi.k9833a255'), content: res.message || $t('appUi.k2bf52db4') });
           reject();
         }
         reject(res);
       }
     }).catch((res)=>{
-      createErrorModal({ title: '오류 메시지', content: res.message || '알 수 없는 문제' });
+      createErrorModal({ title: $t('appUi.k9833a255'), content: res.message || $t('appUi.k2bf52db4') });
       reject();
     });
   });
@@ -178,7 +179,7 @@ export function setThirdCaptcha(params) {
       if (res.success) {
         resolve(true);
       } else {
-        createErrorModal({ title: '오류 메시지', content: res.message || '알 수 없는 문제' });
+        createErrorModal({ title: $t('appUi.k9833a255'), content: res.message || $t('appUi.k2bf52db4') });
         reject();
       }
     });
@@ -207,4 +208,14 @@ export function getQrcodeToken(params) {
 export async function validateCasLogin(params) {
   let url = Api.validateCasLogin;
   return defHttp.get({ url: url, params });
+}
+
+/**
+ * 사용자 선호 언어 저장 (BCP 47: ko-KR, en-US)
+ */
+export function updateUserLocaleApi(locale: string) {
+  return defHttp.put(
+    { url: '/api/v1/kkumz/sys/user/locale', data: { locale } },
+    { errorMessageMode: 'none', successMessageMode: 'none', isPolling: true }
+  );
 }

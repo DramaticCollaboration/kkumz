@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 export interface DaumPostcodeData {
   zonecode: string;
   address: string;
@@ -76,7 +77,7 @@ export function ensureDaumPostcodeLoaded(): Promise<void> {
         return;
       }
       existing.addEventListener('load', () => resolve(), { once: true });
-      existing.addEventListener('error', () => reject(new Error('우편번호 스크립트 로드 실패')), { once: true });
+      existing.addEventListener('error', () => reject(new Error($t('appUi.k4206ac00'))), { once: true });
       return;
     }
     const script = document.createElement('script');
@@ -85,7 +86,7 @@ export function ensureDaumPostcodeLoaded(): Promise<void> {
     script.onload = () => resolve();
     script.onerror = () => {
       daumScriptPromise = null;
-      reject(new Error('우편번호 서비스를 불러오지 못했습니다.'));
+      reject(new Error($t('appUi.k2714ef84')));
     };
     document.head.appendChild(script);
   });
@@ -117,7 +118,7 @@ export function ensureLeafletLoaded(): Promise<any> {
         return;
       }
       existing.addEventListener('load', () => resolve(window.L), { once: true });
-      existing.addEventListener('error', () => reject(new Error('지도 스크립트 로드 실패')), { once: true });
+      existing.addEventListener('error', () => reject(new Error($t('appUi.k7fc75a33'))), { once: true });
       return;
     }
 
@@ -127,7 +128,7 @@ export function ensureLeafletLoaded(): Promise<any> {
     script.onload = () => resolve(window.L);
     script.onerror = () => {
       leafletPromise = null;
-      reject(new Error('지도 라이브러리를 불러오지 못했습니다.'));
+      reject(new Error($t('appUi.ka97dc246')));
     };
     document.head.appendChild(script);
   });

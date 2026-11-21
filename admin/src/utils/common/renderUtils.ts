@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { h } from 'vue';
 import { Avatar, Tag, Tooltip, Image } from 'ant-design-vue';
 import { getFileAccessHttpUrl } from '/@/utils/common/compUtils';
@@ -181,7 +182,7 @@ const render = {
  */
 function downloadFile(url) {
   if (!url) {
-    createMessage.warning('알 수 없는 파일');
+    createMessage.warning($t('appUi.k5a0ed586'));
     return;
   }
   if (url.indexOf(',') > 0) {

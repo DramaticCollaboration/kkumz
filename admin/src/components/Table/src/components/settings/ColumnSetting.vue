@@ -82,7 +82,7 @@
           <a-button size="small" @click="reset">
             {{ t('common.resetText') }}
           </a-button>
-          <a-button size="small" type="primary" @click="saveSetting"> 저장 </a-button>
+          <a-button size="small" type="primary" @click="saveSetting"> {{ t('appUi.k1f1712ac') }} </a-button>
         </div>
       </template>
       <SettingOutlined />

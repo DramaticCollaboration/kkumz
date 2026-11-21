@@ -9,17 +9,17 @@
           {{ fullAddressText }}
         </span>
         <span v-else class="address-empty">
-          주소를 검색하거나 지도 위 위치를 클릭하여 지정하세요.
+          {{ t('appUi.k1cadec82') }}
         </span>
       </div>
       <div class="address-map-toolbar-right">
         <a-space :size="4">
-          <a-tooltip title="마커 위치로 지도 중심 이동">
+          <a-tooltip :title="t('appUi.k65d176b5')">
             <a-button size="small" :disabled="!hasCoords" @click="recenterMap">
               <template #icon><AimOutlined /></template>
             </a-button>
           </a-tooltip>
-          <a-tooltip title="전체 주소 복사">
+          <a-tooltip :title="t('appUi.k1be54e4a')">
             <a-button size="small" :disabled="!address" @click="copyFullAddress">
               <template #icon><CopyOutlined /></template>
             </a-button>
@@ -29,14 +29,14 @@
             size="small"
             @click="openExternalMap('kakao')"
           >
-            카카오맵
+            {{ t('appUi.kd3f06d8a') }}
           </a-button>
           <a-button
             v-if="address"
             size="small"
             @click="openExternalMap('naver')"
           >
-            네이버지도
+            {{ t('appUi.k1a024a2c') }}
           </a-button>
         </a-space>
       </div>
@@ -47,11 +47,11 @@
       <div ref="mapContainerRef" class="address-map-canvas"></div>
 
       <div v-if="geocoding" class="address-map-overlay">
-        <a-spin tip="위치 좌표를 조회하고 있습니다..." />
+        <a-spin :tip="t('appUi.k6d319d68')" />
       </div>
 
       <div v-if="interactive" class="address-map-hint">
-        지도 위 원하는 위치를 클릭하거나 마커를 드래그하면 해당 지점의 도로명 주소를 자동 조회합니다.
+        {{ t('appUi.kfdd0b28d') }}
       </div>
     </div>
   </div>
@@ -68,6 +68,8 @@ import {
   getKakaoMapUrl,
   getNaverMapUrl,
 } from '/@/utils/addressMap';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
@@ -127,7 +129,7 @@ const fullAddressText = computed(() => {
 function buildPopupHtml(): string {
   const title = props.placeName ? `<div style="font-weight:700;color:#1d39c4;margin-bottom:2px;">${escapeHtml(props.placeName)}</div>` : '';
   const zip = props.postCode ? `<span style="color:#1677ff;font-weight:600;">[${escapeHtml(props.postCode)}]</span> ` : '';
-  const addr = escapeHtml(fullAddressText.value || '선택된 위치');
+  const addr = escapeHtml(fullAddressText.value || t('appUi.k4bbf88fe'));
   return `<div style="font-size:12px;line-height:1.45;min-width:180px;">${title}<div>${zip}${addr}</div></div>`;
 }
 
@@ -197,7 +199,7 @@ async function initMap() {
       await locateByAddress(props.address);
     }
   } catch (err: any) {
-    message.warning(err?.message || '지도를 초기화하지 못했습니다.');
+    message.warning(err?.message || t('appUi.k127dca34'));
   }
 }
 
@@ -306,7 +308,7 @@ async function copyFullAddress() {
   const textToCopy = props.postCode ? `[${props.postCode}] ${fullAddressText.value}` : fullAddressText.value;
   try {
     await navigator.clipboard.writeText(textToCopy);
-    message.success('주소가 클립보드에 복사되었습니다.');
+    message.success(t('appUi.kfdfa5066'));
   } catch {
     message.info(`주소: ${textToCopy}`);
   }

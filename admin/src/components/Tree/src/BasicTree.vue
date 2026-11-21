@@ -1,4 +1,5 @@
 <script lang="tsx">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import type { CSSProperties } from 'vue';
   import type {
     FieldNames,
@@ -41,6 +42,7 @@
     props: treeProps,
     emits: treeEmits,
     setup(props, { attrs, slots, emit, expose }) {
+      const { t } = useI18n();
       const [bem] = createBEM('tree');
 
       const state = reactive<TreeState>({
@@ -453,7 +455,7 @@
                 {extendSlots(slots)}
               </TreeHeader>
             )}
-            <Spin spinning={unref(props.loading)} tip="로드 중...">
+            <Spin spinning={unref(props.loading)} tip={t('appUi.kbf2f4994')}>
               <ScrollContainer style={scrollStyle} v-show={!unref(getNotFound)}>
                 <Tree ref={treeRef} {...unref(getBindValues)} showIcon={false} treeData={treeData.value} />
               </ScrollContainer>

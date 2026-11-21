@@ -16,6 +16,8 @@
   </div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
   import { defineComponent, ref, unref } from 'vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { getRoleList } from '/@/api/common/api';
@@ -38,11 +40,12 @@
       //상자 제목 선택
       modalTitle: {
         type: String,
-        default: '역할 선택',
+        default: $t('appUi.k0e05a8c3'),
       },
     },
     emits: ['register', 'getSelectResult'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       //등록 팝업 상자
       const [register, { closeModal }] = useModalInner();
       const attrs = useAttrs();
@@ -77,7 +80,7 @@
         },
         schemas: [
           {
-            label: '역할 이름',
+            label: t('appUi.k27cbee4e'),
             field: 'roleName',
             component: 'Input',
           },
@@ -86,13 +89,13 @@
       //테이블 열 정의
       const columns = [
         {
-          title: '역할 이름',
+          title: t('appUi.k27cbee4e'),
           dataIndex: 'roleName',
           width: 240,
           align: 'left',
         },
         {
-          title: '역할 코드',
+          title: t('appUi.k859a72b1'),
           dataIndex: 'roleCode',
           // width: 40,
         },

@@ -2,24 +2,39 @@
   <BasicModal
     v-bind="$attrs"
     @register="registerModal"
-    :title="isUpdate ? '화면 도움말 가이드 수정' : '신규 화면 도움말 가이드 등록'"
+    :title="isUpdate ? t('appUi.k18e893d1') : t('appUi.ke14ec9fd')"
     width="1040px"
     @ok="handleSubmit"
   >
     <div class="p-2">
-      <div class="flex justify-between items-center mb-3 p-2.5 bg-gray-50 rounded border border-gray-200">
-        <div class="text-xs text-gray-600">
-          DB 등록 메뉴에서 화면 경로를 선택하거나, 도메인 공통 가이드 경로(예: <code>/overview</code>, <code>/api-guide</code>)를 직접 입력할 수 있습니다.
+      <div class="flex flex-wrap justify-between items-center gap-2 mb-3 p-2.5 bg-gray-50 rounded border border-gray-200">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-xs font-semibold text-gray-700">{{ t('appUi.ke94d1e75') }}</span>
+          <a-radio-group v-model:value="formState.helpType" button-style="solid" size="small" @change="handleHelpTypeChange">
+            <a-radio-button value="SCREEN">{{ t('appUi.ka3a0501d') }}</a-radio-button>
+            <a-radio-button value="SYSTEM">{{ t('appUi.k368c6bad') }}</a-radio-button>
+          </a-radio-group>
+          <span class="text-xs text-gray-500">
+            {{
+              formState.helpType === 'SYSTEM'
+                ? t('appUi.kac2792dc')
+                : t('appUi.k764d4070')
+            }}
+          </span>
         </div>
         <a-radio-group v-model:value="editMode" button-style="solid" size="small">
-          <a-radio-button value="builder">항목별 폼 빌더</a-radio-button>
-          <a-radio-button value="json">JSON 원본 편집</a-radio-button>
+          <a-radio-button value="builder">{{ t('appUi.kdb7864d1') }}</a-radio-button>
+          <a-radio-button value="json">{{ t('appUi.kc22288e3') }}</a-radio-button>
         </a-radio-group>
       </div>
 
       <BasicForm @register="registerBaseForm" />
 
-      <HelpBuilderTabs v-if="editMode === 'builder'" :form-state="formState" />
+      <HelpBuilderTabs
+        v-if="editMode === 'builder'"
+        :form-state="formState"
+        :help-type="formState.helpType"
+      />
       <BasicForm v-else @register="registerJsonForm" />
     </div>
   </BasicModal>
@@ -34,6 +49,7 @@
   import {
     DEFAULT_APP_CODE,
     getRegisteredMenuRoutes,
+    HelpGuideType,
     LineageDestinationItem,
     LineageSourceItem,
     MetricFormulaItem,
@@ -44,7 +60,9 @@
     saveOrUpdateHelp,
     SysPageHelpModel,
   } from '../help.api';
-  import { parseHelpRecord } from '../help.data';
+  import { parseHelpRecord, resolveHelpType } from '../help.data';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const emit = defineEmits(['success', 'register']);
   const { createMessage } = useMessage();
@@ -56,10 +74,11 @@
   const formState = reactive({
     id: undefined as string | undefined,
     appCode: DEFAULT_APP_CODE,
+    helpType: 'SCREEN' as HelpGuideType,
     pageKey: '',
     routeName: '',
     title: '',
-    category: '일반',
+    category: t('appUi.kaef1a1e7'),
     icon: 'ant-design:question-circle-outlined',
     summary: '',
     overview: '',
@@ -95,13 +114,14 @@
   const baseFormSchemas: FormSchema[] = [
     {
       field: 'selectedMenuRoute',
-      label: '등록 메뉴 선택',
+      label: t('appUi.k59b1513e'),
       component: 'Select',
       colProps: { span: 10 },
+      ifShow: () => formState.helpType !== 'SYSTEM',
       componentProps: {
         showSearch: true,
         allowClear: true,
-        placeholder: '메뉴 선택 시 경로와 화면명 자동 입력',
+        placeholder: t('appUi.k7ffdebbb'),
         options: [],
         filterOption: filterMenuOption,
         onChange: (val: string) => handleMenuRouteSelect(val),
@@ -109,131 +129,131 @@
     },
     {
       field: 'pageKey',
-      label: '라우트 경로',
+      label: t('appUi.kfa5e96d1'),
       component: 'Input',
       required: true,
       colProps: { span: 8 },
-      componentProps: { placeholder: '예: /llm/models 또는 /overview' },
+      componentProps: { placeholder: t('appUi.k37881802') },
     },
     {
       field: 'category',
-      label: '분류',
+      label: t('appUi.k8b1d74f0'),
       component: 'Input',
       required: true,
       colProps: { span: 6 },
-      componentProps: { placeholder: '예: 게이트웨이 관리' },
+      componentProps: { placeholder: t('appUi.k52f5d7a7') },
     },
     {
       field: 'title',
-      label: '화면명',
+      label: t('appUi.k8cfe4107'),
       component: 'Input',
       required: true,
       colProps: { span: 10 },
-      componentProps: { placeholder: '예: AI 모델 라우팅 관리' },
+      componentProps: { placeholder: t('appUi.kd4a743f5') },
     },
     {
       field: 'appCode',
-      label: '앱 코드',
+      label: t('appUi.k33084c64'),
       component: 'Input',
       colProps: { span: 6 },
     },
     {
       field: 'sortOrder',
-      label: '정렬 순서',
+      label: t('appUi.k11c67410'),
       component: 'InputNumber',
       colProps: { span: 4 },
       componentProps: { min: 0, style: { width: '100%' } },
     },
     {
       field: 'status',
-      label: '상태',
+      label: t('appUi.k2926977b'),
       component: 'Select',
       colProps: { span: 4 },
       componentProps: {
         options: [
-          { label: '활성', value: 'ACTIVE' },
-          { label: '비활성', value: 'INACTIVE' },
+          { label: t('appUi.k6a2123a3'), value: 'ACTIVE' },
+          { label: t('appUi.kfae2014b'), value: 'INACTIVE' },
         ],
       },
     },
     {
       field: 'summary',
-      label: '핵심 요약',
+      label: t('appUi.k3d9cd24e'),
       component: 'Input',
       required: true,
       colProps: { span: 24 },
-      componentProps: { placeholder: '화면 상단 배너에 표시될 핵심 역할 요약 입력' },
+      componentProps: { placeholder: t('appUi.k3ead9978') },
     },
     {
       field: 'overview',
-      label: '상세 개요',
+      label: t('appUi.ke026b4a7'),
       component: 'InputTextArea',
       required: true,
       colProps: { span: 24 },
-      componentProps: { rows: 3, placeholder: '화면의 비즈니스 목적, 아키텍처 역할, 주요 사용 시나리오 서술' },
+      componentProps: { rows: 3, placeholder: t('appUi.k4e831f92') },
     },
     {
       field: 'aiPromptHint',
-      label: '추천 프롬프트',
+      label: t('appUi.k61e65e4f'),
       component: 'Input',
       colProps: { span: 24 },
-      componentProps: { placeholder: '예: 이 화면에서 승인 대기 중인 항목을 요약하고 표준 처리 절차를 알려줘.' },
+      componentProps: { placeholder: t('appUi.k1d5583a0') },
     },
   ];
 
   const jsonFormSchemas: FormSchema[] = [
     {
       field: 'featuresJson',
-      label: '주요 제공 기능 JSON',
+      label: t('appUi.kef063204'),
       component: 'InputTextArea',
       colProps: { span: 12 },
       componentProps: { rows: 4, class: 'font-mono text-xs' },
     },
     {
       field: 'stepsJson',
-      label: '업무 수행 절차 JSON',
+      label: t('appUi.kfdd76612'),
       component: 'InputTextArea',
       colProps: { span: 12 },
       componentProps: { rows: 4, class: 'font-mono text-xs' },
     },
     {
       field: 'lineageJson',
-      label: '데이터 계보 JSON',
+      label: t('appUi.k93c4f9a2'),
       component: 'InputTextArea',
       colProps: { span: 8 },
       componentProps: { rows: 4, class: 'font-mono text-xs' },
     },
     {
       field: 'formulasJson',
-      label: '산출 공식 JSON',
+      label: t('appUi.kaf209a8f'),
       component: 'InputTextArea',
       colProps: { span: 8 },
       componentProps: { rows: 4, class: 'font-mono text-xs' },
     },
     {
       field: 'relatedScreensJson',
-      label: '연관 화면 JSON',
+      label: t('appUi.k8657cda3'),
       component: 'InputTextArea',
       colProps: { span: 8 },
       componentProps: { rows: 4, class: 'font-mono text-xs' },
     },
     {
       field: 'tipsJson',
-      label: '실무 팁 JSON',
+      label: t('appUi.k1ee6d600'),
       component: 'InputTextArea',
       colProps: { span: 8 },
       componentProps: { rows: 4, class: 'font-mono text-xs' },
     },
     {
       field: 'warningsJson',
-      label: '주의사항 JSON',
+      label: t('appUi.k992e7b01'),
       component: 'InputTextArea',
       colProps: { span: 8 },
       componentProps: { rows: 4, class: 'font-mono text-xs' },
     },
     {
       field: 'faqJson',
-      label: '자주 묻는 질문 JSON',
+      label: t('appUi.k47ee20c6'),
       component: 'InputTextArea',
       colProps: { span: 8 },
       componentProps: { rows: 4, class: 'font-mono text-xs' },
@@ -263,6 +283,22 @@
     showActionButtonGroup: false,
     baseRowStyle: { gutter: 16 },
   });
+
+  function handleHelpTypeChange() {
+    const current = getBaseFieldsValue();
+    if (formState.helpType === 'SYSTEM') {
+      const updates: Record<string, any> = {};
+      if (!current.category || current.category === '일반') {
+        updates.category = t('appUi.k368c6bad');
+      }
+      if (!current.pageKey) {
+        updates.pageKey = '/overview';
+      }
+      if (Object.keys(updates).length > 0) {
+        setBaseFieldsValue(updates);
+      }
+    }
+  }
 
   function syncBuilderToRawJson() {
     rawJson.featuresJson = JSON.stringify(formState.features.filter((i) => i.name.trim()), null, 2);
@@ -328,7 +364,7 @@
       componentProps: {
         showSearch: true,
         allowClear: true,
-        placeholder: '메뉴 선택 시 경로와 화면명 자동 입력',
+        placeholder: t('appUi.k7ffdebbb'),
         options: menuRouteOptions.value,
         filterOption: filterMenuOption,
         onChange: (val: string) => handleMenuRouteSelect(val),
@@ -340,18 +376,19 @@
 
     formState.id = record.id;
     formState.appCode = record.appCode || DEFAULT_APP_CODE;
+    formState.helpType = resolveHelpType(record);
     formState.pageKey = record.pageKey || '';
     formState.routeName = record.routeName || '';
     formState.title = record.title || '';
-    formState.category = record.category || '일반';
+    formState.category = record.category || (formState.helpType === 'SYSTEM' ? t('appUi.k368c6bad') : t('appUi.kaef1a1e7'));
     formState.icon = record.icon || 'ant-design:question-circle-outlined';
     formState.summary = record.summary || '';
     formState.overview = record.overview || '';
     formState.aiPromptHint = record.aiPromptHint || '';
     formState.status = record.status || 'ACTIVE';
-    formState.sortOrder = record.sortOrder ?? 10;
+    formState.sortOrder = record.sortOrder ?? (formState.helpType === 'SYSTEM' ? 0 : 10);
 
-    formState.features = parsed.features.length ? [...parsed.features] : [{ name: '', description: '', badge: '핵심' }];
+    formState.features = parsed.features.length ? [...parsed.features] : [{ name: '', description: '', badge: t('appUi.kf5cc9c1e') }];
     formState.steps = parsed.steps.length ? [...parsed.steps] : [{ title: '', description: '' }];
     formState.relatedScreens = parsed.relatedScreens.length ? [...parsed.relatedScreens] : [];
     formState.lineageSources = parsed.lineage.sources.length ? [...parsed.lineage.sources] : [];
@@ -382,7 +419,7 @@
     const current = getBaseFieldsValue();
     const found = menuRouteOptions.value.find((item) => item.value === val);
     const nextTitle = current.title || found?.title || '';
-    const nextCategory = !current.category || current.category === '일반' ? found?.category || '일반' : current.category;
+    const nextCategory = !current.category || current.category === '일반' ? found?.category || t('appUi.kaef1a1e7') : current.category;
     setBaseFieldsValue({
       pageKey: val,
       title: nextTitle,
@@ -393,7 +430,7 @@
   async function handleSubmit() {
     Object.assign(formState, getBaseFieldsValue());
     if (!String(formState.pageKey || '').trim() || !String(formState.title || '').trim() || !String(formState.summary || '').trim()) {
-      createMessage.warning('라우트 경로, 화면명, 핵심 요약은 필수 입력 항목입니다.');
+      createMessage.warning(t('appUi.kfc94f29f'));
       return;
     }
 
@@ -409,10 +446,11 @@
       const payload: SysPageHelpModel = {
         id: formState.id,
         appCode: formState.appCode || DEFAULT_APP_CODE,
+        helpType: formState.helpType,
         pageKey: formState.pageKey.trim(),
         routeName: formState.routeName.trim() || undefined,
         title: formState.title.trim(),
-        category: formState.category.trim() || '일반',
+        category: formState.category.trim() || (formState.helpType === 'SYSTEM' ? t('appUi.k368c6bad') : t('appUi.kaef1a1e7')),
         icon: formState.icon,
         summary: formState.summary.trim(),
         overview: formState.overview.trim() || formState.summary.trim(),
@@ -426,7 +464,7 @@
           sources: formState.lineageSources.filter((i) => i.origin.trim()),
           destinations: formState.lineageDestinations.filter((i) => i.target.trim()),
         },
-        formulas: formState.formulas.filter((i) => i.name.trim()),
+        formulas: formState.helpType === 'SYSTEM' ? [] : formState.formulas.filter((i) => i.name.trim()),
         tips: formState.tips.map((s) => s.trim()).filter(Boolean),
         warnings: formState.warnings.map((s) => s.trim()).filter(Boolean),
         faq: formState.faq.filter((i) => i.q.trim()),
@@ -434,14 +472,14 @@
         stepsJson: rawJson.stepsJson,
         relatedScreensJson: rawJson.relatedScreensJson,
         lineageJson: rawJson.lineageJson,
-        formulasJson: rawJson.formulasJson,
+        formulasJson: formState.helpType === 'SYSTEM' ? '[]' : rawJson.formulasJson,
         tipsJson: rawJson.tipsJson,
         warningsJson: rawJson.warningsJson,
         faqJson: rawJson.faqJson,
       };
 
       await saveOrUpdateHelp(payload);
-      createMessage.success('화면 도움말 가이드가 저장되었습니다.');
+      createMessage.success(t('appUi.kc725c7d2'));
       closeModal();
       emit('success');
     } finally {

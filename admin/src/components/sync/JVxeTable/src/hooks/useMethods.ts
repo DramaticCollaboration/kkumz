@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { Ref, watch } from 'vue';
 import XEUtils from 'xe-utils';
 import { simpleDebounce } from '/@/utils/common/compUtils';
@@ -281,7 +282,7 @@ export function useMethods(props: JVxeTableProps, { emit }, data: JVxeDataProps,
         footers.push(
           getFooterStatisticsMap({
             columns: columns,
-            title: '총',
+            title: $t('appUi.k10d96eb9'),
             checks: statistics.sum,
             method: (column) => XEUtils.sum($data, column.property),
           })
@@ -291,7 +292,7 @@ export function useMethods(props: JVxeTableProps, { emit }, data: JVxeDataProps,
         footers.push(
           getFooterStatisticsMap({
             columns: columns,
-            title: '평균',
+            title: $t('appUi.k99420e35'),
             checks: statistics.average,
             method: (column) => XEUtils.mean($data, column.property),
           })

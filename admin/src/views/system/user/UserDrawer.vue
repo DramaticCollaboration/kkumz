@@ -18,6 +18,8 @@
   import { BasicDrawer, useDrawerInner } from '/@/components/Drawer';
   import { saveOrUpdateUser, getUserRoles, getUserDepartList, getAllRolesList } from './user.api';
   import { useDrawerAdaptiveWidth } from '/@/hooks/sync/useAdaptiveWidth';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
@@ -108,9 +110,9 @@
   //제목 가져오기
   const getTitle = computed(() => {
     if (!unref(isUpdate)) {
-      return '사용자 추가';
+      return t('appUi.k5fba4f4b');
     } else {
-      return unref(showFooter) ? '사용자 편집' : '사용자 세부정보';
+      return unref(showFooter) ? t('appUi.kfbda5c70') : t('appUi.k16d09920');
     }
   });
   const { adaptiveWidth } = useDrawerAdaptiveWidth();

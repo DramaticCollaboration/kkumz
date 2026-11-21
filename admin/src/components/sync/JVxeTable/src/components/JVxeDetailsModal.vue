@@ -1,5 +1,5 @@
 <template>
-  <BasicModal @register="registerModel" title="상세" :width="1200" :keyboard="true" @ok="handleOk" @cancel="close">
+  <BasicModal @register="registerModel" :title="t('appUi.kbb446431')" :width="1200" :keyboard="true" @ok="handleOk" @cancel="close">
     <transition name="fade">
       <div v-if="getVisible">
         <slot name="mainForm" :row="row" :column="column" />
@@ -8,6 +8,7 @@
   </BasicModal>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { ref, defineComponent } from 'vue';
   import { cloneDeep } from 'lodash-es';
   import { useModal } from '/@/components/Modal/src/hooks/useModal';
@@ -26,6 +27,7 @@
       },
     },
     setup(props) {
+      const { t } = useI18n();
       const row = ref(null);
       const column = ref(null);
 
@@ -53,6 +55,7 @@
       }
 
       return {
+        t,
         getVisible,
         row,
         column,

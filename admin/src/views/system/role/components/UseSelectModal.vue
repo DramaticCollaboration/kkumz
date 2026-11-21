@@ -1,5 +1,5 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" title="사용자 선택 목록" width="1000px" @ok="handleSubmit" destroyOnClose>
+  <BasicModal v-bind="$attrs" @register="registerModal" :title="t('appUi.k4ba55bf9')" width="1000px" @ok="handleSubmit" destroyOnClose>
     <BasicTable @register="registerTable" :rowSelection="rowSelection" />
   </BasicModal>
 </template>
@@ -9,6 +9,8 @@
   import { BasicTable, useTable, TableAction } from '/src/components/Table';
   import { userColumns, searchUserFormSchema } from '../role.data';
   import { list } from '../../user/user.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   // 방출 선언
   const emit = defineEmits(['select', 'register']);
   const checkedKeys = ref<Array<string | number>>([]);

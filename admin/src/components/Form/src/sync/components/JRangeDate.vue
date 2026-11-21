@@ -3,11 +3,12 @@
 </template>
 
 <script>
+  import { $t } from '/@/locales';
     import { defineComponent, ref, watch, computed } from 'vue';
     import { propTypes } from '/@/utils/propTypes';
     import { Form } from 'ant-design-vue';
 
-    const placeholder = ['시작일', '종료일']
+    const placeholder = [$t('appUi.k453c56f5'), $t('appUi.kcad7c84c')]
     /**
      * 범위 쿼리에 사용됩니다.
      */

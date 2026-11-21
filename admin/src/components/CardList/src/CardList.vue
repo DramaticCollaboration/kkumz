@@ -11,12 +11,12 @@
             ><slot name="header"></slot>
             <Tooltip>
               <template #title>
-                <div class="w-50">라인당 수량 표시</div><Slider id="slider" v-bind="sliderProp" v-model:value="grid" @change="sliderChange"
+                <div class="w-50">{{ t('appUi.k1116b182') }}</div><Slider id="slider" v-bind="sliderProp" v-model:value="grid" @change="sliderChange"
               /></template>
               <Button><TableOutlined /></Button>
             </Tooltip>
             <Tooltip @click="fetch">
-              <template #title>새로 고치다</template>
+              <template #title>{{ t('appUi.k4c2bf57a') }}</template>
               <Button><RedoOutlined /></Button>
             </Tooltip>
           </div>
@@ -37,10 +37,10 @@
                   :trigger="['hover']"
                   :dropMenuList="[
                     {
-                      text: '삭제',
+                      text: t('appUi.kfc81e222'),
                       event: '1',
                       popConfirm: {
-                        title: '삭제 하시겠습니까?',
+                        title: t('appUi.ka6e94ce1'),
                         confirm: handleDelete.bind(null, item.id),
                       },
                     },
@@ -77,6 +77,8 @@
   import { Button } from '/@/components/Button';
   import { isFunction } from '/@/utils/is';
   import { useSlider, grid } from './data';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   const ListItem = List.Item;
   const CardMeta = Card.Meta;
   const TypographyText = Typography.Text;
@@ -102,7 +104,7 @@
   });
   //형태
   const [registerForm, { validate }] = useForm({
-    schemas: [{ field: 'type', component: 'Input', label: '유형' }],
+    schemas: [{ field: 'type', component: 'Input', label: t('appUi.k80577c5f') }],
     labelWidth: 80,
     baseColProps: { span: 6 },
     actionColOptions: { span: 24 },
@@ -143,7 +145,7 @@
     pageSize,
     current: page,
     total,
-    showTotal: (total) => `총액 ${total} 건`,
+    showTotal: (total) => t('appUi.k28f299d6', { p0: total }),
     onChange: pageChange,
     onShowSizeChange: pageSizeChange,
   });

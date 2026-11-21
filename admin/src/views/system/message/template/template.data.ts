@@ -1,38 +1,39 @@
+import { $t } from '/@/locales';
 import { BasicColumn, FormSchema } from '/@/components/Table';
 import { rules } from '/@/utils/helper/validator';
 import { filterDictTextByCache } from '/@/utils/dict/JDictSelectUtil';
 
 export const columns: BasicColumn[] = [
   {
-    title: '템플릿 제목',
+    title: $t('appUi.kd8066c4e'),
     dataIndex: 'templateName',
     width: 80,
   },
   {
-    title: '템플릿 인코딩',
+    title: $t('appUi.kafcd4a88'),
     dataIndex: 'templateCode',
     width: 100,
   },
   {
-    title: '알림 템플릿',
+    title: $t('appUi.k0e9d1a26'),
     dataIndex: 'templateContent',
     width: 150,
   },
   {
-    title: '템플릿 유형',
+    title: $t('appUi.k2461cb85'),
     dataIndex: 'templateType',
     width: 100,
     customRender: ({ text }) => filterDictTextByCache('msgType', text),
   },
   {
-    title: '신청 여부',
+    title: $t('appUi.k279076d8'),
     dataIndex: 'useStatus',
     width: 90,
     customRender: function ({ text }) {
       if (text == '1') {
-        return '예';
+        return $t('appUi.ka842629a');
       } else {
-        return '아니요';
+        return $t('appUi.kccf0c3a2');
       }
     },
   },
@@ -40,17 +41,17 @@ export const columns: BasicColumn[] = [
 
 export const searchFormSchema: FormSchema[] = [
   {
-    label: '템플릿 제목',
+    label: $t('appUi.kd8066c4e'),
     field: 'templateName',
     component: 'Input',
   },
   {
-    label: '템플릿 인코딩',
+    label: $t('appUi.kafcd4a88'),
     field: 'templateCode',
     component: 'Input',
   },
   {
-    label: '템플릿 유형',
+    label: $t('appUi.k2461cb85'),
     field: 'templateType',
     component: 'JDictSelectTag',
     componentProps: {
@@ -67,13 +68,13 @@ export const formSchemas: FormSchema[] = [
     show: false,
   },
   {
-    label: '템플릿 제목',
+    label: $t('appUi.kd8066c4e'),
     field: 'templateName',
     component: 'Input',
     required: true,
   },
   {
-    label: '템플릿 인코딩',
+    label: $t('appUi.kafcd4a88'),
     field: 'templateCode',
     component: 'Input',
     dynamicRules: ({ model, schema }) => {
@@ -83,17 +84,17 @@ export const formSchemas: FormSchema[] = [
     dynamicDisabled: (params) => !!params.values.id,
   },
   {
-    label: '템플릿 유형',
+    label: $t('appUi.k2461cb85'),
     field: 'templateType',
     component: 'JDictSelectTag',
     componentProps: {
       dictCode: 'msgType',
-      placeholder: '템플릿 유형을 선택하세요.',
+      placeholder: $t('appUi.k45085f3d'),
     },
     required: true,
   },
   {
-    label: '신청 여부',
+    label: $t('appUi.k279076d8'),
     field: 'useStatus',
     component: 'JSwitch',
     componentProps: {
@@ -101,7 +102,7 @@ export const formSchemas: FormSchema[] = [
     },
   },
   {
-    label: '템플릿 내용',
+    label: $t('appUi.kaea1d4a9'),
     field: 'templateContent',
     component: 'InputTextArea',
     componentProps: {
@@ -116,7 +117,7 @@ export const formSchemas: FormSchema[] = [
   },
 
   {
-    label: '템플릿 내용',
+    label: $t('appUi.kaea1d4a9'),
     field: 'templateContent',
     component: 'JEditor',
     ifShow: ({ values }) => {
@@ -124,7 +125,7 @@ export const formSchemas: FormSchema[] = [
     },
   },
   {
-    label: '템플릿 내용',
+    label: $t('appUi.kaea1d4a9'),
     field: 'templateContent',
     component: 'JMarkdownEditor',
     ifShow: ({ values }) => {
@@ -135,37 +136,37 @@ export const formSchemas: FormSchema[] = [
 
 export const sendTestFormSchemas: FormSchema[] = [
   {
-    label: '템플릿 인코딩',
+    label: $t('appUi.kafcd4a88'),
     field: 'templateCode',
     component: 'Input',
     show: false,
   },
   {
-    label: '템플릿 제목',
+    label: $t('appUi.kd8066c4e'),
     field: 'templateName',
     component: 'Input',
     componentProps: { disabled: true },
   },
   {
-    label: '템플릿 내용',
+    label: $t('appUi.kaea1d4a9'),
     field: 'templateContent',
     component: 'InputTextArea',
     componentProps: { disabled: true, rows: 5 },
   },
   {
-    label: '테스트 데이터',
+    label: $t('appUi.kbc37a64d'),
     field: 'testData',
     component: 'InputTextArea',
     required: true,
-    helpMessage: 'JSON 데이터',
+    helpMessage: $t('appUi.k605bd73a'),
     defaultValue: '{}',
     componentProps: {
-      placeholder: '테스트 데이터를 JSON 형식으로 입력하세요.',
+      placeholder: $t('appUi.ke8cbf762'),
       rows: 5,
     },
   },
   {
-    label: '메시지 유형',
+    label: $t('appUi.kb2d237a7'),
     field: 'msgType',
     component: 'JDictSelectTag',
     required: true,
@@ -173,7 +174,7 @@ export const sendTestFormSchemas: FormSchema[] = [
     componentProps: { dictCode: 'messageType',type:'radio' },
   },
   {
-    label: '메시지 수신자',
+    label: $t('appUi.kc9db07ee'),
     field: 'receiver',
     required: true,
     component: 'JSelectUser',

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { inject, reactive, ref, watch, unref, Ref } from 'vue';
 import { useMessage } from '/@/hooks/web/useMessage';
 import { isEmpty } from '@/utils/is';
@@ -129,7 +130,7 @@ export function useSelectBiz(getList, props, emit) {
     });
     selectOptions.value = options;
     if (props.maxSelectCount && values.length > props.maxSelectCount) {
-      $message.createMessage.warning(`최대 선택할 수 있습니다.${props.maxSelectCount}데이터`);
+      $message.createMessage.warning($t('appUi.kd0f45ca0', { p0: props.maxSelectCount }));
       return false;
     }
     success && success(options, values);

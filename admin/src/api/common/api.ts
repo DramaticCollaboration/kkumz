@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { defHttp } from '/@/utils/http/axios';
 import { message } from 'ant-design-vue';
 import { useGlobSetting } from '/@/hooks/setting';
@@ -106,7 +107,7 @@ export const uploadFile = (params, success) => {
 export const downloadFile = (url, fileName?, parameter?) => {
   return getFileblob(url, parameter).then((data) => {
     if (!data || data.size === 0) {
-      message.warning('파일 다운로드 실패');
+      message.warning($t('appUi.k3c495513'));
       return;
     }
     if (typeof window.navigator.msSaveBlob !== 'undefined') {

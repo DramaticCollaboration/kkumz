@@ -1,6 +1,7 @@
 package com.empasy.sync.kkumz.domain;
 
 import com.empasy.sync.core.common.config.SystemConfigHolder;
+import com.empasy.sync.core.i18n.SyncI18nPromptHelper;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -137,7 +138,8 @@ public class KkumzAiGatewayService {
             validateAgainstForbiddenWords(val, forbiddenWords);
         }
 
-        String systemPrompt = String.valueOf(template.getOrDefault("systemPrompt", ""));
+        String systemPrompt = SyncI18nPromptHelper.appendCurrentLocaleDirective(
+                String.valueOf(template.getOrDefault("systemPrompt", "")));
         String userPrompt = String.valueOf(template.getOrDefault("userPromptTemplate", ""));
         for (Map.Entry<String, String> entry : variables.entrySet()) {
             String placeholder = "{{" + entry.getKey() + "}}";

@@ -1,8 +1,8 @@
 <template>
-  <BasicDrawer v-bind="$attrs" @register="registerDrawer" title="사전 목록" width="800px">
+  <BasicDrawer v-bind="$attrs" @register="registerDrawer" :title="t('appUi.kbd8ef133')" width="800px">
     <BasicTable @register="registerTable" :rowClassName="getRowClassName">
       <template #tableTitle>
-        <a-button type="primary" @click="handleCreate"> 등록</a-button>
+        <a-button type="primary" @click="handleCreate"> {{ t('appUi.k1ac11e9b') }}</a-button>
       </template>
       <template v-slot:bodyCell="{column, record, index}">
         <template v-if="column.dataIndex ==='action'">
@@ -24,6 +24,8 @@
   import { dictItemColumns, dictItemSearchFormSchema } from '../dict.data';
   import { itemList, deleteItem } from '../dict.api';
   import { ColEx } from '/@/components/Form/src/types';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { prefixCls } = useDesign('row-invalid');
   const dictId = ref('');
@@ -75,7 +77,7 @@
     immediate: false,
     actionColumn: {
       width: 100,
-      title: '작업',
+      title: t('appUi.k9d9bf438'),
       dataIndex: 'action',
       //slots: { customRender: 'action' },
       fixed: undefined,
@@ -114,13 +116,13 @@
   function getTableAction(record) {
     return [
       {
-        label: '편집',
+        label: t('appUi.kd482e14b'),
         onClick: handleEdit.bind(null, record),
       },
       {
-        label: '삭제',
+        label: t('appUi.kfc81e222'),
         popConfirm: {
-          title: '삭제 하시겠습니까?',
+          title: t('appUi.ka6e94ce1'),
           confirm: handleDelete.bind(null, record),
         },
       },

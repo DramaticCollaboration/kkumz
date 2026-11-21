@@ -46,7 +46,7 @@
       },
       {
         field: 'name',
-        label: isButton(unref(menuType)) ? '버튼/권한' : '메뉴명',
+        label: isButton(unref(menuType)) ? t('appUi.k8b5208c5') : t('appUi.k43f3ee13'),
       },
       {
         field: 'url',
@@ -71,7 +71,7 @@
     setProps({ disabled: !attrs.showFooter });
   });
   //팝업 창 제목 가져오기
-  const getTitle = computed(() => (!unref(isUpdate) ? '메뉴 추가' : '편집 메뉴'));
+  const getTitle = computed(() => (!unref(isUpdate) ? t('appUi.kb6386fc3') : t('appUi.k4e422242')));
   //이벤트 제출
   async function handleSubmit() {
     try {
@@ -103,7 +103,7 @@
       url = url.replaceAll(':', '@');
       placeholder = `${url}`;
     } else {
-      placeholder = '구성요소 이름을 입력하세요.';
+      placeholder = t('appUi.ke9065d29');
     }
     updateSchema([{ field: 'componentName', componentProps: { placeholder } }]);
     if (httpUrl != null && httpUrl != '') {

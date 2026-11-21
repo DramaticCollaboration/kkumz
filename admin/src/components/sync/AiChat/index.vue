@@ -32,6 +32,8 @@
   import { useUserStore } from '/@/store/modules/user';
   import { SYNC_CHAT_KEY } from '/@/enums/cacheEnum';
   import { defHttp } from '/@/utils/http/axios';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   const configUrl = {
     get: '/test/ai/chat/history/get',
     save: '/test/ai/chat/history/save',
@@ -57,7 +59,7 @@
       dataSource.value = {
         active: 1002,
         usingContext: true,
-        history: [{ uuid: 1002, title: '새 채팅', isEdit: false }],
+        history: [{ uuid: 1002, title: t('appUi.k89ca7dd4'), isEdit: false }],
         chat: [{ uuid: 1002, data: [] }],
       };
     };

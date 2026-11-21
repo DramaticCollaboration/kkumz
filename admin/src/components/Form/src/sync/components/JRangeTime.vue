@@ -3,11 +3,12 @@
 </template>
 
 <script>
+  import { $t } from '/@/locales';
     import { defineComponent, ref, watch } from 'vue';
     import { propTypes } from '/@/utils/propTypes';
     import { Form } from 'ant-design-vue';
 
-    const placeholder = ['시작 시간', '종료 시간']
+    const placeholder = [$t('appUi.kc2a700ba'), $t('appUi.ka00e1134')]
     /**
      * 시간-시간 구성요소About 범위 쿼리
      */

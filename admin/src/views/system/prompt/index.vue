@@ -4,7 +4,7 @@
       <template #tableTitle>
         <a-space>
           <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate">
-            신규 프롬프트 등록
+            {{ t('appUi.k30866a6b') }}
           </a-button>
           <a-button
             v-if="selectedRowKeys.length > 0"
@@ -12,7 +12,7 @@
             preIcon="ant-design:delete-outlined"
             @click="handleBatchDelete"
           >
-            선택 일괄 삭제 ({{ selectedRowKeys.length }})
+            {{ t('appUi.k6dac28ac') }}{{ selectedRowKeys.length }})
           </a-button>
         </a-space>
       </template>
@@ -21,22 +21,22 @@
         <TableAction
           :actions="[
             {
-              label: '편집',
+              label: t('appUi.kd482e14b'),
               onClick: handleEdit.bind(null, record),
             },
             {
-              label: '테스트',
+              label: t('appUi.kdd6c8185'),
               onClick: handleTest.bind(null, record),
             },
             {
-              label: '변경이력',
+              label: t('appUi.k5c8631b6'),
               onClick: handleHistory.bind(null, record),
             },
             {
-              label: '삭제',
+              label: t('appUi.kfc81e222'),
               color: 'error',
               popConfirm: {
-                title: '해당 프롬프트 템플릿을 삭제하시겠습니까?',
+                title: t('appUi.k651f172f'),
                 confirm: handleDelete.bind(null, record),
               },
             },
@@ -68,6 +68,8 @@
   import PromptEditModal from './components/PromptEditModal.vue';
   import PromptTestDrawer from './components/PromptTestDrawer.vue';
   import PromptHistoryModal from './components/PromptHistoryModal.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createMessage, createConfirm } = useMessage();
   const selectedRowKeys = ref<string[]>([]);
@@ -77,7 +79,7 @@
   const [registerHistoryModal, { openModal: openHistoryModal }] = useModal();
 
   const [registerTable, { reload }] = useTable({
-    title: '프롬프트 템플릿 목록',
+    title: t('appUi.k87cacb6b'),
     api: async (params) => {
       const res: any = await getPromptList(params);
       const list: SysPromptModel[] = Array.isArray(res)
@@ -100,7 +102,7 @@
     showIndexColumn: false,
     actionColumn: {
       width: 220,
-      title: '관리',
+      title: t('appUi.kc29fba5a'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
       fixed: 'right',
@@ -134,7 +136,7 @@
   async function handleDelete(record: SysPromptModel) {
     if (!record.id) return;
     await deletePromptById(record.id);
-    createMessage.success('프롬프트가 삭제되었습니다.');
+    createMessage.success(t('appUi.k203b7989'));
     reload();
   }
 
@@ -142,11 +144,11 @@
     if (selectedRowKeys.value.length === 0) return;
     createConfirm({
       iconType: 'warning',
-      title: '일괄 삭제 확인',
-      content: `선택한 ${selectedRowKeys.value.length}건의 프롬프트 템플릿을 삭제하시겠습니까?`,
+      title: t('appUi.k28b1f14e'),
+      content: t('appUi.kd59e7829', { p0: selectedRowKeys.value.length }),
       onOk: async () => {
         await deleteBatchPrompt(selectedRowKeys.value);
-        createMessage.success('선택한 프롬프트가 일괄 삭제되었습니다.');
+        createMessage.success(t('appUi.kd0b117e1'));
         selectedRowKeys.value = [];
         reload();
       },

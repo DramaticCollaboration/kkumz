@@ -5,7 +5,7 @@
             <div class="app-loading-dots">
                 <span class="dot dot-spin"><i></i><i></i><i></i><i></i></span>
             </div>
-            <div class="app-loading-title">Empasy 엔터프라이즈 AI 플랫폼</div>
+            <div class="app-loading-title">{{ t('appUi.k6ce04b2a') }}</div>
         </div>
     </div>
 </template>
@@ -29,12 +29,12 @@
       const {t} = useI18n();
       const routeQuery:any = route.query;
       if(!routeQuery){
-        createMessage.warning('잘못된 매개변수')
+        createMessage.warning(t('appUi.ke5a743e4'))
       }
 
       const token = routeQuery['loginToken'];
       if(!token){
-        createMessage.warning('토큰이 유효하지 않습니다')
+        createMessage.warning(t('appUi.k256e20e8'))
       }
       const userStore = useUserStore();
       userStore.ThirdLogin({ token, thirdType:'email', goHome: false }).then(res => {
@@ -48,8 +48,8 @@
 
       function requestFailed (err) {
         notification.error({
-          message: '로그인 실패',
-          description: ((err.response || {}).data || {}).message || err.message || "요청에 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+          message: t('appUi.k56efcfd5'),
+          description: ((err.response || {}).data || {}).message || err.message || t('appUi.kdeee49cc'),
           duration: 4,
         });
       }
@@ -74,12 +74,13 @@
           });
         }else{
           notification.error({
-            message: '매개변수가 잘못되었습니다.',
-            description: "페이지 점프 매개변수가 손실되었습니다. 로그를 확인하세요.",
+            message: t('appUi.ke3a77537'),
+            description: t('appUi.k628746bb'),
             duration: 4,
           });
         }
       }
+      return { t };
     }
   }
 </script>

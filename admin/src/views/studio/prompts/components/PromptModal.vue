@@ -2,7 +2,7 @@
   <BasicModal
     v-bind="$attrs"
     @register="registerModal"
-    :title="isUpdate ? 'AI 프롬프트 템플릿 & 브랜드 필터 수정' : '신규 AI 프롬프트 템플릿 등록'"
+    :title="isUpdate ? t('appUi.k83184cf1') : t('appUi.kc4b296ab')"
     :width="720"
     @ok="handleSubmit"
   >
@@ -15,6 +15,8 @@
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { BasicForm, useForm } from '/@/components/Form';
   import { saveAdminPrompt } from '/@/api/kkumz';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const emit = defineEmits(['success', 'register']);
   const isUpdate = ref(false);
@@ -26,14 +28,14 @@
     schemas: [
       {
         field: 'templateCode',
-        label: '템플릿 코드',
+        label: t('appUi.kc071d7b0'),
         component: 'Input',
         required: true,
         colProps: { span: 12 },
       },
       {
         field: 'stageType',
-        label: '스튜디오 단계',
+        label: t('appUi.k5e5da1b7'),
         component: 'JDictSelectTag',
         required: true,
         defaultValue: 'NAMING',
@@ -45,21 +47,21 @@
       },
       {
         field: 'templateName',
-        label: '템플릿 명칭',
+        label: t('appUi.k513fec17'),
         component: 'Input',
         required: true,
         colProps: { span: 16 },
       },
       {
         field: 'modelName',
-        label: 'AI 모델명',
+        label: t('appUi.k46697c5a'),
         component: 'Input',
         required: true,
         colProps: { span: 8 },
       },
       {
         field: 'systemPrompt',
-        label: '시스템 프롬프트',
+        label: t('appUi.k950730e5'),
         component: 'InputTextArea',
         required: true,
         componentProps: { rows: 4 },
@@ -67,7 +69,7 @@
       },
       {
         field: 'userPromptTemplate',
-        label: '유저 프롬프트 템플릿',
+        label: t('appUi.k9f6d3868'),
         component: 'InputTextArea',
         required: true,
         componentProps: { rows: 3 },
@@ -75,14 +77,14 @@
       },
       {
         field: 'forbiddenKeywordsText',
-        label: '브랜드 금지어 필터',
+        label: t('appUi.k8ea3e128'),
         component: 'Input',
-        helpMessage: '쉼표(,)로 구분하여 입력 (예: 도박,불법,사칭,피싱)',
+        helpMessage: t('appUi.k4c90f571'),
         colProps: { span: 16 },
       },
       {
         field: 'status',
-        label: '상태',
+        label: t('appUi.k2926977b'),
         component: 'JDictSelectTag',
         defaultValue: 'ACTIVE',
         componentProps: {

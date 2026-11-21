@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import type { AppRouteModule, AppRouteRecordRaw } from '/@/router/types';
 import type { Router, RouteRecordNormalized } from 'vue-router';
 
@@ -142,7 +143,7 @@ export function transformObjToRoute<T = AppRouteModule>(routeList: AppRouteModul
         route.meta = meta;
       }
     } else {
-      warn(route?.name + ' 컴포넌트가 설정되어 있지 않습니다');
+      warn(route?.name + $t('appUi.k67a4f6e1'));
     }
     route.children && asyncImportRoute(route.children);
   });

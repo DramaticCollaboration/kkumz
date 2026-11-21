@@ -44,8 +44,10 @@
 
 <script name="presetQuestion" setup lang="ts">
   import { ref, onMounted, onBeforeUnmount } from 'vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   const emit = defineEmits(['outQuestion']);
-  const data = ref(['SyncBoot를 소개해주세요', 'Sync Series의 장점은 무엇인가요?', 'Sync Series는 무엇을 할 수 있나요?']);
+  const data = ref([t('appUi.kabf63a73'), t('appUi.kf5d3f5b4'), t('appUi.kd4070669')]);
   const leftBtnStatus = ref('');
   const rightBtnStatus = ref('');
   const rightBtn = ref('');

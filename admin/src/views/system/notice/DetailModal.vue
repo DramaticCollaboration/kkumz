@@ -2,12 +2,12 @@
   <BasicModal
     v-bind="$attrs"
     @register="registerModal"
-    title="세부 사항을 확인하세요"
+    :title="t('appUi.k7cd23eb8')"
     :showCancelBtn="false"
     :showOkBtn="false"
     :maxHeight="500"
   >
-    <iframe v-if="hasFrameSrc" :src="frameSrc" class="detail-iframe" title="공지 상세 내용" />
+    <iframe v-if="hasFrameSrc" :src="frameSrc" class="detail-iframe" :title="t('appUi.kbf510bc6')" />
   </BasicModal>
 </template>
 
@@ -15,6 +15,8 @@
   import { computed } from 'vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { propTypes } from '/@/utils/propTypes';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const props = defineProps({
     frameSrc: propTypes.string.def(''),

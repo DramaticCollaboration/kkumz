@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 /**
  * @fileoverview RBAC 권한 기반 동적 라우팅 및 메뉴 필터링 스토어 (usePermissionStore)
  * @description
@@ -124,7 +125,7 @@ export const usePermissionStore = defineStore('app-permission', {
     async changePermissionCode() {
       const systemPermission = await getBackMenuAndPerms();
       if (!systemPermission) {
-        throw new Error('인증 및 메뉴 권한 정보를 백엔드로부터 가져오지 못했습니다.');
+        throw new Error($t('appUi.k82e9d4e1'));
       }
       const codeList = systemPermission.codeList || [];
       this.setPermCodeList(codeList);
@@ -133,7 +134,7 @@ export const usePermissionStore = defineStore('app-permission', {
       // 메뉴 라우팅
       const routeList = systemPermission.menu;
       if (!routeList || routeList.length === 0) {
-        throw new Error('백엔드로부터 수신된 메뉴 목록이 비어있습니다.');
+        throw new Error($t('appUi.k548e4a53'));
       }
       return routeList;
     },

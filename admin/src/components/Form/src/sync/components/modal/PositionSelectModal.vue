@@ -43,6 +43,8 @@
   </div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
   import { defineComponent, ref, unref } from 'vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { getPositionList } from '/@/api/common/api';
@@ -65,11 +67,12 @@
       //상자 제목 선택
       modalTitle: {
         type: String,
-        default: '직업 선택',
+        default: $t('appUi.k0828c751'),
       },
     },
     emits: ['register', 'getSelectResult'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       //등록 팝업 상자
       const [register, { closeModal }] = useModalInner();
       const attrs = useAttrs();
@@ -110,7 +113,7 @@
         },
         schemas: [
           {
-            label: '직위',
+            label: t('appUi.k0923a240'),
             field: 'name',
             component: 'JInput',
             colProps: { span: 10 },
@@ -120,18 +123,18 @@
       //테이블 열 정의
       const columns = [
         {
-          title: '직업 코드',
+          title: t('appUi.kc0a1d4a6'),
           dataIndex: 'code',
           width: 180,
           align: 'left',
         },
         {
-          title: '직위',
+          title: t('appUi.k0923a240'),
           dataIndex: 'name',
           // width: 180,
         },
         {
-          title: '직업레벨',
+          title: t('appUi.k4ef6d9e4'),
           dataIndex: 'postRank_dictText',
           width: 180,
         },
@@ -147,12 +150,12 @@
         rowKey: 'id',
         columns: [
           {
-            title: '직위',
+            title: t('appUi.k0923a240'),
             dataIndex: 'name',
             width: 40,
           },
           {
-            title: '작업',
+            title: t('appUi.k9d9bf438'),
             dataIndex: 'action',
             align: 'center',
             width: 40,

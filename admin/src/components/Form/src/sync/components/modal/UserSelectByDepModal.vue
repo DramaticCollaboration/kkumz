@@ -28,6 +28,8 @@
   </BasicModal>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
   import { defineComponent, unref, ref } from 'vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { BasicTree } from '/@/components/Tree/index';
@@ -52,11 +54,12 @@
       //상자 제목 선택
       modalTitle: {
         type: String,
-        default: '부서 사용자 선택',
+        default: $t('appUi.kdd9cc121'),
       },
     },
     emits: ['register', 'getSelectResult'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       const tableRef = ref();
       const treeRef = ref();
       //등록 팝업 상자
@@ -74,22 +77,22 @@
       const tableProps = {
         columns: [
           {
-            title: '아이디',
+            title: t('appUi.k8dd085d9'),
             dataIndex: 'username',
             width: 180,
           },
           {
-            title: '사용자 이름',
+            title: t('appUi.k2cc04d4c'),
             dataIndex: 'realname',
             width: 180,
           },
           {
-            title: '성별',
+            title: t('appUi.k77737feb'),
             dataIndex: 'sex_dictText',
             width: 80,
           },
           {
-            title: '전화 번호',
+            title: t('appUi.kfbf7b5bb'),
             dataIndex: 'phone',
             // width: 50,
           },
@@ -120,7 +123,7 @@
           },
           schemas: [
             {
-              label: '계정',
+              label: t('appUi.k615212b2'),
               field: 'username',
               component: 'Input',
             },

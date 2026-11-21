@@ -10,7 +10,7 @@ import {
 
 import { CacheTypeEnum } from '/@/enums/cacheEnum';
 
-export type LocaleType = 'ko_KR' | 'en' | 'ru' | 'ja' | 'ko';
+export type LocaleType = 'ko-KR' | 'en-US';
 
 export interface MenuSetting {
   bgColor: string;

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { getValueType } from '/@/utils';
 
 export const VALIDATE_FAILED = Symbol();
@@ -9,7 +10,7 @@ export const VALIDATE_FAILED = Symbol();
  */
 export async function validateFormModelAndTables(validate, formData, cases, props, autoJumpTab?) {
   if (!(validate && typeof validate === 'function')) {
-    throw `validate 매개변수에는 메소드가 필요하지만 전달되는 내용 ${typeof validate}`;
+    throw $t('appUi.kb89e3b5c', { p0: typeof validate });
   }
   let dataMap = {};
   let values = await new Promise((resolve, reject) => {
@@ -46,7 +47,7 @@ export async function validateFormModelAndTables(validate, formData, cases, prop
  */
 export function validateTables(cases, autoJumpTab = true) {
   if (!(cases instanceof Array)) {
-    throw `'validateTables'기능성'cases'매개변수에 배열이 필요하지만 $가 전달되었습니다.{typeof cases}`;
+    throw $t('appUi.ke3816534');
   }
   return new Promise((resolve, reject) => {
     let tablesData: any = [];

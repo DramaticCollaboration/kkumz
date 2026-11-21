@@ -31,6 +31,7 @@
   </div>
 </template>
 <script lang="ts">
+  import { $t } from '/@/locales';
   import { defineComponent, PropType, ref, reactive, watchEffect, computed, unref, watch, onMounted, nextTick } from 'vue';
   import { LoadingOutlined, UploadOutlined } from '@ant-design/icons-vue';
   import { useRuleFormItem } from '/@/hooks/component/useFormItem';
@@ -59,7 +60,7 @@
       text: {
         type: String,
         required: false,
-        default: '업로드',
+        default: $t('appUi.k51672ccd'),
       },
       //이 속성은 파일 업로드의 비즈니스 경로를 제어하는 ​​데 사용됩니다.
       bizPath: {

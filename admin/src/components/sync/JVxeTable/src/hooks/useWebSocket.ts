@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { watch, onUnmounted } from 'vue';
 import { buildUUID } from '/@/utils/uuid';
 import { useGlobSetting } from '/@/hooks/setting';
@@ -78,7 +79,7 @@ const vs = {
         );
       }
     } catch (err: any) {
-      console.warn('【JVxeWebSocket】메시지를 보내지 못했습니다.：(' + err.code + ')');
+      console.warn($t('appUi.kae1b5cc1') + err.code + ')');
     }
   },
 
@@ -165,7 +166,7 @@ const vs = {
           this.callBind(this.tableMap, data.socketKey, (args) => this.onVM.onUpdateTable(args, ...data.args));
           break;
         default:
-          console.warn('【JVxeWebSocket】인식할 수 없는 메시지 유형이 수신되었습니다.:' + type);
+          console.warn($t('appUi.kba8d16fb') + type);
           break;
       }
     },

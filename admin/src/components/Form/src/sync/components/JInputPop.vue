@@ -8,7 +8,7 @@
   >
     <template #title>
       <span :class="title ? 'title' : 'emptyTitle'">{{ title }}</span>
-      <span style="float: right" title="취소">
+      <span style="float: right" :title="t('appUi.k19b2d19b')">
         <Icon icon="ant-design:close-outlined" @click="visible = false" />
       </span>
     </template>
@@ -29,6 +29,8 @@
   import { useAttrs } from '/@/hooks/core/useAttrs';
   import { propTypes } from '/@/utils/propTypes';
   import { useDesign } from '/@/hooks/web/useDesign';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { prefixCls } = useDesign('j-input-popup');
   const props = defineProps({

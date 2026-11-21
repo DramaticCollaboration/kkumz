@@ -19,10 +19,10 @@
           <a-col :md="6" :sm="8">
             <span style="float: left; overflow: hidden" class="table-page-search-submitButtons">
               <a-col :lg="6">
-                <a-button type="primary" preIcon="ant-design:search-outlined" @click="searchQuery">검색</a-button>
-                <a-button type="primary" preIcon="ant-design:reload-outlined" @click="searchReset" style="margin-left: 8px">초기화</a-button>
+                <a-button type="primary" preIcon="ant-design:search-outlined" @click="searchQuery">{{ t('appUi.k4f5a3f69') }}</a-button>
+                <a-button type="primary" preIcon="ant-design:reload-outlined" @click="searchReset" style="margin-left: 8px">{{ t('appUi.kff75b4ff') }}</a-button>
                 <a @click="handleToggleSearch" style="margin-left: 8px">
-                  {{ toggleSearchStatus ? '닫기' : '확장' }}
+                  {{ toggleSearchStatus ? t('appUi.k94b7dba1') : t('appUi.k64139068') }}
                   <Icon :icon="toggleSearchStatus ? 'ant-design:up-outlined' : 'ant-design:down-outlined'" />
                 </a>
               </a-col>
@@ -58,6 +58,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, unref, ref, watch, watchEffect, reactive, computed } from 'vue';
   import { createAsyncComponent } from '/@/utils/factory/createAsyncComponent';
   import { useAttrs } from '/@/hooks/core/useAttrs';
@@ -76,6 +77,7 @@
     props: ['multi', 'code', 'id', 'sorter', 'groupId', 'param', 'clickToRowSelect'],
     emits: ['ok', 'register'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       const { createMessage } = useMessage();
       const labelCol = reactive({
         xs: { span: 24 },
@@ -199,6 +201,7 @@
       }
 
       return {
+        t,
         attrs,
 
         tableScroll,

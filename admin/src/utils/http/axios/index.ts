@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 /**
  * @fileoverview Axios 인스턴스 팩토리 및 인터셉터 파이프라인 구성
  * @description
@@ -25,6 +26,7 @@ import { useErrorLogStoreWithOut } from '/@/store/modules/errorLog';
 import { useI18n } from '/@/hooks/web/useI18n';
 import { joinTimestamp, formatRequestDate } from './helper';
 import { useUserStoreWithOut } from '/@/store/modules/user';
+import { useLocaleStoreWithOut } from '/@/store/modules/locale';
 import { cloneDeep } from "lodash-es";
 
 const globSetting = useGlobSetting();
@@ -69,11 +71,11 @@ const transform: AxiosTransform = {
         if (rawMsg && !isGenericOk) {
           createMessage.success(rawMsg);
         } else if (method === RequestEnum.DELETE || /\/delete/i.test(requestUrl)) {
-          createMessage.success('삭제되었습니다.');
+          createMessage.success($t('appUi.k0f202782'));
         } else if (method === RequestEnum.PUT || /\/(edit|update)(\/|\?|$)/i.test(requestUrl)) {
-          createMessage.success('수정되었습니다.');
+          createMessage.success($t('appUi.k9b968290'));
         } else if (method === RequestEnum.POST) {
-          createMessage.success('등록되었습니다.');
+          createMessage.success($t('appUi.k7d075cad'));
         }
       }
       return result;
@@ -84,11 +86,10 @@ const transform: AxiosTransform = {
     const loginPaths = ['/login', '/mLogin', '/phoneLogin', '/validateLogin', '/thirdLogin'];
     const isLoginApi = loginPaths.some((p) => requestUrl.includes(p));
 
-    const isExpiredLoginMsg = (msg: string) =>
-      msg.includes('토큰') || (msg.includes('로그인') && ['만료', '시간 초과'].some((k) => msg.includes(k)));
+    const errorCode = (data as Recordable)?.errorCode;
     const isAuthFailure =
       !isLoginApi &&
-      ([ResultEnum.TIMEOUT, 401].includes(code) || (typeof message === 'string' && isExpiredLoginMsg(message)));
+      ([ResultEnum.TIMEOUT, 401].includes(code) || errorCode === 'AUTH_TOKEN_EXPIRED' || errorCode === 'UNAUTHORIZED');
 
     if (isAuthFailure) {
       timeoutMsg = message || t('sys.api.timeoutMessage');
@@ -166,6 +167,10 @@ const transform: AxiosTransform = {
    */
   requestInterceptors: (config: Recordable, options) => {
     const token = getToken();
+    const localeStore = useLocaleStoreWithOut();
+    const currentLocale = localeStore.getLocale || 'ko-KR';
+    config.headers['Accept-Language'] = currentLocale;
+    config.headers['X-Locale'] = currentLocale;
     
     config.headers[ConfigEnum.TIMESTAMP] = signMd5Utils.getTimestamp();
     config.headers[ConfigEnum.Sign] = signMd5Utils.getSign(config.url, cloneDeep(config.params), cloneDeep(config.data));

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { ref, reactive } from 'vue';
 import { defHttp } from '/@/utils/http/axios';
 import { getDictItemsByCode } from '/@/utils/dict/index';
@@ -123,17 +124,17 @@ export function useSysMessage() {
   // 메시지 유형
   function getMsgCategory(item) {
     if(item.busType=='email'){
-      return '이메일 알림:';
+      return $t('appUi.ka93463a5');
     } else if(item.busType=='bpm'){
-      return '프로세스 알림:';
+      return $t('appUi.k48713094');
     } else if(item.busType=='bpm_cc'){
-      return '프로세스 CC:';
+      return $t('appUi.keb24af2f');
     }else if(item.busType=='bpm_task'){
-      return '프로세스 작업:';
+      return $t('appUi.kdae9a689');
     } else if (item.msgCategory == '2') {
-      return '시스템 메시지:';
+      return $t('appUi.k607d7139');
     } else if (item.msgCategory == '1') {
-      return '공지사항:';
+      return $t('appUi.k0dbdde28');
     }
     return '';
   }

@@ -2,7 +2,7 @@
   <div>
     <BasicTable @register="registerTable" :searchInfo="searchInfo">
       <template #tableTitle>
-        <a-button type="primary" @click="handlerReadAllMsg">모두 읽음으로 표시됨</a-button>
+        <a-button type="primary" @click="handlerReadAllMsg">{{ t('appUi.k6ed864bc') }}</a-button>
       </template>
       <template #action="{ record }">
         <TableAction :actions="getActions(record)" />
@@ -32,6 +32,8 @@
   import { useRouter } from 'vue-router';
   import { useAppStore } from '/@/store/modules/app';
   import { useMessageHref } from '/@/views/system/message/components/useSysMessage';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   const appStore = useAppStore();
 
   const {goPage} = useMessageHref()
@@ -39,7 +41,7 @@
   const { prefixCls, tableContext } = useListPage({
     designScope: 'mynews-list',
     tableProps: {
-      title: '내 메시지',
+      title: t('appUi.k6d8b8996'),
       api: getMyNewsList,
       columns: columns,
       formConfig: {
@@ -56,7 +58,7 @@
   function getActions(record) {
     return [
       {
-        label: '확인',
+        label: t('appUi.k468266d6'),
         onClick: handleDetail.bind(null, record),
       },
     ];

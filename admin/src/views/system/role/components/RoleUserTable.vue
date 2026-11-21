@@ -1,21 +1,21 @@
 <template>
-  <BasicDrawer @register="registerBaseDrawer" title="역할 사용자" width="800" destroyOnClose>
+  <BasicDrawer @register="registerBaseDrawer" :title="t('appUi.k258b2c3d')" width="800" destroyOnClose>
     <BasicTable @register="registerTable" :rowSelection="rowSelection">
       <template #tableTitle>
-        <a-button type="primary" @click="handleCreate" v-if="!disableUserEdit"> 사용자 추가</a-button>
-        <a-button type="primary" @click="handleSelect"> 사용자 찾기</a-button>
+        <a-button type="primary" @click="handleCreate" v-if="!disableUserEdit"> {{ t('appUi.k5fba4f4b') }}</a-button>
+        <a-button type="primary" @click="handleSelect"> {{ t('appUi.k98ce3bf4') }}</a-button>
 
         <a-dropdown v-if="checkedKeys.length > 0">
           <template #overlay>
             <a-menu>
               <a-menu-item key="1" @click="batchHandleDelete">
                 <Icon icon="bx:bx-unlink"></Icon>
-                연결 해제
+                {{ t('appUi.keb58837f') }}
               </a-menu-item>
             </a-menu>
           </template>
           <a-button
-            >일괄 작업
+            >{{ t('appUi.k39eb4aed') }}
             <Icon icon="ant-design:down-outlined"></Icon>
           </a-button>
         </a-dropdown>
@@ -40,6 +40,8 @@
   import { userList, deleteUserRole, batchDeleteUserRole, addUserRole } from '../role.api';
   import { userColumns, searchUserFormSchema } from '../role.data';
   import { getUserRoles } from '../../user/user.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const emit = defineEmits(['register', 'hideUserList']);
   const props = defineProps({
@@ -58,7 +60,7 @@
   //서랍 등록
   const [registerModal, { openModal }] = useModal();
   const [registerTable, { reload, updateTableDataRecord, setProps }] = useTable({
-    title: '사용자 목록',
+    title: t('appUi.k874f9343'),
     api: userList,
     columns: userColumns,
     formConfig: {
@@ -78,7 +80,7 @@
     rowKey: 'id',
     actionColumn: {
       width: 180,
-      title: '작업',
+      title: t('appUi.k9d9bf438'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
       fixed: undefined,
@@ -169,14 +171,14 @@
   function getTableAction(record) {
     return [
       {
-        label: '편집',
+        label: t('appUi.kd482e14b'),
         onClick: handleEdit.bind(null, record),
         ifShow: () => !props.disableUserEdit,
       },
       {
-        label: '연결 해제',
+        label: t('appUi.keb58837f'),
         popConfirm: {
-          title: '연결을 취소하시겠습니까?',
+          title: t('appUi.k2a04b69f'),
           confirm: handleDelete.bind(null, record),
         },
       },

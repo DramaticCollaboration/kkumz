@@ -1,19 +1,19 @@
 <template>
   <BasicDrawer v-bind="$attrs" @register="registerDrawer" width="650px" destroyOnClose showFooter>
     <template #title>
-      역할 권한 구성
+      {{ t('appUi.k2e265b4d') }}
       <a-dropdown>
         <Icon icon="ant-design:more-outlined" class="more-icon" />
         <template #overlay>
           <a-menu @click="treeMenuClick">
-            <a-menu-item key="checkAll">모두 선택</a-menu-item>
-            <a-menu-item key="cancelCheck">선택 취소</a-menu-item>
+            <a-menu-item key="checkAll">{{ t('appUi.kc764a797') }}</a-menu-item>
+            <a-menu-item key="cancelCheck">{{ t('appUi.k78857495') }}</a-menu-item>
             <div class="line"></div>
-            <a-menu-item key="openAll">모두 펼치기</a-menu-item>
-            <a-menu-item key="closeAll">모두 접기</a-menu-item>
+            <a-menu-item key="openAll">{{ t('appUi.k2225f1f1') }}</a-menu-item>
+            <a-menu-item key="closeAll">{{ t('appUi.k4274646a') }}</a-menu-item>
             <div class="line"></div>
-            <a-menu-item key="relation">계층적 연관</a-menu-item>
-            <a-menu-item key="standAlone">계층 독립적</a-menu-item>
+            <a-menu-item key="relation">{{ t('appUi.k6fa9e054') }}</a-menu-item>
+            <a-menu-item key="standAlone">{{ t('appUi.kd657822f') }}</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -38,9 +38,9 @@
     <!--오른쪽 하단 버튼-->
     <template #footer>
       <!-- <PopConfirmButton title="편집을 중단하시겠습니까?" @confirm="closeDrawer" okText="확인" cancelText="취소"></PopConfirmButton> -->
-      <a-button @click="closeDrawer">취소</a-button>
-      <a-button @click="handleSubmit(false)" type="primary" :loading="loading" ghost style="margin-right: 0.8rem"> 저장</a-button>
-      <a-button @click="handleSubmit(true)" type="primary" :loading="loading">저장하고 닫기</a-button>
+      <a-button @click="closeDrawer">{{ t('appUi.k19b2d19b') }}</a-button>
+      <a-button @click="handleSubmit(false)" type="primary" :loading="loading" ghost style="margin-right: 0.8rem"> {{ t('appUi.k1f1712ac') }}</a-button>
+      <a-button @click="handleSubmit(true)" type="primary" :loading="loading">{{ t('appUi.k1268ad51') }}</a-button>
     </template>
     <RoleDataRuleDrawer @register="registerDrawer1" />
   </BasicDrawer>

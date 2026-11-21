@@ -19,19 +19,21 @@
         <a-dropdown placement="top">
           <template #overlay>
             <a-menu>
-              <a-menu-item v-if="multiple" key="1" @click="checkALL(true)">모두 확인</a-menu-item>
-              <a-menu-item v-if="multiple" key="2" @click="checkALL(false)">모두 선택 취소</a-menu-item>
-              <a-menu-item key="3" @click="expandAll(true)">모두 펼치기</a-menu-item>
-              <a-menu-item key="4" @click="expandAll(false)">모두 접기</a-menu-item>
+              <a-menu-item v-if="multiple" key="1" @click="checkALL(true)">{{ t('appUi.k43c1a81d') }}</a-menu-item>
+              <a-menu-item v-if="multiple" key="2" @click="checkALL(false)">{{ t('appUi.k153923e9') }}</a-menu-item>
+              <a-menu-item key="3" @click="expandAll(true)">{{ t('appUi.k2225f1f1') }}</a-menu-item>
+              <a-menu-item key="4" @click="expandAll(false)">{{ t('appUi.k4274646a') }}</a-menu-item>
             </a-menu>
           </template>
-          <a-button style="float: left"> 트리 작업 <Icon icon="ant-design:up-outlined" /> </a-button>
+          <a-button style="float: left"> {{ t('appUi.k6861bc2f') }} <Icon icon="ant-design:up-outlined" /> </a-button>
         </a-dropdown>
       </template>
     </BasicModal>
   </div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
   import { defineComponent, ref, unref } from 'vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { queryDepartTreeSync, queryTreeList } from '/@/api/common/api';
@@ -53,7 +55,7 @@
       //상자 제목 선택
       modalTitle: {
         type: String,
-        default: '학과선택',
+        default: $t('appUi.k66d71b07'),
       },
       maxHeight: {
         type: Number,
@@ -63,6 +65,7 @@
     },
     emits: ['register', 'getSelectResult', 'close'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       //등록 팝업 상자
       const [register, { closeModal }] = useModalInner();
       const attrs = useAttrs();
@@ -101,6 +104,7 @@
       }
 
       return {
+        t,
         tree,
         handleOk,
         searchInfo,

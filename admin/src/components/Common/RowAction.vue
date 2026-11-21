@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { IconifyIcon } from '@vben/icons';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
+  const { t } = useI18n();
 
 withDefaults(
   defineProps<{
@@ -13,8 +16,8 @@ withDefaults(
   {
     showEdit: true,
     showDelete: true,
-    editText: '수정',
-    deleteText: '삭제',
+    editText: (() => $t('appUi.ke1407b51')) as unknown as string,
+    deleteText: (() => $t('appUi.kfc81e222')) as unknown as string,
   },
 );
 

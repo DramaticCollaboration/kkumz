@@ -81,7 +81,7 @@
 
   async function show(name) {
     if (!name) {
-      $message.createMessage.warning('현재 시스템에 로그인한 사용자가 없습니다!');
+      $message.createMessage.warning(t('appUi.k9edd2f82'));
       return;
     } else {
       username.value = name;

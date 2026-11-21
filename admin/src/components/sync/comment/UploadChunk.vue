@@ -4,7 +4,7 @@
       <template #message>
         <span class="j-icon">
           <a-upload multiple v-model:file-list="selectFileList" :showUploadList="false" :before-upload="beforeUpload">
-            <span class="inner-button"><upload-outlined />업로드</span>
+            <span class="inner-button"><upload-outlined />{{ t('appUi.k51672ccd') }}</span>
           </a-upload>
         </span>
       </template>
@@ -38,7 +38,7 @@
               </div>
               <div class="buttons">
                 <div class="opt-icon">
-                  <Tooltip title="삭제">
+                  <Tooltip :title="t('appUi.kfc81e222')">
                     <delete-outlined @click="handleRemove(item)" />
                   </Tooltip>
                 </div>
@@ -54,6 +54,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { toRaw, watch } from 'vue';
   import { useFileList } from './useComment';
   import { Tooltip } from 'ant-design-vue';
@@ -78,6 +79,7 @@
     },
     emits:['select'],
     setup(_p, {emit}) {
+      const { t } = useI18n();
       const { selectFileList, beforeUpload, handleRemove, getBackground, isImage, getImageSrc, viewImage } = useFileList();
 
       const [registerModel, { openModal }] = useModal();
@@ -115,6 +117,7 @@
       }
 
       return {
+        t,
         selectFileList,
         beforeUpload,
         handleRemove,

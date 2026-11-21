@@ -4,7 +4,7 @@
     <div class="address-row-top">
       <a-input
         :value="postCode"
-        placeholder="우편번호"
+        :placeholder="t('appUi.kcd21379e')"
         style="width: 115px;"
         maxlength="6"
         @update:value="(val: string) => emit('update:postCode', val)"
@@ -12,11 +12,11 @@
       />
       <a-button type="primary" ghost @click="openSearchModal('postcode')">
         <template #icon><SearchOutlined /></template>
-        우편번호 · 주소 검색
+        {{ t('appUi.k2d0c4963') }}
       </a-button>
       <a-button @click="openSearchModal('keyword')">
         <template #icon><EnvironmentOutlined /></template>
-        지도 검색
+        {{ t('appUi.kd567b853') }}
       </a-button>
       <a-button
         v-if="address"
@@ -24,7 +24,7 @@
         @click="showInlineMap = !showInlineMap"
       >
         <template #icon><CompassOutlined /></template>
-        {{ showInlineMap ? '지도 닫기' : '지도 위치 확인' }}
+        {{ showInlineMap ? t('appUi.k6e1297d5') : t('appUi.k19447267') }}
       </a-button>
       <a-button
         v-if="postCode || address || addressDetail"
@@ -33,7 +33,7 @@
         size="small"
         @click="handleClear"
       >
-        초기화
+        {{ t('appUi.kff75b4ff') }}
       </a-button>
     </div>
 
@@ -41,7 +41,7 @@
     <div class="address-row-item">
       <a-input
         :value="address"
-        placeholder="도로명 또는 지번 기본 주소"
+        :placeholder="t('appUi.k10d720fa')"
         allow-clear
         @update:value="(val: string) => emit('update:address', val)"
         @click="!address ? openSearchModal('postcode') : undefined"
@@ -57,7 +57,7 @@
       <a-input
         ref="detailInputRef"
         :value="addressDetail"
-        placeholder="동, 층, 호수, 부서 위치 등 상세 주소 입력"
+        :placeholder="t('appUi.kb9f17fb8')"
         allow-clear
         @update:value="(val: string) => emit('update:addressDetail', val)"
       />
@@ -86,6 +86,8 @@ import { ref, nextTick } from 'vue';
 import { SearchOutlined, EnvironmentOutlined, CompassOutlined } from '@ant-design/icons-vue';
 import AddressMapView from './AddressMapView.vue';
 import AddressSearchModal from './AddressSearchModal.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{

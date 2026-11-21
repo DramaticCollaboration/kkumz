@@ -1,14 +1,14 @@
 <template>
   <div v-show="download" class="upload-download-handler">
-    <a class="download" title="다운로드" @click="onDownload">
+    <a class="download" :title="t('appUi.k5c5095ab')" @click="onDownload">
       <Icon icon="ant-design:download" />
     </a>
   </div>
   <div v-show="mover && list.length > 1" class="upload-mover-handler">
-    <a title="앞으로 나아가다" @click="onMoveForward">
+    <a :title="t('appUi.k9e03e2d4')" @click="onMoveForward">
       <Icon icon="ant-design:arrow-left" />
     </a>
-    <a title="뒤로 이동" @click="onMoveBack">
+    <a :title="t('appUi.k4459f93e')" @click="onMoveBack">
       <Icon icon="ant-design:arrow-right" />
     </a>
   </div>
@@ -18,6 +18,8 @@
   import { unref, computed } from 'vue';
   import { Icon } from '/@/components/Icon';
   import { useMessage } from '/@/hooks/web/useMessage';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createMessage } = useMessage();
 
@@ -34,7 +36,7 @@
   function onMoveForward() {
     let index = getIndexByUrl();
     if (index === -1) {
-      createMessage.warn('이동 실패：' + index);
+      createMessage.warn(t('appUi.k27875673') + index);
       return;
     }
     if (index === 0) {
@@ -48,7 +50,7 @@
   function onMoveBack() {
     let index = getIndexByUrl();
     if (index === -1) {
-      createMessage.warn('이동 실패：' + index);
+      createMessage.warn(t('appUi.k27875673') + index);
       return;
     }
     if (index == unref(list).length - 1) {

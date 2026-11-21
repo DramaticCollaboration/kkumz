@@ -5,7 +5,7 @@
       class="flex items-center justify-between gap-2 px-2 py-1.5 mb-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
     >
       <a-button size="small" type="default" @click="mobileFilterOpen = !mobileFilterOpen">
-        {{ mobileFilterOpen ? '필터 닫기' : '검색 필터' }}
+        {{ mobileFilterOpen ? t('component.table.closeFilter') : t('component.table.searchFilter') }}
       </a-button>
       <div v-if="canUseMobileCardView" class="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden text-xs">
         <button
@@ -13,13 +13,13 @@
           class="px-2.5 py-1 border-0 cursor-pointer"
           :class="mobileViewMode === 'card' ? 'bg-sky-600 text-white font-semibold' : 'bg-transparent text-slate-600 dark:text-slate-300'"
           @click="mobileViewMode = 'card'"
-        >카드</button>
+        >{{ t('component.table.cardView') }}</button>
         <button
           type="button"
           class="px-2.5 py-1 border-0 cursor-pointer"
           :class="mobileViewMode === 'table' ? 'bg-sky-600 text-white font-semibold' : 'bg-transparent text-slate-600 dark:text-slate-300'"
           @click="mobileViewMode = 'table'"
-        >표</button>
+        >{{ t('component.table.tableView') }}</button>
       </div>
     </div>
     <div
@@ -32,13 +32,13 @@
           class="px-2.5 py-1 border-0 cursor-pointer"
           :class="mobileViewMode === 'card' ? 'bg-sky-600 text-white font-semibold' : 'bg-transparent text-slate-600 dark:text-slate-300'"
           @click="mobileViewMode = 'card'"
-        >카드</button>
+        >{{ t('component.table.cardView') }}</button>
         <button
           type="button"
           class="px-2.5 py-1 border-0 cursor-pointer"
           :class="mobileViewMode === 'table' ? 'bg-sky-600 text-white font-semibold' : 'bg-transparent text-slate-600 dark:text-slate-300'"
           @click="mobileViewMode = 'table'"
-        >표</button>
+        >{{ t('component.table.tableView') }}</button>
       </div>
     </div>
     <BasicForm
@@ -151,6 +151,7 @@
   import { basicProps } from './props';
   import { isFunction } from '/@/utils/is';
   import { warn } from '/@/utils/log';
+  import { useI18n } from '/@/hooks/web/useI18n';
 
   export default defineComponent({
     components: {
@@ -189,6 +190,7 @@
       const innerPropsRef = ref<Partial<BasicTableProps>>();
 
       const { prefixCls } = useDesign('basic-table');
+      const { t } = useI18n();
       const { getIsMobile } = useAppInject();
       const mobileFilterOpen = ref(false);
       const mobileViewMode = ref<'card' | 'table'>('card');
@@ -497,6 +499,7 @@
         mobileViewMode,
         canUseMobileCardView,
         showMobileCardView,
+        t,
       };
     },
   });

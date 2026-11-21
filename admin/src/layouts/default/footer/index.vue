@@ -7,7 +7,7 @@
 
       <a @click="openWindow(DOC_URL)">{{ t('layout.footer.onlineDocument') }}</a>
     </div>
-    <div>Copyright &copy;2026 주식회사 엠파시 (Empasy Inc.). All rights reserved.</div>
+    <div>{{ t('appUi.k97b55912') }}</div>
   </Footer>
 </template>
 

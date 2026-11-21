@@ -5,19 +5,41 @@ import { store } from '/@/store';
 
 import { LOCALE_KEY } from '/@/enums/cacheEnum';
 import { createLocalStorage } from '/@/utils/cache';
-import { localeSetting } from '/@/settings/localeSetting';
+import {
+  LOCALE,
+  localeSetting,
+  normalizeLocale,
+  getLocaleCookie,
+  setLocaleCookie,
+  detectBrowserLocale,
+} from '/@/settings/localeSetting';
 
 const ls = createLocalStorage();
 
-const lsLocaleSetting = (ls.get(LOCALE_KEY) || localeSetting) as LocaleSetting;
+function resolveInitialLocaleSetting(): LocaleSetting {
+  const stored = ls.get(LOCALE_KEY) as Partial<LocaleSetting> | null;
+  const cookieLocale = getLocaleCookie();
+  const initialLocale: LocaleType = stored?.locale
+    ? normalizeLocale(stored.locale)
+    : cookieLocale || detectBrowserLocale() || localeSetting.locale;
+
+  return {
+    ...localeSetting,
+    ...(stored || {}),
+    showPicker: true,
+    locale: initialLocale,
+    fallback: LOCALE.KO_KR,
+    availableLocales: [LOCALE.KO_KR, LOCALE.EN_US],
+  };
+}
+
+const lsLocaleSetting = resolveInitialLocaleSetting();
 
 interface LocaleState {
   localInfo: LocaleSetting;
-  pathTitleMap: object;
-  // myapps 테마 색상（로우코드 애플리케이션 목록 홈페이지）
-  appIndexTheme: string
-  // myapps - 점프 전 라우팅 주소
-  appMainPth: string
+  pathTitleMap: Record<string, string>;
+  appIndexTheme: string;
+  appMainPth: string;
 }
 
 export const useLocaleStore = defineStore('app-locale', {
@@ -25,17 +47,17 @@ export const useLocaleStore = defineStore('app-locale', {
     localInfo: lsLocaleSetting,
     pathTitleMap: {},
     appIndexTheme: '',
-    appMainPth: ''
+    appMainPth: '',
   }),
   getters: {
     getShowPicker(): boolean {
-      return !!this.localInfo?.showPicker;
+      return this.localInfo?.showPicker !== false;
     },
     getLocale(): LocaleType {
-      return this.localInfo?.locale ?? 'ko_KR';
+      return normalizeLocale(this.localInfo?.locale);
     },
     getPathTitle: (state) => {
-      return (path) => state.pathTitleMap[path];
+      return (path: string) => state.pathTitleMap[path];
     },
     getAppIndexTheme(): string {
       return this.appIndexTheme;
@@ -45,36 +67,37 @@ export const useLocaleStore = defineStore('app-locale', {
     },
   },
   actions: {
-    /**
-     * Set up multilingual information and cache
-     * @param info multilingual info
-     */
     setLocaleInfo(info: Partial<LocaleSetting>) {
-      this.localInfo = { ...this.localInfo, ...info };
-      ls.set(LOCALE_KEY, this.localInfo);
-    },
-    /**
-     * Initialize multilingual information and load the existing configuration from the local cache
-     */
-    initLocale() {
-      this.setLocaleInfo({
-        ...localeSetting,
+      const nextLocale = info.locale ? normalizeLocale(info.locale) : normalizeLocale(this.localInfo.locale);
+      this.localInfo = {
         ...this.localInfo,
-      });
+        ...info,
+        locale: nextLocale,
+        fallback: LOCALE.KO_KR,
+        availableLocales: [LOCALE.KO_KR, LOCALE.EN_US],
+      };
+      ls.set(LOCALE_KEY, this.localInfo);
+      setLocaleCookie(nextLocale);
     },
-    setPathTitle(path, title) {
+    initLocale() {
+      const normalized = resolveInitialLocaleSetting();
+      this.setLocaleInfo(normalized);
+    },
+    setPathTitle(path: string, title: string) {
       this.pathTitleMap[path] = title;
     },
-    setAppIndexTheme(theme) {
+    clearPathTitles() {
+      this.pathTitleMap = {};
+    },
+    setAppIndexTheme(theme: string) {
       this.appIndexTheme = theme;
     },
-    setAppMainPth(path) {
+    setAppMainPth(path: string) {
       this.appMainPth = path;
     },
   },
 });
 
-// Need to be used outside the setup
 export function useLocaleStoreWithOut() {
   return useLocaleStore(store);
 }

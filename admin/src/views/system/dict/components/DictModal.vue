@@ -9,6 +9,8 @@
   import { BasicForm, useForm } from '/src/components/Form';
   import { formSchema } from '../dict.data';
   import { saveOrUpdateDict } from '../dict.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   // 방출 선언
   const emit = defineEmits(['register', 'success']);
   const isUpdate = ref(true);
@@ -33,7 +35,7 @@
     }
   });
   //제목 설정
-  const getTitle = computed(() => (!unref(isUpdate) ? '사전 추가' : '사전 편집'));
+  const getTitle = computed(() => (!unref(isUpdate) ? t('appUi.kd6033a42') : t('appUi.k035a6564')));
   //Form 제출 이벤트
   async function handleSubmit() {
     try {

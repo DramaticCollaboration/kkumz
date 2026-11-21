@@ -13,6 +13,8 @@
   import mdKatex from '@traptitech/markdown-it-katex';
   import mila from 'markdown-it-link-attributes';
   import hljs from 'highlight.js';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const props = defineProps(['dateTime', 'text', 'inversion', 'error', 'loading']);
   const textRef = ref();
@@ -49,9 +51,9 @@
           const code = btn.parentElement?.nextElementSibling?.textContent;
           if (code) {
             copyToClip(code).then(() => {
-              btn.textContent = '성공적으로 복사되었습니다';
+              btn.textContent = t('appUi.k38684682');
               setTimeout(() => {
-                btn.textContent = '코드 복사';
+                btn.textContent = t('appUi.k89d0bf9e');
               }, 1e3);
             });
           }

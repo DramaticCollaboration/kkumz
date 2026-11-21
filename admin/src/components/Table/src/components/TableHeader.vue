@@ -29,15 +29,15 @@
           <template #message>
             <template v-if="selectRowKeys.length > 0">
               <span>
-                <span>선택된 {{ selectRowKeys.length }} 기록</span>
-                <span v-if="isAcrossPage">(여러 페이지에 걸쳐 펼쳐질 수 있음)</span>
+                <span>{{ t('appUi.kc658deba') }} {{ selectRowKeys.length }} {{ t('appUi.kd84b6f4b') }}</span>
+                <span v-if="isAcrossPage">{{ t('appUi.ke9e71adf') }}</span>
               </span>
               <a-divider type="vertical" />
-              <a @click="setSelectedRowKeys([])">초기화</a>
+              <a @click="setSelectedRowKeys([])">{{ t('appUi.kff75b4ff') }}</a>
               <slot name="alertAfter" />
             </template>
             <template v-else>
-              <span>선택한 데이터가 없습니다.</span>
+              <span>{{ t('appUi.k421436e5') }}</span>
             </template>
           </template>
         </a-alert>
@@ -47,6 +47,7 @@
   </div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import type { TableSetting, ColumnChangeParam } from '../types/table';
   import type { PropType } from 'vue';
   import { defineComponent, computed } from 'vue';
@@ -80,6 +81,7 @@
     },
     emits: ['columns-change'],
     setup(_, { emit }) {
+      const { t } = useI18n();
       const { prefixCls } = useDesign('basic-table-header');
 
       function handleColumnChange(data: ColumnChangeParam[]) {
@@ -92,7 +94,8 @@
       // 페이지 간 선택 허용 여부
       const isAcrossPage = computed(() => openRowSelection.value?.preserveSelectedRowKeys === true);
 
-      return { prefixCls, handleColumnChange, selectRowKeys, setSelectedRowKeys, openRowSelection, isAcrossPage };
+      return {
+        t, prefixCls, handleColumnChange, selectRowKeys, setSelectedRowKeys, openRowSelection, isAcrossPage };
     },
   });
 </script>

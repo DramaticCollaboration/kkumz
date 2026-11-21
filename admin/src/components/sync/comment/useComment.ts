@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { useMessage } from '/@/hooks/web/useMessage';
 import { defHttp } from '/@/utils/http/axios';
 import { useGlobSetting } from '/@/hooks/setting';
@@ -143,7 +144,7 @@ export function useCommentWithFile(props) {
       uploadData.commentId = res.result;
     } else {
       createMessage.warning(res.message);
-      return Promise.reject('댓글을 저장하지 못했습니다.');
+      return Promise.reject($t('appUi.kce2ed64f'));
     }
   }
 

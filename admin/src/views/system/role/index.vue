@@ -9,7 +9,7 @@
 <template>
   <BasicTable @register="registerTable">
     <template #tableTitle>
-      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate"> 등록</a-button>
+      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="handleCreate"> {{ t('appUi.k1ac11e9b') }}</a-button>
       <a-button type="primary" preIcon="ant-design:export-outlined" @click="onExportXls"> Export</a-button>
       <j-upload-button type="primary" preIcon="ant-design:import-outlined" @click="onImportXls">Import</j-upload-button>
       <a-dropdown v-if="selectedRowKeys.length > 0">
@@ -17,12 +17,12 @@
           <a-menu>
             <a-menu-item key="1" @click="batchHandleDelete">
               <Icon icon="ant-design:delete-outlined"></Icon>
-              삭제
+              {{ t('appUi.kfc81e222') }}
             </a-menu-item>
           </a-menu>
         </template>
         <a-button
-          >일괄 작업
+          >{{ t('appUi.k39eb4aed') }}
           <Icon icon="mdi:chevron-down"></Icon>
         </a-button>
       </a-dropdown>
@@ -55,6 +55,8 @@
   import { columns, searchFormSchema } from './role.data';
   import { list, deleteRole, batchDeleteRole, getExportUrl, getImportUrl } from './role.api';
   import { useListPage } from '/@/hooks/system/useListPage';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   const showFooter = ref(true);
   const [roleUserDrawer, { openDrawer: openRoleUserDrawer }] = useDrawer();
   const [registerDrawer, { openDrawer }] = useDrawer();
@@ -66,7 +68,7 @@
   const { prefixCls, tableContext, onImportXls, onExportXls } = useListPage({
     designScope: 'role-template',
     tableProps: {
-      title: '시스템 역할 목록',
+      title: t('appUi.k09ea2a45'),
       api: list,
       columns: columns,
       formConfig: {
@@ -85,7 +87,7 @@
       },
     },
     exportConfig: {
-      name: '역할 목록',
+      name: t('appUi.kaa93c339'),
       url: getExportUrl,
     },
     importConfig: {
@@ -160,11 +162,11 @@
   function getTableAction(record) {
     return [
       {
-        label: '사용자',
+        label: t('appUi.k5c50d9e5'),
         onClick: handleUser.bind(null, record),
       },
       {
-        label: '권한',
+        label: t('appUi.k4d02bde7'),
         onClick: handlePerssion.bind(null, record),
       },
     ];
@@ -176,22 +178,22 @@
   function getDropDownAction(record) {
     return [
       {
-        label: '편집',
+        label: t('appUi.kd482e14b'),
         onClick: handleEdit.bind(null, record),
       },
       {
-        label: '상세',
+        label: t('appUi.kbb446431'),
         onClick: handleDetail.bind(null, record),
       },
       {
-        label: '삭제',
+        label: t('appUi.kfc81e222'),
         popConfirm: {
-          title: '삭제 하시겠습니까?',
+          title: t('appUi.ka6e94ce1'),
           confirm: handleDelete.bind(null, record),
         },
       },
       {
-        label: '홈페이지 구성',
+        label: t('appUi.kddd89b73'),
         onClick: handleIndexConfig.bind(null, record.roleCode),
       },
     ];

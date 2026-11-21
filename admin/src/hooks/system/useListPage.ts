@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { reactive, ref, Ref, unref } from 'vue';
 import { merge } from 'lodash-es';
 import { DynamicProps } from '/#/utils';
@@ -135,8 +136,8 @@ export function useListPage(options: ListPageOptions) {
       if (options?.confirm ?? true) {
         $message.createConfirm({
           iconType: 'warning',
-          title: '삭제',
-          content: '삭제하시겠습니까?',
+          title: $t('appUi.kfc81e222'),
+          content: $t('appUi.k5da9b401'),
           onOk: () => execute(),
           onCancel: () => reject(),
         });
@@ -252,7 +253,7 @@ export function useListTable(tableProps: TableProps): [
     // 작업란
     actionColumn: {
       width: 120,
-      title: '작업',
+      title: $t('appUi.k9d9bf438'),
       //작업 열 값을 잠글지 여부 right, left, false
       fixed: false,
       dataIndex: 'action',

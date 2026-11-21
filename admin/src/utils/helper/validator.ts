@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { dateUtil } from '/@/utils/dateUtil';
 import { duplicateCheck } from '/@/views/system/user/user.api';
 
@@ -16,7 +17,7 @@ export const rules = {
         required: required ? required : false,
         validator: async (_rule, value) => {
           if (required == true && !value) {
-            return Promise.reject('이메일을 입력해주세요!');
+            return Promise.reject($t('appUi.kcfc19259'));
           }
           if (
             value &&
@@ -24,7 +25,7 @@ export const rules = {
               /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
             ).test(value)
           ) {
-            return Promise.reject('올바른 이메일 형식을 입력해주세요!');
+            return Promise.reject($t('appUi.ka420271b'));
           }
           return Promise.resolve();
         },
@@ -38,10 +39,10 @@ export const rules = {
         required: required,
         validator: async (_, value) => {
           if (required && !value) {
-            return Promise.reject('휴대폰번호를 입력해주세요!');
+            return Promise.reject($t('appUi.k9a028585'));
           }
           if (value && !/^010([-\s]?)([0-9]{4})([-\s]?)([0-9]{4})$/.test(value)) {
-            return Promise.reject('휴대폰 번호 형식이 잘못되었습니다.');
+            return Promise.reject($t('appUi.ked5ae196'));
           }
           return Promise.resolve();
         },
@@ -55,10 +56,10 @@ export const rules = {
         required: required ? required : false,
         validator: (_, value) => {
           if (required && !value) {
-            return Promise.reject('시작 시간을 선택하세요.');
+            return Promise.reject($t('appUi.k42be3c29'));
           }
           if (endTime && value && dateUtil(endTime).isBefore(value)) {
-            return Promise.reject('시작 시간은 종료 시간보다 이전이어야 합니다.');
+            return Promise.reject($t('appUi.kd96e9496'));
           }
           return Promise.resolve();
         },
@@ -72,10 +73,10 @@ export const rules = {
         required: required ? required : false,
         validator: (_, value) => {
           if (required && !value) {
-            return Promise.reject('종료 시간을 선택하세요.');
+            return Promise.reject($t('appUi.kf0681d54'));
           }
           if (startTime && value && dateUtil(value).isBefore(startTime)) {
-            return Promise.reject('종료 시간은 시작 시간보다 이후여야 합니다.');
+            return Promise.reject($t('appUi.k808744cf'));
           }
           return Promise.resolve();
         },
@@ -89,10 +90,10 @@ export const rules = {
         required: required ? required : false,
         validator: (_, value) => {
           if (!value) {
-            return Promise.reject('비밀번호는 필수입니다.');
+            return Promise.reject($t('appUi.kb0f50ff1'));
           }
           if (value !== values.password) {
-            return Promise.reject('두 번 입력한 비밀번호가 일치하지 않습니다!');
+            return Promise.reject($t('appUi.k9764b4dd'));
           }
           return Promise.resolve();
         },
@@ -104,7 +105,7 @@ export const rules = {
       {
         validator: (_, value) => {
           if (!value && required) {
-            return Promise.reject(`$를 입력하세요.{schema.label}`);
+            return Promise.reject($t('appUi.k0b6662d8'));
           }
           return new Promise<void>((resolve, reject) => {
             duplicateCheck({
@@ -114,10 +115,10 @@ export const rules = {
               dataId: model.id,
             })
               .then((res) => {
-                res.success ? resolve() : reject(res.message || '확인 실패');
+                res.success ? resolve() : reject(res.message || $t('appUi.kae6c001b'));
               })
               .catch((err) => {
-                reject(err.message || '인증 실패');
+                reject(err.message || $t('appUi.k7790958f'));
               });
           });
         },
@@ -145,9 +146,9 @@ export async function duplicateValidate(tableName, fieldName, fieldVal, dataId) 
     if (res.success) {
       return Promise.resolve();
     } else {
-      return Promise.reject(res.message || '확인 실패');
+      return Promise.reject(res.message || $t('appUi.kae6c001b'));
     }
   } catch (e) {
-    return Promise.reject('네트워크 연결 끊김 및 기타 문제로 인해 확인에 실패했습니다.');
+    return Promise.reject($t('appUi.kc3c389a5'));
   }
 }

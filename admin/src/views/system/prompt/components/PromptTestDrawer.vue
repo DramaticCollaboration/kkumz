@@ -2,32 +2,32 @@
   <BasicDrawer
     v-bind="$attrs"
     @register="registerDrawer"
-    title="프롬프트 변수 치환 및 실행 테스트"
+    :title="t('appUi.k9716062a')"
     width="760px"
     showFooter
-    okText="실시간 LLM 테스트 실행"
+    :okText="t('appUi.k615f1816')"
     @ok="handleRunTest"
   >
     <div class="space-y-4">
       <a-descriptions bordered size="small" :column="{ xs: 1, sm: 1, md: 2 }">
-        <a-descriptions-item label="프롬프트 코드">
+        <a-descriptions-item :label="t('appUi.k5bef10a7')">
           <span class="font-mono text-xs font-semibold">{{ currentRecord.promptCode }}</span>
         </a-descriptions-item>
-        <a-descriptions-item label="프롬프트 명칭">
+        <a-descriptions-item :label="t('appUi.kef80204d')">
           {{ currentRecord.promptName }}
         </a-descriptions-item>
-        <a-descriptions-item label="호출 클래스" :span="2">
+        <a-descriptions-item :label="t('appUi.k97b2edea')" :span="2">
           <span class="font-mono text-xs">{{ currentRecord.callerClass || '-' }}</span>
         </a-descriptions-item>
       </a-descriptions>
 
       <div class="p-3 bg-gray-50 rounded border border-gray-200">
         <div class="flex justify-between items-center mb-2">
-          <span class="font-semibold text-xs text-gray-700">테스트 변수 입력</span>
-          <a-button size="small" @click="handlePreview">변수 치환 미리보기</a-button>
+          <span class="font-semibold text-xs text-gray-700">{{ t('appUi.kb6c68b27') }}</span>
+          <a-button size="small" @click="handlePreview">{{ t('appUi.kb99869c7') }}</a-button>
         </div>
         <div v-if="variableInputs.length === 0" class="text-xs text-gray-500">
-          등록된 바인딩 변수가 없는 고정형 프롬프트입니다.
+          {{ t('appUi.k182498dc') }}
         </div>
         <a-row v-else :gutter="12">
           <a-col
@@ -42,7 +42,7 @@
             </div>
             <a-input
               v-model:value="variableValues[item.name]"
-              :placeholder="item.sampleValue || '테스트 값 입력'"
+              :placeholder="item.sampleValue || t('appUi.k4f4fcb58')"
               size="small"
             />
           </a-col>
@@ -51,22 +51,22 @@
 
       <div v-if="renderedSystem || renderedUser" class="space-y-3">
         <div>
-          <div class="font-semibold text-xs text-gray-700 mb-1">렌더링된 시스템 프롬프트</div>
+          <div class="font-semibold text-xs text-gray-700 mb-1">{{ t('appUi.k5c6f2407') }}</div>
           <pre class="rendered-box">{{ renderedSystem }}</pre>
         </div>
         <div>
-          <div class="font-semibold text-xs text-gray-700 mb-1">렌더링된 사용자 프롬프트</div>
+          <div class="font-semibold text-xs text-gray-700 mb-1">{{ t('appUi.k222e5cf6') }}</div>
           <pre class="rendered-box">{{ renderedUser }}</pre>
         </div>
       </div>
 
       <div v-if="testResult" class="space-y-2">
         <div class="flex justify-between items-center">
-          <span class="font-semibold text-xs text-gray-700">LLM 실행 응답 결과</span>
+          <span class="font-semibold text-xs text-gray-700">{{ t('appUi.k21826f66') }}</span>
           <a-space>
             <a-tag color="blue">{{ testResult.durationMs }} ms</a-tag>
             <a-tag :color="testResult.jsonValid ? 'success' : 'warning'">
-              {{ testResult.validationMessage || (testResult.jsonValid ? '검증 통과' : '일반 텍스트') }}
+              {{ testResult.validationMessage || (testResult.jsonValid ? t('appUi.kbe5c9041') : t('appUi.k87c554df')) }}
             </a-tag>
           </a-space>
         </div>
@@ -88,6 +88,8 @@
     SysPromptVariableItem,
   } from '../prompt.api';
   import { parseVariablesSchema } from '../prompt.data';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createMessage } = useMessage();
 
@@ -145,7 +147,7 @@
         renderedSystem.value = res.renderedSystemPrompt || renderedSystem.value;
         renderedUser.value = res.renderedUserPrompt || renderedUser.value;
       }
-      createMessage.success('프롬프트 실행 테스트가 완료되었습니다.');
+      createMessage.success(t('appUi.k7444c855'));
     } finally {
       setDrawerProps({ confirmLoading: false });
     }

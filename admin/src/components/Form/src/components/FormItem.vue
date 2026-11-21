@@ -15,7 +15,7 @@
   import { upperFirst, cloneDeep } from 'lodash-es';
   import { useItemLabelWidth } from '../hooks/useLabelWidth';
   import { normalizeSearchColProps } from '../hooks/useAdvanced';
-  import { useI18n } from '/@/hooks/web/useI18n';
+  import { useI18n, translateIfKey } from '/@/hooks/web/useI18n';
   import { useAppInject } from '/@/hooks/web/useAppInject';
   import { usePermission } from '/@/hooks/web/usePermission';
   import Middleware from './Middleware.vue';
@@ -204,7 +204,7 @@
 
         const joinLabel = Reflect.has(props.schema, 'rulesMessageJoinLabel') ? rulesMessageJoinLabel : globalRulesMessageJoinLabel;
         const defaultMsg =
-          localeStore.getLocale == 'ko_KR'
+          localeStore.getLocale === 'ko-KR'
             ? `${joinLabel ? label : ''} ` + createPlaceholderMessage(component)
             : createPlaceholderMessage(component) + `${joinLabel ? label : ''}`;
 
@@ -341,11 +341,13 @@
         // RangePicker 장소는 배열입니다.
         if (isCreatePlaceholder && component !== 'RangePicker' && component) {
           //자동으로 자리 표시자 설정
+          const rawPh = unref(getComponentsProps)?.placeholder;
+          const resolvedLbl = translateIfKey(props.schema.label);
           propsData.placeholder =
-            unref(getComponentsProps)?.placeholder ||
-            (localeStore.getLocale == 'ko_KR'
-              ? props.schema.label + createPlaceholderMessage(component)
-              : createPlaceholderMessage(component) + props.schema.label);
+            (typeof rawPh === 'string' ? translateIfKey(rawPh) : rawPh) ||
+            (localeStore.getLocale === 'ko-KR'
+              ? resolvedLbl + createPlaceholderMessage(component)
+              : `${createPlaceholderMessage(component)} ${resolvedLbl}`.trim());
         }
         propsData.codeField = field;
         propsData.formValues = unref(getValues);
@@ -377,7 +379,10 @@
        */
       function renderLabelHelpMessage() {
         //라벨 너비는 사용자 정의를 지원합니다
-        const { label, helpMessage, helpComponentProps, subLabel, labelLength } = props.schema;
+        const { label: rawLabel, helpMessage: rawHelp, helpComponentProps, subLabel: rawSubLabel, labelLength } = props.schema;
+        const label = typeof rawLabel === 'string' ? translateIfKey(rawLabel) : rawLabel;
+        const subLabel = typeof rawSubLabel === 'string' ? translateIfKey(rawSubLabel) : rawSubLabel;
+        const helpMessage = typeof rawHelp === 'string' ? translateIfKey(rawHelp) : rawHelp;
         let showLabel: string = label + '';
         if (labelLength) {
           showLabel = showLabel.substr(0, labelLength);

@@ -3,7 +3,7 @@
     <BasicForm @register="registerForm">
       <template #captchaSlot="{ model, field }">
         <div style="width: 100%; display: flex">
-          <a-input style="width: 200px" v-model:value="model[field]" placeholder="이미지 인증코드를 입력해주세요" />
+          <a-input style="width: 200px" v-model:value="model[field]" :placeholder="t('appUi.kd71119e5')" />
           <div class="margin-left10">
             <img
               class="pointer"
@@ -21,6 +21,7 @@
 </template>
 
 <script lang="ts" name="CaptchaModal">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, reactive, ref } from 'vue';
   import { BasicModal, useModalInner } from '@/components/Modal';
   import { BasicForm, FormSchema, useForm } from '@/components/Form';
@@ -34,12 +35,13 @@
     components: { BasicModal, BasicForm },
     emits: ['ok','register'],
     setup(props, { emit }) {
-      const title = ref<string>('인증코드');
+      const { t } = useI18n();
+      const title = ref<string>(t('appUi.k3ab3bb53'));
       const schemas: FormSchema[] = [
         {
           field: 'captcha',
           component: 'Input',
-          label: '이미지 인증 코드',
+          label: t('appUi.k8412a86c'),
           rules: [{ required: true }],
           slot: 'captchaSlot',
         },
@@ -110,6 +112,7 @@
       }
 
       return {
+        t,
         title,
         registerForm,
         registerModal,

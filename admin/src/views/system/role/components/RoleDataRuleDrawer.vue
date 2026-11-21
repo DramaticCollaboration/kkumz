@@ -1,7 +1,7 @@
 <template>
-  <BasicDrawer v-bind="$attrs" @register="registerDrawer" title="데이터 규칙 구성" width="450px" destroyOnClose>
+  <BasicDrawer v-bind="$attrs" @register="registerDrawer" :title="t('appUi.k0fa0ac88')" width="450px" destroyOnClose>
     <a-tabs defaultActiveKey="1">
-      <a-tab-pane tab="데이터 규칙" key="1">
+      <a-tab-pane :tab="t('appUi.k6296eba0')" key="1">
         <a-checkbox-group v-model:value="dataRuleChecked" v-if="dataRuleList.length > 0">
           <a-row>
             <a-col :span="24" v-for="(item, index) in dataRuleList" :key="'dr' + index">
@@ -10,12 +10,12 @@
 
             <a-col :span="24">
               <div style="width: 100%; margin-top: 15px">
-                <a-button @click="saveDataRuleForRole" type="primary" size="small"> <Icon icon="ant-design:save-outlined"></Icon>저장을 클릭하세요</a-button>
+                <a-button @click="saveDataRuleForRole" type="primary" size="small"> <Icon icon="ant-design:save-outlined"></Icon>{{ t('appUi.k656bc9de') }}</a-button>
               </div>
             </a-col>
           </a-row>
         </a-checkbox-group>
-        <div v-else><h3>구성 정보가 없습니다!</h3></div>
+        <div v-else><h3>{{ t('appUi.k3b04077d') }}</h3></div>
       </a-tab-pane>
     </a-tabs>
   </BasicDrawer>
@@ -25,6 +25,8 @@
   import { BasicDrawer, useDrawerInner } from '/src/components/Drawer';
   import { useMessage } from '/src/hooks/web/useMessage';
   import { queryDataRule, saveDataRule } from '../role.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
   const { createMessage } = useMessage();
@@ -69,7 +71,7 @@
    */
   async function saveDataRuleForRole() {
     if (!unref(dataRuleChecked) || unref(dataRuleChecked).length == 0) {
-      createMessage.warning('현재 데이터 권한이 확인되어 있지 않습니다.');
+      createMessage.warning(t('appUi.k1c6a8628'));
     }
     let params = {
       permissionId: unref(functionId),

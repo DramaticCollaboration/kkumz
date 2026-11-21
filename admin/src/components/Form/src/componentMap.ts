@@ -29,6 +29,7 @@ import {
   Divider,
 } from 'ant-design-vue';
 import ApiRadioGroup from './components/ApiRadioGroup.vue';
+import I18nInput from './components/I18nInput.vue';
 import RadioButtonGroup from './components/RadioButtonGroup.vue';
 import ApiSelect from './components/ApiSelect.vue';
 import ApiTreeSelect from './components/ApiTreeSelect.vue';
@@ -78,6 +79,7 @@ const componentMap = new Map<ComponentType, Component>();
 
 componentMap.set('Time', Time);
 componentMap.set('Input', Input);
+componentMap.set('I18nInput', I18nInput);
 componentMap.set('InputGroup', Input.Group);
 componentMap.set('InputPassword', Input.Password);
 componentMap.set('InputSearch', Input.Search);

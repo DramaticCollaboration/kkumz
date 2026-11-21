@@ -13,6 +13,8 @@
 
   import { saveOrUpdateDepartRole } from '../depart.user.api';
   import { departRoleModalFormSchema } from '../depart.user.data';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const emit = defineEmits(['success', 'register']);
   const props = defineProps({
@@ -24,7 +26,7 @@
   const isUpdate = ref<boolean>(true);
   // 현재 팝업 데이터
   const model = ref<object>({});
-  const title = computed(() => (isUpdate.value ? '편집' : '등록'));
+  const title = computed(() => (isUpdate.value ? t('appUi.kd482e14b') : t('appUi.k1ac11e9b')));
 
   //등록 Form
   const [registerForm, { resetFields, setFieldsValue, validate, updateSchema }] = useForm({

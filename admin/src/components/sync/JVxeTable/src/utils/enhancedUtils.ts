@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { useDefaultEnhanced } from '../hooks/useJVxeComponent';
 import { isFunction, isObject, isString } from '/@/utils/is';
 import { JVxeTypes } from '../types';
@@ -33,7 +34,7 @@ export function getEnhanced(type: JVxeTypes | string): JVxeComponent.Enhanced {
         return <JVxeComponent.Enhanced>enhanced;
       }
     } else {
-      throw new Error(`[JVxeTable] ${$type} 컴포넌트가 등록되지 않았으며 향상된 기능을 얻지 못했습니다.`);
+      throw new Error($t('appUi.k26927b7b', { p0: $type }));
     }
     enhancedMap.set($type, <JVxeComponent.Enhanced>defaultEnhanced);
   }

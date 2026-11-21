@@ -79,6 +79,7 @@ public class KkumzSystemOpsDTO {
     public static class SavePageHelpRequest {
         private String id;
         private String appCode;
+        private String helpType;
         private String pageKey;
         private String routeName;
         private String title;

@@ -3,20 +3,20 @@
   <BasicTable @register="registerTable" :rowSelection="rowSelection">
     <!--슬롯: 테이블 제목-->
     <template #tableTitle>
-      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="selectAddUser">기존 사용자 추가</a-button>
-      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="createUser">사용자 등록</a-button>
+      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="selectAddUser">{{ t('appUi.k81c4d8d1') }}</a-button>
+      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="createUser">{{ t('appUi.k50360a70') }}</a-button>
       <template v-if="selectedRowKeys.length > 0">
         <a-dropdown>
           <template #overlay>
             <a-menu>
               <a-menu-item key="1" @click="onUnlinkDepartUserBatch">
                 <icon icon="bx:bx-unlink" />
-                <span>연결 해제</span>
+                <span>{{ t('appUi.keb58837f') }}</span>
               </a-menu-item>
             </a-menu>
           </template>
           <a-button>
-            <span>일괄 작업 </span>
+            <span>{{ t('appUi.k39eb4aed') }} </span>
             <icon icon="akar-icons:chevron-down" />
           </a-button>
         </a-dropdown>
@@ -45,6 +45,8 @@
   import { departUserList, linkDepartUserBatch, unlinkDepartUserBatch } from '../depart.user.api';
   import { userInfoColumns, userInfoSearchFormSchema } from '../depart.user.data';
   import { ColEx } from '/@/components/Form/src/types';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const prefixCls = inject('prefixCls');
   const props = defineProps({
@@ -122,7 +124,7 @@
   // 사용자 생성
   function createUser() {
     if (!departId.value) {
-      createMessage.warning('먼저 부서를 선택해주세요');
+      createMessage.warning(t('appUi.ke219ea80'));
     } else {
       openDrawer(true, {
         isUpdate: false,
@@ -160,7 +162,7 @@
   // 부서와 사용자의 관계를 일괄적으로 해제
   async function unlinkDepartUser(idList, confirm) {
     if (!departId.value) {
-      createMessage.warning('먼저 부서를 선택해주세요');
+      createMessage.warning(t('appUi.ke219ea80'));
     } else {
       setLoading(true);
       let userIds = unref(idList).join(',');
@@ -207,7 +209,7 @@
    * 액션바
    */
   function getTableAction(record): ActionItem[] {
-    return [{ label: '편집', onClick: editUserInfo.bind(null, record) }];
+    return [{ label: t('appUi.kd482e14b'), onClick: editUserInfo.bind(null, record) }];
   }
 
   /**
@@ -215,13 +217,13 @@
    */
   function getDropDownAction(record): ActionItem[] {
     return [
-      { label: '부서 역할', onClick: showDepartRole.bind(null, record) },
-      { label: '사용자 세부정보', onClick: showUserDetail.bind(null, record) },
+      { label: t('appUi.k640052a3'), onClick: showDepartRole.bind(null, record) },
+      { label: t('appUi.k16d09920'), onClick: showUserDetail.bind(null, record) },
       {
-        label: '연결 해제',
+        label: t('appUi.keb58837f'),
         color: 'error',
         popConfirm: {
-          title: '선택한 사용자의 부서 연결을 해제하시겠습니까?',
+          title: t('appUi.k309daa4e'),
           confirm: unlinkDepartUser.bind(null, [record.id], false),
         },
       },

@@ -14,19 +14,19 @@
     <a-col :xl="12" :lg="24" :md="24" style="margin-bottom: 10px">
       <div style="height: 100%;" :class="[`${prefixCls}`]">
         <a-tabs v-show="departData != null" defaultActiveKey="base-info">
-          <a-tab-pane tab="기본정보" key="base-info" forceRender style="position: relative">
+          <a-tab-pane :tab="t('appUi.kd9b2c885')" key="base-info" forceRender style="position: relative">
             <div style="padding: 20px">
               <DepartFormTab :data="departData" :rootTreeData="rootTreeData" @success="onSuccess" />
             </div>
           </a-tab-pane>
-          <a-tab-pane tab="부서 권한" key="role-info">
+          <a-tab-pane :tab="t('appUi.k6b8e534d')" key="role-info">
             <div style="padding: 0 20px 20px">
               <DepartRuleTab :data="departData" />
             </div>
           </a-tab-pane>
         </a-tabs>
         <div v-show="departData == null" style="padding-top: 40px">
-          <a-empty description="아직 선택된 부서가 없습니다." />
+          <a-empty :description="t('appUi.k1dd856f8')" />
         </div>
       </div>
     </a-col>
@@ -39,6 +39,8 @@
   import DepartLeftTree from './components/DepartLeftTree.vue';
   import DepartFormTab from './components/DepartFormTab.vue';
   import DepartRuleTab from './components/DepartRuleTab.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { prefixCls } = useDesign('depart-manage');
   provide('prefixCls', prefixCls);

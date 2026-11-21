@@ -8,7 +8,7 @@
       :width="1200"
       @ok="handleSubmit"
       @cancel="handleCancel"
-      cancelText="취소"
+      :cancelText="t('appUi.k19b2d19b')"
       wrapClassName="j-popup-modal"
       @visible-change="visibleChange"
     >
@@ -31,10 +31,10 @@
             <a-col :md="8" :sm="8" v-if="showAdvancedButton">
               <span style="float: left; overflow: hidden" class="table-page-search-submitButtons">
                 <a-col :lg="6">
-                  <a-button type="primary" preIcon="ant-design:reload-outlined" @click="searchReset">초기화</a-button>
-                  <a-button type="primary" preIcon="ant-design:search-outlined" @click="searchQuery" style="margin-left: 8px">검색</a-button>
+                  <a-button type="primary" preIcon="ant-design:reload-outlined" @click="searchReset">{{ t('appUi.kff75b4ff') }}</a-button>
+                  <a-button type="primary" preIcon="ant-design:search-outlined" @click="searchQuery" style="margin-left: 8px">{{ t('appUi.k4f5a3f69') }}</a-button>
                   <a @click="handleToggleSearch" style="margin-left: 8px">
-                    {{ toggleSearchStatus ? '닫기' : '확장' }}
+                    {{ toggleSearchStatus ? t('appUi.k94b7dba1') : t('appUi.k64139068') }}
                     <Icon :icon="toggleSearchStatus ? 'ant-design:up-outlined' : 'ant-design:down-outlined'" />
                   </a>
                 </a-col>
@@ -65,6 +65,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, unref, ref, watch, watchEffect, reactive, computed } from 'vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { createAsyncComponent } from '/@/utils/factory/createAsyncComponent';
@@ -85,6 +86,7 @@
     props: ['multi', 'code', 'sorter', 'groupId', 'param','showAdvancedButton'],
     emits: ['ok', 'register'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       const { createMessage } = useMessage();
       const labelCol = reactive({
         xs: { span: 24 },
@@ -207,11 +209,11 @@
       function handleSubmit() {
         filterUnuseSelect();
         if (!props.multi && unref(selectRows) && unref(selectRows).length > 1) {
-          createMessage.warning('하나의 레코드만 선택할 수 있습니다.');
+          createMessage.warning(t('appUi.kd4d86277'));
           return false;
         }
         if (!unref(selectRows) || unref(selectRows).length == 0) {
-          createMessage.warning('레코드를 하나 이상 선택하세요.');
+          createMessage.warning(t('appUi.k9e58cde3'));
           return false;
         }
         let rows = getOkSelectRows!();
@@ -233,6 +235,7 @@
         loadData(1);
       }
       return {
+        t,
         attrs,
         register,
         tableScroll,

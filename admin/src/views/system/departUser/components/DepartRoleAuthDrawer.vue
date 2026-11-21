@@ -1,10 +1,10 @@
 <template>
   <BasicDrawer
-    title="부서 역할 권한 구성"
+    :title="t('appUi.k8dd53bc4')"
     :width="650"
     :loading="loading"
     showFooter
-    okText="저장하고 닫기"
+    :okText="t('appUi.k1268ad51')"
     @ok="onSubmit(true)"
     @close="onClose"
     @register="registerDrawer"
@@ -13,7 +13,7 @@
       <a-spin :spinning="loading">
         <template v-if="treeData.length > 0">
           <BasicTree
-            title="소유한 부서 권한"
+            :title="t('appUi.k8a5cf60a')"
             toolbar
             checkable
             :treeData="treeData"
@@ -32,12 +32,12 @@
             </template>
           </BasicTree>
         </template>
-        <a-empty v-else description="부서 권한을 구성할 수 없습니다." />
+        <a-empty v-else :description="t('appUi.k1a0b2c2f')" />
       </a-spin>
     </div>
 
     <template #centerFooter>
-      <a-button type="primary" :loading="loading" ghost @click="onSubmit(false)"> 저장</a-button>
+      <a-button type="primary" :loading="loading" ghost @click="onSubmit(false)"> {{ t('appUi.k1f1712ac') }}</a-button>
     </template>
   </BasicDrawer>
   <DepartRoleDataRuleDrawer @register="registerDataRuleDrawer" />
@@ -53,6 +53,8 @@
   import DepartRoleDataRuleDrawer from './DepartRoleDataRuleDrawer.vue';
   import { queryTreeListForDeptRole, queryDeptRolePermission, saveDeptRolePermission } from '../depart.user.api';
   import { translateTitle } from "@/utils/common/compUtils";
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   defineEmits(['register']);
   const { createMessage } = useMessage();

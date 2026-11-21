@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { Ref } from 'vue';
 import { duplicateCheckDelay } from '/@/views/system/user/user.api';
 import { BasicColumn, FormSchema } from '/@/components/Table';
@@ -7,27 +8,27 @@ import { findTree } from '/@/utils/common/compUtils';
 // 사용자 정보 열
 export const userInfoColumns: BasicColumn[] = [
   {
-    title: '아이디',
+    title: $t('appUi.k8dd085d9'),
     dataIndex: 'username',
     width: 150,
   },
   {
-    title: '사용자 이름',
+    title: $t('appUi.k2cc04d4c'),
     dataIndex: 'realname',
     width: 180,
   },
   {
-    title: '부서',
+    title: $t('appUi.ke5b530d6'),
     dataIndex: 'orgCode',
     width: 200,
   },
   {
-    title: '성별',
+    title: $t('appUi.k77737feb'),
     dataIndex: 'sex_dictText',
     width: 80,
   },
   {
-    title: '전화',
+    title: $t('appUi.k91032991'),
     dataIndex: 'phone',
     width: 120,
   },
@@ -37,7 +38,7 @@ export const userInfoColumns: BasicColumn[] = [
 export const userInfoSearchFormSchema: FormSchema[] = [
   {
     field: 'username',
-    label: '아이디',
+    label: $t('appUi.k8dd085d9'),
     component: 'Input',
   },
 ];
@@ -45,22 +46,22 @@ export const userInfoSearchFormSchema: FormSchema[] = [
 // 부서 역할 열
 export const departRoleColumns: BasicColumn[] = [
   {
-    title: '부서 역할 이름',
+    title: $t('appUi.k1f3baa15'),
     dataIndex: 'roleName',
     width: 100,
   },
   {
-    title: '부서 역할 코드',
+    title: $t('appUi.k2fd47290'),
     dataIndex: 'roleCode',
     width: 100,
   },
   {
-    title: '부서',
+    title: $t('appUi.ke5b530d6'),
     dataIndex: 'departId_dictText',
     width: 100,
   },
   {
-    title: '비고',
+    title: $t('appUi.k75cffa41'),
     dataIndex: 'description',
     width: 100,
   },
@@ -70,7 +71,7 @@ export const departRoleColumns: BasicColumn[] = [
 export const departRoleSearchFormSchema: FormSchema[] = [
   {
     field: 'roleName',
-    label: '부서 역할 이름',
+    label: $t('appUi.k1f3baa15'),
     component: 'Input',
   },
 ];
@@ -85,28 +86,28 @@ export const departRoleModalFormSchema: FormSchema[] = [
   },
   {
     field: 'roleName',
-    label: '부서 역할 이름',
+    label: $t('appUi.k1f3baa15'),
     component: 'Input',
     rules: [
-      { required: true, message: '부서 역할 이름은 필수입니다!' },
-      { min: 2, max: 30, message: '2~30자 길이', trigger: 'blur' },
+      { required: true, message: $t('appUi.k174ba08d') },
+      { min: 2, max: 30, message: $t('appUi.k061d4331'), trigger: 'blur' },
     ],
   },
   {
     field: 'roleCode',
-    label: '부서 역할 코드',
+    label: $t('appUi.k2fd47290'),
     component: 'Input',
     dynamicDisabled: ({ values }) => {
       return !!values.id;
     },
     dynamicRules: ({ model }) => {
       return [
-        { required: true, message: '부서 역할 코드는 필수입니다!' },
-        { min: 0, max: 64, message: '길이는 64자를 초과할 수 없습니다.', trigger: 'blur' },
+        { required: true, message: $t('appUi.ka16ebc3c') },
+        { min: 0, max: 64, message: $t('appUi.k9a3b11ed'), trigger: 'blur' },
         {
           validator: (_, value) => {
             if (/[\u4E00-\u9FA5]/g.test(value)) {
-              return Promise.reject('부서 역할 코드에는 한자를 입력할 수 없습니다!');
+              return Promise.reject($t('appUi.keb1bb74a'));
             }
             return new Promise((resolve, reject) => {
               let params = {
@@ -117,10 +118,10 @@ export const departRoleModalFormSchema: FormSchema[] = [
               };
               duplicateCheckDelay(params)
                 .then((res) => {
-                  res.success ? resolve() : reject(res.message || '확인 실패');
+                  res.success ? resolve() : reject(res.message || $t('appUi.kae6c001b'));
                 })
                 .catch((err) => {
-                  reject(err.message || '인증 실패');
+                  reject(err.message || $t('appUi.k7790958f'));
                 });
             });
           },
@@ -130,9 +131,9 @@ export const departRoleModalFormSchema: FormSchema[] = [
   },
   {
     field: 'description',
-    label: '설명',
+    label: $t('appUi.k84196436'),
     component: 'Input',
-    rules: [{ min: 0, max: 126, message: '길이는 126자를 초과할 수 없습니다.', trigger: 'blur' }],
+    rules: [{ min: 0, max: 126, message: $t('appUi.kb472863d'), trigger: 'blur' }],
   },
 ];
 
@@ -141,11 +142,11 @@ export function useBaseInfoForm(treeData: Ref<any[]>) {
   const descItems: DescItem[] = [
     {
       field: 'departName',
-      label: '조직 이름',
+      label: $t('appUi.k5b860f35'),
     },
     {
       field: 'parentId',
-      label: '상급부서',
+      label: $t('appUi.k6e257e6e'),
       render(val) {
         if (val) {
           let data = findTree(treeData.value, (item) => item.key == val);
@@ -156,38 +157,38 @@ export function useBaseInfoForm(treeData: Ref<any[]>) {
     },
     {
       field: 'orgCode',
-      label: '기관 코드',
+      label: $t('appUi.kb5856d92'),
     },
     {
       field: 'orgCategory',
-      label: '기관 유형',
+      label: $t('appUi.k1db0901e'),
       render(val) {
         if (val === '1') {
-          return '회사';
+          return $t('appUi.kea129229');
         } else if (val === '2') {
-          return '부서';
+          return $t('appUi.ke5b530d6');
         } else if (val === '3') {
-          return '이메일';
+          return $t('appUi.k3c37764a');
         }
         return val;
       },
     },
     {
       field: 'departOrder',
-      label: '정렬',
+      label: $t('appUi.k7745cc5a'),
     },
 
     {
       field: 'mobile',
-      label: '전화 번호',
+      label: $t('appUi.kfbf7b5bb'),
     },
     {
       field: 'address',
-      label: '주소',
+      label: $t('appUi.k117bab80'),
     },
     {
       field: 'memo',
-      label: '비고',
+      label: $t('appUi.k75cffa41'),
     },
   ];
 

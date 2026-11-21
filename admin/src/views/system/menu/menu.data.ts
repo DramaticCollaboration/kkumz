@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { BasicColumn } from '/@/components/Table';
 import { FormSchema } from '/@/components/Table';
 import { h } from 'vue';
@@ -17,13 +18,13 @@ export enum ComponentTypes {
 
 export const columns: BasicColumn[] = [
   {
-    title: '메뉴명',
+    title: $t('appUi.k43f3ee13'),
     dataIndex: 'name',
     width: 200,
     align: 'left',
   },
   {
-    title: '메뉴 종류',
+    title: $t('appUi.k1361e7d1'),
     dataIndex: 'menuType',
     width: 150,
     customRender: ({ text }) => {
@@ -31,7 +32,7 @@ export const columns: BasicColumn[] = [
     },
   },
   {
-    title: '아이콘',
+    title: $t('appUi.kba29904c'),
     dataIndex: 'icon',
     width: 50,
     customRender: ({ record }) => {
@@ -39,19 +40,19 @@ export const columns: BasicColumn[] = [
     },
   },
   {
-    title: '컴포넌트',
+    title: $t('appUi.k7e806e3b'),
     dataIndex: 'component',
     align: 'left',
     width: 150,
   },
   {
-    title: '경로',
+    title: $t('appUi.kbae4002d'),
     dataIndex: 'url',
     align: 'left',
     width: 150,
   },
   {
-    title: '정렬',
+    title: $t('appUi.k7745cc5a'),
     dataIndex: 'sortNo',
     width: 50,
   },
@@ -60,7 +61,7 @@ export const columns: BasicColumn[] = [
 export const searchFormSchema: FormSchema[] = [
   {
     field: 'name',
-    label: '메뉴명',
+    label: $t('appUi.k43f3ee13'),
     component: 'Input',
     colProps: { span: 8 },
   },
@@ -75,19 +76,19 @@ export const formSchema: FormSchema[] = [
   },
   {
     field: 'menuType',
-    label: '메뉴 종류',
+    label: $t('appUi.k1361e7d1'),
     component: 'RadioButtonGroup',
     defaultValue: 0,
     componentProps: ({ formActionType, formModel }) => {
       return {
         options: [
-          { label: '메뉴', value: 0 },
-          { label: '하위 메뉴', value: 1 },
-          { label: '버튼/권한', value: 2 },
+          { label: $t('appUi.k076925c5'), value: 0 },
+          { label: $t('appUi.k7bab3e7a'), value: 1 },
+          { label: $t('appUi.k8b5208c5'), value: 2 },
         ],
         onChange: (e) => {
           const { updateSchema, clearValidate } = formActionType;
-          const label = isButton(e) ? '버튼/권한' : '메뉴명';
+          const label = isButton(e) ? $t('appUi.k8b5208c5') : $t('appUi.k43f3ee13');
           //체크섬 지우기
           clearValidate();
           updateSchema([
@@ -109,13 +110,18 @@ export const formSchema: FormSchema[] = [
   },
   {
     field: 'name',
-    label: '메뉴명',
+    label: $t('appUi.k43f3ee13'),
     component: 'Input',
     required: true,
   },
   {
+    field: 'nameI18n',
+    label: $t('common.i18nName'),
+    component: 'I18nInput',
+  },
+  {
     field: 'parentId',
-    label: '상위 메뉴',
+    label: $t('appUi.k0821aeff'),
     component: 'TreeSelect',
     required: true,
     componentProps: {
@@ -133,7 +139,7 @@ export const formSchema: FormSchema[] = [
   },
   {
     field: 'url',
-    label: '경로',
+    label: $t('appUi.kbae4002d'),
     component: 'Input',
     required: true,
     ifShow: ({ values }) => !(values.component === ComponentTypes.IFrame && values.internalOrExternal),
@@ -143,10 +149,10 @@ export const formSchema: FormSchema[] = [
   },
   {
     field: 'component',
-    label: '프런트엔드 컴포넌트',
+    label: $t('appUi.k933d33cf'),
     component: 'Input',
     componentProps: {
-      placeholder: '프런트엔드 구성요소를 입력하세요.',
+      placeholder: $t('appUi.k888b1cd4'),
     },
     defaultValue: 'layouts/default/index',
     required: true,
@@ -154,22 +160,22 @@ export const formSchema: FormSchema[] = [
   },
   {
     field: 'componentName',
-    label: '구성요소 이름',
+    label: $t('appUi.kaef0e6a1'),
     component: 'Input',
     componentProps: {
-      placeholder: '구성요소 이름을 입력하세요.',
+      placeholder: $t('appUi.ke9065d29'),
     },
-    helpMessage: 'Vue 컴포넌트 name 속성과 일치해야 하며(경로 캐싱용), 비워두면 자동 생성됩니다.',
+    helpMessage: $t('appUi.k3d5de949'),
     defaultValue: '',
     ifShow: ({ values }) => !isButton(values.menuType),
   },
   {
     field: 'frameSrc',
-    label: 'Iframe 주소',
+    label: $t('appUi.k6824a0d5'),
     component: 'Input',
     rules: [
-      { required: true, message: 'Iframe 주소를 입력하세요.' },
-      { type: 'url', message: '올바른 URL 주소를 입력하세요.' },
+      { required: true, message: $t('appUi.k56481df1') },
+      { type: 'url', message: $t('appUi.k701f4996') },
     ],
     ifShow: ({ values }) => !isButton(values.menuType) && values.component === ComponentTypes.IFrame,
   },
@@ -181,7 +187,7 @@ export const formSchema: FormSchema[] = [
   },
   {
     field: 'perms',
-    label: '권한 아이디',
+    label: $t('appUi.kfda3a010'),
     component: 'Input',
     ifShow: ({ values }) => isButton(values.menuType),
     // dynamicRules: ({ model }) => {
@@ -211,74 +217,74 @@ export const formSchema: FormSchema[] = [
   },
   {
     field: 'permsType',
-    label: '권한 정책',
+    label: $t('appUi.ked8e2347'),
     component: 'RadioGroup',
     defaultValue: '1',
-    helpMessage: ['보기/ 접근 가능 (인증 후 보기/ 접근 가능)', '편집 가능 (권한 부여되지 않은 경우 사용하지 않음)'],
+    helpMessage: [$t('appUi.k4c4c2b48'), $t('appUi.k75592334')],
     componentProps: {
       options: [
-        { label: '조회 가능', value: '1' },
-        { label: '편집 가능', value: '2' },
+        { label: $t('appUi.k998f15a1'), value: '1' },
+        { label: $t('appUi.k40f71af6'), value: '2' },
       ],
     },
     ifShow: ({ values }) => isButton(values.menuType),
   },
   {
     field: 'status',
-    label: '상태',
+    label: $t('appUi.k2926977b'),
     component: 'RadioGroup',
     defaultValue: '1',
     componentProps: {
       options: [
-        { label: '활성화', value: '1' },
-        { label: '비활성화', value: '0' },
+        { label: $t('appUi.kbbf831ad'), value: '1' },
+        { label: $t('appUi.k8ff58636'), value: '0' },
       ],
     },
     ifShow: ({ values }) => isButton(values.menuType),
   },
   {
     field: 'icon',
-    label: '메뉴 아이콘',
+    label: $t('appUi.k3cca5135'),
     component: 'IconPicker',
     ifShow: ({ values }) => !isButton(values.menuType),
   },
   {
     field: 'sortNo',
-    label: '정렬',
+    label: $t('appUi.k7745cc5a'),
     component: 'InputNumber',
     defaultValue: 1,
     ifShow: ({ values }) => !isButton(values.menuType),
   },
   {
     field: 'route',
-    label: '라우팅',
+    label: $t('appUi.k06b03319'),
     component: 'Switch',
     defaultValue: true,
     componentProps: {
-      checkedChildren: '예',
-      unCheckedChildren: '아니요',
+      checkedChildren: $t('appUi.ka842629a'),
+      unCheckedChildren: $t('appUi.kccf0c3a2'),
     },
     ifShow: ({ values }) => !isButton(values.menuType),
   },
   {
     field: 'hidden',
-    label: '숨김',
+    label: $t('appUi.k093ff103'),
     component: 'Switch',
     defaultValue: 0,
     componentProps: {
-      checkedChildren: '예',
-      unCheckedChildren: '아니요',
+      checkedChildren: $t('appUi.ka842629a'),
+      unCheckedChildren: $t('appUi.kccf0c3a2'),
     },
     ifShow: ({ values }) => !isButton(values.menuType),
   },
   {
     field: 'hideTab',
-    label: '탭 숨기기',
+    label: $t('appUi.k49249c72'),
     component: 'Switch',
     defaultValue: 0,
     componentProps: {
-      checkedChildren: '예',
-      unCheckedChildren: '아니요',
+      checkedChildren: $t('appUi.ka842629a'),
+      unCheckedChildren: $t('appUi.kccf0c3a2'),
     },
     ifShow: ({ values }) => !isButton(values.menuType),
   },
@@ -288,30 +294,30 @@ export const formSchema: FormSchema[] = [
     component: 'Switch',
     defaultValue: false,
     componentProps: {
-      checkedChildren: '예',
-      unCheckedChildren: '아니요',
+      checkedChildren: $t('appUi.ka842629a'),
+      unCheckedChildren: $t('appUi.kccf0c3a2'),
     },
     ifShow: ({ values }) => !isButton(values.menuType),
   },
   {
     field: 'alwaysShow',
-    label: '항상 보이기',
+    label: $t('appUi.k60d6f146'),
     component: 'Switch',
     defaultValue: false,
     componentProps: {
-      checkedChildren: '예',
-      unCheckedChildren: '아니요',
+      checkedChildren: $t('appUi.ka842629a'),
+      unCheckedChildren: $t('appUi.kccf0c3a2'),
     },
     ifShow: ({ values }) => !isButton(values.menuType),
   },
   {
     field: 'internalOrExternal',
-    label: '외부링크',
+    label: $t('appUi.ka87938c2'),
     component: 'Switch',
     defaultValue: false,
     componentProps: {
-      checkedChildren: '링크',
-      unCheckedChildren: '컨포넌트',
+      checkedChildren: $t('appUi.k1e269063'),
+      unCheckedChildren: $t('appUi.kb57e1c0e'),
     },
     ifShow: ({ values }) => !isButton(values.menuType),
   },
@@ -319,17 +325,17 @@ export const formSchema: FormSchema[] = [
 
 export const dataRuleColumns: BasicColumn[] = [
   {
-    title: '규칙 이름',
+    title: $t('appUi.k6d2c1870'),
     dataIndex: 'ruleName',
     width: 150,
   },
   {
-    title: '규칙 필드',
+    title: $t('appUi.k179705a7'),
     dataIndex: 'ruleColumn',
     width: 100,
   },
   {
-    title: '규칙 값',
+    title: $t('appUi.k7b58f09d'),
     dataIndex: 'ruleValue',
     width: 100,
   },
@@ -338,13 +344,13 @@ export const dataRuleColumns: BasicColumn[] = [
 export const dataRuleSearchFormSchema: FormSchema[] = [
   {
     field: 'ruleName',
-    label: '규칙 이름',
+    label: $t('appUi.k6d2c1870'),
     component: 'Input',
     // colProps: { span: 6 },
   },
   {
     field: 'ruleValue',
-    label: '규칙 값',
+    label: $t('appUi.k7b58f09d'),
     component: 'Input',
     // colProps: { span: 6 },
   },
@@ -359,13 +365,13 @@ export const dataRuleFormSchema: FormSchema[] = [
   },
   {
     field: 'ruleName',
-    label: '규칙 이름',
+    label: $t('appUi.k6d2c1870'),
     component: 'Input',
     required: true,
   },
   {
     field: 'ruleColumn',
-    label: '규칙 필드',
+    label: $t('appUi.k179705a7'),
     component: 'Input',
     ifShow: ({ values }) => {
       const ruleConditions = Array.isArray(values.ruleConditions) ? values.ruleConditions[0] : values.ruleConditions;
@@ -374,7 +380,7 @@ export const dataRuleFormSchema: FormSchema[] = [
   },
   {
     field: 'ruleConditions',
-    label: '조건부 규칙',
+    label: $t('appUi.k29f59547'),
     required: true,
     component: 'ApiSelect',
     componentProps: {
@@ -387,19 +393,19 @@ export const dataRuleFormSchema: FormSchema[] = [
   },
   {
     field: 'ruleValue',
-    label: '규칙 값',
+    label: $t('appUi.k7b58f09d'),
     component: 'Input',
     required: true,
   },
   {
     field: 'status',
-    label: '상태',
+    label: $t('appUi.k2926977b'),
     component: 'RadioButtonGroup',
     defaultValue: '1',
     componentProps: {
       options: [
-        { label: '비활성화', value: '0' },
-        { label: '활성화', value: '1' },
+        { label: $t('appUi.k8ff58636'), value: '0' },
+        { label: $t('appUi.kbbf831ad'), value: '1' },
       ],
     },
   },

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { defHttp } from '/@/utils/http/axios';
 import { Modal } from 'ant-design-vue';
 
@@ -53,10 +54,10 @@ export const deleteDict = (params, handleSuccess) => {
  */
 export const batchDeleteDict = (params, handleSuccess) => {
   Modal.confirm({
-    title: '삭제 확인',
-    content: '선택한 데이터를 삭제하시겠습니까?',
-    okText: '확인',
-    cancelText: '취소',
+    title: $t('appUi.k20fdea4d'),
+    content: $t('appUi.ka4c827cc'),
+    okText: $t('appUi.k468266d6'),
+    cancelText: $t('appUi.k19b2d19b'),
     onOk: async () => {
       const ids = Array.isArray(params?.ids)
         ? params.ids
@@ -99,7 +100,7 @@ export const duplicateCheck = async (params) => {
         (!dataId || String(r.id) !== dataId),
     );
     return duplicated
-      ? { success: false, code: 500, message: '이미 사용 중인 사전 코드입니다.' }
+      ? { success: false, code: 500, message: $t('appUi.k733ffc0f') }
       : { success: true, code: 200, message: '' };
   } catch {
     return { success: true, code: 200, message: '' };
@@ -179,7 +180,7 @@ export const saveOrUpdateDictItem = (params, isUpdate) => {
     .post({ url: Api.itemSave, params }, { successMessageMode: 'none' })
     .then((res) => {
       const { createMessage } = useMessage();
-      createMessage.success(isUpdate ? '수정되었습니다.' : '등록되었습니다.');
+      createMessage.success(isUpdate ? $t('appUi.k9b968290') : $t('appUi.k7d075cad'));
       return res;
     });
 };
@@ -201,7 +202,7 @@ export const dictItemCheck = async (params) => {
         (!id || String(item.id) !== id),
     );
     return duplicated
-      ? { success: false, code: 500, message: '이미 존재하는 데이터 값입니다.' }
+      ? { success: false, code: 500, message: $t('appUi.ke2bf1b04') }
       : { success: true, code: 200, message: '' };
   } catch {
     return { success: true, code: 200, message: '' };

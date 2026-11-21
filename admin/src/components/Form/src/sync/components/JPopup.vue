@@ -25,6 +25,7 @@
   </div>
 </template>
 <script lang="ts">
+  import { $t } from '/@/locales';
   import JPopupOnlReportModal from './modal/JPopupOnlReportModal.vue';
   import { defineComponent, ref, reactive, onMounted, watchEffect, watch, computed, unref } from 'vue';
   import { useModal } from '/@/components/Modal';
@@ -43,7 +44,7 @@
       value: propTypes.string.def(''),
       sorter: propTypes.string.def(''),
       width: propTypes.number.def(1200),
-      placeholder: propTypes.string.def('선택하세요'),
+      placeholder: propTypes.string.def($t('appUi.kc2255771')),
       multi: propTypes.bool.def(false),
       param: propTypes.object.def({}),
       spliter: propTypes.string.def(','),

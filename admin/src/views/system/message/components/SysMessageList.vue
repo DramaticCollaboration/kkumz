@@ -5,13 +5,13 @@
         v-if="messageList && messageList.length > 0 && !loadEndStatus && !loadingMoreStatus"
         :style="{ textAlign: 'center', marginTop: '12px', height: '32px', lineHeight: '32px' }"
       >
-        <a-button @click="onLoadMore">더 로드하세요</a-button>
+        <a-button @click="onLoadMore">{{ t('appUi.kbc93de56') }}</a-button>
       </div>
       <div
         v-if="messageList && messageList.length > 0 && loadEndStatus"
         :style="{ textAlign: 'center', marginTop: '12px', height: '32px', lineHeight: '32px' }"
       >
-        더 이상
+        {{ t('appUi.k69dcfc87') }}
       </div>
     </template>
 
@@ -36,34 +36,34 @@
                 {{ item.titile }}
               </a-tooltip>
 
-              <a @click="showMessageDetail(item)" style="margin-left: 16px">세부 사항을 확인하세요</a>
+              <a @click="showMessageDetail(item)" style="margin-left: 16px">{{ t('appUi.k7cd23eb8') }}</a>
             </div>
           </template>
           <template #avatar>
             <template v-if="item.busType=='email'">
               <a-badge dot v-if="noRead(item)" class="msg-no-read">
-                <a-avatar style="background: #79919d"><mail-outlined style="font-size: 16px" title="읽지 않은 메시지"/></a-avatar>
+                <a-avatar style="background: #79919d"><mail-outlined style="font-size: 16px" :title="t('appUi.k83cce32e')"/></a-avatar>
               </a-badge>
               <a-avatar v-else style="background: #79919d"><mail-outlined style="font-size: 16px"/></a-avatar>
             </template>
 
             <template v-else-if="item.busType=='bpm_task'">
               <a-badge dot v-if="noRead(item)" class="msg-no-read">
-                <a-avatar style="background: #79919d"><interaction-outlined style="font-size: 16px" title="읽지 않은 메시지"/></a-avatar>
+                <a-avatar style="background: #79919d"><interaction-outlined style="font-size: 16px" :title="t('appUi.k83cce32e')"/></a-avatar>
               </a-badge>
               <a-avatar v-else style="background: #79919d"><interaction-outlined style="font-size: 16px"/></a-avatar>
             </template>
 
             <template v-else-if="item.busType=='bpm'">
               <a-badge dot v-if="noRead(item)" class="msg-no-read">
-                <a-avatar style="background: #79919d"><alert-outlined style="font-size: 16px" title="읽지 않은 메시지"/></a-avatar>
+                <a-avatar style="background: #79919d"><alert-outlined style="font-size: 16px" :title="t('appUi.k83cce32e')"/></a-avatar>
               </a-badge>
               <a-avatar v-else style="background: #79919d"><alert-outlined style="font-size: 16px"/></a-avatar>
             </template>
             
             <template v-else>
               <a-badge dot v-if="noRead(item)" class="msg-no-read">
-                <a-avatar style="background: #79919d"><bell-filled style="font-size: 16px" title="읽지 않은 메시지"/></a-avatar>
+                <a-avatar style="background: #79919d"><bell-filled style="font-size: 16px" :title="t('appUi.k83cce32e')"/></a-avatar>
               </a-badge>
               <a-avatar v-else style="background: #79919d"><bell-filled style="font-size: 16px" /></a-avatar>
             </template>
@@ -75,6 +75,7 @@
 </template>
 
 <script>
+  import { useI18n } from '/@/hooks/web/useI18n';
 
   import { FilterOutlined, CloseOutlined, BellFilled, ExclamationOutlined, MailOutlined,InteractionOutlined, AlertOutlined } from '@ant-design/icons-vue';
   import { useSysMessage, useMessageHref } from './useSysMessage';
@@ -99,6 +100,7 @@
     },
     emits:['close', 'detail'],
     setup(props, {emit}){
+      const { t } = useI18n();
       const { messageList,loadEndStatus,loadingMoreStatus,onLoadMore,noRead, getMsgCategory, searchParams, reset, loadData, updateStarMessage } = useSysMessage();
       
       function reload(params){
@@ -134,6 +136,7 @@
       }
 
       return {
+        t,
         messageList,
         loadEndStatus,
         loadingMoreStatus,

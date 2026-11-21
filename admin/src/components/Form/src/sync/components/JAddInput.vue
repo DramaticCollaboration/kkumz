@@ -1,7 +1,7 @@
 <template>
   <div v-for="(param, index) in dynamicInput.params" :key="index" style="display: flex">
-    <a-input placeholder="매개변수 키를 입력하세요." v-model:value="param.label" style="width: 30%; margin-bottom: 5px" @input="emitChange" />
-    <a-input placeholder="매개변수 값을 입력하세요." v-model:value="param.value" style="width: 30%; margin: 0 0 5px 5px" @input="emitChange" />
+    <a-input :placeholder="t('appUi.k64a747f7')" v-model:value="param.label" style="width: 30%; margin-bottom: 5px" @input="emitChange" />
+    <a-input :placeholder="t('appUi.k60f6fcd6')" v-model:value="param.value" style="width: 30%; margin: 0 0 5px 5px" @input="emitChange" />
     <MinusCircleOutlined
       v-if="dynamicInput.params.length > min"
       class="dynamic-delete-button"
@@ -12,11 +12,12 @@
   <div>
     <a-button type="dashed" style="width: 60%" @click="add">
       <PlusOutlined />
-      등록
+      {{ t('appUi.k1ac11e9b') }}
     </a-button>
   </div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons-vue';
   import { defineComponent, reactive, ref, UnwrapRef, watchEffect } from 'vue';
   import { propTypes } from '/@/utils/propTypes';
@@ -36,6 +37,7 @@
     },
     emits: ['change', 'update:value'],
     setup(props, { emit }) {
+      const { t } = useI18n();
       //동적 데이터 입력
       const dynamicInput: UnwrapRef<{ params: Params[] }> = reactive({ params: [] });
       //입력 삭제
@@ -88,6 +90,7 @@
       }
 
       return {
+        t,
         dynamicInput,
         emitChange,
         remove,

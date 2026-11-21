@@ -24,7 +24,7 @@
                   class="ant-tabs-tab"
                   :class="{ 'ant-tabs-tab-active': activeKey == 'all' }"
                 >
-                  모든 뉴스
+                  {{ t('appUi.k4b3b62d9') }}
                 </div>
                 <div
                   @click="(e) => handleChangeTab(e, 'star')"
@@ -34,7 +34,7 @@
                   class="ant-tabs-tab"
                   :class="{ 'ant-tabs-tab-active': activeKey == 'star' }"
                 >
-                  중요 뉴스
+                  {{ t('appUi.k6198300a') }}
                 </div>
               </div>
               <div
@@ -56,7 +56,7 @@
             <a-popover placement="bottomRight" :overlayStyle="{ width: '400px' }" trigger="click" v-model:open="showSearch">
               <template #content>
                 <div>
-                  <span class="search-label">나에게 답글을 달거나 언급하는 사람들?：</span>
+                  <span class="search-label">{{ t('appUi.k3d7c868e') }}</span>
                   <span style="display: inline-block">
                     <div v-if="searchParams.fromUser" class="selected-user">
                       <span>{{ searchParams.realname }}</span>
@@ -68,7 +68,7 @@
                   </span>
                 </div>
                 <div class="search-date">
-                  <div class="date-label">시간：</div>
+                  <div class="date-label">{{ t('appUi.k034a9dea') }}</div>
                   <div class="date-tags">
                     <div class="tags-container">
                       <div v-for="item in dateTags" :class="item.active == true ? 'tag active' : 'tag'" @click="handleClickDateTag(item)">{{
@@ -101,12 +101,12 @@
           <div></div>
         </template>
 
-        <a-tab-pane tab="모든 뉴스" key="all" forceRender>
+        <a-tab-pane :tab="t('appUi.k4b3b62d9')" key="all" forceRender>
           <sys-message-list ref="allMessageRef" @close="hrefThenClose" @detail="showDetailModal" />
         </a-tab-pane>
 
         <!-- 별표 표시 -->
-        <a-tab-pane tab="스타뉴스" key="star" forceRender>
+        <a-tab-pane :tab="t('appUi.k5fb3b903')" key="star" forceRender>
           <sys-message-list ref="starMessageRef" star @close="hrefThenClose" @detail="showDetailModal" />
         </a-tab-pane>
       </a-tabs>
@@ -126,6 +126,7 @@
 </template>
 
 <script>
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { BasicModal, useModalInner, useModal } from '/@/components/Modal';
   import { FilterOutlined, CloseOutlined, BellFilled, ExclamationOutlined, PlusOutlined } from '@ant-design/icons-vue';
   import JSelectUser from '/@/components/Form/src/sync/components/JSelectUser.vue';
@@ -150,6 +151,7 @@
     },
     emits: ['register', 'refresh'],
     setup(_p, { emit }) {
+      const { t } = useI18n();
       const allMessageRef = ref();
       const starMessageRef = ref();
       const activeKey = ref('all');
@@ -195,15 +197,15 @@
       }
 
       const dateTags = reactive([
-        { key: 'jt', text: '오늘', active: false },
-        { key: 'zt', text: '어제', active: false },
-        { key: 'qt', text: '그저께', active: false },
-        { key: 'bz', text: '이번 주', active: false },
-        { key: 'sz', text: '지난주', active: false },
-        { key: 'by', text: '이번 달', active: false },
-        { key: 'sy', text: '전달', active: false },
-        { key: '7day', text: '7일', active: true },
-        { key: 'zdy', text: '사용자 정의', active: false },
+        { key: 'jt', text: t('appUi.k2bdce5e8'), active: false },
+        { key: 'zt', text: t('appUi.k476b58b7'), active: false },
+        { key: 'qt', text: t('appUi.kdd61c7da'), active: false },
+        { key: 'bz', text: t('appUi.k89ea2d72'), active: false },
+        { key: 'sz', text: t('appUi.k85289ac8'), active: false },
+        { key: 'by', text: t('appUi.kfa72e1d8'), active: false },
+        { key: 'sy', text: t('appUi.k996151eb'), active: false },
+        { key: '7day', text: t('appUi.kf5c18688'), active: true },
+        { key: 'zdy', text: t('appUi.k8b4afa53'), active: false },
       ]);
       function handleClickDateTag(item) {
         for (let a of dateTags) {
@@ -312,6 +314,7 @@
         openDetailModal(true, { record: unref(record), isUpdate: true });
       }
       return {
+        t,
         conditionStr,
         regModal,
         getSelectedUser,

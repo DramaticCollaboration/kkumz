@@ -11,7 +11,7 @@
     <div class="text-4xl font-bold compliance-rate-value">{{ formattedRate }}%</div>
     <p v-if="hasUnencryptedItems" class="mt-2 font-semibold flex items-center gap-1.5 compliance-alert-text">
       <span class="inline-block w-2 h-2 rounded-full bg-red-500"></span>
-      <span>{{ unencryptedCount }}건 승인 검토 필요</span>
+      <span>{{ unencryptedCount }}{{ t('appUi.k99f5ebbb') }}</span>
     </p>
   </div>
 </template>
@@ -19,6 +19,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
 const props = defineProps({
   title: {

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { BasicColumn } from '/@/components/Table';
 import { FormSchema } from '/@/components/Table';
 import { dictItemCheck } from './dict.api';
@@ -6,17 +7,17 @@ import { h } from "vue";
 
 export const columns: BasicColumn[] = [
   {
-    title: '사전 이름',
+    title: $t('appUi.ka2617c7d'),
     dataIndex: 'dictName',
     width: 240,
   },
   {
-    title: '사전 코드',
+    title: $t('appUi.k1de2c832'),
     dataIndex: 'dictCode',
     width: 240,
   },
   {
-    title: '설명',
+    title: $t('appUi.k84196436'),
     dataIndex: 'description',
     // width: 120
   },
@@ -24,17 +25,17 @@ export const columns: BasicColumn[] = [
 
 export const recycleBincolumns: BasicColumn[] = [
   {
-    title: '사전 이름',
+    title: $t('appUi.ka2617c7d'),
     dataIndex: 'dictName',
     width: 120,
   },
   {
-    title: '사전 코드',
+    title: $t('appUi.k1de2c832'),
     dataIndex: 'dictCode',
     width: 120,
   },
   {
-    title: '설명',
+    title: $t('appUi.k84196436'),
     dataIndex: 'description',
     width: 120,
   },
@@ -42,13 +43,13 @@ export const recycleBincolumns: BasicColumn[] = [
 
 export const searchFormSchema: FormSchema[] = [
   {
-    label: '사전 이름',
+    label: $t('appUi.ka2617c7d'),
     field: 'dictName',
     component: 'Input',
     colProps: { span: 6 },
   },
   {
-    label: '사전 코드',
+    label: $t('appUi.k1de2c832'),
     field: 'dictCode',
     component: 'Input',
     colProps: { span: 6 },
@@ -63,13 +64,18 @@ export const formSchema: FormSchema[] = [
     show: false,
   },
   {
-    label: '사전 이름',
+    label: $t('appUi.ka2617c7d'),
     field: 'dictName',
     required: true,
     component: 'Input',
   },
   {
-    label: '사전 코드',
+    field: 'dictNameI18n',
+    label: $t('common.i18nName'),
+    component: 'I18nInput',
+  },
+  {
+    label: $t('appUi.k1de2c832'),
     field: 'dictCode',
     component: 'Input',
     dynamicDisabled: ({ values }) => {
@@ -78,7 +84,7 @@ export const formSchema: FormSchema[] = [
     dynamicRules: ({ model, schema }) => rules.duplicateCheckRule('sys_dict', 'dict_code', model, schema, true),
   },
   {
-    label: '설명',
+    label: $t('appUi.k84196436'),
     field: 'description',
     component: 'Input',
   },
@@ -86,17 +92,17 @@ export const formSchema: FormSchema[] = [
 
 export const dictItemColumns: BasicColumn[] = [
   {
-    title: '이름',
+    title: $t('appUi.k9aa18e50'),
     dataIndex: 'itemText',
     width: 80,
   },
   {
-    title: '데이터 값',
+    title: $t('appUi.kdc125b35'),
     dataIndex: 'itemValue',
     width: 80,
   },
   {
-    title: '사전 색상',
+    title: $t('appUi.k2425c571'),
     dataIndex: 'itemColor',
     width: 80,
     align:'center',
@@ -110,12 +116,17 @@ export const dictItemColumns: BasicColumn[] = [
 
 export const dictItemSearchFormSchema: FormSchema[] = [
   {
-    label: '이름',
+    label: $t('appUi.k9aa18e50'),
     field: 'itemText',
     component: 'Input',
   },
   {
-    label: '상태',
+    field: 'itemTextI18n',
+    label: $t('common.i18nName'),
+    component: 'I18nInput',
+  },
+  {
+    label: $t('appUi.k2926977b'),
     field: 'status',
     component: 'JDictSelectTag',
     componentProps: {
@@ -133,13 +144,13 @@ export const itemFormSchema: FormSchema[] = [
     show: false,
   },
   {
-    label: '이름',
+    label: $t('appUi.k9aa18e50'),
     field: 'itemText',
     required: true,
     component: 'Input',
   },
   {
-    label: '데이터 값',
+    label: $t('appUi.kdc125b35'),
     field: 'itemValue',
     component: 'Input',
     dynamicRules: ({ values, model }) => {
@@ -148,10 +159,10 @@ export const itemFormSchema: FormSchema[] = [
           required: true,
           validator: (_, value) => {
             if (!value) {
-              return Promise.reject('데이터 값을 입력하세요');
+              return Promise.reject($t('appUi.k89d36224'));
             }
             if (new RegExp("[`~!@#$^&*()=|{}'.<>《》/?！₩（）—【】‘；：”“。，、？]").test(value)) {
-              return Promise.reject('데이터 값에는 특수 문자가 포함될 수 없습니다!');
+              return Promise.reject($t('appUi.k6864a5bd'));
             }
             return new Promise<void>((resolve, reject) => {
               let params = {
@@ -161,10 +172,10 @@ export const itemFormSchema: FormSchema[] = [
               };
               dictItemCheck(params)
                 .then((res) => {
-                  res.success ? resolve() : reject(res.message || '확인 실패');
+                  res.success ? resolve() : reject(res.message || $t('appUi.kae6c001b'));
                 })
                 .catch((err) => {
-                  reject(err.message || '인증 실패');
+                  reject(err.message || $t('appUi.k7790958f'));
                 });
             });
           },
@@ -173,25 +184,25 @@ export const itemFormSchema: FormSchema[] = [
     },
   },
   {
-    label: '색상 값',
+    label: $t('appUi.kcb12bde0'),
     field: 'itemColor',
     component: 'Input',
     slot:'itemColor'
   },
   {
-    label: '설명',
+    label: $t('appUi.k84196436'),
     field: 'description',
     component: 'Input',
   },
   {
     field: 'sortOrder',
-    label: '정렬',
+    label: $t('appUi.k7745cc5a'),
     component: 'InputNumber',
     defaultValue: 1,
   },
   {
     field: 'status',
-    label: '활성화 여부',
+    label: $t('appUi.ke91e52ad'),
     defaultValue: 1,
     component: 'JDictSelectTag',
     componentProps: {

@@ -16,6 +16,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import type { JPromptProps } from './typing';
   import type { ModalProps } from '/@/components/Modal';
   import { ref, defineComponent, computed, unref, onMounted, nextTick } from 'vue';
@@ -34,13 +35,14 @@
     },
     emits: ['register'],
     setup(props, { emit }) {
+      const { t } = useI18n();
       const inputRef = ref();
       const { getAntdLocale } = useLocale();
       const visible = ref(false);
       // 현재 로딩중인가요?
       const loading = ref(false);
       const options = ref<JPromptProps>({});
-      const placeholder = computed(() => options.value.placeholder ?? '내용을 입력해주세요');
+      const placeholder = computed(() => options.value.placeholder ?? t('appUi.k84a38ce3'));
       // 등록 Form
       const [registerForm, { clearValidate, setFieldsValue, validate, updateSchema }] = useForm({
         compact: true,

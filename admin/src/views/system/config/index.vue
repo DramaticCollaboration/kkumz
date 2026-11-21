@@ -6,7 +6,7 @@
           <div class="flex items-center gap-2 flex-wrap">
             <a-input-search
               v-model:value="searchKeyword"
-              placeholder="설정 키·명칭·설명 검색"
+              :placeholder="t('appUi.kbace4ff5')"
               allow-clear
               style="width: 220px"
             />
@@ -18,19 +18,19 @@
               :loading="testing"
             >
               <template #icon><Icon icon="ant-design:cluster-outlined" /></template>
-              외부 연동 연결 진단
+              {{ t('appUi.k7d5a032f') }}
             </a-button>
             <a-button type="default" @click="handleOpenAddModal">
               <template #icon><Icon icon="ant-design:plus-outlined" /></template>
-              설정 항목 추가
+              {{ t('appUi.k0b325bd0') }}
             </a-button>
             <a-button type="default" @click="handleRefreshCache" :loading="refreshing">
               <template #icon><Icon icon="ant-design:sync-outlined" /></template>
-              캐시 즉시 동기화
+              {{ t('appUi.kb543d328') }}
             </a-button>
             <a-button type="primary" @click="handleSaveCurrentCategory" :loading="saving">
               <template #icon><Icon icon="ant-design:save-outlined" /></template>
-              현재 탭 일괄 저장
+              {{ t('appUi.k7e2095dc') }}
             </a-button>
           </div>
         </template>
@@ -42,7 +42,7 @@
         >
           <a-empty
             v-if="currentConfigs.length === 0"
-            description="조건에 일치하는 환경설정 항목이 없습니다."
+            :description="t('appUi.k00203e77')"
             class="my-8"
           />
           <BasicForm v-else layout="vertical" :showActionButtonGroup="false" class="max-w-6xl">
@@ -74,7 +74,7 @@
                                 class="p-0 h-auto text-xs"
                                 @click="handleOpenEditModal(item)"
                               >
-                                편집
+                                {{ t('appUi.kd482e14b') }}
                               </a-button>
                               <a-button
                                 type="link"
@@ -82,7 +82,7 @@
                                 class="p-0 h-auto text-xs"
                                 @click="handleResetSingle(item)"
                               >
-                                기본값 복원
+                                {{ t('appUi.ka2d19eaa') }}
                               </a-button>
                             </div>
                           </div>
@@ -91,7 +91,7 @@
                         <a-input-password
                           v-if="item.isSecret || item.valueType === 'SECRET'"
                           v-model:value="formModel[item.configKey]"
-                          placeholder="민감 설정값을 입력하세요"
+                          :placeholder="t('appUi.kf23263a7')"
                         />
                         <a-input-number
                           v-else-if="item.valueType === 'NUMBER'"
@@ -101,8 +101,8 @@
                         <a-switch
                           v-else-if="item.valueType === 'BOOLEAN'"
                           v-model:checked="boolModel[item.configKey]"
-                          checked-children="활성"
-                          un-checked-children="비활성"
+                          :checked-children="t('appUi.k6a2123a3')"
+                          :un-checked-children="t('appUi.kfae2014b')"
                           @change="(val) => (formModel[item.configKey] = String(val))"
                         />
                         <a-textarea
@@ -110,12 +110,12 @@
                           v-model:value="formModel[item.configKey]"
                           :rows="3"
                           class="font-mono text-xs"
-                          placeholder="JSON 설정값을 입력하세요"
+                          :placeholder="t('appUi.k251977de')"
                         />
                         <a-input
                           v-else
                           v-model:value="formModel[item.configKey]"
-                          placeholder="설정값을 입력하세요"
+                          :placeholder="t('appUi.kd9567124')"
                         />
                       </a-form-item>
                     </a-col>
@@ -151,6 +151,8 @@ import {
   testConnection,
   SysConfigModel,
 } from './config.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
 const activeTab = ref<string>('INTEGRATION');
 const searchKeyword = ref<string>('');
@@ -234,7 +236,7 @@ async function loadConfigs() {
       });
     }
   } catch (e: any) {
-    message.error('환경설정 목록 조회에 실패했습니다: ' + (e.message || '알 수 없는 오류'));
+    message.error(t('appUi.k76b4fe13') + (e.message || t('appUi.k5e9f6b80')));
   }
 }
 
@@ -267,10 +269,10 @@ async function handleSaveCurrentCategory() {
     }));
 
     await updateBatchConfig(itemsToUpdate);
-    message.success('현재 탭의 설정이 성공적으로 저장 및 핫 리로드되었습니다.');
+    message.success(t('appUi.kb8cff7dc'));
     await loadConfigs();
   } catch (e: any) {
-    message.error('설정 저장 중 오류가 발생했습니다: ' + (e.message || '알 수 없는 오류'));
+    message.error(t('appUi.kd763edfb') + (e.message || t('appUi.k5e9f6b80')));
   } finally {
     saving.value = false;
   }
@@ -279,10 +281,10 @@ async function handleSaveCurrentCategory() {
 async function handleResetSingle(item: SysConfigModel) {
   try {
     await resetConfig(item.configKey);
-    message.success(`[${item.configName}] 기본값으로 복원되었습니다.`);
+    message.success(t('appUi.kcf57fbd1', { p0: item.configName }));
     await loadConfigs();
   } catch (e: any) {
-    message.error('기본값 복원 실패: ' + (e.message || '알 수 없는 오류'));
+    message.error(t('appUi.kb66dac2e') + (e.message || t('appUi.k5e9f6b80')));
   }
 }
 
@@ -290,10 +292,10 @@ async function handleRefreshCache() {
   refreshing.value = true;
   try {
     await refreshConfigCache();
-    message.success('시스템 환경설정 캐시가 성공적으로 갱신되었습니다.');
+    message.success(t('appUi.k8cc04e24'));
     await loadConfigs();
   } catch (e: any) {
-    message.error('캐시 동기화 실패: ' + (e.message || '알 수 없는 오류'));
+    message.error(t('appUi.kcb87df22') + (e.message || t('appUi.k5e9f6b80')));
   } finally {
     refreshing.value = false;
   }
@@ -309,7 +311,7 @@ async function handleTestIntegrationConnection() {
     });
     openDiagModal(true, { diagResult: res });
   } catch (e: any) {
-    message.error('연결 진단 중 예외 발생: ' + (e.message || '서버 통신 오류'));
+    message.error(t('appUi.kf749a189') + (e.message || t('appUi.kf0e53658')));
   } finally {
     testing.value = false;
   }

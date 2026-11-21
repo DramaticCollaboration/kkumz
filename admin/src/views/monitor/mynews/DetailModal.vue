@@ -1,11 +1,11 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" title="세부 사항을 확인하세요" :minHeight="600" :showCancelBtn="false" :showOkBtn="false" :height="88" :destroyOnClose="true">
+  <BasicModal v-bind="$attrs" @register="registerModal" :title="t('appUi.k7cd23eb8')" :minHeight="600" :showCancelBtn="false" :showOkBtn="false" :height="88" :destroyOnClose="true">
     <a-card class="daily-article">
-      <a-card-meta :title="content.titile" :description="'등록자：' + content.sender + ' 출시 시간： ' + content.sendTime"> </a-card-meta>
+      <a-card-meta :title="content.titile" :description="t('appUi.k4054f0ec') + content.sender + t('appUi.k96c54ee9') + content.sendTime"> </a-card-meta>
       <a-divider />
       <div v-html="content.msgContent" class="article-content"></div>
       <div>
-        <a-button v-if="hasHref" @click="jumpToHandlePage">신청하러 가기<ArrowRightOutlined /></a-button>
+        <a-button v-if="hasHref" @click="jumpToHandlePage">{{ t('appUi.ke20a79d3') }}<ArrowRightOutlined /></a-button>
       </div>
     </a-card>
   </BasicModal>
@@ -21,6 +21,8 @@
   const router = useRouter()
 
   import { ref, unref } from 'vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   const isUpdate = ref(true);
   const content = ref({});
   //Form 할당

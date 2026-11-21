@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { useGlobSetting } from '/@/hooks/setting';
 import { merge, random } from 'lodash-es';
 import { isArray } from '/@/utils/is';
@@ -144,7 +145,7 @@ export const toTree = (array, startPid, currentDept, opt) => {
  * @param fieldKeys 총계를 계산할 열 필드
  */
 export function mapTableTotalSummary(tableData: Recordable[], fieldKeys: string[]) {
-  let totals: any = { _row: '총', _index: '총' };
+  let totals: any = { _row: $t('appUi.k10d96eb9'), _index: $t('appUi.k10d96eb9') };
   fieldKeys.forEach((key) => {
     totals[key] = tableData.reduce((prev, next) => {
       const value = Number(next[key]);

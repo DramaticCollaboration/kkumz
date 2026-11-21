@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { isRef, unref, watch, Ref, ComputedRef } from 'vue';
 import Clipboard from 'clipboard';
 import { ModalOptionsEx, useMessage } from '/@/hooks/web/useMessage';
@@ -23,9 +24,9 @@ function createCopyModal(options: Partial<IOptions>) {
     ...options,
     iconType: options.iconType ?? 'info',
     width: options.width ?? 500,
-    title: options.title ?? '복사',
+    title: options.title ?? $t('appUi.ka55b1ecb'),
     maskClosable: options.maskClosable ?? true,
-    okText: options.okText ?? '복사',
+    okText: options.okText ?? $t('appUi.ka55b1ecb'),
     okButtonProps: {
       ...options.okButtonProps,
       class: COPY_CLASS,
@@ -36,7 +37,7 @@ function createCopyModal(options: Partial<IOptions>) {
         const clipboard = new Clipboard('.' + COPY_CLASS);
         clipboard.on('success', () => {
           clipboard.destroy();
-          createMessage.success('성공적으로 복사되었습니다');
+          createMessage.success($t('appUi.k38684682'));
           resolve();
         });
         clipboard.on('error', () => {

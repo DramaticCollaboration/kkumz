@@ -1,5 +1,5 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" title="비밀번호 변경" @ok="handleSubmit">
+  <BasicModal v-bind="$attrs" @register="registerModal" :title="t('appUi.k4c7b9670')" @ok="handleSubmit">
     <BasicForm @register="registerForm" />
   </BasicModal>
 </template>
@@ -9,6 +9,8 @@
   import { BasicForm, useForm } from '/@/components/Form/index';
   import { formPasswordSchema } from './user.data';
   import { changePassword } from './user.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
   //Form 구성

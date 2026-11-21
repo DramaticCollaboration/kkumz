@@ -1,11 +1,11 @@
 import { genMessage } from '../helper';
 import antdLocale from 'ant-design-vue/es/locale/en_US';
-//import momentLocale from 'moment/dist/locale/eu';
+import 'dayjs/locale/en';
 
-const modules = import.meta.glob('./en/**/*.ts', { eager: true });
+const modules = import.meta.glob('./en-US/**/*.ts', { eager: true });
 export default {
   message: {
-    ...genMessage(modules as Recordable<Recordable>, 'en'),
+    ...genMessage(modules as Recordable<Recordable>, 'en-US'),
     antdLocale,
   },
   dateLocale: null,

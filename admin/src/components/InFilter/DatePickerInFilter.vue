@@ -8,7 +8,7 @@
           {{ opt.label }}
         </a-select-option>
         <a-select-option key="custom" value="custom">
-          맞춤 날짜
+          {{ t('appUi.k3622ce61') }}
         </a-select-option>
       </a-select>
       <!-- 맞춤 날짜 선택기 -->
@@ -22,7 +22,7 @@
               {{ opt.label }}
             </a-menu-item>
             <a-menu-item key="custom">
-              맞춤 날짜
+              {{ t('appUi.k3622ce61') }}
             </a-menu-item>
           </a-menu>
         </template>
@@ -45,20 +45,22 @@ import {ref, watch, computed, nextTick, useAttrs, defineProps} from 'vue'
 import {DatePicker} from 'ant-design-vue'
 import {useDesign} from '/@/hooks/web/useDesign';
 import { Form } from 'ant-design-vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 const formItemContext = Form.useInjectFormItemContext();
 
 // 기간 옵션
 const RANGE_OPTIONS = [
-  {key: 'TODAY', label: '오늘'},
-  {key: 'YESTERDAY', label: '어제'},
-  {key: 'TOMORROW', label: '내일'},
-  {key: 'THIS_WEEK', label: '이번 주'},
-  {key: 'LAST_WEEK', label: '지난주'},
-  {key: 'NEXT_WEEK', label: '다음 주'},
-  {key: 'LAST_7_DAYS', label: '지난 7일'},
-  {key: 'THIS_MONTH', label: '이번 달'},
-  {key: 'LAST_MONTH', label: '전달'},
-  {key: 'NEXT_MONTH', label: '다음 달'},
+  {key: 'TODAY', label: t('appUi.k2bdce5e8')},
+  {key: 'YESTERDAY', label: t('appUi.k476b58b7')},
+  {key: 'TOMORROW', label: t('appUi.kad95f2b6')},
+  {key: 'THIS_WEEK', label: t('appUi.k89ea2d72')},
+  {key: 'LAST_WEEK', label: t('appUi.k85289ac8')},
+  {key: 'NEXT_WEEK', label: t('appUi.k3e92afe7')},
+  {key: 'LAST_7_DAYS', label: t('appUi.kab9f8e81')},
+  {key: 'THIS_MONTH', label: t('appUi.kfa72e1d8')},
+  {key: 'LAST_MONTH', label: t('appUi.k996151eb')},
+  {key: 'NEXT_MONTH', label: t('appUi.k4f828d56')},
 ];
 const RANGE_OPTION_KEYS = RANGE_OPTIONS.map(item => item.key)
 

@@ -2,27 +2,27 @@
   <div :class="`${prefixCls}-config-list`">
     <a-radio-group v-model:value="type">
       <div class="item">
-        <a-radio :value="TypeEnum.unset" v-bind="beforeRadioAttrs">설정되지 않음</a-radio>
-        <span class="tip-info">요일과 요일 중 하나만 설정할 수 있습니다.</span>
+        <a-radio :value="TypeEnum.unset" v-bind="beforeRadioAttrs">{{ t('appUi.k8437fcce') }}</a-radio>
+        <span class="tip-info">{{ t('appUi.k1f200ef5') }}</span>
       </div>
       <div class="item">
-        <a-radio :value="TypeEnum.every" v-bind="beforeRadioAttrs">일일</a-radio>
+        <a-radio :value="TypeEnum.every" v-bind="beforeRadioAttrs">{{ t('appUi.k51941908') }}</a-radio>
       </div>
       <div class="item">
-        <a-radio :value="TypeEnum.range" v-bind="beforeRadioAttrs">간격</a-radio>
-        <span> ~에서 </span>
+        <a-radio :value="TypeEnum.range" v-bind="beforeRadioAttrs">{{ t('appUi.k38ed2036') }}</a-radio>
+        <span> {{ t('appUi.k915f36de') }} </span>
         <InputNumber v-model:value="valueRange.start" v-bind="typeRangeAttrs" />
-        <span> 하루에 </span>
+        <span> {{ t('appUi.kf23bf857') }} </span>
         <InputNumber v-model:value="valueRange.end" v-bind="typeRangeAttrs" />
-        <span> 낮 </span>
+        <span> {{ t('appUi.k582cb057') }} </span>
       </div>
       <div class="item">
-        <a-radio :value="TypeEnum.loop" v-bind="beforeRadioAttrs">주기</a-radio>
-        <span> ~에서 </span>
+        <a-radio :value="TypeEnum.loop" v-bind="beforeRadioAttrs">{{ t('appUi.k1cd385d7') }}</a-radio>
+        <span> {{ t('appUi.k915f36de') }} </span>
         <InputNumber v-model:value="valueLoop.start" v-bind="typeLoopAttrs" />
-        <span> 하루 시작, 간격 </span>
+        <span> {{ t('appUi.k11b32aee') }} </span>
         <InputNumber v-model:value="valueLoop.interval" v-bind="typeLoopAttrs" />
-        <span> 낮 </span>
+        <span> {{ t('appUi.k582cb057') }} </span>
       </div>
 <!--       근무일에는 지원되지 않으며, 오류가 발생할 경우 먼저 숨기도록 하겠습니다. -->
 
@@ -32,10 +32,10 @@
 
 <!--      </div>-->
       <div class="item">
-        <a-radio :value="TypeEnum.last" v-bind="beforeRadioAttrs">마지막 날</a-radio>
+        <a-radio :value="TypeEnum.last" v-bind="beforeRadioAttrs">{{ t('appUi.ka5287c22') }}</a-radio>
       </div>
       <div class="item">
-        <a-radio :value="TypeEnum.specify" v-bind="beforeRadioAttrs">지정하다</a-radio>
+        <a-radio :value="TypeEnum.specify" v-bind="beforeRadioAttrs">{{ t('appUi.k7d4473c2') }}</a-radio>
         <div class="list">
           <a-checkbox-group v-model:value="valueList">
             <template v-for="i in specifyRange" :key="i">
@@ -49,6 +49,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { computed, defineComponent, watch } from 'vue';
   import { InputNumber } from 'ant-design-vue';
   import { TypeEnum, useTabEmits, useTabProps, useTabSetup } from './useTabMixin';
@@ -64,6 +65,7 @@
     }),
     emits: useTabEmits(),
     setup(props, context) {
+      const { t } = useI18n();
       const disabledChoice = computed(() => {
         return (props.week && props.week !== '?') || props.disabled;
       });
@@ -88,7 +90,8 @@
         }
       );
 
-      return { ...setup, typeWorkAttrs };
+      return {
+        t, ...setup, typeWorkAttrs };
     },
   });
 </script>

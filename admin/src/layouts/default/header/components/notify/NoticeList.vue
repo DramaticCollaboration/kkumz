@@ -22,17 +22,17 @@
           <template #avatar>
             <a-avatar v-if="item.avatar" class="avatar" :src="item.avatar" />
             <template v-else-if="item.priority">
-              <a-avatar v-if="item.priority === PriorityTypes.L" class="avatar priority-L" title="일반 뉴스">
+              <a-avatar v-if="item.priority === PriorityTypes.L" class="avatar priority-L" :title="t('appUi.k72c2d084')">
                 <template #icon>
                   <Icon icon="entypo:info" />
                 </template>
               </a-avatar>
-              <a-avatar v-if="item.priority === PriorityTypes.M" class="avatar priority-M" title="중요한 소식">
+              <a-avatar v-if="item.priority === PriorityTypes.M" class="avatar priority-M" :title="t('appUi.kf6f28706')">
                 <template #icon>
                   <Icon icon="bi:exclamation-lg" />
                 </template>
               </a-avatar>
-              <a-avatar v-if="item.priority === PriorityTypes.H" class="avatar priority-H" title="긴급 메시지">
+              <a-avatar v-if="item.priority === PriorityTypes.H" class="avatar priority-H" :title="t('appUi.kd04b3e6d')">
                 <template #icon>
                   <Icon icon="ant-design:warning-filled" />
                 </template>
@@ -61,6 +61,7 @@
   </a-list>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { computed, defineComponent, PropType, ref, watch, unref } from 'vue';
   import { PriorityTypes, ListItem } from './data';
   import { useDesign } from '/@/hooks/web/useDesign';
@@ -104,6 +105,7 @@
     },
     emits: ['update:currentPage'],
     setup(props, { emit }) {
+      const { t } = useI18n();
       const { prefixCls } = useDesign('header-notify-list');
       const current = ref(props.currentPage || 1);
       const getData = computed(() => {
@@ -142,6 +144,7 @@
       }
 
       return {
+        t,
         prefixCls,
         getPagination,
         getData,

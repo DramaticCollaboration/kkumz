@@ -2,7 +2,7 @@
   <BasicModal
     v-bind="$attrs"
     @register="registerModal"
-    :title="isUpdate ? '프롬프트 템플릿 수정' : '신규 프롬프트 템플릿 등록'"
+    :title="isUpdate ? t('appUi.ka07ab67e') : t('appUi.k3257be71')"
     width="980px"
     @ok="handleSubmit"
   >
@@ -12,24 +12,24 @@
           <div class="w-full">
             <a-row :gutter="16">
               <a-col :xs="24" :md="9">
-                <a-form-item label="프롬프트 코드" required>
+                <a-form-item :label="t('appUi.k5bef10a7')" required>
                   <a-input
                     v-model:value="formState.promptCode"
                     :disabled="isUpdate"
-                    placeholder="예: TODAYCARE_DAILY_SAFETY_BRIEFING"
+                    :placeholder="t('appUi.kd91342a8')"
                   />
                 </a-form-item>
               </a-col>
               <a-col :xs="24" :md="9">
-                <a-form-item label="프롬프트 명칭" required>
+                <a-form-item :label="t('appUi.kef80204d')" required>
                   <a-input
                     v-model:value="formState.promptName"
-                    placeholder="예: 일간 안심 돌봄 브리핑 생성"
+                    :placeholder="t('appUi.k8b7d4af0')"
                   />
                 </a-form-item>
               </a-col>
               <a-col :xs="24" :md="6">
-                <a-form-item label="분류" required>
+                <a-form-item :label="t('appUi.k8b1d74f0')" required>
                   <a-select v-model:value="formState.category" :options="CATEGORY_OPTIONS" />
                 </a-form-item>
               </a-col>
@@ -37,23 +37,23 @@
 
             <a-row :gutter="16">
               <a-col :xs="24" :md="9">
-                <a-form-item label="호출 클래스 및 메서드">
+                <a-form-item :label="t('appUi.kb52cee49')">
                   <a-input
                     v-model:value="formState.callerClass"
-                    placeholder="예: TodayCareSeniorCareAgent.generateDailyCareBriefing"
+                    :placeholder="t('appUi.k416a5633')"
                   />
                 </a-form-item>
               </a-col>
               <a-col :xs="24" :md="6">
-                <a-form-item label="지정 모델">
+                <a-form-item :label="t('appUi.kfcd1b545')">
                   <a-input
                     v-model:value="formState.modelOverride"
-                    placeholder="기본 라우팅 모델 사용 시 비워둠"
+                    :placeholder="t('appUi.kbeeb044a')"
                   />
                 </a-form-item>
               </a-col>
               <a-col :xs="24" :md="4">
-                <a-form-item label="생성 온도값">
+                <a-form-item :label="t('appUi.k2f90eb14')">
                   <a-input-number
                     v-model:value="formState.temperature"
                     :min="0"
@@ -64,37 +64,37 @@
                 </a-form-item>
               </a-col>
               <a-col :xs="24" :md="5">
-                <a-form-item label="상태">
+                <a-form-item :label="t('appUi.k2926977b')">
                   <a-select v-model:value="formState.status">
-                    <a-select-option value="ACTIVE">활성</a-select-option>
-                    <a-select-option value="INACTIVE">비활성</a-select-option>
+                    <a-select-option value="ACTIVE">{{ t('appUi.k6a2123a3') }}</a-select-option>
+                    <a-select-option value="INACTIVE">{{ t('appUi.kfae2014b') }}</a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>
             </a-row>
 
-            <a-form-item label="용도 및 운영 설명">
+            <a-form-item :label="t('appUi.k3e794577')">
               <a-input
                 v-model:value="formState.description"
-                placeholder="프롬프트의 호출 시점, 비즈니스 역할 및 주의사항을 입력하세요."
+                :placeholder="t('appUi.k14764bee')"
               />
             </a-form-item>
 
-            <a-form-item label="시스템 페르소나 및 지침" required>
+            <a-form-item :label="t('appUi.k58301d13')" required>
               <a-textarea
                 v-model:value="formState.systemPrompt"
                 :rows="5"
                 class="font-mono text-xs"
-                placeholder="AI 에이전트의 역할, 제약 조건, 응답 어조를 정의하세요."
+                :placeholder="t('appUi.ke9f35cec')"
               />
             </a-form-item>
 
-            <a-form-item label="사용자 입력 템플릿" required>
+            <a-form-item :label="t('appUi.kea6cdc93')" required>
               <a-textarea
                 v-model:value="formState.userPromptTemplate"
                 :rows="6"
                 class="font-mono text-xs"
-                placeholder="{{variableName}} 형식의 바인딩 변수를 포함하여 사용자 프롬프트 본문을 작성하세요."
+                :placeholder="t('appUi.k8543df8b')"
               />
             </a-form-item>
 
@@ -102,11 +102,11 @@
               <a-col :xs="24" :md="14">
                 <div class="flex justify-between items-center mb-2">
                   <span class="font-semibold text-xs text-gray-700">
-                    바인딩 변수 스키마 ({{ formState.variables.length }})
+                    {{ t('appUi.k282d17c8') }}{{ formState.variables.length }})
                   </span>
                   <a-space>
                     <a-button size="small" @click="handleExtractVariables">
-                      본문에서 변수 자동 추출
+                      {{ t('appUi.k5f019c74') }}
                     </a-button>
                     <a-button
                       size="small"
@@ -120,7 +120,7 @@
                         })
                       "
                     >
-                      + 변수 추가
+                      {{ t('appUi.k7fff032a') }}
                     </a-button>
                   </a-space>
                 </div>
@@ -132,43 +132,43 @@
                   >
                     <a-input
                       v-model:value="v.name"
-                      placeholder="변수키"
+                      :placeholder="t('appUi.k9fbc906f')"
                       class="font-mono text-xs"
                       style="width: 26%"
                     />
                     <a-input
                       v-model:value="v.label"
-                      placeholder="표시명"
+                      :placeholder="t('appUi.kd382d62a')"
                       style="width: 24%"
                     />
                     <a-input
                       v-model:value="v.sampleValue"
-                      placeholder="샘플값"
+                      :placeholder="t('appUi.k0b99e62e')"
                       style="flex: 1"
                     />
-                    <a-checkbox v-model:checked="v.required">필수</a-checkbox>
+                    <a-checkbox v-model:checked="v.required">{{ t('appUi.k5b4a45c2') }}</a-checkbox>
                     <a-button danger type="text" size="small" @click="formState.variables.splice(idx, 1)">
-                      삭제
+                      {{ t('appUi.kfc81e222') }}
                     </a-button>
                   </div>
                 </div>
               </a-col>
               <a-col :xs="24" :md="10">
-                <a-form-item label="출력 JSON 스키마 규격">
+                <a-form-item :label="t('appUi.k05e3e2b3')">
                   <a-textarea
                     v-model:value="formState.outputSchema"
                     :rows="5"
                     class="font-mono text-xs"
-                    placeholder='JSON 응답 강제 시 예시 규격 입력 (예: {"key": "value"})'
+                    :placeholder="t('appUi.k5a1d8d54')"
                   />
                 </a-form-item>
               </a-col>
             </a-row>
 
-            <a-form-item v-if="isUpdate" label="버전 변경 사유" class="mt-2">
+            <a-form-item v-if="isUpdate" :label="t('appUi.kb4f8f196')" class="mt-2">
               <a-input
                 v-model:value="formState.changeReason"
-                placeholder="이번 프롬프트 수정 사유를 기록하면 변경 이력에 함께 저장됩니다."
+                :placeholder="t('appUi.k4f2f2264')"
               />
             </a-form-item>
           </div>
@@ -190,6 +190,8 @@
     SysPromptVariableItem,
   } from '../prompt.api';
   import { CATEGORY_OPTIONS, parseVariablesSchema } from '../prompt.data';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const emit = defineEmits(['success', 'register']);
   const { createMessage } = useMessage();
@@ -256,7 +258,7 @@
       }
     }
     if (addedCount > 0) {
-      createMessage.success(`${addedCount}개의 바인딩 변수가 추출되었습니다.`);
+      createMessage.success(t('appUi.k04a09241', { p0: addedCount }));
     } else {
       createMessage.info('새로 추가할 변수가 없습니다.');
     }
@@ -270,7 +272,7 @@
       !formState.userPromptTemplate.trim()
     ) {
       createMessage.warning(
-        '프롬프트 코드, 명칭, 시스템 페르소나 지침, 사용자 입력 템플릿은 필수 입력 항목입니다.',
+        t('appUi.kee2f9efd'),
       );
       return;
     }
@@ -298,7 +300,7 @@
       };
 
       await saveOrUpdatePrompt(payload);
-      createMessage.success('프롬프트 템플릿이 저장되고 런타임 캐시에 반영되었습니다.');
+      createMessage.success(t('appUi.k9bfc6b5b'));
       closeModal();
       emit('success');
     } finally {

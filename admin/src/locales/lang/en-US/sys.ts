@@ -29,8 +29,10 @@ export default {
   errorLog: {
     tableTitle: 'Error log list',
     tableColumnType: 'Type',
+    tableColumnUrl: 'URL',
     tableColumnDate: 'Time',
     tableColumnFile: 'File',
+    tableColumnName: 'Name',
     tableColumnMsg: 'Error message',
     tableColumnStackMsg: 'Stack info',
 
@@ -96,6 +98,7 @@ export default {
     userName: 'Username',
     password: 'Password',
     inputCode: 'Verification code',
+    inputCodePlaceholder: 'Please enter verification code',
     confirmPassword: 'Confirm Password',
     email: 'Email',
     smsCode: 'SMS code',

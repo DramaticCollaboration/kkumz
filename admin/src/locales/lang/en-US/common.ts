@@ -10,11 +10,12 @@ export default {
   queryText: 'Search',
 
   inputText: 'Please enter',
-  chooseText: 'Please choose',
+  chooseText: 'Please select',
 
   redo: 'Refresh',
   back: 'Back',
 
   light: 'Light',
   dark: 'Dark',
+  i18nName: 'Multilingual Name',
 };

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { computed } from 'vue';
 import { router } from '/@/router';
 import { createLocalStorage } from '/@/utils/cache';
@@ -46,7 +47,7 @@ export function useColumnsCache({ cacheColumnsKey, refs }: any) {
     const hideColumnKey = getHideColumnKey(fullColumn, visibleColumn);
     if (hideColumnKey.length) {
       $ls.set(cacheKey.value, hideColumnKey);
-      $message.success('성공적으로 저장되었습니다');
+      $message.success($t('appUi.ke428910a'));
     }
   }
   const resetSetting = ($grid) => {
@@ -63,7 +64,7 @@ export function useColumnsCache({ cacheColumnsKey, refs }: any) {
       }
     }
     $ls.remove(cacheKey.value);
-    $message.success('재설정 성공');
+    $message.success($t('appUi.kaea3840b'));
   };
   const getHideColumn = (fullColumn, columnCache) => {
     const result: any = [];

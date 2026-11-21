@@ -2,26 +2,26 @@
   <BasicTable :ellipsis="true" @register="registerTable" :searchInfo="searchInfo" :columns="logColumns" :expand-column-width="16">
     <template #tableTitle>
       <a-tabs defaultActiveKey="4" @change="tabChange" size="small">
-        <a-tab-pane tab="예외 로그" key="4"></a-tab-pane>
-        <a-tab-pane tab="로그인 로그" key="1"></a-tab-pane>
-        <a-tab-pane tab="작업 로그" key="2"></a-tab-pane>
+        <a-tab-pane :tab="t('appUi.kad013e63')" key="4"></a-tab-pane>
+        <a-tab-pane :tab="t('appUi.k6070dc26')" key="1"></a-tab-pane>
+        <a-tab-pane :tab="t('appUi.kd5cd9ad7')" key="2"></a-tab-pane>
       </a-tabs>
     </template>
     <template #expandedRowRender="{ record }">
       <div v-if="searchInfo.logType == 2">
         <div style="margin-bottom: 5px">
           <a-badge status="success" style="vertical-align: middle" />
-          <span style="vertical-align: middle">요청 방법:{{ record.method }}</span></div
+          <span style="vertical-align: middle">{{ t('appUi.kcd934183') }}{{ record.method }}</span></div
         >
         <div>
           <a-badge status="processing" style="vertical-align: middle" />
-          <span style="vertical-align: middle">요청 매개변수:{{ record.requestParam }}</span></div
+          <span style="vertical-align: middle">{{ t('appUi.k4bbf4bd8') }}{{ record.requestParam }}</span></div
         >
       </div>
       <div v-if="searchInfo.logType == 4">
         <div style="margin-bottom: 5px">
           <a-badge status="success" style="vertical-align: middle" />
-          <span class="error-box" style="vertical-align: middle">예외 스택:{{ record.requestParam }}</span>
+          <span class="error-box" style="vertical-align: middle">{{ t('appUi.k3094a735') }}{{ record.requestParam }}</span>
         </div>
       </div>
     </template>
@@ -40,6 +40,8 @@
   } from './log.data';
   import { useMessage } from '/@/hooks/web/useMessage';
   import { useListPage } from '/@/hooks/system/useListPage';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   const { createMessage } = useMessage();
   const checkedKeys = ref<Array<string | number>>([]);
 
@@ -50,7 +52,7 @@
   const { prefixCls, tableContext } = useListPage({
     designScope: 'user-list',
     tableProps: {
-      title: '로그 목록',
+      title: t('appUi.k4f4dc4b9'),
       api: getLogList,
       expandRowByClick: true,
       showActionColumn: false,

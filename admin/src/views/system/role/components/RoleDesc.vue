@@ -2,7 +2,7 @@
   <BasicDrawer
     v-bind="$attrs"
     @register="registerDrawer"
-    title="역할 세부정보"
+    :title="t('appUi.k8a38b786')"
     width="500px"
     destroyOnClose
   >
@@ -17,6 +17,8 @@
   import { BasicDrawer, useDrawerInner } from '/src/components/Drawer';
   import { formDescSchema } from '../role.data';
   import { Description } from '/@/components/Description/index';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   defineEmits(['register']);
   const attrs = useAttrs();

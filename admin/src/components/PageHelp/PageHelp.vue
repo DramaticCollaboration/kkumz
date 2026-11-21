@@ -1,12 +1,12 @@
 <template>
   <div>
-    <a-tooltip title="화면 도움말 및 운영 가이드" placement="bottom">
+    <a-tooltip :title="t('layout.header.tooltipHelp')" placement="bottom">
       <div
         class="header-help-btn cursor-pointer px-2 flex items-center h-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         @click="handleOpenHelp"
       >
         <QuestionCircleOutlined class="text-lg" />
-        <span v-if="showText" class="ml-1 text-sm font-medium">도움말</span>
+        <span v-if="showText" class="ml-1 text-sm font-medium">{{ t('layout.header.help') }}</span>
       </div>
     </a-tooltip>
 
@@ -18,6 +18,7 @@
   import { useRouter } from 'vue-router';
   import { QuestionCircleOutlined } from '@ant-design/icons-vue';
   import { useModal } from '/@/components/Modal';
+  import { useI18n } from '/@/hooks/web/useI18n';
   import HelpGuideModal from './HelpGuideModal.vue';
 
   defineProps({
@@ -27,6 +28,7 @@
     },
   });
 
+  const { t } = useI18n();
   const router = useRouter();
   const [registerModal, { openModal }] = useModal();
 

@@ -1,19 +1,20 @@
+import { $t } from '/@/locales';
 import { BasicColumn, FormSchema } from '/@/components/Table';
 
 export const columns: BasicColumn[] = [
   {
-    title: '로그 내용',
+    title: $t('appUi.ke59c9016'),
     dataIndex: 'logContent',
     width: 100,
     align: 'left',
   },
   {
-    title: '작업자 ID',
+    title: $t('appUi.k600c1043'),
     dataIndex: 'userid',
     width: 80,
   },
   {
-    title: '작업자',
+    title: $t('appUi.k52164040'),
     dataIndex: 'username',
     width: 80,
   },
@@ -23,18 +24,18 @@ export const columns: BasicColumn[] = [
     width: 80,
   },
   {
-    title: '소요 시간(밀리초)',
+    title: $t('appUi.k6bb035cf'),
     dataIndex: 'costTime',
     width: 80,
   },
   {
-    title: '등록일',
+    title: $t('appUi.k6f80446e'),
     dataIndex: 'createTime',
     sorter: true,
     width: 80,
   },
   {
-    title: '클라이언트 유형',
+    title: $t('appUi.k26771db3'),
     dataIndex: 'clientType_dictText',
     width: 60,
   },
@@ -46,7 +47,7 @@ export const columns: BasicColumn[] = [
 export const operationLogColumn: BasicColumn[] = [
   ...columns,
   {
-    title: '작업 유형',
+    title: $t('appUi.k3abc74fc'),
     dataIndex: 'operateType_dictText',
     width: 40,
   },
@@ -54,23 +55,23 @@ export const operationLogColumn: BasicColumn[] = [
 
 export const exceptionColumns: BasicColumn[] = [
   {
-    title: '예외 제목',
+    title: $t('appUi.ke8ad2fbb'),
     dataIndex: 'logContent',
     width: 100,
     align: 'left',
   },
   {
-    title: '요청 주소',
+    title: $t('appUi.k05dd5ce6'),
     dataIndex: 'requestUrl',
     width: 100,
   },
   {
-    title: '요청 매개변수',
+    title: $t('appUi.k8f5bae3c'),
     dataIndex: 'method',
     width: 60,
   },
   {
-    title: '작업자',
+    title: $t('appUi.k52164040'),
     dataIndex: 'username',
     width: 60,
     customRender: ({ record }) => {
@@ -79,7 +80,7 @@ export const exceptionColumns: BasicColumn[] = [
       if(!pname && !pid){
         return "";
       }
-      return pname + " (계정: "+ pid + " )";
+      return pname + $t('appUi.kdadaafa0')+ pid + " )";
     },
   },
   {
@@ -88,13 +89,13 @@ export const exceptionColumns: BasicColumn[] = [
     width: 60,
   },
   {
-    title: '등록일',
+    title: $t('appUi.k6f80446e'),
     dataIndex: 'createTime',
     sorter: true,
     width: 60,
   },
   {
-    title: '클라이언트 유형',
+    title: $t('appUi.k26771db3'),
     dataIndex: 'clientType_dictText',
     width: 60,
   },
@@ -103,14 +104,14 @@ export const exceptionColumns: BasicColumn[] = [
 export const searchFormSchema: FormSchema[] = [
   {
     field: 'keyWord',
-    label: '검색 로그',
+    label: $t('appUi.k7e9c2b7b'),
     component: 'Input',
     colProps: { span: 8 },
   },
   {
     field: 'fieldTime',
     component: 'RangePicker',
-    label: '등록일',
+    label: $t('appUi.k6f80446e'),
     componentProps: {
       valueType: 'Date',
     },
@@ -124,7 +125,7 @@ export const operationSearchFormSchema: FormSchema[] = [
   ...searchFormSchema,
   {
     field: 'operateType',
-    label: '작업 유형',
+    label: $t('appUi.k3abc74fc'),
     component: 'JDictSelectTag',
     colProps: { span: 4 },
     componentProps: {

@@ -7,7 +7,7 @@
         </template>
         <template v-else-if="column.key === 'siteType'">
           <Tag :color="record.siteType === 'COMMERCE' ? 'blue' : record.siteType === 'HYBRID' ? 'default' : 'green'">
-            {{ record.siteType === 'COMMERCE' ? '쇼핑몰 스토어' : record.siteType === 'HYBRID' ? '매거진+스토어 복합' : '브랜드·커뮤니티 웹' }}
+            {{ record.siteType === 'COMMERCE' ? t('appUi.kfe990b2f') : record.siteType === 'HYBRID' ? t('appUi.k55479f2f') : t('appUi.k59d1dd90') }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'status'">
@@ -19,16 +19,16 @@
           <TableAction
             :actions="[
               {
-                label: '기획서 보기',
+                label: t('appUi.k1a7a1ad2'),
                 icon: 'ant-design:eye-outlined',
                 onClick: handleDetail.bind(null, record),
               },
               {
-                label: '삭제',
+                label: t('appUi.kfc81e222'),
                 icon: 'ant-design:delete-outlined',
                 color: 'error',
                 popConfirm: {
-                  title: '해당 아이디어 프로젝트를 삭제하시겠습니까?',
+                  title: t('appUi.kc2172bf9'),
                   confirm: handleDelete.bind(null, record),
                 },
               },
@@ -48,12 +48,14 @@
   import { useMessage } from '/@/hooks/web/useMessage';
   import { getAdminIdeaList, deleteAdminIdea } from '/@/api/kkumz';
   import IdeaDetailModal from './components/IdeaDetailModal.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createMessage } = useMessage();
   const [registerDetailModal, { openModal: openDetailModal }] = useModal();
 
   const [registerTable, { reload }] = useTable({
-    title: '아이디어·기획서 목록',
+    title: t('appUi.k9140c8ef'),
     api: getAdminIdeaList,
     rowKey: 'id',
     useSearchForm: true,
@@ -64,36 +66,36 @@
       schemas: [
         {
           field: 'keyword',
-          label: '검색어',
+          label: t('appUi.kd64280cb'),
           component: 'Input',
-          componentProps: { placeholder: '브랜드명, 제목, 프롬프트 검색' },
+          componentProps: { placeholder: t('appUi.kf69498b7') },
           colProps: { span: 8 },
         },
         {
           field: 'siteType',
-          label: '사이트 유형',
+          label: t('appUi.k73456d62'),
           component: 'JDictSelectTag',
           componentProps: {
             dictCode: 'kkumz_site_type',
-            placeholder: '전체',
+            placeholder: t('appUi.k934dd25e'),
           },
           colProps: { span: 8 },
         },
       ],
     },
     columns: [
-      { title: '로고', dataIndex: 'logoSvg', key: 'logoSvg', width: 120 },
-      { title: '브랜드명', dataIndex: 'selectedBrandName', width: 160 },
-      { title: '슬러그', dataIndex: 'siteSlug', width: 140 },
-      { title: '아이디어 제목', dataIndex: 'title', width: 260 },
-      { title: '사이트 유형', dataIndex: 'siteType', key: 'siteType', width: 150 },
-      { title: '작성자', dataIndex: 'authorDisplayName', width: 120 },
-      { title: '상태/버전', dataIndex: 'status', key: 'status', width: 130 },
-      { title: '생성일시', dataIndex: 'createdAt', width: 160 },
+      { title: t('appUi.kd2ba3ac7'), dataIndex: 'logoSvg', key: 'logoSvg', width: 120 },
+      { title: t('appUi.ke4171b02'), dataIndex: 'selectedBrandName', width: 160 },
+      { title: t('appUi.k40c5662e'), dataIndex: 'siteSlug', width: 140 },
+      { title: t('appUi.ke4057e06'), dataIndex: 'title', width: 260 },
+      { title: t('appUi.k73456d62'), dataIndex: 'siteType', key: 'siteType', width: 150 },
+      { title: t('appUi.k0be45e6f'), dataIndex: 'authorDisplayName', width: 120 },
+      { title: t('appUi.kf34625a7'), dataIndex: 'status', key: 'status', width: 130 },
+      { title: t('appUi.k92436d1b'), dataIndex: 'createdAt', width: 160 },
     ],
     actionColumn: {
       width: 170,
-      title: '관리',
+      title: t('appUi.kc29fba5a'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
     },
@@ -105,7 +107,7 @@
 
   async function handleDelete(record: Recordable) {
     await deleteAdminIdea(record.id);
-    createMessage.success('아이디어 프로젝트가 삭제되었습니다.');
+    createMessage.success(t('appUi.k62234d68'));
     reload();
   }
 </script>

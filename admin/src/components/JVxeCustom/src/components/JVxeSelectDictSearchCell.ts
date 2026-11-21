@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { computed, ref, watch, defineComponent, h } from 'vue';
 import { cloneDeep, debounce } from 'lodash-es';
 import { defHttp } from '/@/utils/http/axios';
@@ -37,7 +38,7 @@ export const DictSearchInputCell = defineComponent({
     const hasRequest = ref(false);
     // 프롬프트 메시지
     const tipsContent = computed(() => {
-      return originColumn.value.tipsContent || '검색 내용을 입력해주세요';
+      return originColumn.value.tipsContent || $t('appUi.k0a6af41c');
     });
     // 필터 기능
     const filterOption = computed(() => {
@@ -72,7 +73,7 @@ export const DictSearchInputCell = defineComponent({
               LabelMap.set(item.value, [item]);
             });
           } else {
-            createMessage.warning(message || '쿼리 실패');
+            createMessage.warning(message || $t('appUi.ka9dedd8b'));
           }
         })
         .finally(() => {
@@ -137,7 +138,7 @@ export const DictSearchInputCell = defineComponent({
             if (loading.value) {
               return h(rc('a-spin'), { size: 'small' });
             } else if (hasRequest.value) {
-              return h('div', '데이터가 없습니다');
+              return h('div', $t('appUi.kec7ece11'));
             } else {
               return h('div', [tipsContent.value]);
             }

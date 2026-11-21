@@ -16,6 +16,7 @@
   </a-tree-select>
 </template>
 <script lang="ts">
+  import { $t } from '/@/locales';
   import { defineComponent, ref, unref, watch, nextTick } from 'vue';
   import { useRuleFormItem } from '/@/hooks/component/useFormItem';
   import { propTypes } from '/@/utils/propTypes';
@@ -32,7 +33,7 @@
       value: propTypes.oneOfType([propTypes.string, propTypes.array]),
       placeholder: {
         type: String,
-        default: '선택하세요',
+        default: $t('appUi.kc2255771'),
         required: false,
       },
       disabled: {

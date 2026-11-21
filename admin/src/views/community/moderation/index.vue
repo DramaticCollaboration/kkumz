@@ -7,14 +7,14 @@
         </template>
         <template v-else-if="column.key === 'status'">
           <Tag :color="record.status === 'PENDING' ? 'warning' : record.status === 'RESOLVED' ? 'success' : 'default'">
-            {{ record.status === 'PENDING' ? '심사 대기' : record.status === 'RESOLVED' ? '조치 완료' : '반려' }}
+            {{ record.status === 'PENDING' ? t('appUi.k5270f81b') : record.status === 'RESOLVED' ? t('appUi.k18dd1c90') : t('appUi.kd747407a') }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'action'">
           <TableAction
             :actions="[
               {
-                label: '심사/조치',
+                label: t('appUi.k330fe5b5'),
                 icon: 'ant-design:audit-outlined',
                 onClick: handleResolve.bind(null, record),
               },
@@ -33,11 +33,13 @@
   import { useModal } from '/@/components/Modal';
   import { getAdminModerationList } from '/@/api/kkumz';
   import ModerationResolveModal from './components/ModerationResolveModal.vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const [registerModal, { openModal }] = useModal();
 
   const [registerTable, { reload }] = useTable({
-    title: '신고·제재 관리',
+    title: t('appUi.k6e0bbb84'),
     api: getAdminModerationList,
     rowKey: 'id',
     useSearchForm: true,
@@ -48,30 +50,30 @@
       schemas: [
         {
           field: 'status',
-          label: '처리 상태',
+          label: t('appUi.kf845e3fb'),
           component: 'JDictSelectTag',
           componentProps: {
             dictCode: 'kkumz_moderation_status',
-            placeholder: '전체',
+            placeholder: t('appUi.k934dd25e'),
           },
           colProps: { span: 8 },
         },
       ],
     },
     columns: [
-      { title: '신고 ID', dataIndex: 'id', width: 120 },
-      { title: '대상 브랜드', dataIndex: 'brandName', width: 160 },
-      { title: '슬러그', dataIndex: 'siteSlug', width: 130 },
-      { title: '신고 유형', dataIndex: 'reasonCategory', key: 'reasonCategory', width: 130 },
-      { title: '상세 신고 사유', dataIndex: 'reasonDetail', width: 260 },
-      { title: '신고자', dataIndex: 'reporterUsername', width: 120 },
-      { title: '상태', dataIndex: 'status', key: 'status', width: 140 },
-      { title: '심사 의견', dataIndex: 'resolutionNote', width: 200 },
-      { title: '접수일시', dataIndex: 'createdAt', width: 150 },
+      { title: t('appUi.kb8bb19d8'), dataIndex: 'id', width: 120 },
+      { title: t('appUi.k55e1d4c0'), dataIndex: 'brandName', width: 160 },
+      { title: t('appUi.k40c5662e'), dataIndex: 'siteSlug', width: 130 },
+      { title: t('appUi.k95baa4f6'), dataIndex: 'reasonCategory', key: 'reasonCategory', width: 130 },
+      { title: t('appUi.kbcd6a5b7'), dataIndex: 'reasonDetail', width: 260 },
+      { title: t('appUi.k4f5f63a0'), dataIndex: 'reporterUsername', width: 120 },
+      { title: t('appUi.k2926977b'), dataIndex: 'status', key: 'status', width: 140 },
+      { title: t('appUi.k9240fc60'), dataIndex: 'resolutionNote', width: 200 },
+      { title: t('appUi.kefe20c17'), dataIndex: 'createdAt', width: 150 },
     ],
     actionColumn: {
       width: 130,
-      title: '심사',
+      title: t('appUi.k7e8360b9'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
     },

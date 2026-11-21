@@ -2,7 +2,7 @@
   <div class="redirect-container" role="status" aria-live="polite">
     <div class="redirect-card">
       <div class="redirect-spinner" aria-hidden="true"></div>
-      <p class="redirect-title">화면을 이동하고 있습니다</p>
+      <p class="redirect-title">{{ t('appUi.ka1a57f97') }}</p>
       <p class="redirect-desc">{{ targetPathText }}</p>
     </div>
   </div>
@@ -11,6 +11,8 @@
   import { computed, unref } from 'vue';
   import { useRouter } from 'vue-router';
   import { useMultipleTabStore } from '/@/store/modules/multipleTab';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { currentRoute, replace } = useRouter();
   const { params, query } = unref(currentRoute);
@@ -22,9 +24,9 @@
 
   const targetPathText = computed(() => {
     if (redirectPageParam?.redirect_type === 'name' && redirectPageParam.name) {
-      return `대상 라우트: ${redirectPageParam.name}`;
+      return t('appUi.k4653b794', { p0: redirectPageParam.name });
     }
-    return normalizedPath && normalizedPath !== '/' ? `대상 경로: ${normalizedPath}` : '요청하신 화면으로 안전하게 연결 중입니다.';
+    return normalizedPath && normalizedPath !== '/' ? t('appUi.k8dabe023', { p0: normalizedPath }) : t('appUi.k73c87a9f');
   });
 
   if (redirectPageParam) {

@@ -1,4 +1,4 @@
 export default {
-  login: 'Login',
+  login: 'Sign In',
   errorLogList: 'Error Log',
 };

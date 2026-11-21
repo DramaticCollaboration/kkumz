@@ -6,7 +6,7 @@
   <div class="anticon flex items-center cursor-pointer select-none py-1.5 px-2.5" :class="getAppLogoClass" @click="goHome">
     <img
       :src="kkumzLogo"
-      alt="꿈즈 Kkumz"
+      :alt="t('appUi.k7681c3dc')"
       width="36"
       height="36"
       class="w-9 h-9 rounded-lg shadow-sm mr-2.5 shrink-0 transition-transform hover:scale-105"
@@ -17,7 +17,7 @@
         class="font-extrabold tracking-tight shrink-0"
         :class="theme === 'light' ? 'text-slate-900' : 'text-white'"
       >
-        꿈즈 <span class="text-[#818CF8]">Kkumz</span>
+        {{ t('appUi.k9d77b845') }} <span class="text-[#818CF8]">Kkumz</span>
       </span>
       <span
         class="ml-2 px-1.5 py-0.5 text-[10px] leading-none font-semibold rounded uppercase tracking-wider whitespace-nowrap shrink-0 hidden sm:inline-block"
@@ -42,6 +42,8 @@
   import { useDesign } from '/@/hooks/web/useDesign';
   import { PageEnum } from '/@/enums/pageEnum';
   import { useUserStore } from '/@/store/modules/user';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const props = defineProps({
     theme: { type: String, validator: (v: string) => ['light', 'dark'].includes(v) },

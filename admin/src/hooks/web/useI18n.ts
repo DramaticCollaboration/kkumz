@@ -21,35 +21,66 @@ function getKey(namespace: string | undefined, key: string) {
   return `${namespace}.${key}`;
 }
 
+/**
+ * 문자열이 유효한 등록 i18n 키인 경우 번역 값을 반환하고, 일반 텍스트인 경우 원문을 그대로 반환합니다.
+ * BasicTable 컬럼 제목, BasicForm 라벨/플레이스홀더, Description 라벨 자동 반응형 번역에 사용됩니다.
+ */
+export function translateIfKey(value: unknown): string {
+  if (typeof value !== 'string' || !value) {
+    return '';
+  }
+  if (!i18n || !value.includes('.')) {
+    return value;
+  }
+  try {
+    if (i18n.global.te(value)) {
+      return (i18n.global.t as any)(value);
+    }
+  } catch {
+    // 일반 문자열 폴백
+  }
+  return value;
+}
+
 export function useI18n(namespace?: string): {
   t: I18nGlobalTranslation;
+  te: (key: string) => boolean;
+  translateIfKey: (value: unknown) => string;
 } {
   const normalFn = {
-    t: (key: string) => {
-      return getKey(namespace, key);
-    },
+    t: (key: string) => getKey(namespace, key),
+    te: (_key: string) => false,
+    translateIfKey,
   };
 
   if (!i18n) {
     return normalFn;
   }
 
-  const { t, ...methods } = i18n.global;
+  const { t, te, ...methods } = i18n.global;
 
   const tFn: I18nGlobalTranslation = (key: string, ...arg: any[]) => {
     if (!key) return '';
     if (!key.includes('.') && !namespace) return key;
-    return t(getKey(namespace, key), ...(arg as I18nTranslationRestParameters));
+    const fullKey = getKey(namespace, key);
+    if (!te(fullKey)) {
+      return key;
+    }
+    return t(fullKey, ...(arg as I18nTranslationRestParameters));
   };
+
+  const teFn = (key: string) => {
+    if (!key) return false;
+    return te(getKey(namespace, key));
+  };
+
   return {
     ...methods,
     t: tFn,
+    te: teFn,
+    translateIfKey,
   };
 }
 
-// Why write this function？
-// Mainly to configure the vscode i18nn ally plugin. This function is only used for routing and menus. Please use useI18n for other places
-
-// 이 함수를 작성하는 이유는 무엇입니까?
-// 주로 vscode i18nn 동맹 플러그인과 협력하는 데 사용됩니다.이 기능은 라우팅 및 메뉴에만 사용할 수 있습니다.다른 곳에서 useI18n을 사용해 보세요.
+// 라우팅/메뉴 정적 분석 호환용 식별자
 export const t = (key: string) => key;

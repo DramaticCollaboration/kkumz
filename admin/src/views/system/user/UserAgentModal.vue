@@ -1,5 +1,5 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" :width="800" title="사용자 에이전트" @ok="handleSubmit" destroyOnClose>
+  <BasicModal v-bind="$attrs" @register="registerModal" :width="800" :title="t('appUi.k55a58027')" @ok="handleSubmit" destroyOnClose>
     <BasicForm @register="registerForm" />
   </BasicModal>
 </template>
@@ -9,6 +9,8 @@
   import { BasicForm, useForm } from '/@/components/Form/index';
   import { formAgentSchema } from './user.data';
   import { getUserAgent, saveOrUpdateAgent } from './user.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
   //Form 구성

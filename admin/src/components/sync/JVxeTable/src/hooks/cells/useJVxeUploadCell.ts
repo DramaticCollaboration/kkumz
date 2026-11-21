@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { ref, computed, watch } from 'vue';
 
 import {getToken} from '/@/utils/auth';
@@ -73,7 +74,7 @@ export function useJVxeUploadCell(props: JVxeComponent.Props, options?) {
           handleChangeCommon(value);
         } else {
           value['status'] = 'error';
-          value['message'] = file.response.message || '알 수 없는 오류';
+          value['message'] = file.response.message || $t('appUi.k5e9f6b80');
         }
       } else {
         // 액션 업로드 경로가 sync-boot가 아닌 배경으로 설정된 경우 성공 속성이 반환되지 않을 수 있다는 점을 고려하면 기본값은 성공입니다.
@@ -82,7 +83,7 @@ export function useJVxeUploadCell(props: JVxeComponent.Props, options?) {
         handleChangeCommon(value);
       }
     } else if (file.status === 'error') {
-      value['message'] = file.response.message || '알 수 없는 오류';
+      value['message'] = file.response.message || $t('appUi.k5e9f6b80');
     }
     innerFile.value = value;
   }

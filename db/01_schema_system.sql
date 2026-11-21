@@ -30,8 +30,8 @@ CREATE TABLE sys_user (
     create_by VARCHAR(64) DEFAULT 'admin',
     create_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_by VARCHAR(64) DEFAULT 'admin',
-    update_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+    update_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    preferred_locale varchar(10) NOT NULL DEFAULT 'ko-KR');
 
 CREATE TABLE sys_role (
     id VARCHAR(64) PRIMARY KEY,
@@ -71,8 +71,9 @@ CREATE TABLE sys_permission (
     del_flag INTEGER NOT NULL DEFAULT 0,
     rule_flag INTEGER NOT NULL DEFAULT 0,
     status INTEGER NOT NULL DEFAULT 1,
-    internal_or_external BOOLEAN NOT NULL DEFAULT FALSE
-);
+    internal_or_external BOOLEAN NOT NULL DEFAULT FALSE,
+    name_i18n jsonb NOT NULL DEFAULT '{}'::jsonb,
+    description_i18n jsonb NOT NULL DEFAULT '{}'::jsonb);
 
 CREATE TABLE sys_user_role (
     id VARCHAR(64) PRIMARY KEY,
@@ -101,8 +102,8 @@ CREATE TABLE sys_dict (
     create_by VARCHAR(64) DEFAULT 'admin',
     create_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_by VARCHAR(64) DEFAULT 'admin',
-    update_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+    update_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    dict_name_i18n jsonb NOT NULL DEFAULT '{}'::jsonb);
 
 CREATE TABLE sys_dict_item (
     id VARCHAR(64) PRIMARY KEY,
@@ -115,8 +116,8 @@ CREATE TABLE sys_dict_item (
     create_by VARCHAR(64) DEFAULT 'admin',
     create_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_by VARCHAR(64) DEFAULT 'admin',
-    update_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+    update_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    item_text_i18n jsonb NOT NULL DEFAULT '{}'::jsonb);
 
 CREATE TABLE sys_log (
     id VARCHAR(64) PRIMARY KEY,
@@ -231,7 +232,8 @@ COMMENT ON TABLE sys_config IS '시스템 통합 동적 환경설정';
 CREATE TABLE IF NOT EXISTS sys_page_help (
     id                    VARCHAR(64) PRIMARY KEY,
     app_code              VARCHAR(32) NOT NULL,
-    page_key              VARCHAR(128) NOT NULL UNIQUE,
+    help_type             varchar(20) NOT NULL DEFAULT 'SCREEN',
+    page_key              VARCHAR(128) NOT NULL,
     route_name            VARCHAR(64) DEFAULT NULL,
     title                 VARCHAR(100) NOT NULL,
     category              VARCHAR(50) NOT NULL,
@@ -253,7 +255,9 @@ CREATE TABLE IF NOT EXISTS sys_page_help (
     create_by             VARCHAR(32) DEFAULT 'SYSTEM',
     create_time           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_by             VARCHAR(32) DEFAULT NULL,
-    update_time           TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    update_time           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    locale varchar(10) NOT NULL DEFAULT 'ko-KR',
+    CONSTRAINT uk_sys_page_help_app_key_locale UNIQUE (app_code, page_key, locale)
 );
 
 CREATE INDEX IF NOT EXISTS idx_sys_page_help_app_key ON sys_page_help (app_code, page_key);

@@ -3,7 +3,7 @@
     <BasicTable @register="registerTable" :rowSelection="rowSelection">
       <!--슬롯: 테이블 제목-->
       <template #tableTitle>
-        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="onAdd">등록</a-button>
+        <a-button type="primary" preIcon="ant-design:plus-outlined" @click="onAdd">{{ t('appUi.k1ac11e9b') }}</a-button>
         <a-button type="primary" preIcon="ant-design:export-outlined" @click="onExportXls"> Export</a-button>
         <j-upload-button type="primary" preIcon="ant-design:import-outlined" @click="onImportXls">Import</j-upload-button>
         <a-dropdown v-if="showBatchBtn">
@@ -11,12 +11,12 @@
             <a-menu>
               <a-menu-item key="1" @click="onDeleteBatch">
                 <Icon icon="ant-design:delete-outlined"></Icon>
-                <span>삭제</span>
+                <span>{{ t('appUi.kfc81e222') }}</span>
               </a-menu-item>
             </a-menu>
           </template>
           <a-button>
-            <span>일괄 작업</span>
+            <span>{{ t('appUi.k39eb4aed') }}</span>
             <Icon icon="mdi:chevron-down"></Icon>
           </a-button>
         </a-dropdown>
@@ -42,13 +42,15 @@
   import { Api, saveOrUpdate, list, deleteBatch } from './template.api';
   import { columns, searchFormSchema } from './template.data';
   import { useMessage } from '/@/hooks/web/useMessage';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   const { createMessage } = useMessage();
 
   // 목록 페이지 공개 매개변수 및 메소드
   const { prefixCls, onExportXls, onImportXls, tableContext } = useListPage({
     designScope: 'message-template',
     tableProps: {
-      title: '메시지 센터 템플릿 목록 데이터',
+      title: t('appUi.k83448f1d'),
       api: list,
       columns: columns,
       formConfig: {
@@ -57,7 +59,7 @@
     },
     exportConfig: {
       url: Api.exportXls,
-      name: '메시지 센터 템플릿 목록',
+      name: t('appUi.k415c6ab4'),
     },
     importConfig: {
       url: Api.importXls,
@@ -73,7 +75,7 @@
 
   function onAdd() {
     openModal(true, {
-      title: '메시지 템플릿 추가',
+      title: t('appUi.k588093c6'),
       isUpdate: false,
       showFooter: true,
       record: {},
@@ -82,11 +84,11 @@
 
   function onEdit(record) {
     if (record.useStatus === '1') {
-      createMessage.warning('이 템플릿은 적용되었으며 편집이 금지되어 있습니다!');
+      createMessage.warning(t('appUi.kdb418fae'));
       return;
     }
     openModal(true, {
-      title: '메시지 템플릿 수정',
+      title: t('appUi.kb19722ff'),
       isUpdate: true,
       record: record,
       showFooter: true,
@@ -96,7 +98,7 @@
   function onDelete(record) {
     if (record) {
       if(record.useStatus == '1'){
-        createMessage.warning('이 템플릿은 애플리케이션에 의해 삭제가 금지되었습니다!');
+        createMessage.warning(t('appUi.k98c72335'));
         return;
       }
       doDeleteDepart([record.id], false);
@@ -126,7 +128,7 @@
       let arr = toRaw(selectedRows.value);
       let temp = arr.filter(item=>item.useStatus=='1')
       if(temp.length>0){
-        createMessage.warning('선택한 템플릿은 적용되었으며 삭제가 금지됩니다!');
+        createMessage.warning(t('appUi.kd75517a9'));
         return;
       }
       await doDeleteDepart(selectedRowKeys);
@@ -144,7 +146,7 @@
    * 액션바
    */
   function getTableAction(record): ActionItem[] {
-    return [{ label: '확인', onClick: handleDetail.bind(null, record)}, { label: '편집', onClick: onEdit.bind(null, record) }];
+    return [{ label: t('appUi.k468266d6'), onClick: handleDetail.bind(null, record)}, { label: t('appUi.kd482e14b'), onClick: onEdit.bind(null, record) }];
   }
 
   /**
@@ -152,14 +154,14 @@
    */
   function getDropDownAction(record): ActionItem[] {
     return [
-      { label: '애플리케이션', onClick: handleUse.bind(null, record) },
-      { label: '비활성화', onClick: handleNotUse.bind(null, record) },
-      { label: '테스트 보내기', onClick: onSendTest.bind(null, record) },
+      { label: t('appUi.k37bca7fa'), onClick: handleUse.bind(null, record) },
+      { label: t('appUi.k8ff58636'), onClick: handleNotUse.bind(null, record) },
+      { label: t('appUi.kb0465814'), onClick: onSendTest.bind(null, record) },
       {
-        label: '삭제',
+        label: t('appUi.kfc81e222'),
         color: 'error',
         popConfirm: {
-          title: '삭제하시겠습니까?',
+          title: t('appUi.k5da9b401'),
           confirm: onDelete.bind(null, record),
         },
       },
@@ -190,7 +192,7 @@
    */
   function handleDetail(record) {
     openModal(true,{
-      title: "메시지 템플릿 세부정보",
+      title: t('appUi.k18505cd1'),
       isUpdate: true,
       showFooter: false,
       record:record

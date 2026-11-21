@@ -11,6 +11,8 @@
   import JUpload from './JUpload.vue';
   import { UploadTypeEnum } from './upload.data';
   import { propTypes } from '/@/utils/propTypes';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createMessage } = useMessage();
   const emit = defineEmits(['change', 'update:value', 'register']);
@@ -21,7 +23,7 @@
 
   const uploadRef = ref();
   const uploadBinds = reactive({ props: {} as any });
-  const modalTitle = computed(() => (uploadBinds.props?.fileType === UploadTypeEnum.image ? '이미지 업로드' : '파일 업로드'));
+  const modalTitle = computed(() => (uploadBinds.props?.fileType === UploadTypeEnum.image ? t('appUi.kf02cbe21') : t('appUi.k4dd0b345')));
 
   // 등록팝업창
   const [registerModal, { closeModal }] = useModalInner(async (data) => {

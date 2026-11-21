@@ -2,7 +2,7 @@
   <BasicModal
     v-bind="$attrs"
     @register="registerModal"
-    title="커뮤니티 모더레이션 신고 심사 처리"
+    :title="t('appUi.k96bef73f')"
     :width="620"
     @ok="handleSubmit"
   >
@@ -16,6 +16,8 @@
   import { BasicForm, useForm } from '/@/components/Form';
   import { resolveModerationReport } from '/@/api/kkumz';
   import { useUserStore } from '/@/store/modules/user';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const emit = defineEmits(['success', 'register']);
   const userStore = useUserStore();
@@ -27,21 +29,21 @@
     schemas: [
       {
         field: 'brandName',
-        label: '대상 사이트',
+        label: t('appUi.k32e52cff'),
         component: 'Input',
         dynamicDisabled: true,
         colProps: { span: 12 },
       },
       {
         field: 'reasonCategory',
-        label: '신고 사유 유형',
+        label: t('appUi.k02848934'),
         component: 'Input',
         dynamicDisabled: true,
         colProps: { span: 12 },
       },
       {
         field: 'reasonDetail',
-        label: '상세 신고 내용',
+        label: t('appUi.kfe5807da'),
         component: 'InputTextArea',
         dynamicDisabled: true,
         componentProps: { rows: 2 },
@@ -49,7 +51,7 @@
       },
       {
         field: 'status',
-        label: '심사 결정',
+        label: t('appUi.k2bb9a21b'),
         component: 'JDictSelectTag',
         required: true,
         defaultValue: 'RESOLVED',
@@ -61,17 +63,17 @@
       },
       {
         field: 'suspendSite',
-        label: '사이트 즉시 정지',
+        label: t('appUi.k4baa960e'),
         component: 'Switch',
         defaultValue: false,
         colProps: { span: 12 },
       },
       {
         field: 'resolutionNote',
-        label: '심사 의견 기록',
+        label: t('appUi.k0bc9e520'),
         component: 'InputTextArea',
         required: true,
-        componentProps: { rows: 3, placeholder: '모더레이션 조치 사유 및 결과를 기록하세요.' },
+        componentProps: { rows: 3, placeholder: t('appUi.k13bc8746') },
         colProps: { span: 24 },
       },
     ],

@@ -3,7 +3,7 @@
   <BasicTable @register="registerTable" :rowSelection="rowSelection">
     <!--슬롯: 테이블 제목-->
     <template #tableTitle>
-      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="addDepartRole">부서 역할 추가</a-button>
+      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="addDepartRole">{{ t('appUi.kb2e396a6') }}</a-button>
       <template v-if="selectedRowKeys.length > 0">
         <a-divider type="vertical" />
         <a-dropdown>
@@ -11,12 +11,12 @@
             <a-menu>
               <a-menu-item key="1" @click="onDeleteDepartRoleBatch">
                 <icon icon="ant-design:delete-outlined" />
-                <span>삭제</span>
+                <span>{{ t('appUi.kfc81e222') }}</span>
               </a-menu-item>
             </a-menu>
           </template>
           <a-button>
-            <span>일괄 작업 </span>
+            <span>{{ t('appUi.k39eb4aed') }} </span>
             <icon icon="akar-icons:chevron-down" />
           </a-button>
         </a-dropdown>
@@ -45,6 +45,8 @@
   import { deleteBatchDepartRole, departRoleList } from '../depart.user.api';
   import { departRoleColumns, departRoleSearchFormSchema } from '../depart.user.data';
   import { ColEx } from '/@/components/Form/src/types';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const prefixCls = inject('prefixCls');
   const props = defineProps({
@@ -145,7 +147,7 @@
   // 부서 역할을 일괄 삭제
   async function deleteDepartRole(idList, confirm) {
     if (!departId.value) {
-      createMessage.warning('먼저 부서를 선택해주세요');
+      createMessage.warning(t('appUi.ke219ea80'));
     } else {
       setLoading(true);
       let ids = unref(idList).join(',');
@@ -177,7 +179,7 @@
    * 액션바
    */
   function getTableAction(record): ActionItem[] {
-    return [{ label: '편집', onClick: editDepartRole.bind(null, record) }];
+    return [{ label: t('appUi.kd482e14b'), onClick: editDepartRole.bind(null, record) }];
   }
 
   /**
@@ -185,12 +187,12 @@
    */
   function getDropDownAction(record): ActionItem[] {
     return [
-      { label: '권한', onClick: permissionDepartRole.bind(null, record) },
+      { label: t('appUi.k4d02bde7'), onClick: permissionDepartRole.bind(null, record) },
       {
-        label: '삭제',
+        label: t('appUi.kfc81e222'),
         color: 'error',
         popConfirm: {
-          title: '삭제하시겠습니까?',
+          title: t('appUi.k5da9b401'),
           confirm: deleteDepartRole.bind(null, [record.id], false),
         },
       },

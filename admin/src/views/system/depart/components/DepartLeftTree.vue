@@ -1,8 +1,8 @@
 <template>
   <a-card :bordered="false" style="height: 100%">
     <div class="j-table-operator" style="width: 100%">
-      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="onAddDepart">등록</a-button>
-      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="onAddChildDepart()">하위 추가</a-button>
+      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="onAddDepart">{{ t('appUi.k1ac11e9b') }}</a-button>
+      <a-button type="primary" preIcon="ant-design:plus-outlined" @click="onAddChildDepart()">{{ t('appUi.k3e38935f') }}</a-button>
       <BasicUpload :maxSize="20" :maxNumber="1" :emptyHidePreview="true" :api="onImportXls" class="inline-block" />
       <a-button type="primary" preIcon="ant-design:export-outlined" @click="onExportXls">Export</a-button>
       <template v-if="checkedKeys.length > 0">
@@ -11,12 +11,12 @@
             <a-menu>
               <a-menu-item key="1" @click="onDeleteBatch">
                 <icon icon="ant-design:delete-outlined" />
-                <span>삭제</span>
+                <span>{{ t('appUi.kfc81e222') }}</span>
               </a-menu-item>
             </a-menu>
           </template>
           <a-button>
-            <span>일괄 작업 </span>
+            <span>{{ t('appUi.k39eb4aed') }} </span>
             <icon icon="akar-icons:chevron-down" />
           </a-button>
         </a-dropdown>
@@ -25,17 +25,17 @@
     <a-alert type="info" show-icon class="alert" style="margin-bottom: 8px">
       <template #message>
         <template v-if="checkedKeys.length > 0">
-          <span>선택된 {{ checkedKeys.length }} 기록</span>
+          <span>{{ t('appUi.kc658deba') }} {{ checkedKeys.length }} {{ t('appUi.kd84b6f4b') }}</span>
           <a-divider type="vertical" />
-          <a @click="checkedKeys = []">초기화</a>
+          <a @click="checkedKeys = []">{{ t('appUi.kff75b4ff') }}</a>
         </template>
         <template v-else>
-          <span>선택한 데이터가 없습니다.</span>
+          <span>{{ t('appUi.k421436e5') }}</span>
         </template>
       </template>
     </a-alert>
     <a-spin :spinning="loading">
-      <a-input-search placeholder="부서명으로 검색…" style="margin-bottom: 10px" @search="onSearch" />
+      <a-input-search :placeholder="t('appUi.k63f5a573')" style="margin-bottom: 10px" @search="onSearch" />
       <!--조직도-->
       <template v-if="treeData.length > 0">
         <BasicTree
@@ -55,9 +55,9 @@
             <a-dropdown :trigger="['contextmenu']">
               <Popconfirm
                 :open="visibleTreeKey === treeKey"
-                title="삭제하시겠습니까?"
-                ok-text="확인"
-                cancel-text="취소"
+                :title="t('appUi.k5da9b401')"
+                :ok-text="t('appUi.k468266d6')"
+                :cancel-text="t('appUi.k19b2d19b')"
                 placement="rightTop"
                 @confirm="onDelete(dataRef)"
                 @openChange="onVisibleChange"
@@ -67,9 +67,9 @@
 
               <template #overlay>
                 <a-menu @click="">
-                  <a-menu-item key="1" @click="onAddChildDepart(dataRef)">자녀 추가</a-menu-item>
+                  <a-menu-item key="1" @click="onAddChildDepart(dataRef)">{{ t('appUi.keee7acd1') }}</a-menu-item>
                   <a-menu-item key="2" @click="visibleTreeKey = treeKey">
-                    <span style="color: red">삭제</span>
+                    <span style="color: red">{{ t('appUi.kfc81e222') }}</span>
                   </a-menu-item>
                 </a-menu>
               </template>
@@ -77,7 +77,7 @@
           </template>
         </BasicTree>
       </template>
-      <a-empty v-else description="아직 데이터가 없습니다" />
+      <a-empty v-else :description="t('appUi.k09f4e4ae')" />
     </a-spin>
     <DepartFormModal :rootTreeData="treeData" @register="registerModal" @success="loadRootTreeData" />
   </a-card>
@@ -94,6 +94,8 @@
   import { searchByKeywords } from '/@/views/system/departUser/depart.user.api';
   import DepartFormModal from '/@/views/system/depart/components/DepartFormModal.vue';
   import { Popconfirm } from 'ant-design-vue';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const prefixCls = inject('prefixCls');
   const emit = defineEmits(['select', 'rootTreeData']);
@@ -226,7 +228,7 @@
   // 하위 부서 추가
   function onAddChildDepart(data = currentDepart.value) {
     if (data == null) {
-      createMessage.warning('먼저 부서를 선택해주세요');
+      createMessage.warning(t('appUi.ke219ea80'));
       return;
     }
     const record = { parentId: data.id };
@@ -321,7 +323,7 @@
   }
 
   function onExportXls() {
-    handleExportXls('학과정보', Api.exportXlsUrl);
+    handleExportXls(t('appUi.k484b4f9c'), Api.exportXlsUrl);
   }
 
   defineExpose({

@@ -1,25 +1,25 @@
 <template>
   <div :class="{'comment-active': commentActive}" class="comment-main" @click="handleClickBlank">
-    <textarea ref="commentRef" v-model="myComment" @keyup.enter="sendComment" @input="handleCommentChange" @blur="handleBlur" class="comment-content" :rows="3" placeholder="@member로 댓글을 입력해주세요." />
+    <textarea ref="commentRef" v-model="myComment" @keyup.enter="sendComment" @input="handleCommentChange" @blur="handleBlur" class="comment-content" :rows="3" :placeholder="t('appUi.ke0570fb3')" />
     <div class="comment-content comment-html-shower" :class="{'no-content':noConent, 'top-div': showHtml, 'bottom-div': showHtml == false }" v-html="commentHtml" @click="handleClickHtmlShower"></div>
     <div class="comment-buttons" v-if="commentActive">
       <div style="cursor: pointer">
-        <Tooltip title="@사용자 선택">
+        <Tooltip :title="t('appUi.ke1a0868b')">
           <user-add-outlined @click="openSelectUser" />
         </Tooltip>
 
-        <Tooltip title="첨부파일 업로드">
+        <Tooltip :title="t('appUi.k9f896912')">
           <PaperClipOutlined @click="uploadVisible = !uploadVisible" />
         </Tooltip>
 
-        <span title="표현" style="display: inline-block">
+        <span :title="t('appUi.k08209dba')" style="display: inline-block">
           <SmileOutlined ref="emojiButton" @click="handleShowEmoji" />
           <div style="position: relative" v-show="false"> </div>
         </span>
       </div>
       <div v-if="commentActive">
-        <a-button v-if="inner" @click="noComment" style="margin-right: 10px">취소</a-button>
-        <a-button type="primary" @click="sendComment" :loading="buttonLoading" :disabled="disabledButton">보내다</a-button>
+        <a-button v-if="inner" @click="noComment" style="margin-right: 10px">{{ t('appUi.k19b2d19b') }}</a-button>
+        <a-button type="primary" @click="sendComment" :loading="buttonLoading" :disabled="disabledButton">{{ t('appUi.ka4f11213') }}</a-button>
       </div>
     </div>
     <upload-chunk ref="uploadRef" :visible="uploadVisible" @select="selectFirstFile"></upload-chunk>
@@ -45,6 +45,8 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
   import {ref, watch, computed, inject} from 'vue';
   import { propTypes } from '/@/utils/propTypes';
   import { UserAddOutlined, PaperClipOutlined, SmileOutlined } from '@ant-design/icons-vue';
@@ -57,16 +59,16 @@
 
   const optionsName = {
     categories: {
-      recent: '가장 일반적으로 사용되는',
-      smileys: '표현 선택',
-      people: '역할 & 바디',
-      nature: '동물과 자연',
-      foods: '음식 및 음료',
-      activity: '활동',
-      places: '여행 및 장소',
-      objects: '물건',
-      symbols: '상징',
-      flags: '기치',
+      recent: $t('appUi.kcea6ac24'),
+      smileys: $t('appUi.k0436098c'),
+      people: $t('appUi.k366639b9'),
+      nature: $t('appUi.k3f8596c9'),
+      foods: $t('appUi.ke07de324'),
+      activity: $t('appUi.k8274589b'),
+      places: $t('appUi.kac516d34'),
+      objects: $t('appUi.keaad482a'),
+      symbols: $t('appUi.k60fbf51b'),
+      flags: $t('appUi.kf05def62'),
     },
   };
   export default {
@@ -88,6 +90,7 @@
     },
     emits: ['cancel', 'comment'],
     setup(props, { emit }) {
+      const { t } = useI18n();
       const uploadVisible = ref(false);
       const uploadRef = ref();
       //모델등록
@@ -235,7 +238,7 @@
       const commentHtml = computed(() => {
         let temp = myComment.value;
         if (!temp) {
-          return '@member로 댓글을 입력해주세요.';
+          return t('appUi.ke0570fb3');
         }
         return getHtml(temp);
       });
@@ -274,6 +277,7 @@
       }
       
       return {
+        t,
         myComment,
         sendComment,
         noComment,

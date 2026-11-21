@@ -118,7 +118,7 @@
       const getResetBtnOptions = computed((): ButtonOptions => {
         return Object.assign(
           {
-            text: resolveText('common.resetText', '초기화'),
+            text: resolveText('common.resetText', t('appUi.kff75b4ff')),
             preIcon: 'ic:baseline-restart-alt',
           },
           props.resetButtonOptions
@@ -129,7 +129,7 @@
         return Object.assign(
           {},
           {
-            text: resolveText('common.queryText', '검색'),
+            text: resolveText('common.queryText', t('appUi.k4f5a3f69')),
             preIcon: 'ant-design:search-outlined',
           },
           props.submitButtonOptions
@@ -138,9 +138,9 @@
 
       const toggleButtonText = computed(() => {
         if (props.isAdvanced) {
-          return resolveText('component.form.putAway', '접기');
+          return resolveText('component.form.putAway', t('appUi.k0d2c2495'));
         }
-        const baseText = resolveText('component.form.unfold', '펼치기');
+        const baseText = resolveText('component.form.unfold', t('appUi.k5eec8827'));
         const count = Number(props.hiddenFilterCount || 0);
         return count > 0 ? `${baseText} (${count})` : baseText;
       });

@@ -12,6 +12,7 @@
   import BasicHelp from '/@/components/Basic/src/BasicHelp.vue';
   import EditTableHeaderCell from './EditTableHeaderIcon.vue';
   import { useDesign } from '/@/hooks/web/useDesign';
+  import { translateIfKey } from '/@/hooks/web/useI18n';
 
   export default defineComponent({
     name: 'TableHeaderCell',
@@ -32,12 +33,20 @@
       const getTitle = computed(() => {
         const result = props.column?.customTitle || props.column?.title;
         if (typeof result === 'string') {
-          return result;
-        } else {
-          return '';
+          return translateIfKey(result);
         }
+        return '';
       });
-      const getHelpMessage = computed(() => props.column?.helpMessage);
+      const getHelpMessage = computed(() => {
+        const msg = props.column?.helpMessage;
+        if (typeof msg === 'string') {
+          return translateIfKey(msg);
+        }
+        if (Array.isArray(msg)) {
+          return msg.map((item) => (typeof item === 'string' ? translateIfKey(item) : item));
+        }
+        return msg;
+      });
 
       return { prefixCls, getIsEdit, getTitle, getHelpMessage };
     },

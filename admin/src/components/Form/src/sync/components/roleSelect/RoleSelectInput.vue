@@ -6,18 +6,19 @@
           <SelectedUserItem v-if="index < maxCount" :info="item" @unSelect="unSelect" query />
         </template>
       </template>
-      <span v-else style="height: 30px; line-height: 30px; display: inline-block; margin-left: 7px; color: #bfbfbf">선택하세요</span>
+      <span v-else style="height: 30px; line-height: 30px; display: inline-block; margin-left: 7px; color: #bfbfbf">{{ t('appUi.kc2255771') }}</span>
       <div v-if="ellipsisInfo.status" class="user-selected-item">
         <div class="user-select-ellipsis">
           <span style="color: red">+{{ ellipsisInfo.count }}...</span>
         </div>
       </div>
     </div>
-    <RoleSelectModal :appId="currentAppId" :multi="multi" :getContainer="getContainer" title="조직 역할 선택" @register="registerRoleModal" @selected="onSelected" />
+    <RoleSelectModal :appId="currentAppId" :multi="multi" :getContainer="getContainer" :title="t('appUi.k62010c69')" @register="registerRoleModal" @selected="onSelected" />
   </div>
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { useModal } from '/@/components/Modal';
   import { defHttp } from '/@/utils/http/axios';
   import { computed, ref, watch, watchEffect, defineComponent } from 'vue';
@@ -62,6 +63,7 @@
     },
     emits: ['update:value', 'change'],
     setup(props, { emit }) {
+      const { t } = useI18n();
       const formItemContext = Form.useInjectFormItemContext();
       const selectedList = ref<any[]>([]);
       const loading = ref(true);
@@ -196,6 +198,7 @@
       }
 
       return {
+        t,
         selectedList,
         ellipsisInfo,
         maxCount,

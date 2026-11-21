@@ -3,7 +3,7 @@
     <a-row class="j-select-row" type="flex" :gutter="8">
       <a-col class="left" :class="{ full: !showButton }">
         <!-- 로딩 효과 표시 -->
-        <a-input v-if="loading" readOnly placeholder="로드 중…">
+        <a-input v-if="loading" readOnly :placeholder="t('appUi.ke34887fa')">
           <template #prefix>
             <LoadingOutlined />
           </template>
@@ -25,13 +25,15 @@
         ></a-select>
       </a-col>
       <a-col v-if="showButton" class="right">
-        <a-button v-if="buttonIcon" :preIcon="buttonIcon" type="primary" @click="openModal(true)" :disabled="disabled">선택</a-button>
-        <a-button v-else type="primary" @click="openModal(true)" :disabled="disabled">선택</a-button>
+        <a-button v-if="buttonIcon" :preIcon="buttonIcon" type="primary" @click="openModal(true)" :disabled="disabled">{{ t('appUi.k08109e41') }}</a-button>
+        <a-button v-else type="primary" @click="openModal(true)" :disabled="disabled">{{ t('appUi.k08109e41') }}</a-button>
       </a-col>
     </a-row>
   </div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
   import { defineComponent, ref, inject, reactive } from 'vue';
   import { propTypes } from '/@/utils/propTypes';
   import { useAttrs } from '/@/hooks/core/useAttrs';
@@ -46,7 +48,7 @@
       disabled: propTypes.bool.def(false),
       placeholder: {
         type: String,
-        default: '선택하세요',
+        default: $t('appUi.kc2255771'),
       },
       // 다중 선택 지원 여부, 기본값은 true
       multiple: {
@@ -62,6 +64,7 @@
     },
     emits: ['handleOpen', 'change'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       //드롭다운 상자 옵션 수신
       const options = inject('selectOptions') || ref([]);
       //선택한 값 받기
@@ -90,6 +93,7 @@
       }
 
       return {
+        t,
         attrs,
         selectValues,
         options,

@@ -2,7 +2,7 @@
   <a-select :value="innerValue" v-bind="selectProps">
     <template v-if="loading" #notFoundContent>
       <LoadingOutlined />
-      <span>&nbsp;로드 중…</span>
+      <span>{{ t('appUi.kb19177f9') }}</span>
     </template>
     <template v-for="option of selectOptions" :key="option.value">
       <a-select-option :value="option.value" :title="option.text || option.label || option.title" :disabled="option.disabled">
@@ -13,6 +13,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { ref, computed, defineComponent } from 'vue';
   import { LoadingOutlined } from '@ant-design/icons-vue';
   import { filterDictText } from '/@/utils/dict/JDictSelectUtil';
@@ -26,6 +27,7 @@
     components: { LoadingOutlined },
     props: useJVxeCompProps(),
     setup(props: JVxeComponent.Props) {
+      const { t } = useI18n();
       const { innerValue, cellProps, row, originColumn, scrolling, handleChangeCommon, handleBlurCommon } = useJVxeComponent(props);
       const loading = ref(false);
       // 비동기식으로 로드된 옵션（다단계 연결에 사용됩니다.）
@@ -162,6 +164,7 @@
       }
 
       return {
+        t,
         loading,
         innerValue,
         selectProps,

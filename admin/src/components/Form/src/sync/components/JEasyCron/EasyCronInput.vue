@@ -4,7 +4,7 @@
       <template #addonAfter>
         <a class="open-btn" :disabled="disabled ? 'disabled' : null" @click="showConfigModal">
           <Icon icon="ant-design:setting-outlined" />
-          <span>선택</span>
+          <span>{{ t('appUi.k08109e41') }}</span>
         </a>
       </template>
     </a-input>
@@ -27,12 +27,15 @@
   import Icon from '/@/components/Icon/src/Icon.vue';
   import EasyCronModal from './EasyCronModal.vue';
   import { cronEmits, cronProps } from './easy.cron.data';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
+  const { t } = useI18n();
 
   const { prefixCls } = useDesign('easy-cron-input');
   const emit = defineEmits([...cronEmits]);
   const props = defineProps({
     ...cronProps,
-    placeholder: propTypes.string.def('Cron식을 입력하세요.'),
+    placeholder: propTypes.string.def(() => $t('appUi.k55d08ea7')),
     exeStartTime: propTypes.oneOfType([propTypes.number, propTypes.string, propTypes.object]).def(0),
   });
   const [registerModal, { openModal }] = useModal();

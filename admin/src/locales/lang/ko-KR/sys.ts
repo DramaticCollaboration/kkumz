@@ -29,8 +29,10 @@ export default {
   errorLog: {
     tableTitle: '오류 로그 목록',
     tableColumnType: '유형',
+    tableColumnUrl: '요청 URL',
     tableColumnDate: '일시',
     tableColumnFile: '파일',
+    tableColumnName: '오류명',
     tableColumnMsg: '오류 메시지',
     tableColumnStackMsg: '스택 정보',
 

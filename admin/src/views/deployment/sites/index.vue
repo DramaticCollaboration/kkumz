@@ -10,37 +10,37 @@
         </template>
         <template v-else-if="column.key === 'siteType'">
           <Tag :color="record.siteType === 'COMMERCE' ? 'blue' : record.siteType === 'HYBRID' ? 'default' : 'green'">
-            {{ record.siteType === 'COMMERCE' ? '쇼핑몰 스토어' : record.siteType === 'HYBRID' ? '매거진+스토어 복합' : '브랜드·커뮤니티 웹' }}
+            {{ record.siteType === 'COMMERCE' ? t('appUi.kfe990b2f') : record.siteType === 'HYBRID' ? t('appUi.k55479f2f') : t('appUi.k59d1dd90') }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'deployMode'">
           <Tag :color="record.deployMode === 'CUSTOM_BUNDLE' ? 'default' : 'default'">
-            {{ record.deployMode === 'CUSTOM_BUNDLE' ? '코드 번들 배포' : '즉시 디자인 배포' }} (v{{ record.activeVersionNo }})
+            {{ record.deployMode === 'CUSTOM_BUNDLE' ? t('appUi.k8bb944fb') : t('appUi.k2f258cb1') }} (v{{ record.activeVersionNo }})
           </Tag>
         </template>
         <template v-else-if="column.key === 'status'">
           <Tag :color="record.status === 'ACTIVE' ? 'success' : 'error'">
-            {{ record.status === 'ACTIVE' ? '정상 가동' : '일시 정지' }}
+            {{ record.status === 'ACTIVE' ? t('appUi.kf567a95a') : t('appUi.k340d4e47') }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'action'">
           <TableAction
             :actions="[
               {
-                label: record.status === 'ACTIVE' ? '사이트 정지' : '사이트 재개',
+                label: record.status === 'ACTIVE' ? t('appUi.k825c8915') : t('appUi.k105ee254'),
                 icon: record.status === 'ACTIVE' ? 'ant-design:stop-outlined' : 'ant-design:check-circle-outlined',
                 color: record.status === 'ACTIVE' ? 'warning' : 'success',
                 popConfirm: {
-                  title: record.status === 'ACTIVE' ? '이 멀티사이트를 일시 정지하시겠습니까?' : '이 멀티사이트를 다시 활성화하시겠습니까?',
+                  title: record.status === 'ACTIVE' ? t('appUi.k89d3814a') : t('appUi.k2e5ef435'),
                   confirm: handleToggleStatus.bind(null, record),
                 },
               },
               {
-                label: 'v1 롤백',
+                label: t('appUi.k31fa871d'),
                 icon: 'ant-design:rollback-outlined',
                 ifShow: () => record.activeVersionNo > 1,
                 popConfirm: {
-                  title: '이 사이트의 릴리즈를 v1으로 즉시 롤백하시겠습니까?',
+                  title: t('appUi.k9c88f568'),
                   confirm: handleRollback.bind(null, record),
                 },
               },
@@ -57,11 +57,13 @@
   import { BasicTable, useTable, TableAction } from '/@/components/Table';
   import { useMessage } from '/@/hooks/web/useMessage';
   import { getAdminSiteList, updateAdminSiteStatus, rollbackAdminSiteRelease } from '/@/api/kkumz';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { createMessage } = useMessage();
 
   const [registerTable, { reload }] = useTable({
-    title: '생성 사이트 목록',
+    title: t('appUi.k21484471'),
     api: getAdminSiteList,
     rowKey: 'id',
     useSearchForm: true,
@@ -72,37 +74,37 @@
       schemas: [
         {
           field: 'keyword',
-          label: '검색어',
+          label: t('appUi.kd64280cb'),
           component: 'Input',
-          componentProps: { placeholder: '브랜드명, 슬러그 검색' },
+          componentProps: { placeholder: t('appUi.k1b8f7ac0') },
           colProps: { span: 8 },
         },
         {
           field: 'status',
-          label: '운영 상태',
+          label: t('appUi.k68d30371'),
           component: 'JDictSelectTag',
           componentProps: {
             dictCode: 'kkumz_site_status',
-            placeholder: '전체',
+            placeholder: t('appUi.k934dd25e'),
           },
           colProps: { span: 8 },
         },
       ],
     },
     columns: [
-      { title: '로고', dataIndex: 'logoSvg', key: 'logoSvg', width: 120 },
-      { title: '브랜드명', dataIndex: 'brandName', width: 170 },
-      { title: '멀티사이트 경로', dataIndex: 'siteSlug', key: 'siteSlug', width: 150 },
-      { title: '사이트 유형', dataIndex: 'siteType', key: 'siteType', width: 150 },
-      { title: '배포 방식 / 버전', dataIndex: 'deployMode', key: 'deployMode', width: 170 },
-      { title: '오너 계정', dataIndex: 'ownerUsername', width: 120 },
-      { title: '조회수', dataIndex: 'viewCount', width: 90 },
-      { title: '좋아요', dataIndex: 'likeCount', width: 90 },
-      { title: '상태', dataIndex: 'status', key: 'status', width: 150 },
+      { title: t('appUi.kd2ba3ac7'), dataIndex: 'logoSvg', key: 'logoSvg', width: 120 },
+      { title: t('appUi.ke4171b02'), dataIndex: 'brandName', width: 170 },
+      { title: t('appUi.k3b4a102e'), dataIndex: 'siteSlug', key: 'siteSlug', width: 150 },
+      { title: t('appUi.k73456d62'), dataIndex: 'siteType', key: 'siteType', width: 150 },
+      { title: t('appUi.ka39b046b'), dataIndex: 'deployMode', key: 'deployMode', width: 170 },
+      { title: t('appUi.k27b3430a'), dataIndex: 'ownerUsername', width: 120 },
+      { title: t('appUi.k274b7b80'), dataIndex: 'viewCount', width: 90 },
+      { title: t('appUi.k224a2886'), dataIndex: 'likeCount', width: 90 },
+      { title: t('appUi.k2926977b'), dataIndex: 'status', key: 'status', width: 150 },
     ],
     actionColumn: {
       width: 190,
-      title: '관리',
+      title: t('appUi.kc29fba5a'),
       dataIndex: 'action',
       slots: { customRender: 'action' },
     },
@@ -111,13 +113,13 @@
   async function handleToggleStatus(record: Recordable) {
     const nextStatus = record.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
     await updateAdminSiteStatus(record.id, { status: nextStatus });
-    createMessage.success(`사이트 상태가 ${nextStatus}(으)로 변경되었습니다.`);
+    createMessage.success(t('appUi.k6fd4fec1', { p0: nextStatus }));
     reload();
   }
 
   async function handleRollback(record: Recordable) {
     await rollbackAdminSiteRelease(record.siteSlug, 1);
-    createMessage.success(`${record.brandName} 사이트가 v1 릴리즈로 롤백되었습니다.`);
+    createMessage.success(t('appUi.kcf3d0419', { p0: record.brandName }));
     reload();
   }
 </script>

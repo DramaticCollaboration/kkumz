@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import type { PaginationProps } from '../types/pagination';
 import type { BasicTableProps } from '../types/table';
 import { computed, unref, ref, ComputedRef, watch } from 'vue';
@@ -58,7 +59,7 @@ export function usePagination(refProps: ComputedRef<BasicTableProps>) {
       showTotal: isMobile ? undefined : (total) => {
         const totalText = t('component.table.total', { total });
         if (!totalText || totalText === 'component.table.total') {
-          return `전체 ${total}건`;
+          return $t('appUi.k4326de94', { p0: total });
         }
         return totalText;
       },

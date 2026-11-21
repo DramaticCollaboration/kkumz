@@ -51,6 +51,8 @@
   </div>
 </template>
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
+  import { $t } from '/@/locales';
   import { defineComponent, unref, ref, watch } from 'vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { getUserList } from '/@/api/common/api';
@@ -73,7 +75,7 @@
       //상자 제목 선택
       modalTitle: {
         type: String,
-        default: '사용자 선택',
+        default: $t('appUi.kf1e1572f'),
       },
       //사용자 ID 모음 제외
       excludeUserIdList: {
@@ -83,6 +85,7 @@
     },
     emits: ['register', 'getSelectResult', 'close'],
     setup(props, { emit, refs }) {
+      const { t } = useI18n();
       const tableScroll = ref<any>({ x: false });
       const tableRef = ref();
       const maxHeight = ref(600);
@@ -139,12 +142,12 @@
         },
         schemas: [
           {
-            label: '계정',
+            label: t('appUi.k615212b2'),
             field: 'username',
             component: 'JInput',
           },
           {
-            label: '이름',
+            label: t('appUi.k9aa18e50'),
             field: 'realname',
             component: 'JInput',
           },
@@ -153,33 +156,33 @@
       //테이블 열 정의
       const columns = [
         {
-          title: '아이디',
+          title: t('appUi.k8dd085d9'),
           dataIndex: 'username',
           width: 120,
           align: 'left',
         },
         {
-          title: '사용자 이름',
+          title: t('appUi.k2cc04d4c'),
           dataIndex: 'realname',
           width: 120,
         },
         {
-          title: '성별',
+          title: t('appUi.k77737feb'),
           dataIndex: 'sex_dictText',
           width: 50,
         },
         {
-          title: '전화 번호',
+          title: t('appUi.kfbf7b5bb'),
           dataIndex: 'phone',
           width: 120,
         },
         {
-          title: '이메일',
+          title: t('appUi.k3c37764a'),
           dataIndex: 'email',
           // width: 40,
         },
         {
-          title: '상태',
+          title: t('appUi.k2926977b'),
           dataIndex: 'status_dictText',
           width: 80,
         },
@@ -195,12 +198,12 @@
         rowKey: 'id',
         columns: [
           {
-            title: '사용자 이름',
+            title: t('appUi.k2cc04d4c'),
             dataIndex: 'realname',
             width: 40,
           },
           {
-            title: '작업',
+            title: t('appUi.k9d9bf438'),
             dataIndex: 'action',
             align: 'center',
             width: 40,

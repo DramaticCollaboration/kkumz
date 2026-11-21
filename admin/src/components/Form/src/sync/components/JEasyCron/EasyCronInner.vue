@@ -2,25 +2,25 @@
   <div :class="`${prefixCls}`">
     <div class="content">
       <a-tabs :size="`small`" v-model:activeKey="activeKey">
-        <a-tab-pane tab="두번째" key="second" v-if="!hideSecond">
+        <a-tab-pane :tab="t('appUi.k7f823a3a')" key="second" v-if="!hideSecond">
           <SecondUI v-model:value="second" :disabled="disabled" />
         </a-tab-pane>
-        <a-tab-pane tab="가리키다" key="minute">
+        <a-tab-pane :tab="t('appUi.kd1f78278')" key="minute">
           <MinuteUI v-model:value="minute" :disabled="disabled" />
         </a-tab-pane>
-        <a-tab-pane tab="시간" key="hour">
+        <a-tab-pane :tab="t('appUi.k6c35133c')" key="hour">
           <HourUI v-model:value="hour" :disabled="disabled" />
         </a-tab-pane>
-        <a-tab-pane tab="낮" key="day">
+        <a-tab-pane :tab="t('appUi.k582cb057')" key="day">
           <DayUI v-model:value="day" :week="week" :disabled="disabled" />
         </a-tab-pane>
-        <a-tab-pane tab="달" key="month">
+        <a-tab-pane :tab="t('appUi.kf743af38')" key="month">
           <MonthUI v-model:value="month" :disabled="disabled" />
         </a-tab-pane>
-        <a-tab-pane tab="주" key="week">
+        <a-tab-pane :tab="t('appUi.k752244cf')" key="week">
           <WeekUI v-model:value="week" :day="day" :disabled="disabled" />
         </a-tab-pane>
-        <a-tab-pane tab="년도" key="year" v-if="!hideYear && !hideSecond">
+        <a-tab-pane :tab="t('appUi.k9e494018')" key="year" v-if="!hideYear && !hideSecond">
           <YearUI v-model:value="year" :disabled="disabled" />
         </a-tab-pane>
       </a-tabs>
@@ -32,63 +32,63 @@
             <a-col :span="8" style="margin-bottom: 12px">
               <a-input v-model:value="inputValues.second" @blur="onInputBlur">
                 <template #addonBefore>
-                  <span class="allow-click" @click="activeKey = 'second'">두번째</span>
+                  <span class="allow-click" @click="activeKey = 'second'">{{ t('appUi.k7f823a3a') }}</span>
                 </template>
               </a-input>
             </a-col>
             <a-col :span="8" style="margin-bottom: 12px">
               <a-input v-model:value="inputValues.minute" @blur="onInputBlur">
                 <template #addonBefore>
-                  <span class="allow-click" @click="activeKey = 'minute'">가리키다</span>
+                  <span class="allow-click" @click="activeKey = 'minute'">{{ t('appUi.kd1f78278') }}</span>
                 </template>
               </a-input>
             </a-col>
             <a-col :span="8" style="margin-bottom: 12px">
               <a-input v-model:value="inputValues.hour" @blur="onInputBlur">
                 <template #addonBefore>
-                  <span class="allow-click" @click="activeKey = 'hour'">시간</span>
+                  <span class="allow-click" @click="activeKey = 'hour'">{{ t('appUi.k6c35133c') }}</span>
                 </template>
               </a-input>
             </a-col>
             <a-col :span="8" style="margin-bottom: 12px">
               <a-input v-model:value="inputValues.day" @blur="onInputBlur">
                 <template #addonBefore>
-                  <span class="allow-click" @click="activeKey = 'day'">낮</span>
+                  <span class="allow-click" @click="activeKey = 'day'">{{ t('appUi.k582cb057') }}</span>
                 </template>
               </a-input>
             </a-col>
             <a-col :span="8" style="margin-bottom: 12px">
               <a-input v-model:value="inputValues.month" @blur="onInputBlur">
                 <template #addonBefore>
-                  <span class="allow-click" @click="activeKey = 'month'">달</span>
+                  <span class="allow-click" @click="activeKey = 'month'">{{ t('appUi.kf743af38') }}</span>
                 </template>
               </a-input>
             </a-col>
             <a-col :span="8" style="margin-bottom: 12px">
               <a-input v-model:value="inputValues.week" @blur="onInputBlur">
                 <template #addonBefore>
-                  <span class="allow-click" @click="activeKey = 'week'">주</span>
+                  <span class="allow-click" @click="activeKey = 'week'">{{ t('appUi.k752244cf') }}</span>
                 </template>
               </a-input>
             </a-col>
             <a-col :span="8">
               <a-input v-model:value="inputValues.year" @blur="onInputBlur">
                 <template #addonBefore>
-                  <span class="allow-click" @click="activeKey = 'year'">년도</span>
+                  <span class="allow-click" @click="activeKey = 'year'">{{ t('appUi.k9e494018') }}</span>
                 </template>
               </a-input>
             </a-col>
             <a-col :span="16">
               <a-input v-model:value="inputValues.cron" @blur="onInputCronBlur">
                 <template #addonBefore>
-                  <a-tooltip title="Cron">방법</a-tooltip>
+                  <a-tooltip title="Cron">{{ t('appUi.ka68dfb55') }}</a-tooltip>
                 </template>
               </a-input>
             </a-col>
           </a-row>
         </a-col>
         <a-col :span="6">
-          <div>마지막 10번의 실행 시간（연도는 포함되지 않습니다.）</div>
+          <div>{{ t('appUi.k6cfbb3f0') }}</div>
           <a-textarea type="textarea" :value="preTimeList" :rows="5" />
         </a-col>
       </a-row>
@@ -109,6 +109,8 @@
   import YearUI from './tabs/YearUI.vue';
   import { cronEmits, cronProps } from './easy.cron.data';
   import { dateFormat, simpleDebounce } from '/@/utils/common/compUtils';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const { prefixCls } = useDesign('easy-cron-inner');
   provide('prefixCls', prefixCls);
@@ -132,7 +134,7 @@
     year: '',
     cron: '',
   });
-  const preTimeList = ref('미리보기를 수행할 때 연도 매개변수는 무시됩니다.');
+  const preTimeList = ref(t('appUi.k0ad7e3e4'));
 
   // Cron
   const cronValueInner = computed(() => {
@@ -292,7 +294,7 @@
     for (let i = 1; i <= 10; i++) {
       result.push(dateFormat(new Date(iter.next() as any), format));
     }
-    preTimeList.value = result.length > 0 ? result.join('\n') : '실행 시간 없음';
+    preTimeList.value = result.length > 0 ? result.join('\n') : t('appUi.kd46d7d3a');
   }
 
   function onInputBlur() {

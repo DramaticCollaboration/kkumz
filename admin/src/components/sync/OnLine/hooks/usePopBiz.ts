@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { reactive, ref, unref, defineAsyncComponent, toRaw, markRaw, isRef, watch, onUnmounted } from 'vue';
 import { httpGroupRequest } from '/@/components/Form/src/utils/GroupRequest';
 import { defHttp } from '/@/utils/http/axios';
@@ -29,7 +30,7 @@ export function usePopBiz(ob, tableRef?) {
   //cgRpConfigId
   const cgRpConfigId = ref('');
   //제목
-  const title = ref('목록');
+  const title = ref($t('appUi.kb6071ac7'));
   // 정렬 필드, 기본적으로 정렬 없음
   const iSorter = ref<any>('');
   // 쿼리 객체
@@ -203,7 +204,7 @@ export function usePopBiz(ob, tableRef?) {
         }
         if (currColumns[0].key !== 'rowIndex') {
           currColumns.unshift({
-            title: '일련번호',
+            title: $t('appUi.k6b2dfe96'),
             dataIndex: 'rowIndex',
             key: 'rowIndex',
             width: 60,
@@ -246,7 +247,7 @@ export function usePopBiz(ob, tableRef?) {
         // 팝업에는 일련 번호가 필요하지만 일반 목록에는 그렇지 않습니다.
         if (clickThenCheckFlag === true) {
           currColumns.unshift({
-            title: '일련번호',
+            title: $t('appUi.k6b2dfe96'),
             dataIndex: 'rowIndex',
             key: 'rowIndex',
             width: 60,
@@ -300,7 +301,7 @@ export function usePopBiz(ob, tableRef?) {
             count += parseFloat(row[dataIndex]);
           }
         });
-        totalRow[dataIndex] = isNaN(count) ? '디지털이 아닌 콘텐츠가 포함되어 있습니다.' : count.toFixed(2);
+        totalRow[dataIndex] = isNaN(count) ? $t('appUi.kab768412') : count.toFixed(2);
 
         // 긴 모양을 사용하는 경우 합계에 .00 접미사가 표시되지 않습니다.
         let v = metaColumnList.find((v) => v.dataIndex == dataIndex);
@@ -523,7 +524,7 @@ export function usePopBiz(ob, tableRef?) {
     let start = (pagination.current - 1) * pagination.realPageSize + 1;
     let end = start + (pagination.isTotal ? dataSource.value.length - 1 : dataSource.value.length) - 1;
     let realTotal = pagination.isTotal ? pagination.realTotal : total;
-    return start + '-' + end + ' 총 ' + realTotal + '건';
+    return start + '-' + end + $t('appUi.k4721d912') + realTotal + $t('appUi.kd202b4d7');
   }
 
   /**
@@ -782,7 +783,7 @@ export function usePopBiz(ob, tableRef?) {
   const hrefComponent = ref({
     model: {
       title: '',
-      okText: '취소',
+      okText: $t('appUi.k19b2d19b'),
       width: '100%',
       open: false,
       destroyOnClose: true,
@@ -824,7 +825,7 @@ export function usePopBiz(ob, tableRef?) {
       hrefComponent.value.params = {};
     }
     hrefComponent.value.model.open = true;
-    hrefComponent.value.model.title = '작업';
+    hrefComponent.value.model.title = $t('appUi.k9d9bf438');
     hrefComponent.value.is = markRaw(defineAsyncComponent(() => importViewsFile(path)));
   }
 

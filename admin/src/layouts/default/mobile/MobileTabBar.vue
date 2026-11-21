@@ -2,7 +2,7 @@
   <nav
     v-if="isVisible"
     class="sync-mobile-tabbar fixed bottom-0 left-0 right-0 z-[499] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 md:hidden"
-    aria-label="모바일 하단 메뉴"
+    :aria-label="t('appUi.kcb651ef4')"
   >
     <div class="grid grid-cols-4 h-14 items-center">
       <button
@@ -23,13 +23,14 @@
         @click="openMenuDrawer"
       >
         <Icon icon="ant-design:menu-outlined" :size="19" />
-        <span class="text-[11px] leading-tight">전체 메뉴</span>
+        <span class="text-[11px] leading-tight">{{ t('appUi.kf022be31') }}</span>
       </button>
     </div>
   </nav>
 </template>
 
 <script lang="ts">
+  import { $t } from '/@/locales';
   import { defineComponent, computed, unref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { Icon } from '/@/components/Icon';
@@ -61,7 +62,7 @@
     if (node.path && !String(node.path).startsWith('http')) {
       return {
         path: node.path,
-        label: node.name || node.meta?.title || '메뉴',
+        label: node.name || node.meta?.title || $t('appUi.k076925c5'),
         icon: node.icon || node.meta?.icon,
       };
     }

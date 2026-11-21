@@ -9,19 +9,19 @@
             <template #label>
               <a-tooltip placement="topLeft">
                 <template #title>
-                  <span>귀하는 여러 부서에 속해 있습니다. 로그인 부서를 선택하세요.</span>
+                  <span>{{ t('appUi.k1ae50e03') }}</span>
                 </template>
-                <a-avatar style="background-color: rgb(104, 208, 203)" :size="30"> 부서 </a-avatar>
+                <a-avatar style="background-color: rgb(104, 208, 203)" :size="30"> {{ t('appUi.ke5b530d6') }} </a-avatar>
               </a-tooltip>
             </template>
             <template #extra v-if="validate_status1 == 'error'">
-              <span style="color: #ed6f6f">로그인 부서를 선택해주세요</span>
+              <span style="color: #ed6f6f">{{ t('appUi.k21eedb85') }}</span>
             </template>
             <!--부서 드롭다운 콘텐츠-->
             <a-select
               v-model:value="formState.orgCode"
               @change="handleDepartChange"
-              placeholder="로그인 부서를 선택해주세요"
+              :placeholder="t('appUi.k21eedb85')"
               :class="{ 'valid-error': validate_status1 == 'error' }"
             >
               <template v-for="depart in departList" :key="depart.orgCode">
@@ -34,12 +34,13 @@
     </BasicForm>
 
     <template #footer>
-      <a-button @click="handleSubmit" type="primary">확인</a-button>
+      <a-button @click="handleSubmit" type="primary">{{ t('appUi.k468266d6') }}</a-button>
     </template>
   </BasicModal>
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { defineComponent, ref, computed, watch, unref, reactive, UnwrapRef } from 'vue';
   import { Avatar } from 'ant-design-vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
@@ -59,6 +60,7 @@
     },
     emits: ['success', 'register'],
     setup(props, { emit }) {
+      const { t } = useI18n();
       const userStore = useUserStore();
       const { notification } = useMessage();
       const [registerForm] = useForm({
@@ -94,12 +96,12 @@
       //현재 제목
       const currTitle = computed(() => {
         if (unref(isMultiDepart)) {
-          return '부서를 선택해주세요.';
+          return t('appUi.k41b10493');
         }
       });
 
       const rules = ref({
-        orgCode: [{ required: unref(isMultiDepart), message: '부서를 선택해주세요.', trigger: 'change' }],
+        orgCode: [{ required: unref(isMultiDepart), message: t('appUi.k41b10493'), trigger: 'change' }],
       });
 
       const layout = {
@@ -120,8 +122,8 @@
         //0: 부서 없음 1: 한 부서 2: 여러 부서
         if (multi_depart == 0) {
           notification.warn({
-            message: '힌트',
-            description: `아직 해당 부서에 속하지 않으셨습니다. 계정정보를 확인해 주세요`,
+            message: t('appUi.k678ea22a'),
+            description: t('appUi.ke7faaccb'),
             duration: 3,
           });
           isMultiDepart.value = false;
@@ -188,8 +190,8 @@
        */
       function requestFailed(err) {
         notification.error({
-          message: '로그인 실패',
-          description: ((err.response || {}).data || {}).message || err.message || '요청에 오류가 발생했습니다. 나중에 다시 시도해 주세요.',
+          message: t('appUi.k56efcfd5'),
+          description: ((err.response || {}).data || {}).message || err.message || t('appUi.kdeee49cc'),
           duration: 4,
         });
       }
@@ -233,6 +235,7 @@
       }
 
       return {
+        t,
         registerModal,
         registerForm,
         visible,

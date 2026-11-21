@@ -1,5 +1,5 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" :width="800" title="이양" @ok="handleSubmit">
+  <BasicModal v-bind="$attrs" @register="registerModal" :width="800" :title="t('appUi.k61afe1fd')" @ok="handleSubmit">
     <BasicForm @register="registerForm" />
   </BasicModal>
 </template>
@@ -9,6 +9,8 @@
   import { formQuitAgentSchema } from './user.data';
   import { getUserAgent, userQuitAgent } from './user.api';
   import dayjs from 'dayjs';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
   //Form 구성

@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { BasicColumn } from '/@/components/Table';
 import { FormSchema } from '/@/components/Table';
 import { getAllRolesList } from './user.api';
@@ -5,23 +6,23 @@ import { rules } from '/@/utils/helper/validator';
 import { render } from '/@/utils/common/renderUtils';
 export const columns: BasicColumn[] = [
   {
-    title: '아이디',
+    title: $t('appUi.k8dd085d9'),
     dataIndex: 'username',
     width: 120,
   },
   {
-    title: '사용자 이름',
+    title: $t('appUi.k2cc04d4c'),
     dataIndex: 'realname',
     width: 100,
   },
   {
-    title: '아바타',
+    title: $t('appUi.k27eeb981'),
     dataIndex: 'avatar',
     width: 120,
     customRender: render.renderAvatar,
   },
   {
-    title: '성별',
+    title: $t('appUi.k77737feb'),
     dataIndex: 'sex',
     width: 80,
     sorter: true,
@@ -30,27 +31,27 @@ export const columns: BasicColumn[] = [
     },
   },
   {
-    title: '생일',
+    title: $t('appUi.k10f776d3'),
     dataIndex: 'birthday',
     width: 100,
   },
   {
-    title: '전화 번호',
+    title: $t('appUi.kfbf7b5bb'),
     dataIndex: 'phone',
     width: 100,
   },
   {
-    title: '부서',
+    title: $t('appUi.ke5b530d6'),
     width: 150,
     dataIndex: 'orgCodeTxt',
   },
   {
-    title: '담당부서',
+    title: $t('appUi.k2eed4a6d'),
     width: 150,
     dataIndex: 'departIds_dictText',
   },
   {
-    title: '상태',
+    title: $t('appUi.k2926977b'),
     dataIndex: 'status_dictText',
     width: 80,
   },
@@ -58,23 +59,23 @@ export const columns: BasicColumn[] = [
 
 export const recycleColumns: BasicColumn[] = [
   {
-    title: '아이디',
+    title: $t('appUi.k8dd085d9'),
     dataIndex: 'username',
     width: 100,
   },
   {
-    title: '사용자 이름',
+    title: $t('appUi.k2cc04d4c'),
     dataIndex: 'realname',
     width: 100,
   },
   {
-    title: '아바타',
+    title: $t('appUi.k27eeb981'),
     dataIndex: 'avatar',
     width: 80,
     customRender: render.renderAvatar,
   },
   {
-    title: '성별',
+    title: $t('appUi.k77737feb'),
     dataIndex: 'sex',
     width: 80,
     sorter: true,
@@ -86,44 +87,44 @@ export const recycleColumns: BasicColumn[] = [
 
 export const searchFormSchema: FormSchema[] = [
   {
-    label: '계정',
+    label: $t('appUi.k615212b2'),
     field: 'username',
     component: 'JInput',
     alwaysShow: true,
     //colProps: { span: 6 },
   },
   {
-    label: '이름',
+    label: $t('appUi.k9aa18e50'),
     field: 'realname',
     component: 'JInput',
     alwaysShow: true,
    //colProps: { span: 6 },
   },
   {
-    label: '성별',
+    label: $t('appUi.k77737feb'),
     field: 'sex',
     component: 'JDictSelectTag',
     componentProps: {
       dictCode: 'sex',
-      placeholder: '성별을 선택해주세요',
+      placeholder: $t('appUi.k59337943'),
       stringToNumber: true,
     },
     //colProps: { span: 6 },
   },
   {
-    label: '전화 번호',
+    label: $t('appUi.kfbf7b5bb'),
     field: 'phone',
     component: 'Input',
     //colProps: { span: 6 },
   },
   {
-    label: '사용자 상태',
+    label: $t('appUi.k45cd44a3'),
     field: 'status',
     component: 'JDictSelectTag',
     alwaysShow: true,
     componentProps: {
       dictCode: 'user_status',
-      placeholder: '상태를 선택해주세요',
+      placeholder: $t('appUi.k2cb67eda'),
       stringToNumber: true,
     },
    //colProps: { span: 6 },
@@ -138,7 +139,7 @@ export const formSchema: FormSchema[] = [
     show: false,
   },
   {
-    label: '아이디',
+    label: $t('appUi.k8dd085d9'),
     field: 'username',
     component: 'Input',
     dynamicDisabled: ({ values }) => {
@@ -147,7 +148,7 @@ export const formSchema: FormSchema[] = [
     dynamicRules: ({ model, schema }) => rules.duplicateCheckRule('sys_user', 'username', model, schema, true),
   },
   {
-    label: '비밀번호',
+    label: $t('appUi.k81973897'),
     field: 'password',
     component: 'StrengthMeter',
     componentProps:{
@@ -156,28 +157,28 @@ export const formSchema: FormSchema[] = [
     rules: [
       {
         required: true,
-        message: '비밀번호를 입력해주세요',
+        message: $t('appUi.kf893b7b0'),
       },
       {
         pattern: /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[~!@#$%^&*()_+`\-={}:";'<>?,./]).{8,}$/,
-        message: '비밀번호는 8자리, 대문자, 소문자, 특수기호로 구성됩니다!',
+        message: $t('appUi.k1e15995d'),
       },
     ],
   },
   {
-    label: '비밀번호 확인',
+    label: $t('appUi.k768b58d6'),
     field: 'confirmPassword',
     component: 'InputPassword',
     dynamicRules: ({ values }) => rules.confirmPassword(values, true),
   },
   {
-    label: '사용자 이름',
+    label: $t('appUi.k2cc04d4c'),
     field: 'realname',
     required: true,
     component: 'Input',
   },
   {
-    label: '역할',
+    label: $t('appUi.kf3f4087e'),
     field: 'selectedroles',
     component: 'ApiSelect',
     componentProps: {
@@ -189,7 +190,7 @@ export const formSchema: FormSchema[] = [
     },
   },
   {
-    label: '부서',
+    label: $t('appUi.ke5b530d6'),
     field: 'selecteddeparts',
     component: 'JSelectDept',
     componentProps: ({ formActionType, formModel }) => {
@@ -218,15 +219,15 @@ export const formSchema: FormSchema[] = [
     },
   },
   {
-    label: '등급',
+    label: $t('appUi.k89dbf513'),
     field: 'userIdentity',
     component: 'RadioGroup',
     defaultValue: 1,
     componentProps: ({ formModel }) => {
       return {
         options: [
-          { label: '사용자', value: 1, key: '1' },
-          { label: '관리자', value: 2, key: '2' },
+          { label: $t('appUi.k5c50d9e5'), value: 1, key: '1' },
+          { label: $t('appUi.kec873cb1'), value: 2, key: '2' },
         ],
         onChange: () => {
           formModel.userIdentity == 1 && (formModel.departIds = []);
@@ -235,7 +236,7 @@ export const formSchema: FormSchema[] = [
     },
   },
   {
-    label: '담당부서',
+    label: $t('appUi.k2eed4a6d'),
     field: 'departIds',
     component: 'Select',
     componentProps: {
@@ -244,22 +245,22 @@ export const formSchema: FormSchema[] = [
     ifShow: ({ values }) => values.userIdentity == 2,
   },
   {
-    label: '생일',
+    label: $t('appUi.k10f776d3'),
     field: 'birthday',
     component: 'DatePicker',
   },
   {
-    label: '성별',
+    label: $t('appUi.k77737feb'),
     field: 'sex',
     component: 'JDictSelectTag',
     componentProps: {
       dictCode: 'sex',
-      placeholder: '성별을 선택해주세요',
+      placeholder: $t('appUi.k59337943'),
       stringToNumber: true,
     },
   },
   {
-    label: '이메일',
+    label: $t('appUi.k3c37764a'),
     field: 'email',
     component: 'Input',
     required: true,
@@ -271,52 +272,52 @@ export const formSchema: FormSchema[] = [
     },
   },
   {
-    label: '전화 번호',
+    label: $t('appUi.kfbf7b5bb'),
     field: 'phone',
     component: 'Input',
     required: true,
     dynamicRules: ({ model, schema }) => {
       return [
         { ...rules.duplicateCheckRule('sys_user', 'phone', model, schema, true)[0], trigger: 'blur' },
-        { pattern: /^010([-\s]?)([0-9]{4})([-\s]?)([0-9]{4})$/, message: '휴대폰 번호 형식이 잘못되었습니다.', trigger: 'blur' },
+        { pattern: /^010([-\s]?)([0-9]{4})([-\s]?)([0-9]{4})$/, message: $t('appUi.ked5ae196'), trigger: 'blur' },
       ];
     },
   },
   {
-    label: '유선전화',
+    label: $t('appUi.ke38e65af'),
     field: 'telephone',
     component: 'Input',
-    rules: [{ pattern: /^0\d{2,3}-[1-9]\d{6,7}$/, message: '정확한 유선전화번호를 입력해주세요' }],
+    rules: [{ pattern: /^0\d{2,3}-[1-9]\d{6,7}$/, message: $t('appUi.kdf787538') }],
   },
 ];
 
 export const formPasswordSchema: FormSchema[] = [
   {
-    label: '아이디',
+    label: $t('appUi.k8dd085d9'),
     field: 'username',
     component: 'Input',
     componentProps: { readOnly: true },
   },
   {
-    label: '비밀번호',
+    label: $t('appUi.k81973897'),
     field: 'password',
     component: 'StrengthMeter',
     componentProps: {
-      placeholder: '비밀번호를 입력해주세요',
+      placeholder: $t('appUi.kf893b7b0'),
     },
     rules: [
       {
         required: true,
-        message: '비밀번호를 입력해주세요',
+        message: $t('appUi.kf893b7b0'),
       },
       {
         pattern: /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[~!@#$%^&*()_+`\-={}:";'<>?,./]).{8,}$/,
-        message: '비밀번호는 8자리, 대문자, 소문자, 특수기호로 구성됩니다!',
+        message: $t('appUi.k1e15995d'),
       },
     ],
   },
   {
-    label: '비밀번호 확인',
+    label: $t('appUi.k768b58d6'),
     field: 'confirmPassword',
     component: 'InputPassword',
     dynamicRules: ({ values }) => rules.confirmPassword(values, true),
@@ -332,7 +333,7 @@ export const formAgentSchema: FormSchema[] = [
   },
   {
     field: 'userName',
-    label: '사용자 이름',
+    label: $t('appUi.k2cc04d4c'),
     component: 'Input',
     componentProps: {
       readOnly: true,
@@ -341,7 +342,7 @@ export const formAgentSchema: FormSchema[] = [
   },
   {
     field: 'agentUserName',
-    label: '상담원 사용자 이름',
+    label: $t('appUi.k82a2e5df'),
     required: true,
     component: 'JSelectUser',
     componentProps: {
@@ -352,31 +353,31 @@ export const formAgentSchema: FormSchema[] = [
   },
   {
     field: 'startTime',
-    label: '에이전트 시작 시간',
+    label: $t('appUi.kb4dd997c'),
     component: 'DatePicker',
     required: true,
     componentProps: {
       showTime: true,
       valueFormat: 'YYYY-MM-DD HH:mm:ss',
-      placeholder: '상담원 시작 시간을 선택하세요.',
+      placeholder: $t('appUi.k21113295'),
       getPopupContainer: () => document.body,
     },
   },
   {
     field: 'endTime',
-    label: '에이전트 종료 시간',
+    label: $t('appUi.kac8e3945'),
     component: 'DatePicker',
     required: true,
     componentProps: {
       showTime: true,
       valueFormat: 'YYYY-MM-DD HH:mm:ss',
-      placeholder: '상담원 종료 시간을 선택하세요.',
+      placeholder: $t('appUi.k3ddc481e'),
       getPopupContainer: () => document.body,
     },
   },
   {
     field: 'status',
-    label: '상태',
+    label: $t('appUi.k2926977b'),
     component: 'JDictSelectTag',
     defaultValue: '1',
     componentProps: {
@@ -395,7 +396,7 @@ export const formQuitAgentSchema: FormSchema[] = [
   },
   {
     field: 'userName',
-    label: '사용자 이름',
+    label: $t('appUi.k2cc04d4c'),
     component: 'Input',
     componentProps: {
       readOnly: true,
@@ -404,7 +405,7 @@ export const formQuitAgentSchema: FormSchema[] = [
   },
   {
     field: 'agentUserName',
-    label: '인계인력',
+    label: $t('appUi.k39a8a1e1'),
     //required: true,
     component: 'JSelectUser',
     componentProps: {
@@ -415,31 +416,31 @@ export const formQuitAgentSchema: FormSchema[] = [
   },
   {
     field: 'startTime',
-    label: '핸드오버 시작 시간',
+    label: $t('appUi.k9718b125'),
     component: 'DatePicker',
     //required: true,
     componentProps: {
       showTime: true,
       valueFormat: 'YYYY-MM-DD HH:mm:ss',
-      placeholder: '핸드오버 시작 시간을 선택하세요.',
+      placeholder: $t('appUi.k40bf1a2e'),
       getPopupContainer: () => document.body,
     },
   },
   {
     field: 'endTime',
-    label: '핸드오버 종료 시간',
+    label: $t('appUi.kbf78bf27'),
     component: 'DatePicker',
     //required: true,
     componentProps: {
       showTime: true,
       valueFormat: 'YYYY-MM-DD HH:mm:ss',
-      placeholder: '인계 종료 시간을 선택해주세요.',
+      placeholder: $t('appUi.k3317c34f'),
       getPopupContainer: () => document.body,
     },
   },
   {
     field: 'status',
-    label: '상태',
+    label: $t('appUi.k2926977b'),
     component: 'JDictSelectTag',
     defaultValue: '1',
     componentProps: {

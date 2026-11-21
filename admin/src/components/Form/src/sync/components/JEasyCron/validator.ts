@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import CronParser from 'cron-parser';
 import type { ValidatorRule } from 'ant-design-vue/lib/form/interface';
 
@@ -9,7 +10,7 @@ const cronRule: ValidatorRule = {
     }
     const values: string[] = value.split(' ').filter((item) => !!item);
     if (values.length > 7) {
-      return Promise.reject('Cron식은 최대 7개의 용어를 가질 수 있습니다!');
+      return Promise.reject($t('appUi.k412f228f'));
     }
     // 항목 7을 확인하세요.
     let val: string = value;
@@ -27,7 +28,7 @@ const cronRule: ValidatorRule = {
         // 모두 숫자인지 확인
         const checkYear = yearValues.some((item) => isNaN(Number(item)));
         if (checkYear) {
-          return Promise.reject('Cron식 매개변수[년도]실수：' + year);
+          return Promise.reject($t('appUi.k9677108b') + year);
         }
       }
       // 처음 6개 항목을 가져옵니다.
@@ -40,7 +41,7 @@ const cronRule: ValidatorRule = {
       iter.next();
       return Promise.resolve();
     } catch (e) {
-      return Promise.reject('Cron 오류：' + e);
+      return Promise.reject($t('appUi.k88043a4b') + e);
     }
   },
 };

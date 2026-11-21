@@ -4,7 +4,7 @@
       <template #message>
         <span class="j-icon">
           <a-upload multiple v-model:file-list="selectFileList" :showUploadList="false" :before-upload="beforeUpload">
-            <span class="inner-button"><upload-outlined />업로드</span>
+            <span class="inner-button"><upload-outlined />{{ t('appUi.k51672ccd') }}</span>
           </a-upload>
         </span>
       </template>
@@ -36,7 +36,7 @@
               <div class="next" @click="viewImage(item)"><div class="text">{{ item.name }} </div></div>
               <div class="buttons">
                 <div class="opt-icon">
-                  <Tooltip title="삭제">
+                  <Tooltip :title="t('appUi.kfc81e222')">
                     <delete-outlined @click="handleRemove(item)" />
                   </Tooltip>
                 </div>
@@ -48,8 +48,8 @@
       </div>
 
       <div style="margin-bottom: 24px; margin-top: 18px; text-align: right">
-        <a-button @click="quxiao">취소</a-button>
-        <a-button type="primary" style="margin-left: 10px" @click="queding" :loading="buttonLoading">확인</a-button>
+        <a-button @click="quxiao">{{ t('appUi.k19b2d19b') }}</a-button>
+        <a-button type="primary" style="margin-left: 10px" @click="queding" :loading="buttonLoading">{{ t('appUi.k468266d6') }}</a-button>
       </div>
     </div>
 
@@ -59,6 +59,7 @@
 </template>
 
 <script>
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { UploadOutlined, FolderOutlined, DownloadOutlined, PaperClipOutlined, DeleteOutlined } from '@ant-design/icons-vue';
   import JUpload from '/@/components/Form/src/sync/components/JUpload/JUpload.vue';
   import { uploadFileUrl } from './useComment';
@@ -92,6 +93,7 @@
       datetime:  propTypes.number.def(1)
     },
     setup(props) {
+      const { t } = useI18n();
       // const { createMessage } = useMessage();
       const [registerModel, { openModal }] = useModal();
       const { userInfo } = useUserStore();
@@ -133,7 +135,7 @@
       async function queding() {
         let obj = {
           fromUserId: userInfo.id,
-          commentContent: '첨부파일이 업로드되었습니다'
+          commentContent: t('appUi.kdacee8ad')
         }
         await saveCommentAndFiles(obj, selectFileList.value)
         selectFileList.value = [];
@@ -155,6 +157,7 @@
       }
 
       return {
+        t,
         selectFileList,
         beforeUpload,
         handleRemove,

@@ -6,22 +6,22 @@
         <div :class="`${prefixCls}-button div`" :size="btnSize">
           <slot v-if="showPrefix" name="toolbarPrefix" :size="btnSize" />
           <a-button v-if="showAdd" type="primary" preIcon="ant-design:plus-outlined" :disabled="disabled" @click="trigger('add')">
-            <span>등록</span>
+            <span>{{ t('appUi.k1ac11e9b') }}</span>
           </a-button>
           <a-button v-if="showSave" preIcon="ant-design:save-outlined" :disabled="disabled" @click="trigger('save')">
-            <span>저장</span>
+            <span>{{ t('appUi.k1f1712ac') }}</span>
           </a-button>
           <template v-if="selectedRowIds.length > 0">
-            <Popconfirm v-if="showRemove" :title="`정말로 이 $을 삭제하시겠습니까?{selectedRowIds.length} 목?`" @confirm="trigger('remove')">
-              <a-button preIcon="ant-design:minus-outlined" :disabled="disabled">삭제</a-button>
+            <Popconfirm v-if="showRemove" :title="t('appUi.k569f8dfa')" @confirm="trigger('remove')">
+              <a-button preIcon="ant-design:minus-outlined" :disabled="disabled">{{ t('appUi.kfc81e222') }}</a-button>
             </Popconfirm>
             <template v-if="showClearSelection">
-              <a-button preIcon="ant-design:delete-outlined" @click="trigger('clearSelection')">선택 취소</a-button>
+              <a-button preIcon="ant-design:delete-outlined" @click="trigger('clearSelection')">{{ t('appUi.k78857495') }}</a-button>
             </template>
           </template>
           <slot v-if="showSuffix" name="toolbarSuffix" :size="btnSize" />
           <a v-if="showCollapse" style="margin-left: 4px" @click="toggleCollapse">
-            <span>{{ collapsed ? '확장' : '닫기' }}</span>
+            <span>{{ collapsed ? t('appUi.k64139068') : t('appUi.k94b7dba1') }}</span>
             <Icon :icon="collapsed ? 'ant-design:down-outlined' : 'ant-design:up-outlined'" />
           </a>
         </div>
@@ -37,6 +37,8 @@
   import { VxeToolbarInstance } from 'vxe-table';
   import { Icon } from '/@/components/Icon';
   import { propTypes } from '/@/utils/propTypes';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
 
   const props = defineProps({
     size: propTypes.string,

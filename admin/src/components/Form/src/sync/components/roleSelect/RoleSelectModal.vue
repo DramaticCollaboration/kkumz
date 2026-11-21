@@ -11,7 +11,7 @@
 
         <div style="position: relative; min-height: 350px">
             <div style="width: 100%">
-                <a-input v-model:value="searchText" allowClear style="width: 100%" placeholder="찾다">
+                <a-input v-model:value="searchText" allowClear style="width: 100%" :placeholder="t('appUi.k46b3eeee')">
                     <template #prefix>
                         <SearchOutlined style="color: #c0c0c0" />
                     </template>
@@ -42,6 +42,7 @@
 </template>
 
 <script lang="ts">
+  import { useI18n } from '/@/hooks/web/useI18n';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { SearchOutlined, CloseOutlined } from '@ant-design/icons-vue';
   import SelectedUserItem from '../userSelect/SelectedUserItem.vue';
@@ -80,6 +81,7 @@
     },
     emits: ['selected', 'register'],
     setup(props, { emit }) {
+      const { t } = useI18n();
 
       const searchText = ref('');
       const selectedIdList = computed(() => {
@@ -200,6 +202,7 @@
       }
 
       return {
+        t,
         register,
         showDataList,
         searchText,

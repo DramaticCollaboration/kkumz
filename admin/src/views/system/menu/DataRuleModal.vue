@@ -9,6 +9,8 @@
   import { BasicForm, useForm } from '/@/components/Form/index';
   import { dataRuleFormSchema } from './menu.data';
   import { saveOrUpdateRule } from './menu.api';
+  import { useI18n } from '/@/hooks/web/useI18n';
+  const { t } = useI18n();
   // 방출 선언
   const emit = defineEmits(['success', 'register']);
   const props = defineProps({ permissionId: String });
@@ -33,7 +35,7 @@
   });
 
   //제목 설정
-  const getTitle = computed(() => (!unref(isUpdate) ? '새 규칙 추가' : '규칙 편집'));
+  const getTitle = computed(() => (!unref(isUpdate) ? t('appUi.k5eba0a7b') : t('appUi.k6cda52b3')));
 
   //Form 제출 이벤트
   async function handleSubmit() {

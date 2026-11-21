@@ -1,3 +1,4 @@
+import { $t } from '/@/locales';
 import { defHttp } from '/@/utils/http/axios';
 import { Modal } from 'ant-design-vue';
 
@@ -37,10 +38,10 @@ export const deleteMenu = (params, handleSuccess) => {
  */
 export const batchDeleteMenu = (params, handleSuccess) => {
   Modal.confirm({
-    title: '삭제 확인',
-    content: '선택한 데이터 삭제 여부',
-    okText: '확인',
-    cancelText: '취소',
+    title: $t('appUi.k20fdea4d'),
+    content: $t('appUi.kec2cff67'),
+    okText: $t('appUi.k468266d6'),
+    cancelText: $t('appUi.k19b2d19b'),
     onOk: async () => {
       const ids = String(params?.ids || '')
         .split(',')
@@ -115,7 +116,7 @@ export const checkPermDuplication=(model, schema, required?)=>{
           return Promise.resolve();
         }
         if (!value && required) {
-          return Promise.reject(`$를 입력하세요.{schema.label}`);
+          return Promise.reject($t('appUi.k0b6662d8'));
         }
         return new Promise<void>((resolve, reject) => {
           getCheckPermDuplication({
@@ -123,9 +124,9 @@ export const checkPermDuplication=(model, schema, required?)=>{
             url:model.url,
             alwaysShow:model.alwaysShow
           }).then((res) => {
-              res.success ? resolve() : reject(res.message || '확인 실패');
+              res.success ? resolve() : reject(res.message || $t('appUi.kae6c001b'));
           }).catch((err) => {
-              reject(err.message || '인증 실패');
+              reject(err.message || $t('appUi.k7790958f'));
           });
         });
       },
